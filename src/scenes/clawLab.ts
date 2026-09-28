@@ -61,9 +61,9 @@ export const CLAW_LAB_CONFIG = {
   pt003BoxFriction: 0.65,
   pt003BoxRestitution: 0.02,
   pt003BoxCenterOffsetX: 0.04,
-  pt003SupportHalfX: 0.020,
-  pt003SupportHalfZ: 0.020,
-  pt003MinRotationRadians: 0.12,
+  pt003SupportHalfX: 0.015,
+  pt003SupportHalfZ: 0.015,
+  pt003MinRotationRadians: 0.10,
   pt003MaxPassiveRotationRadians: 0.03,
 } as const;
 
