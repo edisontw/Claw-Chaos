@@ -1184,3 +1184,236 @@ The design succeeds when:
 - different machine configurations feel mechanically different,
 - content can scale to hundreds of prize variants without hundreds of unique gameplay classes.
 
+# 35. Real-machine control profiles
+
+Not every cabinet should use the same control scheme.
+
+Support configurable control profiles such as:
+
+### Joystick + action button
+Common flow:
+- joystick moves X/Z,
+- action starts descent,
+- action may become early-close while descending.
+
+### Direction buttons + action button
+Used for cabinets that expose discrete direction buttons rather than an analog stick.
+
+### Two-stage / limited-axis control
+Some prize machines intentionally constrain the order or availability of movement axes.
+
+The simulator should support a profile where:
+- one stage selects one axis,
+- a later stage selects the other axis,
+- or movement becomes locked after DROP.
+
+### Optional claw rotation control
+Some specialized machines may permit controlled claw yaw/rotation.
+
+This is not a universal default. Most baseline machines should let yaw/twist emerge from suspension mechanics rather than a free player rotation command.
+
+Machine control profile must define:
+- available axes,
+- analog vs digital input,
+- movement before/after DROP,
+- early-close availability,
+- hold-boost availability,
+- play timer behavior,
+- return/home behavior.
+
+---
+
+# 36. Credit, timer, and one-play lifecycle
+
+A machine play is a complete lifecycle, not only a claw animation.
+
+A configurable play may contain:
+
+```text
+IDLE
+→ CREDIT ACCEPTED
+→ READY
+→ AIM TIMER
+→ DROP
+→ CLOSE
+→ LIFT
+→ RETURN
+→ RELEASE
+→ CHUTE CHECK
+→ HOME
+→ READY / OUT OF CREDIT
+```
+
+Machine profiles may define:
+- price per play,
+- number of credits,
+- aim time limit,
+- whether movement stops when time expires,
+- whether DROP is automatic when aim time expires,
+- whether player input is locked after DROP,
+- delay before the next credit/play,
+- attract-mode timing.
+
+The baseline simulation must not assume infinite aiming time.
+
+---
+
+# 37. Home position, return path, and release timing
+
+The carriage/claw must have an explicit home/release configuration.
+
+A machine definition should specify:
+- home X/Z,
+- prize chute X/Z,
+- return speed profile,
+- whether lift completes before horizontal return,
+- whether horizontal return begins while the claw is still settling,
+- release height,
+- release delay,
+- finger opening speed,
+- post-release wait,
+- route back to home/ready position.
+
+This matters because a carried prize can:
+- swing during return,
+- collide with cabinet/prizes,
+- slide during deceleration,
+- miss or strike the chute edge.
+
+Do not teleport the claw above the chute.
+
+---
+
+# 38. Claw yaw, cable twist, and reel limits
+
+The suspended claw is not only an X/Z pendulum.
+
+Depending on machine profile, allow small:
+- yaw rotation,
+- torsional lag,
+- twist damping.
+
+The reel/winch should define:
+- minimum cable length,
+- maximum cable length,
+- reel speed,
+- reel acceleration,
+- upper/lower limit behavior,
+- stop tolerance,
+- emergency stop behavior.
+
+Initial implementation may use a simplified torsional spring rather than true cable twist.
+
+---
+
+# 39. Machine faults and recovery
+
+Realistic play needs safe handling for faults without corrupting simulation state.
+
+Fault categories may include:
+- prize chute blocked,
+- claw/finger jam,
+- carriage limit fault,
+- prize trapped in service-only region,
+- sensor disagreement,
+- physics instability watchdog,
+- service door open.
+
+Recovery rules:
+- freeze or safely stop player input,
+- preserve prize state when possible,
+- move into SERVICE state,
+- perform a visible/documented reset or staff intervention,
+- never silently award/remove a prize to hide a physics bug.
+
+A development-only hard reset is allowed, but production gameplay should explain the recovery in-world.
+
+---
+
+# 40. Physical calibration and real-machine measurement
+
+"Realistic" requires measured references rather than only visual tuning.
+
+Maintain a calibration dataset for representative real machines:
+
+- cabinet dimensions,
+- playfield dimensions,
+- claw finger length and curvature,
+- open span,
+- claw head mass,
+- suspension length,
+- carriage speed,
+- acceleration/braking time,
+- drop/lift speed,
+- swing period,
+- damping,
+- prize masses and dimensions,
+- approximate material friction,
+- chute dimensions,
+- control/input latency.
+
+Where direct torque measurement is unavailable, infer effective parameters from observable motion and load tests.
+
+Every calibrated value should record:
+- source/machine model,
+- measurement method,
+- uncertainty,
+- whether it is a measured value, inferred value, or gameplay-tuned approximation.
+
+See `docs/CALIBRATION_PLAN.md`.
+
+---
+
+# 41. Replay, observability, and explainable outcomes
+
+Physics debugging and realism verification require an input/event recording system.
+
+Record, where practical:
+- fixed-tick number,
+- input state,
+- machine state,
+- force phase,
+- carriage transform/velocity,
+- claw transform/velocity,
+- finger joint angles,
+- active machine parameters,
+- prize transforms at checkpoints,
+- chute sensor events,
+- random/layout seed.
+
+The goal is not perfect cross-platform bitwise determinism; it is reproducible diagnosis.
+
+A failed grab should be explainable after the fact:
+- low friction,
+- off-center COM,
+- weak retaining phase,
+- excessive return swing,
+- contact lost at a known tick,
+rather than "the game decided to fail".
+
+---
+
+# 42. Web platform and performance tiers
+
+GitHub Pages/Web builds are a first-class delivery target for development and public demos.
+
+The active cabinet keeps full simulation fidelity.
+
+Potential scaling strategy:
+- active cabinet: full 120 Hz target physics,
+- nearby inactive cabinets: simplified animation/low-rate state,
+- distant cabinets: visual-only,
+- sleeping prizes: zero active solver cost where supported.
+
+Quality settings may reduce:
+- reflection quality,
+- shadow resolution,
+- environment effects,
+- decorative NPC count.
+
+Quality settings must not secretly alter active-cabinet:
+- mass,
+- friction,
+- claw force,
+- contact geometry,
+- gameplay timing.
