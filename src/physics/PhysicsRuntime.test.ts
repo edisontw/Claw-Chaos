@@ -29,4 +29,53 @@ describe("PhysicsRuntime", () => {
     expect(cube.isSleeping()).toBe(true);
     expect(physics.dynamicBodyCount).toBe(1);
   });
+
+  it("drives one revolute finger independently without moving two idle fingers", async () => {
+    const physics = await PhysicsRuntime.create();
+    const hub = physics.createStaticCuboid(
+      { x: 0, y: 1, z: 0 },
+      { x: 0.35, y: 0.04, z: 0.08 },
+    );
+
+    const joints = [];
+    const fingers = [];
+
+    for (let index = 0; index < 3; index += 1) {
+      const x = (index - 1) * 0.22;
+      const finger = physics.createDynamicCuboid(
+        { x, y: 0.82, z: 0 },
+        { x: 0.02, y: 0.14, z: 0.02 },
+        0,
+        { density: 120 },
+      );
+      const joint = physics.createRevoluteJoint(hub, finger, {
+        anchor1: { x, y: -0.04, z: 0 },
+        anchor2: { x: 0, y: 0.14, z: 0 },
+        axis: { x: 0, y: 0, z: 1 },
+        minAngle: -0.6,
+        maxAngle: 0.4,
+        initialTarget: 0,
+        stiffness: 28,
+        damping: 5,
+        maxTorque: 2,
+        contactsEnabled: false,
+      });
+      fingers.push(finger);
+      joints.push(joint);
+    }
+
+    joints[0].configureMotorPosition(-0.45, 28, 5);
+
+    for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
+      physics.step();
+    }
+
+    expect(joints[0].limitsEnabled()).toBe(true);
+    expect(joints[0].limitsMin()).toBeCloseTo(-0.6, 5);
+    expect(joints[0].limitsMax()).toBeCloseTo(0.4, 5);
+    expect(Math.abs(fingers[0].rotation().z)).toBeGreaterThan(0.05);
+    expect(Math.abs(fingers[1].rotation().z)).toBeLessThan(0.03);
+    expect(Math.abs(fingers[2].rotation().z)).toBeLessThan(0.03);
+    expect(physics.dynamicBodyCount).toBe(3);
+  });
 });
