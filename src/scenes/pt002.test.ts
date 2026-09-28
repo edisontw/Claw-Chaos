@@ -63,7 +63,7 @@ describe("PT-002 low-friction ball slip", () => {
         pivotWorld,
         createFingerSegments(createFingerPoints(theta)),
         {
-          friction: config.pt002ContactFriction,
+          friction: config.fingerFriction,
           restitution: config.fingerRestitution,
           density: config.fingerDensity,
         },
