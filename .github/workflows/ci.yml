@@ -71,18 +71,42 @@ jobs:
 
           BROWSER=$(command -v google-chrome || command -v chromium || true)
           test -n "$BROWSER"
-          "$BROWSER" \
-            --headless=new \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --use-gl=angle \
-            --use-angle=swiftshader \
-            --enable-webgl \
-            --enable-unsafe-swiftshader \
-            --virtual-time-budget=3000 \
-            --dump-dom \
-            "http://127.0.0.1:4173/Claw-Chaos/?scene=falling-cube&seed=ci-smoke" \
-            > /tmp/claw-chaos-dom.html
 
-          grep -q 'data-simulation-ready="true"' /tmp/claw-chaos-dom.html
-          echo "Preview/browser smoke passed: $ASSET_PATH"
+          BROWSER_READY=0
+          for attempt in 1 2 3; do
+            DOM_FILE="/tmp/claw-chaos-dom-$attempt.html"
+            LOG_FILE="/tmp/claw-chaos-browser-$attempt.log"
+
+            timeout 30s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=8000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=claw-lab&seed=ci-smoke" \
+              > "$DOM_FILE" 2> "$LOG_FILE" || true
+
+            if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
+               grep -q 'claw-lab' "$DOM_FILE"; then
+              BROWSER_READY=1
+              break
+            fi
+
+            echo "Headless browser smoke attempt $attempt did not reach claw-lab readiness."
+            sleep 1
+          done
+
+          if [ "$BROWSER_READY" -ne 1 ]; then
+            echo "Headless browser failed to initialize claw-lab after 3 attempts."
+            for file in /tmp/claw-chaos-browser-*.log; do
+              echo "===== $file ====="
+              cat "$file"
+            done
+            exit 1
+          fi
+
+          echo "Preview/browser claw-lab smoke passed: $ASSET_PATH"
