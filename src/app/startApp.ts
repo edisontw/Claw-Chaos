@@ -48,6 +48,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let droppedCatchUpSeconds = 0;
   let lastFrameSeconds = performance.now() / 1000;
   let smoothedFps = 60;
+  let firstFrameRendered = false;
 
   const resize = (): void => {
     const width = Math.max(1, root.clientWidth);
@@ -88,6 +89,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
     syncRenderTransforms();
     renderer.render(scene, camera);
+
+    if (!firstFrameRendered) {
+      root.dataset.simulationReady = "true";
+      firstFrameRendered = true;
+    }
 
     debugOverlay.update({
       fps: smoothedFps,

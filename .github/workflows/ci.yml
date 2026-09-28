@@ -68,4 +68,21 @@ jobs:
           ASSET_PATH=$(grep -oE '/Claw-Chaos/assets/[^"]+\.js' /tmp/claw-chaos-index.html | head -n 1)
           test -n "$ASSET_PATH"
           curl --fail --silent "http://127.0.0.1:4173$ASSET_PATH" -o /dev/null
-          echo "Preview smoke test passed: $ASSET_PATH"
+
+          BROWSER=$(command -v google-chrome || command -v chromium || true)
+          test -n "$BROWSER"
+          "$BROWSER" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --use-gl=angle \
+            --use-angle=swiftshader \
+            --enable-webgl \
+            --enable-unsafe-swiftshader \
+            --virtual-time-budget=3000 \
+            --dump-dom \
+            "http://127.0.0.1:4173/Claw-Chaos/?scene=falling-cube&seed=ci-smoke" \
+            > /tmp/claw-chaos-dom.html
+
+          grep -q 'data-simulation-ready="true"' /tmp/claw-chaos-dom.html
+          echo "Preview/browser smoke passed: $ASSET_PATH"
