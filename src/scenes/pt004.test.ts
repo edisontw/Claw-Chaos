@@ -27,12 +27,12 @@ async function simulateTeddyPlacement(
   bodyOffsetX: number,
   supportHalfX: number,
   hookAngle: number,
-  supportFriction: number,
+  closeLeadSeconds: number,
 ): Promise<
   HookMetrics & {
     supportHalfX: number;
     hookAngle: number;
-    supportFriction: number;
+    closeLeadSeconds: number;
   }
 > {
   const config = CLAW_LAB_CONFIG;
@@ -54,7 +54,7 @@ async function simulateTeddyPlacement(
       y: config.pt004SupportHalfY,
       z: config.pt004SupportHalfZ,
     },
-    supportFriction,
+    0.9,
   );
 
   const labHubCenterY = config.hubCenterY;
@@ -175,7 +175,7 @@ async function simulateTeddyPlacement(
 
   for (
     let tick = 0;
-    tick < Math.ceil(0.25 * PHYSICS_HZ);
+    tick < Math.ceil(closeLeadSeconds * PHYSICS_HZ);
     tick += 1
   ) {
     drive(hookAngle);
@@ -217,7 +217,7 @@ async function simulateTeddyPlacement(
     bodyOffsetX,
     supportHalfX,
     hookAngle,
-    supportFriction,
+    closeLeadSeconds,
     passiveRotation,
     peakLift,
     peakRotation,
@@ -230,25 +230,25 @@ async function simulateTeddyPlacement(
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds a support friction where a real paw hook can pull the teddy free", async () => {
+  it("finds close/lift overlap timing that forms a real paw hook", async () => {
     const bodyOffsetX = -0.06;
     const supportHalfX = 0.05;
     const hookAngle = -0.38;
-    const supportFrictions = [0.15, 0.25, 0.35, 0.45, 0.55, 0.7, 0.9];
+    const closeLeadTimes = [0, 0.05, 0.10, 0.15, 0.20];
     const results = [];
 
-    for (const supportFriction of supportFrictions) {
+    for (const closeLeadSeconds of closeLeadTimes) {
       results.push(
         await simulateTeddyPlacement(
           bodyOffsetX,
           supportHalfX,
           hookAngle,
-          supportFriction,
+          closeLeadSeconds,
         ),
       );
     }
 
-    console.log("PT-004 support-friction sweep", JSON.stringify(results));
+    console.log("PT-004 close-lift overlap sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
