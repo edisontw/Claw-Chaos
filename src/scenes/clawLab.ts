@@ -48,7 +48,7 @@ export const CLAW_LAB_CONFIG = {
   pt001CloseSettleSeconds: 0.9,
   pt001PassLiftDelta: 0.08,
 
-  pt002ContactFriction: 0.02,
+  pt002ContactFriction: 0.25,
   pt002MinPeakLift: 0.03,
   pt002MinSlipLoss: 0.04,
   pt002MaxFinalLift: 0.03,
