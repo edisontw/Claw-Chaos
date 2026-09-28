@@ -5,7 +5,9 @@ import {
   computeFingerPathLength,
   computeFingerTipSpan,
   evaluatePt002Slip,
+  evaluatePt003Rotation,
   parseClawLabExperiment,
+  quaternionAngleFromIdentity,
 } from "./clawLab";
 
 describe("M01 claw motor command", () => {
@@ -51,6 +53,7 @@ describe("M01 claw-lab experiment selection", () => {
     expect(parseClawLabExperiment("")).toBe("pt001");
     expect(parseClawLabExperiment("?experiment=pt001")).toBe("pt001");
     expect(parseClawLabExperiment("?experiment=pt002")).toBe("pt002");
+    expect(parseClawLabExperiment("?experiment=pt003")).toBe("pt003");
     expect(parseClawLabExperiment("?experiment=unknown")).toBe("pt001");
   });
 
@@ -59,5 +62,25 @@ describe("M01 claw-lab experiment selection", () => {
     expect(evaluatePt002Slip(0.02, -0.02)).toBe(false);
     expect(evaluatePt002Slip(0.08, 0.06)).toBe(false);
     expect(evaluatePt002Slip(0.08, 0.04)).toBe(false);
+  });
+});
+
+
+describe("PT-003 rotation helpers", () => {
+  it("converts a quaternion to angular displacement from identity", () => {
+    const halfAngle = 0.2;
+    expect(
+      quaternionAngleFromIdentity({
+        x: 0,
+        y: Math.sin(halfAngle),
+        z: 0,
+        w: Math.cos(halfAngle),
+      }),
+    ).toBeCloseTo(0.4, 8);
+  });
+
+  it("requires meaningful box rotation", () => {
+    expect(evaluatePt003Rotation(0.2)).toBe(true);
+    expect(evaluatePt003Rotation(0.05)).toBe(false);
   });
 });
