@@ -6,9 +6,12 @@ import {
 } from "../config/simulation";
 import { FixedStepLoop } from "../core/FixedStepLoop";
 import { DebugOverlay } from "../debug/DebugOverlay";
+import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
+import { createClawLabScene } from "../scenes/clawLab";
 import { createFallingCubeScene } from "../scenes/fallingCube";
 import { parseSceneSelection } from "../scenes/sceneSelection";
+import type { SimulationScene } from "../scenes/types";
 
 export async function startApp(root: HTMLElement): Promise<void> {
   const selection = parseSceneSelection(window.location.search);
@@ -17,9 +20,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111722);
 
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
-  camera.position.set(6, 4.5, 7);
-  camera.lookAt(0, 1, 0);
+  const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 100);
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -35,8 +36,19 @@ export async function startApp(root: HTMLElement): Promise<void> {
   keyLight.shadow.mapSize.set(1024, 1024);
   scene.add(keyLight);
 
-  const testScene = createFallingCubeScene(scene, physics, selection.seed);
+  const testScene: SimulationScene =
+    selection.id === "claw-lab"
+      ? createClawLabScene(scene, physics)
+      : createFallingCubeScene(scene, physics, selection.seed);
+
+  camera.position.set(...testScene.camera.position);
+  camera.lookAt(...testScene.camera.target);
+
   const debugOverlay = new DebugOverlay(root);
+  const physicsDebugRenderer = new PhysicsDebugRenderer(
+    scene,
+    selection.id === "claw-lab",
+  );
   const fixedStep = new FixedStepLoop(
     FIXED_TIMESTEP_SECONDS,
     MAX_PHYSICS_STEPS_PER_FRAME,
@@ -49,6 +61,13 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let lastFrameSeconds = performance.now() / 1000;
   let smoothedFps = 60;
   let firstFrameRendered = false;
+
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (!event.repeat && event.code === "KeyD") {
+      physicsDebugRenderer.toggle();
+    }
+  };
+  window.addEventListener("keydown", onKeyDown);
 
   const resize = (): void => {
     const width = Math.max(1, root.clientWidth);
@@ -81,6 +100,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     }
 
     const result = fixedStep.advance(frameDeltaSeconds, (stepSeconds) => {
+      testScene.beforePhysicsStep?.(stepSeconds);
       physics.step();
       physicsTicks += 1;
       simulationSeconds += stepSeconds;
@@ -88,6 +108,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     droppedCatchUpSeconds += result.droppedSeconds;
 
     syncRenderTransforms();
+    physicsDebugRenderer.update(physics.debugRender());
     renderer.render(scene, camera);
 
     if (!firstFrameRendered) {
@@ -96,6 +117,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     }
 
     debugOverlay.update({
+      milestone: testScene.milestone,
       fps: smoothedFps,
       physicsTicks,
       sceneId: selection.id,
@@ -103,6 +125,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
       simulationSeconds,
       dynamicBodies: physics.dynamicBodyCount,
       droppedCatchUpSeconds,
+      physicsDebugVisible: physicsDebugRenderer.visible,
+      extraLines: testScene.debugLines?.(),
     });
 
     requestAnimationFrame(frame);
