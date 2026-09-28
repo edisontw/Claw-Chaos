@@ -37,6 +37,56 @@ Create a minimal development environment capable of running deterministic/repeat
 - one dynamic cube falls and settles reproducibly within tolerance
 - a test scene can be selected by ID/URL/debug menu
 
+## Completion record — 2026-09-28
+
+**Status: COMPLETE**
+
+Implemented technical baseline:
+
+- TypeScript 6 + Vite 8
+- Three.js WebGL rendering bootstrap
+- Rapier 3D via `@dimforge/rapier3d-compat`
+- Vitest regression tests
+- ESLint flat-config baseline
+- GitHub Actions CI on `main` and pull requests
+- committed `package-lock.json` for reproducible `npm ci`
+
+Simulation harness:
+
+- physics runs at a fixed 120 Hz (`1 / 120 s`)
+- rendering remains variable-rate and independent from physics stepping
+- accumulator loop limits catch-up to 8 physics steps per render frame
+- frame delta is clamped to 0.25 s and excess backlog is dropped rather than allowing a spiral-of-death
+- Rapier integration `dt` is explicitly set to the same fixed timestep
+- initial deterministic scene is `?scene=falling-cube`
+- optional deterministic seed is selected with `?seed=<value>`
+- unknown scene IDs safely fall back to `falling-cube`
+- debug overlay reports FPS, physics ticks, simulation time, active scene, seed, dynamic body count, and dropped catch-up time
+
+Verified behavior:
+
+- Rapier initializes in automated tests
+- the M00 dynamic cube falls from 3 m and settles/sleeps on the static floor
+- seeded RNG repeatability is tested
+- fixed-step accumulation/catch-up protection is tested
+- scene parsing/fallback is tested
+- CI passes `npm ci`, `npm run lint`, `npm run test`, and `npm run build`
+- production `dist/index.html` is checked for the required `/Claw-Chaos/assets/` base path
+- `npm run preview` is started in CI and the project-subpath page plus generated JavaScript asset are fetched successfully
+- a lightweight headless-Chrome smoke test confirms Rapier/WebGL initialization reaches the first rendered frame
+
+Known M00 limitations:
+
+- only the `falling-cube` development scene exists; no claw, prize gameplay, cabinet, economy, NPC, or backend systems were introduced
+- render interpolation between physics snapshots is not yet used; the renderer currently displays the latest fixed-tick transform
+- the debug overlay is intentionally minimal and does not yet draw colliders, contacts, COM, or joints
+- CI browser smoke validates startup/first render but is not a visual pixel-regression test
+- GitHub Pages deployment itself is intentionally not enabled in M00; the build, subpath, and preview are verified and ready for the deployment procedure in `docs/DEPLOYMENT.md`
+
+**Exact next milestone:** M01 — Claw Physics Laboratory.
+
+**Recommended first M01 task:** add a deterministic `?scene=claw-lab` laboratory scene containing only the gray test floor, a rigid claw hub, and three independently constrained finger rigid bodies/revolute joints with configurable open/close motor target and torque. Add joint/collider diagnostics, then use the centered-ball experiment as the first prize-contact acceptance case. Do not add prize attachment or cabinet gameplay.
+
 ---
 
 # M01 — Claw Physics Laboratory

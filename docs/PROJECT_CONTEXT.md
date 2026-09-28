@@ -244,22 +244,50 @@ Do not start with:
 
 First prove that one gray-box claw interacting with one box, one ball and one teddy is physically convincing.
 
+## Implemented baseline — M00 complete
+
+M00 — Repository & simulation harness was completed and verified on 2026-09-28.
+
+Actual technical stack:
+- TypeScript 6
+- Vite 8
+- Three.js WebGL renderer
+- Rapier 3D via `@dimforge/rapier3d-compat`
+- Vitest
+- ESLint
+- GitHub Actions CI with Node.js 22
+
+Runtime baseline:
+- canonical units remain meters / kilograms / seconds / radians
+- Rapier gravity is `(0, -9.81, 0)`
+- physics uses a fixed 120 Hz step
+- rendering uses `requestAnimationFrame` independently from physics ticks
+- the accumulator permits at most 8 catch-up physics steps per render frame
+- excessive backlog is discarded after a 0.25 s frame-delta clamp to prevent spiral-of-death behavior
+- initial deterministic scene selection uses `?scene=falling-cube&seed=<value>`
+- current debug overlay shows FPS, tick count, simulation time, scene/seed, dynamic body count, and dropped catch-up time
+
+M00 verification:
+- `npm ci`: PASS
+- `npm run lint`: PASS
+- `npm run test`: PASS, including seeded RNG, fixed-step timing, scene selection, and a Rapier fall/settle regression
+- `npm run build`: PASS
+- production base path `/Claw-Chaos/`: PASS
+- `npm run preview` project-subpath/asset smoke: PASS
+- headless browser bootstrap through first Rapier + WebGL rendered frame: PASS
+
+Known baseline limitations:
+- only `falling-cube` exists
+- no render interpolation between fixed physics snapshots yet
+- no collider/contact/COM/joint visualizers yet
+- no Pages deployment workflow is enabled yet; only build/preview compatibility is verified
+- no claw gameplay, prize gameplay, cabinet, staff, economy, NPC, or backend was introduced
+
 ## Current next step
 
-Implement **M00 — Repository & simulation harness** from `docs/ROADMAP.md`.
+Proceed to **M01 — Claw Physics Laboratory** from `docs/ROADMAP.md`.
 
-M00 is intentionally before the claw Physics Laboratory. It must establish:
-- Vite/TypeScript scaffold,
-- fixed-step simulation loop,
-- test-scene selection,
-- seeded initialization,
-- debug/diagnostic foundations,
-- production build,
-- GitHub Pages-safe `/Claw-Chaos/` asset paths.
-
-After M00 passes, proceed to **M01 — Claw Physics Laboratory**.
-
-
+The first M01 implementation slice should create a deterministic `?scene=claw-lab` containing a gray test floor, rigid claw hub, and three independently constrained finger bodies/revolute joints with configurable motor target and torque. Add joint/collider diagnostics before adding broader gameplay. The centered-ball grip experiment is the first prize-contact acceptance target, and the no-attachment rule remains mandatory.
 
 ## Design-review additions
 

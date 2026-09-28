@@ -22,9 +22,9 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**Pre-production / documentation baseline**
+**M00 complete — M01 Claw Physics Laboratory is next**
 
-Development must begin with the physics laboratory, not with a full arcade environment.
+The repository/simulation harness is now implemented and CI-verified. Development proceeds with the physics laboratory, not with a full arcade environment.
 
 ### First milestone
 
@@ -100,17 +100,18 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Start **M00 — Repository & simulation harness** from `docs/ROADMAP.md`.
+Start **M01 — Claw Physics Laboratory** from `docs/ROADMAP.md`.
 
-M00 must establish:
-- Vite/TypeScript application scaffold,
-- fixed-step physics harness,
-- test-scene loader,
-- basic CI/tests,
-- GitHub Pages-safe `/Claw-Chaos/` asset base,
-- a production build that succeeds before Pages deployment is enabled.
+M00 is complete with:
+- Vite/TypeScript/Three.js application scaffold,
+- Rapier 3D physics bootstrap,
+- fixed 120 Hz simulation harness,
+- deterministic `falling-cube` test-scene loader and seed utility,
+- debug overlay,
+- CI/lint/tests,
+- GitHub Pages-safe `/Claw-Chaos/` production build and preview smoke.
 
-Do not begin the full arcade environment before the physics laboratory and deployment harness are proven.
+The first M01 slice should add the deterministic `claw-lab` scene and prove the rigid hub plus three independently constrained claw fingers before building cabinet or arcade gameplay.
 
 ## Status
 
