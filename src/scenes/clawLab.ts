@@ -272,8 +272,7 @@ export function createClawLabScene(
 ): SimulationScene {
   const config = CLAW_LAB_CONFIG;
   const experiment = parseClawLabExperiment(search);
-  const activeFingerFriction =
-    experiment === "pt002" ? config.pt002ContactFriction : config.fingerFriction;
+  const activeFingerFriction = config.fingerFriction;
   const activeBallFriction =
     experiment === "pt002" ? config.pt002ContactFriction : config.pt001BallFriction;
   const bindings: SimulationScene["bindings"] = [];
