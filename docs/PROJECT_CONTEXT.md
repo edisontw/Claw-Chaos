@@ -276,18 +276,39 @@ M00 verification:
 - `npm run preview` project-subpath/asset smoke: PASS
 - headless browser bootstrap through first Rapier + WebGL rendered frame: PASS
 
-Known baseline limitations:
-- only `falling-cube` exists
+M00 ended with these deliberate limitations:
+- only `falling-cube` existed at M00 completion
 - no render interpolation between fixed physics snapshots yet
-- no collider/contact/COM/joint visualizers yet
-- no Pages deployment workflow is enabled yet; only build/preview compatibility is verified
-- no claw gameplay, prize gameplay, cabinet, staff, economy, NPC, or backend was introduced
+- no claw gameplay, prize gameplay, cabinet, staff, economy, NPC, or backend had been introduced
+
+## M01 implementation status — slice 1 complete
+
+The first **M01 — Claw Physics Laboratory** slice was implemented and CI-verified on 2026-09-28.
+
+Current laboratory baseline:
+- `claw-lab` is the default scene; `?scene=falling-cube` remains as the M00 regression scene
+- fixed rigid claw hub
+- three independent dynamic finger rigid bodies
+- three Rapier revolute joints with independent limits
+- fixed-tick open/close motor command ramp
+- configurable motor stiffness, damping, maximum torque, finger density and friction
+- engineering controls: `C` close, `O` open, `Space` toggle
+- `D` toggles Rapier collider debug lines
+- visible joint pivot/axis diagnostics
+- no prize parenting, hidden weld, or pickup-success logic
+
+Verification:
+- 11 automated tests PASS
+- revolute motor movement and independent idle-finger behavior are regression-tested
+- lint/build/base-path/headless WebGL smoke PASS
+- GitHub Pages deployment workflow is active on `main`
+- public target remains `https://edisontw.github.io/Claw-Chaos/`
+
+M01 as a whole is **not complete**. COM visualization, prize-contact experiments and M01 exit criteria remain.
 
 ## Current next step
 
-Proceed to **M01 — Claw Physics Laboratory** from `docs/ROADMAP.md`.
-
-The first M01 implementation slice should create a deterministic `?scene=claw-lab` containing a gray test floor, rigid claw hub, and three independently constrained finger bodies/revolute joints with configurable motor target and torque. Add joint/collider diagnostics before adding broader gameplay. The centered-ball grip experiment is the first prize-contact acceptance target, and the no-attachment rule remains mandatory.
+Proceed with **PT-001 Centered ball pickup** inside `claw-lab`: add one physically simulated sphere with explicit mass/friction, place it under the three-prong claw, and tune only documented motor/contact parameters until the ball can be supported and lifted by geometry/contact alone. Do not add attachment or scripted success logic.
 
 ## Design-review additions
 
