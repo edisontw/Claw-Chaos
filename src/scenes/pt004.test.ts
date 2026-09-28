@@ -27,7 +27,14 @@ async function simulateTeddyPlacement(
   bodyOffsetX: number,
   supportHalfX: number,
   hookAngle: number,
-): Promise<HookMetrics & { supportHalfX: number; hookAngle: number }> {
+  supportFriction: number,
+): Promise<
+  HookMetrics & {
+    supportHalfX: number;
+    hookAngle: number;
+    supportFriction: number;
+  }
+> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
 
@@ -47,7 +54,7 @@ async function simulateTeddyPlacement(
       y: config.pt004SupportHalfY,
       z: config.pt004SupportHalfZ,
     },
-    0.9,
+    supportFriction,
   );
 
   const labHubCenterY = config.hubCenterY;
@@ -210,6 +217,7 @@ async function simulateTeddyPlacement(
     bodyOffsetX,
     supportHalfX,
     hookAngle,
+    supportFriction,
     passiveRotation,
     peakLift,
     peakRotation,
@@ -222,23 +230,25 @@ async function simulateTeddyPlacement(
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds a partial-close target that hooks the paw before lift", async () => {
+  it("finds a support friction where a real paw hook can pull the teddy free", async () => {
     const bodyOffsetX = -0.06;
     const supportHalfX = 0.05;
-    const hookAngles = [-0.28, -0.32, -0.34, -0.36, -0.38, -0.40];
+    const hookAngle = -0.38;
+    const supportFrictions = [0.15, 0.25, 0.35, 0.45, 0.55, 0.7, 0.9];
     const results = [];
 
-    for (const hookAngle of hookAngles) {
+    for (const supportFriction of supportFrictions) {
       results.push(
         await simulateTeddyPlacement(
           bodyOffsetX,
           supportHalfX,
           hookAngle,
+          supportFriction,
         ),
       );
     }
 
-    console.log("PT-004 hook-angle sweep", JSON.stringify(results));
+    console.log("PT-004 support-friction sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
