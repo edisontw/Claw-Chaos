@@ -18,9 +18,9 @@ export const CLAW_LAB_CONFIG = {
   openAngle: 0.38,
   closedAngle: -0.72,
   motorSpeedRadiansPerSecond: 1.6,
-  motorStiffness: 28,
-  motorDamping: 5,
-  maxMotorTorque: 1.5,
+  motorStiffness: 180,
+  motorDamping: 18,
+  maxMotorTorque: 2.5,
 } as const;
 
 type ClawTargetState = "OPEN" | "CLOSED";
