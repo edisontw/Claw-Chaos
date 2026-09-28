@@ -245,27 +245,25 @@ async function simulateTeddyPlacement(
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds a partial-close/lift timing that produces sustained limb hooking", async () => {
-    const bodyOffsetX = -0.06;
+  it("finds the horizontal paw alignment for sustained geometric hooking", async () => {
+    const bodyOffsets = [-0.05, -0.055, -0.06, -0.065, -0.07, -0.075];
     const supportHalfX = 0.05;
-    const hookAngles = [-0.38, -0.39, -0.40, -0.41];
-    const closeLeadTimes = [0.10, 0.12, 0.14, 0.16, 0.18];
+    const hookAngle = -0.40;
+    const closeLeadSeconds = 0.16;
     const results = [];
 
-    for (const hookAngle of hookAngles) {
-      for (const closeLeadSeconds of closeLeadTimes) {
-        results.push(
-          await simulateTeddyPlacement(
-            bodyOffsetX,
-            supportHalfX,
-            hookAngle,
-            closeLeadSeconds,
-          ),
-        );
-      }
+    for (const bodyOffsetX of bodyOffsets) {
+      results.push(
+        await simulateTeddyPlacement(
+          bodyOffsetX,
+          supportHalfX,
+          hookAngle,
+          closeLeadSeconds,
+        ),
+      );
     }
 
-    console.log("PT-004 hook grid", JSON.stringify(results));
+    console.log("PT-004 lying-offset sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
