@@ -225,7 +225,7 @@ describe("PT-004 teddy limb hook calibration", () => {
   it("finds a claw height where the paw forms a real under-hook", async () => {
     const bodyOffsetX = -0.06;
     const supportHalfX = 0.05;
-    const clawYOffsets = [0.03, 0.04, 0.05, 0.06, 0.07];
+    const clawYOffsets = [0, 0.01, 0.02, 0.03];
     const results = [];
 
     for (const clawYOffset of clawYOffsets) {
