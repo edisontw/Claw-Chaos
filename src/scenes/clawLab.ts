@@ -126,6 +126,16 @@ export function evaluatePt003Rotation(peakRotationRadians: number): boolean {
   return peakRotationRadians >= CLAW_LAB_CONFIG.pt003MinRotationRadians;
 }
 
+export function quaternionAngularDistance(
+  a: { x: number; y: number; z: number; w: number },
+  b: { x: number; y: number; z: number; w: number },
+): number {
+  const dot = Math.abs(
+    a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w,
+  );
+  return 2 * Math.acos(Math.min(1, Math.max(-1, dot)));
+}
+
 export function evaluatePt004Hook(
   peakLift: number,
   peakRotationRadians: number,
