@@ -26,7 +26,8 @@ interface HookMetrics {
 async function simulateTeddyPlacement(
   bodyOffsetX: number,
   supportHalfX: number,
-): Promise<HookMetrics & { supportHalfX: number }> {
+  clawYOffset: number,
+): Promise<HookMetrics & { supportHalfX: number; clawYOffset: number }> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
 
@@ -49,8 +50,11 @@ async function simulateTeddyPlacement(
     0.9,
   );
 
+  const labHubCenterY = config.hubCenterY + clawYOffset;
+  const labFingerPivotY = config.fingerPivotY + clawYOffset;
+
   const hub = physics.createKinematicCylinder(
-    { x: 0, y: config.hubCenterY, z: 0 },
+    { x: 0, y: labHubCenterY, z: 0 },
     config.hubColliderHalfHeight,
     config.collarRadius,
     0.55,
@@ -70,7 +74,7 @@ async function simulateTeddyPlacement(
     };
     const pivotWorld = {
       x: pivotLocal.x,
-      y: config.hubCenterY + pivotLocal.y,
+      y: labFingerPivotY,
       z: pivotLocal.z,
     };
     const tangent = {
@@ -121,7 +125,7 @@ async function simulateTeddyPlacement(
   );
 
   let motorAngle = 0;
-  let hubY: number = config.hubCenterY;
+  let hubY: number = labHubCenterY;
   const stepSeconds = 1 / PHYSICS_HZ;
 
   const drive = (targetAngle: number): void => {
@@ -176,7 +180,7 @@ async function simulateTeddyPlacement(
     sample();
   }
 
-  const targetHubY = config.hubCenterY + config.pt001LiftDistance;
+  const targetHubY = labHubCenterY + config.pt001LiftDistance;
   while (hubY < targetHubY - 1e-6) {
     hubY = advanceLinearCommand(
       hubY,
@@ -205,6 +209,7 @@ async function simulateTeddyPlacement(
   return {
     bodyOffsetX,
     supportHalfX,
+    clawYOffset,
     passiveRotation,
     peakLift,
     peakRotation,
@@ -217,18 +222,23 @@ async function simulateTeddyPlacement(
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds a support width that leaves the target arm free for a real under-hook", async () => {
+  it("finds a claw height where the paw forms a real under-hook", async () => {
     const bodyOffsetX = -0.06;
-    const supportHalfWidths = [0.035, 0.04, 0.045, 0.05, 0.055, 0.06];
+    const supportHalfX = 0.05;
+    const clawYOffsets = [0.03, 0.04, 0.05, 0.06, 0.07];
     const results = [];
 
-    for (const supportHalfX of supportHalfWidths) {
+    for (const clawYOffset of clawYOffsets) {
       results.push(
-        await simulateTeddyPlacement(bodyOffsetX, supportHalfX),
+        await simulateTeddyPlacement(
+          bodyOffsetX,
+          supportHalfX,
+          clawYOffset,
+        ),
       );
     }
 
-    console.log("PT-004 support sweep", JSON.stringify(results));
+    console.log("PT-004 claw-height sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
