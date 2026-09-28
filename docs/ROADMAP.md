@@ -133,6 +133,38 @@ Gray room containing:
 - hook can succeed through geometry alone
 - no major solver explosion/jitter
 
+## Implementation record — 2026-09-28
+
+**Status: IN PROGRESS — first mechanical slice complete**
+
+Implemented:
+- `claw-lab` deterministic laboratory scene and M01 default entry
+- fixed rigid hub
+- three independent dynamic finger bodies
+- three Rapier revolute joints with per-joint limits
+- fixed-tick open/close command ramp rather than animation snapping
+- configurable motor stiffness/damping/max torque and finger material parameters
+- `C` close, `O` open, `Space` toggle
+- Rapier collider debug lines toggled with `D`
+- visible hinge pivot/axis diagnostics
+- automated regression for motor command ramp and independent revolute movement
+
+Verified:
+- 11 tests PASS
+- lint PASS
+- TypeScript/Vite production build PASS
+- GitHub Pages base-path check PASS
+- headless Rapier/WebGL startup smoke PASS
+
+Not yet complete:
+- COM visualization
+- centered ball / low-friction ball / box / teddy experiments
+- physical lift experiment
+- blocked-finger acceptance
+- M01 exit criteria as a whole
+
+**Next slice:** PT-001 centered ball pickup. Add the sphere as a real dynamic body with explicit material/mass data and prove support through three physical contacts only. No parenting, weld, or hidden success state.
+
 ---
 
 # M02 — Gantry & Suspended Claw

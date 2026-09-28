@@ -14,10 +14,40 @@ export interface Quaternion {
   w: number;
 }
 
-export interface DynamicBodyHandle {
-  translation(): Vec3;
-  rotation(): Quaternion;
-  isSleeping(): boolean;
+export type RigidBodyHandle = InstanceType<typeof RAPIER.RigidBody>;
+
+export interface PhysicsDebugBuffers {
+  vertices: Float32Array;
+  colors: Float32Array;
+}
+
+export interface CuboidMaterialOptions {
+  friction?: number;
+  restitution?: number;
+  density?: number;
+}
+
+export interface RevoluteJointHandle {
+  configureMotorPosition(targetPos: number, stiffness: number, damping: number): void;
+  setMotorMaxForce(maxForce: number): void;
+  setLimits(min: number, max: number): void;
+  setContactsEnabled(enabled: boolean): void;
+  limitsEnabled(): boolean;
+  limitsMin(): number;
+  limitsMax(): number;
+}
+
+export interface RevoluteJointOptions {
+  anchor1: Vec3;
+  anchor2: Vec3;
+  axis: Vec3;
+  minAngle: number;
+  maxAngle: number;
+  initialTarget: number;
+  stiffness: number;
+  damping: number;
+  maxTorque: number;
+  contactsEnabled?: boolean;
 }
 
 export class PhysicsRuntime {
@@ -37,7 +67,11 @@ export class PhysicsRuntime {
     return this.dynamicBodyCountValue;
   }
 
-  createStaticCuboid(center: Vec3, halfExtents: Vec3, friction = 0.8): void {
+  createStaticCuboid(
+    center: Vec3,
+    halfExtents: Vec3,
+    friction = 0.8,
+  ): RigidBodyHandle {
     const body = this.world.createRigidBody(
       RAPIER.RigidBodyDesc.fixed().setTranslation(center.x, center.y, center.z),
     );
@@ -46,13 +80,16 @@ export class PhysicsRuntime {
       RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z).setFriction(friction),
       body,
     );
+
+    return body;
   }
 
   createDynamicCuboid(
     center: Vec3,
     halfExtents: Vec3,
     rotationYRadians: number,
-  ): DynamicBodyHandle {
+    material: CuboidMaterialOptions = {},
+  ): RigidBodyHandle {
     const halfYaw = rotationYRadians * 0.5;
     const body = this.world.createRigidBody(
       RAPIER.RigidBodyDesc.dynamic()
@@ -60,15 +97,56 @@ export class PhysicsRuntime {
         .setRotation({ x: 0, y: Math.sin(halfYaw), z: 0, w: Math.cos(halfYaw) }),
     );
 
-    this.world.createCollider(
-      RAPIER.ColliderDesc.cuboid(halfExtents.x, halfExtents.y, halfExtents.z)
-        .setFriction(0.7)
-        .setRestitution(0.08),
-      body,
-    );
+    let collider = RAPIER.ColliderDesc.cuboid(
+      halfExtents.x,
+      halfExtents.y,
+      halfExtents.z,
+    )
+      .setFriction(material.friction ?? 0.7)
+      .setRestitution(material.restitution ?? 0.08);
+
+    if (material.density !== undefined) {
+      collider = collider.setDensity(material.density);
+    }
+
+    this.world.createCollider(collider, body);
 
     this.dynamicBodyCountValue += 1;
     return body;
+  }
+
+  createRevoluteJoint(
+    body1: RigidBodyHandle,
+    body2: RigidBodyHandle,
+    options: RevoluteJointOptions,
+  ): RevoluteJointHandle {
+    const params = RAPIER.JointData.revolute(
+      options.anchor1,
+      options.anchor2,
+      options.axis,
+    );
+
+    const joint = this.world.createImpulseJoint(
+      params,
+      body1,
+      body2,
+      true,
+    ) as unknown as RevoluteJointHandle;
+
+    joint.setLimits(options.minAngle, options.maxAngle);
+    joint.configureMotorPosition(
+      options.initialTarget,
+      options.stiffness,
+      options.damping,
+    );
+    joint.setMotorMaxForce(options.maxTorque);
+    joint.setContactsEnabled(options.contactsEnabled ?? false);
+
+    return joint;
+  }
+
+  debugRender(): PhysicsDebugBuffers {
+    return this.world.debugRender();
   }
 
   step(): void {

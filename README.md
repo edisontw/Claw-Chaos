@@ -22,9 +22,9 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M00 complete — M01 Claw Physics Laboratory is next**
+**M01 in progress — three-prong claw laboratory mechanics are live**
 
-The repository/simulation harness is now implemented and CI-verified. Development proceeds with the physics laboratory, not with a full arcade environment.
+M00 is complete. The first M01 mechanical slice is CI-verified: a rigid hub with three independent Rapier revolute-joint fingers, motorized open/close control, joint diagnostics and collider debug rendering. Development remains focused on gray-box claw physics rather than cabinet/arcade content.
 
 ### First milestone
 
@@ -100,18 +100,18 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Start **M01 — Claw Physics Laboratory** from `docs/ROADMAP.md`.
+Continue **M01 — Claw Physics Laboratory** with **PT-001 centered ball pickup**.
 
-M00 is complete with:
-- Vite/TypeScript/Three.js application scaffold,
-- Rapier 3D physics bootstrap,
-- fixed 120 Hz simulation harness,
-- deterministic `falling-cube` test-scene loader and seed utility,
-- debug overlay,
-- CI/lint/tests,
-- GitHub Pages-safe `/Claw-Chaos/` production build and preview smoke.
+The current `claw-lab` already provides:
+- rigid hub plus three independent dynamic fingers,
+- Rapier revolute joints and physical motor limits,
+- configurable open/close motor command,
+- `C` close, `O` open, `Space` toggle,
+- `D` collider debug,
+- visible joint pivot/axis diagnostics,
+- active GitHub Pages deployment.
 
-The first M01 slice should add the deterministic `claw-lab` scene and prove the rigid hub plus three independently constrained claw fingers before building cabinet or arcade gameplay.
+Next add one real dynamic sphere with explicit mass/friction and prove that three physical contacts can support and lift it. Prize parenting, hidden welds and scripted pickup success remain prohibited.
 
 ## Status
 

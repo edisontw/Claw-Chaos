@@ -398,21 +398,21 @@ These are also tracked in `docs/ACCEPTANCE_TESTS.md`.
 
 ## 17. Current repository state
 
-At the time of this document:
-- repository documentation exists,
-- the Vite/game scaffold has not yet been created,
-- therefore an active Pages workflow should **not** be added yet because it would fail on missing `package.json` / build files.
+As of 2026-09-28:
+- M00 Vite/TypeScript/Three.js/Rapier scaffold is complete,
+- production base is `/Claw-Chaos/`,
+- `.github/workflows/deploy-pages.yml` is active,
+- repository Pages source is GitHub Actions,
+- the first production deployment completed successfully,
+- pushes to `main` now run the Pages build/deploy workflow.
 
-Correct order:
+Current public target:
 
 ```text
-M00 scaffold
-→ npm build works
-→ configure /Claw-Chaos/ base
-→ add Pages workflow
-→ enable Settings > Pages > GitHub Actions
-→ deploy
+https://edisontw.github.io/Claw-Chaos/
 ```
+
+The deployment workflow runs install, lint, tests and production build before publishing `dist/`. Keep experimental branch work off the production Pages URL until merged to `main`.
 
 ## 18. Official references
 
