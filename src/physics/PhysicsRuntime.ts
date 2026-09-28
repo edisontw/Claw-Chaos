@@ -233,9 +233,12 @@ export class PhysicsRuntime {
     colliders: readonly CompoundColliderSpec[],
     massKg: number,
     material: CuboidMaterialOptions = {},
+    rotation: Quaternion = { x: 0, y: 0, z: 0, w: 1 },
   ): RigidBodyHandle {
     const body = this.world.createRigidBody(
-      RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z),
+      RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(origin.x, origin.y, origin.z)
+        .setRotation(rotation),
     );
 
     const totalVolume = colliders.reduce((sum, collider) => {
