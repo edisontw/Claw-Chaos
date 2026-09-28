@@ -29,7 +29,7 @@ export const CLAW_LAB_CONFIG = {
   fingerDensity: 3200,
   fingerFriction: 0.6,
   fingerRestitution: 0.02,
-  openAngle: 0.22,
+  openAngle: 0.35,
   closedAngle: -0.42,
   motorSpeedRadiansPerSecond: 1.6,
   motorStiffness: 180,
