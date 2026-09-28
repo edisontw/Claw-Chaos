@@ -55,25 +55,26 @@ describe("PhysicsRuntime", () => {
         minAngle: -0.6,
         maxAngle: 0.4,
         initialTarget: 0,
-        stiffness: 28,
-        damping: 5,
-        maxTorque: 2,
+        stiffness: 180,
+        damping: 18,
+        maxTorque: 2.5,
         contactsEnabled: false,
       });
       fingers.push(finger);
       joints.push(joint);
     }
 
-    joints[0].configureMotorPosition(-0.45, 28, 5);
-
     for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
+      joints[0].configureMotorPosition(-0.45, 180, 18);
+      joints[0].setMotorMaxForce(2.5);
+      fingers[0].wakeUp();
       physics.step();
     }
 
     expect(joints[0].limitsEnabled()).toBe(true);
     expect(joints[0].limitsMin()).toBeCloseTo(-0.6, 5);
     expect(joints[0].limitsMax()).toBeCloseTo(0.4, 5);
-    expect(Math.abs(fingers[0].rotation().z)).toBeGreaterThan(0.05);
+    expect(Math.abs(fingers[0].rotation().z)).toBeGreaterThan(0.08);
     expect(Math.abs(fingers[1].rotation().z)).toBeLessThan(0.03);
     expect(Math.abs(fingers[2].rotation().z)).toBeLessThan(0.03);
     expect(physics.dynamicBodyCount).toBe(3);
