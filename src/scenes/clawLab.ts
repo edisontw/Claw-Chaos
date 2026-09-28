@@ -48,7 +48,8 @@ export const CLAW_LAB_CONFIG = {
   pt001CloseSettleSeconds: 0.9,
   pt001PassLiftDelta: 0.08,
 
-  pt002ContactFriction: 0.25,
+  pt002PickupLiftDistance: 0.06,
+  pt002RetainingTorque: 0.005,
   pt002MinPeakLift: 0.03,
   pt002MinSlipLoss: 0.04,
   pt002MaxFinalLift: 0.03,
@@ -273,8 +274,7 @@ export function createClawLabScene(
   const config = CLAW_LAB_CONFIG;
   const experiment = parseClawLabExperiment(search);
   const activeFingerFriction = config.fingerFriction;
-  const activeBallFriction =
-    experiment === "pt002" ? config.pt002ContactFriction : config.pt001BallFriction;
+  const activeBallFriction = config.pt001BallFriction;
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const joints: RevoluteJointHandle[] = [];
@@ -510,13 +510,22 @@ export function createClawLabScene(
         stepSeconds,
       );
 
+      const liftAmount = hubCommandY - config.hubCenterY;
+      const retainingPhaseActive =
+        experiment === "pt002" &&
+        (labPhase === "LIFTING" || labPhase === "HOLDING") &&
+        liftAmount >= config.pt002PickupLiftDistance;
+      const activeMotorTorque = retainingPhaseActive
+        ? config.pt002RetainingTorque
+        : config.maxMotorTorque;
+
       for (const joint of joints) {
         joint.configureMotorPosition(
           commandedAngle,
           config.motorStiffness,
           config.motorDamping,
         );
-        joint.setMotorMaxForce(config.maxMotorTorque);
+        joint.setMotorMaxForce(activeMotorTorque);
       }
 
       const observedLift = ballBody.translation().y - ballReferenceY;
@@ -607,10 +616,23 @@ export function createClawLabScene(
           " / " +
           config.pt001LiftDistance.toFixed(3) +
           " m",
+        "Force phase      " +
+          (experiment === "pt002" &&
+          (labPhase === "LIFTING" || labPhase === "HOLDING") &&
+          hubCommandY - config.hubCenterY >= config.pt002PickupLiftDistance
+            ? "RETAINING"
+            : "PICKUP/CLOSE"),
         "Motor speed      " +
           config.motorSpeedRadiansPerSecond.toFixed(2) +
           " rad/s",
-        "Max torque       " + config.maxMotorTorque.toFixed(2) + " N·m",
+        "Active torque    " +
+          (experiment === "pt002" &&
+          (labPhase === "LIFTING" || labPhase === "HOLDING") &&
+          hubCommandY - config.hubCenterY >= config.pt002PickupLiftDistance
+            ? config.pt002RetainingTorque
+            : config.maxMotorTorque
+          ).toFixed(3) +
+          " N·m",
         "Controls         P run active test | C close | O open | Space toggle | D debug",
         "Attachment       NONE — sphere has no parent/weld/joint to claw",
       ];
