@@ -23,7 +23,10 @@ interface HookMetrics {
   passed: boolean;
 }
 
-async function simulateTeddyOffset(bodyOffsetX: number): Promise<HookMetrics> {
+async function simulateTeddyPlacement(
+  bodyOffsetX: number,
+  verticalShift: number,
+): Promise<HookMetrics & { verticalShift: number }> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
 
@@ -106,7 +109,7 @@ async function simulateTeddyOffset(bodyOffsetX: number): Promise<HookMetrics> {
   const teddy = physics.createDynamicCompound(
     {
       x: bodyOffsetX,
-      y: config.pt004BodyCenterY,
+      y: config.pt004BodyCenterY + verticalShift,
       z: 0,
     },
     createPt004TeddyColliders(),
@@ -201,6 +204,7 @@ async function simulateTeddyOffset(bodyOffsetX: number): Promise<HookMetrics> {
 
   return {
     bodyOffsetX,
+    verticalShift,
     passiveRotation,
     peakLift,
     peakRotation,
@@ -213,15 +217,18 @@ async function simulateTeddyOffset(bodyOffsetX: number): Promise<HookMetrics> {
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds an offset where the arm enters a real claw-tip hook path", async () => {
-    const candidates = [-0.11, -0.10, -0.09, -0.08, -0.07, -0.06, -0.05];
-    const results: HookMetrics[] = [];
+  it("finds a vertical placement where real limb geometry forms an under-hook", async () => {
+    const bodyOffsetX = -0.06;
+    const verticalShifts = [-0.12, -0.10, -0.08, -0.06, -0.04, -0.02, 0];
+    const results = [];
 
-    for (const bodyOffsetX of candidates) {
-      results.push(await simulateTeddyOffset(bodyOffsetX));
+    for (const verticalShift of verticalShifts) {
+      results.push(
+        await simulateTeddyPlacement(bodyOffsetX, verticalShift),
+      );
     }
 
-    console.log("PT-004 offset sweep", JSON.stringify(results));
+    console.log("PT-004 height sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
