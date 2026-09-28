@@ -149,12 +149,28 @@ Implemented:
 - visible hinge pivot/axis diagnostics
 - automated regression for motor command ramp and independent revolute movement
 
-Verified:
+Verified after first mechanical slice:
 - 11 tests PASS
 - lint PASS
 - TypeScript/Vite production build PASS
 - GitHub Pages base-path check PASS
 - headless Rapier/WebGL startup smoke PASS
+
+### Geometry refinement record — 2026-09-28
+
+Implemented before prize-contact tuning:
+- cylindrical claw-head visual proportions instead of a rectangular block
+- lower collar/pivot ring
+- three-segment finger path with outward sweep and inward hook tip
+- one rigid body + three capsule colliders per finger
+- render centerline aligned to the same segmented collider path
+- centralized provisional geometry and material parameters
+- `docs/CLAW_GEOMETRY_BASELINE.md` records dimensions, assumptions and calibration policy
+- geometry regression tests for path length, open/closed span and rod profile
+
+The geometry values are provisional engineering approximations from visual references and must not be described as measured manufacturer specifications.
+
+Current verification target is 14 automated tests plus the existing lint/build/base-path/browser smoke suite.
 
 Not yet complete:
 - COM visualization
