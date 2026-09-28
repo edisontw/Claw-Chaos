@@ -246,5 +246,37 @@ First prove that one gray-box claw interacting with one box, one ball and one te
 
 ## Current next step
 
-Implement **Phase 0: Physics Laboratory** from `docs/ROADMAP.md`.
+Implement **M00 — Repository & simulation harness** from `docs/ROADMAP.md`.
 
+M00 is intentionally before the claw Physics Laboratory. It must establish:
+- Vite/TypeScript scaffold,
+- fixed-step simulation loop,
+- test-scene selection,
+- seeded initialization,
+- debug/diagnostic foundations,
+- production build,
+- GitHub Pages-safe `/Claw-Chaos/` asset paths.
+
+After M00 passes, proceed to **M01 — Claw Physics Laboratory**.
+
+
+
+## Design-review additions
+
+The 2026-09-28 second-pass review identified and formalized several previously under-specified areas:
+
+- machine-specific control profiles rather than one universal joystick scheme,
+- finite aim timers and complete credit/play lifecycle,
+- explicit physical return/home/release path,
+- passive claw yaw/torsion and reel limits,
+- machine faults/service recovery,
+- fixed-tick input/replay diagnostics,
+- real-machine calibration/measurement methodology,
+- asset licensing/provenance,
+- GitHub Pages/Web deployment and performance constraints.
+
+Read:
+- `docs/CALIBRATION_PLAN.md`
+- `docs/DEPLOYMENT.md`
+
+These additions are part of the baseline design, not optional polish.
