@@ -471,3 +471,59 @@ If a feature is too complex:
 - leave an upgrade path,
 - do not fake the result with hidden attachment/success logic.
 
+# Cross-cutting gates added after design review
+
+These gates apply across milestones.
+
+## Web delivery gate
+
+Before M00 is considered complete:
+- Vite production build must succeed,
+- repository-relative asset paths must work under `/Claw-Chaos/`,
+- production build must run with `npm run preview`,
+- GitHub Pages deployment workflow may be enabled once the app scaffold exists,
+- no asset URL may assume deployment at domain root unless intentionally configured.
+
+See `docs/DEPLOYMENT.md`.
+
+## Calibration gate
+
+Before declaring M04/M06 "realistic":
+- create at least one reference-machine calibration record,
+- record measured or inferred carriage timing,
+- record swing period/damping,
+- record claw dimensions/open span,
+- record descent/lift timing,
+- document uncertainty.
+
+See `docs/CALIBRATION_PLAN.md`.
+
+## Replay/debug gate
+
+Before extensive gameplay tuning:
+- fixed-tick input recording exists,
+- layout seeds are logged,
+- active machine force phases are inspectable,
+- a physics bug can be reproduced by a test scene or replay/checkpoint.
+
+## Content/legal gate
+
+Before public demo:
+- maintain asset manifest,
+- verify licenses,
+- use generic/original prize art unless specific rights are available,
+- avoid manufacturer trade dress/logo copying.
+
+## Current execution order
+
+The immediate order is:
+
+```text
+M00 repository + Vite/Web/physics harness
+→ M01 claw physics laboratory
+→ M02 gantry/suspension
+→ M03 swing
+→ M04 drop/early-close/force phases
+```
+
+Do not start the full arcade environment before these gates pass.
