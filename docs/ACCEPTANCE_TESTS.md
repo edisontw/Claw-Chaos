@@ -374,3 +374,113 @@ Every resolved physics bug should ideally produce one of:
 
 Do not close recurring physics bugs with only parameter tweaks and no reproduction case.
 
+# Additional acceptance tests from design review
+
+## PT-031 Return path is physical
+
+Setup:
+- prize held during RETURN.
+
+Expected:
+- carriage physically travels toward chute,
+- prize can swing/rotate/slip during return,
+- no teleport to chute.
+
+## PT-032 Release timing
+
+Expected:
+- fingers physically open at configured release point/height,
+- prize leaves contact through gravity/momentum/contact loss,
+- no direct prize transform into chute.
+
+## PT-033 Home cycle
+
+Expected:
+- after release/chute check, machine returns to configured ready/home state,
+- next play cannot start while the machine is in an unsafe intermediate state.
+
+## PT-034 Aim timer
+
+When a machine has a finite aim timer:
+- timer begins at configured state,
+- expiration follows configured policy,
+- physics continues deterministically through the resulting drop/lock behavior.
+
+## PT-035 Control-profile lock
+
+For a profile with movement locked after DROP:
+- player input no longer accelerates gantry,
+- existing claw horizontal momentum/swing remains.
+
+## PT-036 Passive yaw/torsion
+
+When enabled:
+- claw can twist slightly from motion/contact,
+- torsional damping returns it toward equilibrium,
+- yaw does not snap instantly to zero.
+
+## PT-037 Reel limit stability
+
+Expected:
+- lower/upper reel limit cannot create high-energy bounce or numerical explosion,
+- cable length never exceeds configured safe tolerance.
+
+## PT-038 Collision-mask integrity
+
+Verify:
+- chute sensor does not push prize,
+- claw cannot trigger prize-out,
+- player boundary cannot physically shove prizes through glass,
+- decorative objects do not affect active prize physics unless explicitly configured.
+
+## PT-039 Physics watchdog
+
+Inject an invalid/extreme test condition.
+
+Expected:
+- development build detects fault,
+- simulation enters a diagnosable safe state,
+- fault is logged with tick/context.
+
+## PT-040 Replay reproducibility
+
+Record a short fixed-tick input sequence.
+
+Expected:
+- same build/config/seed replays within documented transform/velocity tolerance,
+- divergence is detectable and reported.
+
+## PT-041 Asset base-path test
+
+Production build served from `/Claw-Chaos/` must load:
+- JS chunks,
+- CSS,
+- physics/WASM assets,
+- textures,
+- models,
+- audio.
+
+No root-relative path should break the GitHub Pages build.
+
+## PT-042 GitHub Pages smoke test
+
+After deployment:
+- landing page loads,
+- WebGL/WebGPU fallback path initializes as intended,
+- one physics scene starts,
+- browser console has no fatal asset-path/CORS errors.
+
+## PT-043 Camera optics vs head turn
+
+Manual check:
+- side inspection comes from head/body movement,
+- FOV is not widened to an implausible fisheye just to expose side content.
+
+## PT-044 Calibration record completeness
+
+At least one reference machine must have documented:
+- dimensions,
+- movement timing,
+- swing period/damping,
+- descent/lift timing,
+- source/method/uncertainty.
