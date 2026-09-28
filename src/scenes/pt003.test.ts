@@ -204,25 +204,24 @@ async function simulateSupport(supportHalfSize: number): Promise<RotationMetrics
   };
 }
 
-describe("PT-003 support calibration", () => {
-  it("finds a stable support that permits clear off-center contact rotation", async () => {
-    const candidates = [0.014, 0.015, 0.016, 0.017, 0.018, 0.019];
-    const results: RotationMetrics[] = [];
+describe("PT-003 off-center box rotation", () => {
+  it("stays stable at rest and rotates under off-center claw contact without tumbling off", async () => {
+    expect(CLAW_LAB_CONFIG.pt003SupportHalfX).toBe(
+      CLAW_LAB_CONFIG.pt003SupportHalfZ,
+    );
 
-    for (const supportHalfSize of candidates) {
-      results.push(await simulateSupport(supportHalfSize));
-    }
+    const result = await simulateSupport(CLAW_LAB_CONFIG.pt003SupportHalfX);
+    const supportTopY = CLAW_LAB_CONFIG.pt001PedestalTopY;
 
-    console.log("PT-003 support sweep", JSON.stringify(results));
-
-    expect(
-      results.some(
-        (result) =>
-          result.passiveRotation <=
-            CLAW_LAB_CONFIG.pt003MaxPassiveRotationRadians &&
-          result.peakRotation >= CLAW_LAB_CONFIG.pt003MinRotationRadians &&
-          result.peakRotation < 1.5,
-      ),
-    ).toBe(true);
+    expect(result.passiveRotation).toBeLessThanOrEqual(
+      CLAW_LAB_CONFIG.pt003MaxPassiveRotationRadians,
+    );
+    expect(result.peakRotation).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt003MinRotationRadians,
+    );
+    expect(result.peakRotation).toBeLessThan(1.0);
+    expect(result.finalY).toBeGreaterThan(
+      supportTopY + CLAW_LAB_CONFIG.pt003BoxSizeY * 0.25,
+    );
   });
 });
