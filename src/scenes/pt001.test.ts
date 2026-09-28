@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PHYSICS_HZ } from "../config/simulation";
+import type { RevoluteJointHandle, RigidBodyHandle } from "../physics/PhysicsRuntime";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import {
   CLAW_LAB_CONFIG,
@@ -34,8 +35,8 @@ describe("PT-001 centered ball pickup", () => {
       0.55,
     );
 
-    const fingers = [];
-    const joints = [];
+    const fingers: RigidBodyHandle[] = [];
+    const joints: RevoluteJointHandle[] = [];
 
     for (let index = 0; index < 3; index += 1) {
       const theta = index * (Math.PI * 2 / 3);
@@ -95,7 +96,7 @@ describe("PT-001 centered ball pickup", () => {
     );
 
     let motorAngle = 0;
-    let hubY = config.hubCenterY;
+    let hubY: number = config.hubCenterY;
     const stepSeconds = 1 / PHYSICS_HZ;
 
     const drive = (targetAngle: number): void => {
