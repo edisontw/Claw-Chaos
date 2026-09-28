@@ -198,7 +198,7 @@ function createTeddyVisual(): THREE.Group {
     new THREE.SphereGeometry(0.006, 12, 8),
     new THREE.MeshBasicMaterial({ color: 0x56d6ff }),
   );
-  rightArmMarker.position.set(0.095, -0.005, 0);
+  rightArmMarker.position.set(0.095, -0.055, 0);
   teddy.add(rightArmMarker);
 
   const comMarker = new THREE.Mesh(
