@@ -407,3 +407,162 @@ When a behavior looks unrealistic, first diagnose:
 
 Do not patch it with a prize-specific gameplay exception unless a real mechanical reason exists.
 
+# 29. Input sampling and control latency
+
+Player/machine input should be sampled into the fixed-step simulation rather than applied only on render frames.
+
+Recommended flow:
+1. collect render-frame input,
+2. convert to a stable input state,
+3. consume that state on each physics tick,
+4. log state changes with tick numbers.
+
+Machine profiles may intentionally add small control latency or digital button behavior, but engine/render latency must not unpredictably change gameplay.
+
+---
+
+# 30. Horizontal input lock after drop
+
+Whether X/Z carriage movement remains available after DROP is machine-specific.
+
+Represent this as configuration.
+
+Do not globally assume:
+- the player can steer during descent,
+or
+- the player is always locked.
+
+Swing momentum remains physical even if control input becomes locked.
+
+---
+
+# 31. Claw yaw and torsion
+
+Support an optional torsional degree of freedom:
+- current yaw angle,
+- angular velocity,
+- restoring stiffness,
+- torsional damping,
+- yaw limit.
+
+Baseline machines should use small passive twist/yaw.
+
+A simplified torsional spring constraint is acceptable.
+
+---
+
+# 32. Winch/reel dynamics
+
+The vertical reel should expose:
+- cable length,
+- target reel velocity,
+- reel acceleration,
+- upper/lower limit,
+- braking/deceleration,
+- stop tolerance.
+
+Do not change cable length discontinuously during normal play.
+
+The hub may continue to swing while reel length changes.
+
+---
+
+# 33. Collision layers and masks
+
+Define explicit collision groups for at least:
+- cabinet static geometry,
+- claw hub,
+- claw fingers,
+- prize,
+- chute sensor,
+- player/camera boundary,
+- service-only geometry,
+- decorative non-physics objects.
+
+Goals:
+- prize collides with cabinet/claw/prizes,
+- claw does not trigger prize-out incorrectly,
+- player body cannot push active prizes through glass,
+- sensors do not generate physical impulses,
+- decorative props do not destabilize the active simulation.
+
+---
+
+# 34. Limit handling
+
+Rail and reel limits must use stable physical/control handling.
+
+Avoid high-energy rebound from hard numerical clipping.
+
+Preferred behavior:
+- command decelerates before limit,
+- final travel constrained safely,
+- optional small bumper/compliance if the real machine exhibits it.
+
+---
+
+# 35. Physics watchdog and recovery
+
+Development builds should detect:
+- NaN/invalid transforms,
+- extreme velocities,
+- bodies below world bounds,
+- impossible penetration depth,
+- joint break/explosion,
+- prize permanently embedded in static geometry.
+
+Production handling should:
+- pause the machine,
+- enter a fault/service state,
+- preserve valid state where possible.
+
+Do not silently normalize a bad simulation and continue as if nothing happened.
+
+---
+
+# 36. Replay checkpoints
+
+A diagnostic replay can use:
+- initial config/version,
+- layout seed,
+- input events by fixed tick,
+- periodic state checkpoints.
+
+Because browser/CPU physics may not be bitwise identical across all platforms, checkpoints should support divergence detection with tolerance.
+
+---
+
+# 37. Calibration metrics
+
+For each reference machine, collect measurable targets such as:
+- time from zero to max carriage speed,
+- stopping distance,
+- free-swing period,
+- decay of swing amplitude,
+- time to descend full travel,
+- time to lift,
+- finger close time,
+- max open span,
+- loaded vs unloaded swing response.
+
+Tune simulation against these observables before tuning "feel".
+
+---
+
+# 38. Web performance budget
+
+Initial active-scene target:
+- 60 FPS render target,
+- 120 Hz fixed physics target,
+- 10–15 active prizes minimum,
+- no visible tunneling during normal claw motion,
+- stable contact with debugging disabled.
+
+If target hardware cannot sustain this:
+1. simplify visual effects first,
+2. simplify distant/inactive simulation,
+3. simplify prize colliders where physically equivalent,
+4. profile solver/contact hotspots,
+5. only then reconsider physics rate.
+
+Do not reduce active simulation fidelity without documenting the trade-off.
