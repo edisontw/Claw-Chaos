@@ -192,7 +192,7 @@ async function simulateRetainingTorque(
 
 describe("PT-002 retaining-force slip calibration", () => {
   it("finds a retaining torque that first lifts and then slips", async () => {
-    const candidates = [0.1, 0.2, 0.35, 0.5, 0.75, 1, 1.5, 2];
+    const candidates = [0, 0.001, 0.003, 0.005, 0.01, 0.02, 0.04, 0.06];
     const results: SlipMetrics[] = [];
 
     for (const retainingTorque of candidates) {
