@@ -8,7 +8,8 @@ import { FixedStepLoop } from "../core/FixedStepLoop";
 import { DebugOverlay } from "../debug/DebugOverlay";
 import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
-import { createClawLabScene } from "../scenes/clawLab";
+import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
+import { createPt003Scene } from "../scenes/pt003Scene";
 import { createFallingCubeScene } from "../scenes/fallingCube";
 import { parseSceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
@@ -36,9 +37,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
   keyLight.shadow.mapSize.set(1024, 1024);
   scene.add(keyLight);
 
+  const experiment = parseClawLabExperiment(window.location.search);
   const testScene: SimulationScene =
     selection.id === "claw-lab"
-      ? createClawLabScene(scene, physics, window.location.search)
+      ? experiment === "pt003"
+        ? createPt003Scene(scene, physics)
+        : createClawLabScene(scene, physics, window.location.search)
       : createFallingCubeScene(scene, physics, selection.seed);
 
   camera.position.set(...testScene.camera.position);

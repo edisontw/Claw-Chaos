@@ -53,15 +53,32 @@ export const CLAW_LAB_CONFIG = {
   pt002MinPeakLift: 0.03,
   pt002MinSlipLoss: 0.04,
   pt002MaxFinalLift: 0.03,
+
+  pt003BoxSizeX: 0.13,
+  pt003BoxSizeY: 0.08,
+  pt003BoxSizeZ: 0.07,
+  pt003BoxMassKg: 0.12,
+  pt003BoxFriction: 0.65,
+  pt003BoxRestitution: 0.02,
+  pt003BoxCenterOffsetX: 0.04,
+  pt003SupportHalfX: 0.015,
+  pt003SupportHalfZ: 0.015,
+  pt003MinRotationRadians: 0.10,
+  pt003MaxPassiveRotationRadians: 0.03,
 } as const;
 
-export type ClawLabExperiment = "pt001" | "pt002";
+export type ClawLabExperiment = "pt001" | "pt002" | "pt003";
 type ClawTargetState = "OPEN" | "CLOSED";
 type LabPhase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
 
 export function parseClawLabExperiment(search: string): ClawLabExperiment {
-  const params = new URLSearchParams(search);
-  return params.get("experiment") === "pt002" ? "pt002" : "pt001";
+  const requested = new URLSearchParams(search).get("experiment");
+
+  if (requested === "pt002" || requested === "pt003") {
+    return requested;
+  }
+
+  return "pt001";
 }
 
 export function evaluatePt002Slip(
@@ -73,6 +90,20 @@ export function evaluatePt002Slip(
     peakLift - finalLift >= CLAW_LAB_CONFIG.pt002MinSlipLoss &&
     finalLift <= CLAW_LAB_CONFIG.pt002MaxFinalLift
   );
+}
+
+export function quaternionAngleFromIdentity(rotation: {
+  x: number;
+  y: number;
+  z: number;
+  w: number;
+}): number {
+  const normalizedW = Math.min(1, Math.max(-1, Math.abs(rotation.w)));
+  return 2 * Math.acos(normalizedW);
+}
+
+export function evaluatePt003Rotation(peakRotationRadians: number): boolean {
+  return peakRotationRadians >= CLAW_LAB_CONFIG.pt003MinRotationRadians;
 }
 
 export function advanceMotorCommand(

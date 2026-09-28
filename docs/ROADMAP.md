@@ -243,14 +243,41 @@ Verification target after this slice:
 - PT-002 force-phase slip regression PASS
 - lint/build/base-path/headless browser smoke PASS
 
+### PT-003 record — 2026-09-29
+
+**Automated status: PASS**
+
+Implemented:
+- isolated `?experiment=pt003` scene path
+- dynamic rectangular box with explicit dimensions, mass and friction
+- geometric-center COM with visible yellow COM marker
+- 0.04 m grip-center-to-COM offset
+- narrow support centered under COM so passive state remains stable
+- box orientation marker for manual visual verification
+- rotation derived only from rigid-body quaternion/contact response
+- no scripted rotation, parenting, weld, or prize joint
+
+Calibration:
+- support 0.024 m wide: unstable, near-180° tumble
+- support 0.040 m wide: almost no rotation
+- support 0.030 m wide: stable at rest, about 0.122 rad (~7°) peak rotation after claw interaction
+- acceptance threshold: >= 0.10 rad while remaining supported
+
+Verification:
+- 21 automated tests PASS
+- PT-001 PASS
+- PT-002 PASS
+- PT-003 integration regression PASS
+- lint/build/base-path/headless browser smoke PASS
+
 Not yet complete:
-- COM visualization
-- PT-003 off-center box rotation
-- teddy hook
+- generic COM visualization tooling
+- PT-004 teddy limb hook
 - blocked-finger acceptance
+- oversized-object close acceptance
 - M01 exit criteria as a whole
 
-**Next slice:** PT-003 off-center box rotation.
+**Next slice:** PT-004 teddy limb hook.
 
 ---
 

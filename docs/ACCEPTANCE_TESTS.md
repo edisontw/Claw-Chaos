@@ -86,6 +86,20 @@ Expected:
 Fail:
 - box always remains axis-aligned with world or claw.
 
+Implementation status — 2026-09-29:
+- **Automated PASS**
+- box size: 0.13 × 0.08 × 0.07 m
+- mass: 0.12 kg
+- friction: 0.65
+- COM: geometric center, visualized by a yellow marker
+- claw center is offset 0.04 m from the box COM
+- support footprint is 0.03 × 0.03 m and centered under the box COM
+- passive rotation before claw interaction is effectively 0
+- calibrated peak rotation is about 0.122 rad (~7°)
+- regression requires peak rotation >= 0.10 rad while the box remains on the support rather than simply tumbling to the floor
+- no scripted rotation, prize parenting, weld, or claw-prize joint
+- manual visual test: `?scene=claw-lab&experiment=pt003`, then press `P`
+
 ## 6. PT-004 Teddy limb hook
 
 Setup:
