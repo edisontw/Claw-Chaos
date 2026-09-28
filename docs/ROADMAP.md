@@ -170,7 +170,25 @@ Implemented before prize-contact tuning:
 
 The geometry values are provisional engineering approximations from visual references and must not be described as measured manufacturer specifications.
 
-Current verification target is 14 automated tests plus the existing lint/build/base-path/browser smoke suite.
+### Open-angle calibration record — 2026-09-28
+
+Visual review showed the default open pose remained too narrow compared with common commercial 3-prong claws.
+
+Changed only:
+- open target: +0.22 → +0.35 rad
+- approximate open angle: 12.6° → 20.1°
+- command-space tip span: about 0.296 → 0.348 m
+
+Unchanged:
+- closed target -0.42 rad
+- finger path/rod geometry
+- friction/density/restitution
+- motor speed/stiffness/damping/max torque
+- PT-001 ball parameters
+
+Gate: PT-001 must remain PASS after this geometry calibration.
+
+Current verification target is 15 automated tests plus the existing lint/build/base-path/browser smoke suite.
 
 ### PT-001 record — 2026-09-28
 
