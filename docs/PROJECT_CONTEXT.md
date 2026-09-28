@@ -382,11 +382,29 @@ PT-002 baseline:
 
 The alternate experiment is selected with `?scene=claw-lab&experiment=pt002`; press `P` to run it. PT-001 remains the default claw-lab experiment.
 
-M01 as a whole is **not complete**. COM visualization, off-center box rotation, teddy hook, blocked-finger behavior and the remaining M01 exit criteria remain.
+### PT-003 off-center box rotation — automated PASS
+
+PT-003 is isolated at `?scene=claw-lab&experiment=pt003`.
+
+Baseline:
+- dynamic box: 0.13 × 0.08 × 0.07 m
+- mass: 0.12 kg
+- friction: 0.65
+- COM: geometric center, marked visibly in yellow
+- box center is offset 0.04 m from the claw center
+- support footprint: 0.03 × 0.03 m, centered under the COM
+- passive rotation before contact is effectively zero
+- calibrated contact-driven peak rotation is about 0.122 rad (~7°)
+- box remains supported instead of passing by simply falling/tumbling
+- no scripted angular motion or hidden prize-claw constraint is used
+
+PT-003 calibration also established that a 0.024 m support footprint was too unstable and caused near-180° tumble, while 0.040 m nearly locked the box; 0.030 m produced a stable and readable off-center rotation.
+
+M01 as a whole is **not complete**. Generic COM visualization tooling, teddy hook, blocked-finger behavior, oversized-object close behavior and remaining M01 exit criteria remain.
 
 ## Current next step
 
-Proceed with **PT-003 Off-center box rotation**: add a dynamic rectangular box with explicit mass/friction/COM, offset the grip from its center, and require the resulting contact torque to rotate the box naturally.
+Proceed with **PT-004 Teddy limb hook**: add a simple compound teddy rigid-body approximation and prove that a claw tip can catch a limb/neck region through geometry alone, allowing asymmetric hanging and natural rotation.
 
 ## Design-review additions
 
