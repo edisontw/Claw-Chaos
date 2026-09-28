@@ -9,7 +9,7 @@ import {
   createFingerPoints,
   createFingerSegments,
   evaluatePt004Hook,
-  quaternionAngleFromIdentity,
+  quaternionAngularDistance,
 } from "./clawLab";
 import { createPt004TeddyColliders } from "./pt004Teddy";
 
@@ -117,6 +117,14 @@ async function simulateTeddyPlacement(
     joints.push(joint);
   }
 
+  const halfInitialRotation = config.pt004InitialRotationX * 0.5;
+  const initialRotation = {
+    x: Math.sin(halfInitialRotation),
+    y: 0,
+    z: 0,
+    w: Math.cos(halfInitialRotation),
+  };
+
   const teddy = physics.createDynamicCompound(
     {
       x: bodyOffsetX,
@@ -129,6 +137,7 @@ async function simulateTeddyPlacement(
       friction: config.pt004TeddyFriction,
       restitution: config.pt004TeddyRestitution,
     },
+    initialRotation,
   );
 
   let motorAngle = 0;
@@ -160,16 +169,20 @@ async function simulateTeddyPlacement(
     physics.step();
   }
 
-  const passiveRotation = quaternionAngleFromIdentity(teddy.rotation());
+  const passiveRotation = quaternionAngularDistance(
+    initialRotation,
+    teddy.rotation(),
+  );
+  const referenceRotation = teddy.rotation();
   const referenceY = teddy.translation().y;
   let peakLift = 0;
-  let peakRotation = passiveRotation;
+  let peakRotation = 0;
 
   const sample = (): void => {
     peakLift = Math.max(peakLift, teddy.translation().y - referenceY);
     peakRotation = Math.max(
       peakRotation,
-      quaternionAngleFromIdentity(teddy.rotation()),
+      quaternionAngularDistance(referenceRotation, teddy.rotation()),
     );
   };
 
