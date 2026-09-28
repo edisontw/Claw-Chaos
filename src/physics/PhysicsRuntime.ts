@@ -27,6 +27,12 @@ export interface CuboidMaterialOptions {
   density?: number;
 }
 
+export interface CapsuleSegmentSpec {
+  start: Vec3;
+  end: Vec3;
+  radius: number;
+}
+
 export interface RevoluteJointHandle {
   configureMotorPosition(targetPos: number, stiffness: number, damping: number): void;
   setMotorMaxForce(maxForce: number): void;
@@ -48,6 +54,35 @@ export interface RevoluteJointOptions {
   damping: number;
   maxTorque: number;
   contactsEnabled?: boolean;
+}
+
+function rotationFromYDirection(direction: Vec3): Quaternion {
+  const length = Math.hypot(direction.x, direction.y, direction.z);
+
+  if (length <= Number.EPSILON) {
+    return { x: 0, y: 0, z: 0, w: 1 };
+  }
+
+  const x = direction.x / length;
+  const y = direction.y / length;
+  const z = direction.z / length;
+
+  if (y < -0.999999) {
+    return { x: 1, y: 0, z: 0, w: 0 };
+  }
+
+  const qx = z;
+  const qy = 0;
+  const qz = -x;
+  const qw = 1 + y;
+  const qLength = Math.hypot(qx, qy, qz, qw);
+
+  return {
+    x: qx / qLength,
+    y: qy / qLength,
+    z: qz / qLength,
+    w: qw / qLength,
+  };
 }
 
 export class PhysicsRuntime {
@@ -84,6 +119,24 @@ export class PhysicsRuntime {
     return body;
   }
 
+  createStaticCylinder(
+    center: Vec3,
+    halfHeight: number,
+    radius: number,
+    friction = 0.55,
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed().setTranslation(center.x, center.y, center.z),
+    );
+
+    this.world.createCollider(
+      RAPIER.ColliderDesc.cylinder(halfHeight, radius).setFriction(friction),
+      body,
+    );
+
+    return body;
+  }
+
   createDynamicCuboid(
     center: Vec3,
     halfExtents: Vec3,
@@ -110,6 +163,50 @@ export class PhysicsRuntime {
     }
 
     this.world.createCollider(collider, body);
+
+    this.dynamicBodyCountValue += 1;
+    return body;
+  }
+
+  createDynamicCapsuleChain(
+    origin: Vec3,
+    segments: readonly CapsuleSegmentSpec[],
+    material: CuboidMaterialOptions = {},
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z),
+    );
+
+    for (const segment of segments) {
+      const dx = segment.end.x - segment.start.x;
+      const dy = segment.end.y - segment.start.y;
+      const dz = segment.end.z - segment.start.z;
+      const length = Math.hypot(dx, dy, dz);
+
+      if (length <= Number.EPSILON) {
+        continue;
+      }
+
+      const center = {
+        x: (segment.start.x + segment.end.x) * 0.5,
+        y: (segment.start.y + segment.end.y) * 0.5,
+        z: (segment.start.z + segment.end.z) * 0.5,
+      };
+      const rotation = rotationFromYDirection({ x: dx, y: dy, z: dz });
+      const cylinderHalfHeight = Math.max(0.0001, length * 0.5 - segment.radius);
+
+      let collider = RAPIER.ColliderDesc.capsule(cylinderHalfHeight, segment.radius)
+        .setTranslation(center.x, center.y, center.z)
+        .setRotation(rotation)
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08);
+
+      if (material.density !== undefined) {
+        collider = collider.setDensity(material.density);
+      }
+
+      this.world.createCollider(collider, body);
+    }
 
     this.dynamicBodyCountValue += 1;
     return body;
