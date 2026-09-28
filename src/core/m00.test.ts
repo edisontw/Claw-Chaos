@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 import { DEFAULT_SCENE_SEED } from "../config/simulation";
+import { parseSceneSelection } from "../scenes/sceneSelection";
 import { FixedStepLoop } from "./FixedStepLoop";
 import { createSeededRandom } from "./seededRng";
-import { parseSceneSelection } from "../scenes/sceneSelection";
 
 describe("M00 deterministic utilities", () => {
   it("runs two 120 Hz physics ticks for one 60 Hz render frame", () => {
@@ -49,7 +49,12 @@ describe("M00 deterministic utilities", () => {
     }
   });
 
-  it("selects falling-cube and preserves an explicit seed", () => {
+  it("selects both laboratory and legacy M00 scenes", () => {
+    expect(parseSceneSelection("?scene=claw-lab&seed=lab-7")).toEqual({
+      id: "claw-lab",
+      seed: "lab-7",
+      usedFallback: false,
+    });
     expect(parseSceneSelection("?scene=falling-cube&seed=regression-7")).toEqual({
       id: "falling-cube",
       seed: "regression-7",
@@ -57,9 +62,9 @@ describe("M00 deterministic utilities", () => {
     });
   });
 
-  it("falls back safely for an unknown scene", () => {
-    const selection = parseSceneSelection("?scene=claw-lab");
-    expect(selection.id).toBe("falling-cube");
+  it("falls back safely to the current default scene", () => {
+    const selection = parseSceneSelection("?scene=not-a-scene");
+    expect(selection.id).toBe("claw-lab");
     expect(selection.usedFallback).toBe(true);
   });
 
