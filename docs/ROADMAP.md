@@ -218,15 +218,39 @@ Verification:
 - GitHub Pages base-path check PASS
 - headless `claw-lab` browser smoke PASS
 
+### PT-002 record — 2026-09-28
+
+**Automated status: PASS**
+
+Implemented:
+- explicit `?experiment=pt002` mode while PT-001 remains the default
+- same sphere geometry/mass/friction/restitution as PT-001
+- same claw geometry and close/pickup torque
+- lab force phase changes from 2.5 N·m pickup torque to 0.003 N·m retaining torque after 0.06 m of lift
+- debug telemetry reports experiment, phase, peak lift, slip loss, active force phase and active torque
+- no hidden release, prize parenting, weld, joint or kinematic prize state
+
+Calibration findings:
+- friction-only sweeps did not produce a useful gradual-slip interval with the current centered sphere geometry
+- retaining torque applied from the start also produced a sharp no-lift/stable-capture threshold
+- a physical pickup→retaining transition produced the intended delayed loss of support
+- calibrated run reaches about 0.048 m peak lift and returns near the pedestal
+- regression thresholds: peak >= 0.03 m, slip loss >= 0.04 m, final lift <= 0.03 m
+
+Verification target after this slice:
+- 18 automated tests PASS
+- PT-001 remains PASS
+- PT-002 force-phase slip regression PASS
+- lint/build/base-path/headless browser smoke PASS
+
 Not yet complete:
 - COM visualization
-- PT-002 low-friction ball slip
-- off-center box rotation
+- PT-003 off-center box rotation
 - teddy hook
 - blocked-finger acceptance
 - M01 exit criteria as a whole
 
-**Next slice:** PT-002 low-friction ball slip. Change only friction/retaining-related physical parameters and require gradual contact migration/slip rather than a scripted release.
+**Next slice:** PT-003 off-center box rotation.
 
 ---
 
