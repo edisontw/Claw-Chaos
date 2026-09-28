@@ -26,8 +26,8 @@ interface HookMetrics {
 async function simulateTeddyPlacement(
   bodyOffsetX: number,
   supportHalfX: number,
-  clawYOffset: number,
-): Promise<HookMetrics & { supportHalfX: number; clawYOffset: number }> {
+  hookAngle: number,
+): Promise<HookMetrics & { supportHalfX: number; hookAngle: number }> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
 
@@ -50,8 +50,8 @@ async function simulateTeddyPlacement(
     0.9,
   );
 
-  const labHubCenterY = config.hubCenterY + clawYOffset;
-  const labFingerPivotY = config.fingerPivotY + clawYOffset;
+  const labHubCenterY = config.hubCenterY;
+  const labFingerPivotY = config.fingerPivotY;
 
   const hub = physics.createKinematicCylinder(
     { x: 0, y: labHubCenterY, z: 0 },
@@ -168,10 +168,10 @@ async function simulateTeddyPlacement(
 
   for (
     let tick = 0;
-    tick < Math.ceil(config.pt001CloseSettleSeconds * PHYSICS_HZ);
+    tick < Math.ceil(0.25 * PHYSICS_HZ);
     tick += 1
   ) {
-    drive(config.closedAngle);
+    drive(hookAngle);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -188,7 +188,7 @@ async function simulateTeddyPlacement(
       config.pt001LiftSpeedMetersPerSecond,
       stepSeconds,
     );
-    drive(config.closedAngle);
+    drive(hookAngle);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -198,7 +198,7 @@ async function simulateTeddyPlacement(
   }
 
   for (let tick = 0; tick < Math.ceil(0.75 * PHYSICS_HZ); tick += 1) {
-    drive(config.closedAngle);
+    drive(hookAngle);
     teddy.wakeUp();
     physics.step();
     sample();
@@ -209,7 +209,7 @@ async function simulateTeddyPlacement(
   return {
     bodyOffsetX,
     supportHalfX,
-    clawYOffset,
+    hookAngle,
     passiveRotation,
     peakLift,
     peakRotation,
@@ -222,23 +222,23 @@ async function simulateTeddyPlacement(
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds a claw height where the paw forms a real under-hook", async () => {
+  it("finds a partial-close target that hooks the paw before lift", async () => {
     const bodyOffsetX = -0.06;
     const supportHalfX = 0.05;
-    const clawYOffsets = [0, 0.01, 0.02, 0.03];
+    const hookAngles = [-0.28, -0.32, -0.34, -0.36, -0.38, -0.40];
     const results = [];
 
-    for (const clawYOffset of clawYOffsets) {
+    for (const hookAngle of hookAngles) {
       results.push(
         await simulateTeddyPlacement(
           bodyOffsetX,
           supportHalfX,
-          clawYOffset,
+          hookAngle,
         ),
       );
     }
 
-    console.log("PT-004 claw-height sweep", JSON.stringify(results));
+    console.log("PT-004 hook-angle sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
