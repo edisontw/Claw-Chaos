@@ -18,14 +18,14 @@ The values are **engineering approximations inferred from the supplied real-claw
 | lower collar outside diameter | 0.110 m | visual pivot ring |
 | finger pivot radius | 0.050 m | three pivots at 120 degrees |
 | finger rod diameter | 0.009 m | render and collider reference |
-| finger path length | about 0.235 m | three straight capsule segments approximating a curve |
+| finger path length | about 0.246 m | three straight capsule segments approximating a curve |
 | finger node 0 | radial 0.000 m, down 0.000 m | hinge |
 | finger node 1 | radial 0.030 m, down 0.070 m | upper outward sweep |
 | finger node 2 | radial 0.075 m, down 0.165 m | widest lower sweep |
 | finger node 3 | radial 0.050 m, down 0.225 m | inward hook tip |
 | open joint target | +0.22 rad | about +12.6 degrees |
 | closed joint target | -0.42 rad | about -24.1 degrees |
-| estimated open tip span | about 0.296 m | depends on solver/joint state |
+| estimated open tip span | about 0.296 m | geometric command-space estimate before solver compliance |
 | effective finger density | 3200 kg/m^3 | mass-tuning parameter, not a claim of solid material density |
 | claw contact friction | 0.60 | provisional; calibrate during PT-001/PT-002 |
 | restitution | 0.02 | suppress unrealistic metal bounce |
