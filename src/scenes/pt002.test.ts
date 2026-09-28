@@ -12,15 +12,15 @@ import {
 } from "./clawLab";
 
 interface SlipMetrics {
-  retainingTorque: number;
+  retainingStiffness: number;
   peakLift: number;
   finalLift: number;
   slipLoss: number;
   passed: boolean;
 }
 
-async function simulateRetainingTorque(
-  retainingTorque: number,
+async function simulateRetainingCompliance(
+  retainingStiffness: number,
 ): Promise<SlipMetrics> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -60,7 +60,7 @@ async function simulateRetainingTorque(
     const pivotWorld = {
       x: pivotLocal.x,
       y: config.hubCenterY + pivotLocal.y,
-      z: radialZ * config.fingerPivotRadius,
+      z: pivotLocal.z,
     };
     const tangent = {
       x: -Math.sin(theta),
@@ -109,7 +109,11 @@ async function simulateRetainingTorque(
   let hubY: number = config.hubCenterY;
   const stepSeconds = 1 / PHYSICS_HZ;
 
-  const drive = (targetAngle: number, maxTorque: number): void => {
+  const drive = (
+    targetAngle: number,
+    stiffness: number,
+    damping: number,
+  ): void => {
     motorAngle = advanceMotorCommand(
       motorAngle,
       targetAngle,
@@ -118,19 +122,15 @@ async function simulateRetainingTorque(
     );
 
     for (const joint of joints) {
-      joint.configureMotorPosition(
-        motorAngle,
-        config.motorStiffness,
-        config.motorDamping,
-      );
-      joint.setMotorMaxForce(maxTorque);
+      joint.configureMotorPosition(motorAngle, stiffness, damping);
+      joint.setMotorMaxForce(config.maxMotorTorque);
     }
 
     hub.setNextKinematicTranslation({ x: 0, y: hubY, z: 0 });
   };
 
   for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
-    drive(config.openAngle, config.maxMotorTorque);
+    drive(config.openAngle, config.motorStiffness, config.motorDamping);
     physics.step();
   }
 
@@ -141,7 +141,7 @@ async function simulateRetainingTorque(
     tick < Math.ceil(config.pt001CloseSettleSeconds * PHYSICS_HZ);
     tick += 1
   ) {
-    drive(config.closedAngle, config.maxMotorTorque);
+    drive(config.closedAngle, config.motorStiffness, config.motorDamping);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -151,6 +151,7 @@ async function simulateRetainingTorque(
 
   let peakLift = Math.max(0, ball.translation().y - baselineY);
   const liftTargetY = config.hubCenterY + config.pt001LiftDistance;
+  const retainingDamping = 0.5;
 
   while (hubY < liftTargetY - 1e-6) {
     hubY = advanceLinearCommand(
@@ -159,7 +160,7 @@ async function simulateRetainingTorque(
       config.pt001LiftSpeedMetersPerSecond,
       stepSeconds,
     );
-    drive(config.closedAngle, retainingTorque);
+    drive(config.closedAngle, retainingStiffness, retainingDamping);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -169,7 +170,7 @@ async function simulateRetainingTorque(
   }
 
   for (let tick = 0; tick < Math.ceil(0.5 * PHYSICS_HZ); tick += 1) {
-    drive(config.closedAngle, retainingTorque);
+    drive(config.closedAngle, retainingStiffness, retainingDamping);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -182,7 +183,7 @@ async function simulateRetainingTorque(
   const slipLoss = peakLift - finalLift;
 
   return {
-    retainingTorque,
+    retainingStiffness,
     peakLift,
     finalLift,
     slipLoss,
@@ -190,16 +191,16 @@ async function simulateRetainingTorque(
   };
 }
 
-describe("PT-002 retaining-force slip calibration", () => {
-  it("finds a retaining torque that first lifts and then slips", async () => {
-    const candidates = [0.00655, 0.0066, 0.00665, 0.0067, 0.00675, 0.0068, 0.00685, 0.0069, 0.00695];
+describe("PT-002 retaining-compliance calibration", () => {
+  it("finds a compliant retaining motor that first lifts and then slips", async () => {
+    const candidates = [0, 0.5, 1, 2, 5, 10, 20, 40, 80];
     const results: SlipMetrics[] = [];
 
-    for (const retainingTorque of candidates) {
-      results.push(await simulateRetainingTorque(retainingTorque));
+    for (const retainingStiffness of candidates) {
+      results.push(await simulateRetainingCompliance(retainingStiffness));
     }
 
-    console.log("PT-002 retaining sweep", JSON.stringify(results));
+    console.log("PT-002 stiffness sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
