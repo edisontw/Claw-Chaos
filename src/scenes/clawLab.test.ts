@@ -4,6 +4,8 @@ import {
   advanceMotorCommand,
   computeFingerPathLength,
   computeFingerTipSpan,
+  evaluatePt002Slip,
+  parseClawLabExperiment,
 } from "./clawLab";
 
 describe("M01 claw motor command", () => {
@@ -40,5 +42,22 @@ describe("M01 realistic three-prong geometry", () => {
       CLAW_LAB_CONFIG.fingerNodes[3]!.radial,
     );
     expect(CLAW_LAB_CONFIG.fingerRodRadius * 2).toBeCloseTo(0.009, 6);
+  });
+});
+
+
+describe("M01 claw-lab experiment selection", () => {
+  it("keeps PT-001 as default and selects PT-002 explicitly", () => {
+    expect(parseClawLabExperiment("")).toBe("pt001");
+    expect(parseClawLabExperiment("?experiment=pt001")).toBe("pt001");
+    expect(parseClawLabExperiment("?experiment=pt002")).toBe("pt002");
+    expect(parseClawLabExperiment("?experiment=unknown")).toBe("pt001");
+  });
+
+  it("requires an initial lift followed by measurable slip for PT-002", () => {
+    expect(evaluatePt002Slip(0.08, 0.01)).toBe(true);
+    expect(evaluatePt002Slip(0.02, -0.02)).toBe(false);
+    expect(evaluatePt002Slip(0.08, 0.06)).toBe(false);
+    expect(evaluatePt002Slip(0.08, 0.04)).toBe(false);
   });
 });

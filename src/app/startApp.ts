@@ -38,7 +38,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   const testScene: SimulationScene =
     selection.id === "claw-lab"
-      ? createClawLabScene(scene, physics)
+      ? createClawLabScene(scene, physics, window.location.search)
       : createFallingCubeScene(scene, physics, selection.seed);
 
   camera.position.set(...testScene.camera.position);

@@ -24,7 +24,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 **M01 in progress — three-prong claw laboratory mechanics are live**
 
-M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, and a passing PT-001 centered-ball pickup regression. The centered sphere is lifted through physical claw contacts only; there is no prize parenting, hidden weld, or success roll.
+M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, a passing PT-001 centered-ball pickup regression, and a passing PT-002 pickup-to-retaining slip regression. Both outcomes come from physical contacts and motor force changes; there is no prize parenting, hidden weld, scripted release, or success roll.
 
 ### First milestone
 
@@ -101,7 +101,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with **PT-002 low-friction ball slip**.
+Continue **M01 — Claw Physics Laboratory** with **PT-003 off-center box rotation**.
 
 The current `claw-lab` now provides:
 - rigid hub plus three independent dynamic fingers,
@@ -115,9 +115,11 @@ The current `claw-lab` now provides:
 - centered 55 mm / 80 g PT-001 sphere with explicit friction/restitution,
 - `P` automated close → lift → hold laboratory cycle,
 - PT-001 PASS/FAIL and ball lift telemetry,
+- `?experiment=pt002` pickup→retaining-force slip mode,
+- PT-002 peak-lift/slip-loss/active-torque telemetry,
 - active GitHub Pages deployment.
 
-PT-001 is automated PASS. Next reduce only explicit friction/retaining-related parameters and verify PT-002 produces a gradual physical slip/fall rather than a scripted release.
+PT-001 and PT-002 are automated PASS. PT-002 keeps the same sphere material and uses a physical force-phase change: 2.5 N·m pickup torque, then 0.003 N·m retaining torque after 0.06 m of lab lift. Next add an off-center rectangular box and verify rotation emerges from contact torque.
 
 ## Status
 

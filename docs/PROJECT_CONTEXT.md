@@ -362,11 +362,31 @@ Acceptance regression:
 - lint/tests/build/base-path/headless claw-lab smoke PASS
 - total automated tests after this slice: 15 PASS
 
-M01 as a whole is **not complete**. COM visualization, low-friction slip, box rotation, teddy hook, blocked-finger behavior and the remaining M01 exit criteria remain.
+### PT-002 slip under reduced retaining force — automated PASS
+
+PT-002 was calibrated after testing two candidate mechanisms.
+
+Observed calibration behavior:
+- friction-only sweeps with the current centered sphere/claw geometry were strongly thresholded: lower friction values produced almost no pickup, while higher values produced stable capture with almost no slip
+- static retaining-torque sweeps showed the same two-state behavior
+- the accepted lab approximation therefore uses an explicit **PICKUP → RETAINING** force transition, which is already part of the mechanical contract
+
+PT-002 baseline:
+- sphere geometry, mass, friction and restitution are unchanged from PT-001
+- close/pickup torque: 2.5 N·m
+- pickup phase continues through the first 0.06 m of lab lift
+- retaining torque after that point: 0.003 N·m
+- automated run reaches about 0.048 m peak ball lift, then physically slips back near the pedestal
+- PASS requires peak lift >= 0.03 m, slip loss >= 0.04 m, final lift <= 0.03 m
+- no prize transform, parenting, weld, joint, kinematic prize state or scripted release is used
+
+The alternate experiment is selected with `?scene=claw-lab&experiment=pt002`; press `P` to run it. PT-001 remains the default claw-lab experiment.
+
+M01 as a whole is **not complete**. COM visualization, off-center box rotation, teddy hook, blocked-finger behavior and the remaining M01 exit criteria remain.
 
 ## Current next step
 
-Proceed with **PT-002 Low-friction ball slip** using the same ball geometry and test cycle, changing only explicit physical parameters such as sphere/claw friction or retaining force. The expected failure must emerge as visible sliding/contact loss, never as a scripted drop.
+Proceed with **PT-003 Off-center box rotation**: add a dynamic rectangular box with explicit mass/friction/COM, offset the grip from its center, and require the resulting contact torque to rotate the box naturally.
 
 ## Design-review additions
 

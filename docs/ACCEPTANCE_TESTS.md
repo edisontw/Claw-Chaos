@@ -61,6 +61,17 @@ Fail:
 - instant scripted drop at a state boundary,
 - sphere remains unnaturally locked.
 
+Implementation status — 2026-09-28:
+- **Automated PASS via the allowed lower-retaining-force route**
+- PT-001 sphere geometry/material remains unchanged: radius 0.055 m, mass 0.080 kg, friction 0.90
+- close/pickup torque remains 2.5 N·m
+- after 0.06 m of lab lift, PT-002 switches only the motor max torque to a retaining value of 0.003 N·m
+- calibrated regression produces about 0.048 m peak sphere lift and then physical loss of support back near the pedestal
+- pass requires peak lift >= 0.03 m, slip loss >= 0.04 m, and final lift <= 0.03 m
+- the sphere remains dynamic and has no parent, weld, hidden release, or claw-prize joint
+- friction-only calibration was tested first: the current sphere/claw geometry showed a sharp threshold (roughly no lift below the useful range, stable capture above it), so no friction value was selected merely to force the expected result
+- manual visual check is available at `?scene=claw-lab&experiment=pt002`, then press `P`
+
 ## 5. PT-003 Off-center box rotation
 
 Setup:

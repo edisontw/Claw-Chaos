@@ -47,10 +47,33 @@ export const CLAW_LAB_CONFIG = {
   pt001LiftSpeedMetersPerSecond: 0.12,
   pt001CloseSettleSeconds: 0.9,
   pt001PassLiftDelta: 0.08,
+
+  pt002PickupLiftDistance: 0.06,
+  pt002RetainingTorque: 0.003,
+  pt002MinPeakLift: 0.03,
+  pt002MinSlipLoss: 0.04,
+  pt002MaxFinalLift: 0.03,
 } as const;
 
+export type ClawLabExperiment = "pt001" | "pt002";
 type ClawTargetState = "OPEN" | "CLOSED";
-type Pt001Phase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
+type LabPhase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
+
+export function parseClawLabExperiment(search: string): ClawLabExperiment {
+  const params = new URLSearchParams(search);
+  return params.get("experiment") === "pt002" ? "pt002" : "pt001";
+}
+
+export function evaluatePt002Slip(
+  peakLift: number,
+  finalLift: number,
+): boolean {
+  return (
+    peakLift >= CLAW_LAB_CONFIG.pt002MinPeakLift &&
+    peakLift - finalLift >= CLAW_LAB_CONFIG.pt002MinSlipLoss &&
+    finalLift <= CLAW_LAB_CONFIG.pt002MaxFinalLift
+  );
+}
 
 export function advanceMotorCommand(
   current: number,
@@ -246,8 +269,12 @@ export function createFingerSegments(
 export function createClawLabScene(
   scene: THREE.Scene,
   physics: PhysicsRuntime,
+  search = "",
 ): SimulationScene {
   const config = CLAW_LAB_CONFIG;
+  const experiment = parseClawLabExperiment(search);
+  const activeFingerFriction = config.fingerFriction;
+  const activeBallFriction = config.pt001BallFriction;
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const joints: RevoluteJointHandle[] = [];
@@ -340,7 +367,7 @@ export function createClawLabScene(
       pivotWorld,
       createFingerSegments(points),
       {
-        friction: config.fingerFriction,
+        friction: activeFingerFriction,
         restitution: config.fingerRestitution,
         density: config.fingerDensity,
       },
@@ -408,7 +435,7 @@ export function createClawLabScene(
     config.pt001BallRadius,
     config.pt001BallMassKg,
     {
-      friction: config.pt001BallFriction,
+      friction: activeBallFriction,
       restitution: config.pt001BallRestitution,
     },
   );
@@ -417,10 +444,11 @@ export function createClawLabScene(
   let targetState: ClawTargetState = "OPEN";
   let commandedAngle = 0;
   let hubCommandY: number = config.hubCenterY;
-  let pt001Phase: Pt001Phase = "READY";
-  let pt001PhaseSeconds = 0;
+  let labPhase: LabPhase = "READY";
+  let labPhaseSeconds = 0;
   let ballReferenceY: number = config.pt001BallCenterY;
-  let pt001Result = "NOT RUN";
+  let experimentResult = "NOT RUN";
+  let peakBallLift = 0;
 
   const wakeFingers = (): void => {
     for (const body of fingerBodies) {
@@ -433,15 +461,16 @@ export function createClawLabScene(
     wakeFingers();
   };
 
-  const startPt001 = (): void => {
-    if (pt001Phase !== "READY") {
+  const startExperiment = (): void => {
+    if (labPhase !== "READY") {
       return;
     }
 
     ballReferenceY = ballBody.translation().y;
-    pt001Phase = "CLOSING";
-    pt001PhaseSeconds = 0;
-    pt001Result = "RUNNING";
+    peakBallLift = 0;
+    labPhase = "CLOSING";
+    labPhaseSeconds = 0;
+    experimentResult = "RUNNING";
     setTargetState("CLOSED");
     ballBody.wakeUp();
   };
@@ -459,14 +488,14 @@ export function createClawLabScene(
       event.preventDefault();
       setTargetState(targetState === "OPEN" ? "CLOSED" : "OPEN");
     } else if (event.code === "KeyP") {
-      startPt001();
+      startExperiment();
     }
   };
   window.addEventListener("keydown", onKeyDown);
 
   return {
     bindings,
-    milestone: "M01 / PT-001",
+    milestone: "M01 / " + experiment.toUpperCase(),
     camera: {
       position: [0.62, 0.72, 0.88],
       target: [0, 0.64, 0],
@@ -481,22 +510,34 @@ export function createClawLabScene(
         stepSeconds,
       );
 
+      const liftAmount = hubCommandY - config.hubCenterY;
+      const retainingPhaseActive =
+        experiment === "pt002" &&
+        (labPhase === "LIFTING" || labPhase === "HOLDING") &&
+        liftAmount >= config.pt002PickupLiftDistance;
+      const activeMotorTorque = retainingPhaseActive
+        ? config.pt002RetainingTorque
+        : config.maxMotorTorque;
+
       for (const joint of joints) {
         joint.configureMotorPosition(
           commandedAngle,
           config.motorStiffness,
           config.motorDamping,
         );
-        joint.setMotorMaxForce(config.maxMotorTorque);
+        joint.setMotorMaxForce(activeMotorTorque);
       }
 
-      if (pt001Phase === "CLOSING") {
-        pt001PhaseSeconds += stepSeconds;
-        if (pt001PhaseSeconds >= config.pt001CloseSettleSeconds) {
-          pt001Phase = "LIFTING";
-          pt001PhaseSeconds = 0;
+      const observedLift = ballBody.translation().y - ballReferenceY;
+      peakBallLift = Math.max(peakBallLift, observedLift);
+
+      if (labPhase === "CLOSING") {
+        labPhaseSeconds += stepSeconds;
+        if (labPhaseSeconds >= config.pt001CloseSettleSeconds) {
+          labPhase = "LIFTING";
+          labPhaseSeconds = 0;
         }
-      } else if (pt001Phase === "LIFTING") {
+      } else if (labPhase === "LIFTING") {
         const targetHubY = config.hubCenterY + config.pt001LiftDistance;
         hubCommandY = advanceLinearCommand(
           hubCommandY,
@@ -507,20 +548,26 @@ export function createClawLabScene(
 
         if (hubCommandY >= targetHubY - 1e-6) {
           hubCommandY = targetHubY;
-          pt001Phase = "HOLDING";
-          pt001PhaseSeconds = 0;
+          labPhase = "HOLDING";
+          labPhaseSeconds = 0;
         }
-      } else if (pt001Phase === "HOLDING") {
-        pt001PhaseSeconds += stepSeconds;
-        if (pt001PhaseSeconds >= 0.5) {
-          pt001Phase = "COMPLETE";
+      } else if (labPhase === "HOLDING") {
+        labPhaseSeconds += stepSeconds;
+        if (labPhaseSeconds >= 0.5) {
+          labPhase = "COMPLETE";
           const ballLift = ballBody.translation().y - ballReferenceY;
-          pt001Result =
-            ballLift >= config.pt001PassLiftDelta ? "PASS" : "FAIL";
+          experimentResult =
+            experiment === "pt001"
+              ? ballLift >= config.pt001PassLiftDelta
+                ? "PASS"
+                : "FAIL"
+              : evaluatePt002Slip(peakBallLift, ballLift)
+                ? "PASS"
+                : "FAIL";
         }
       }
 
-      if (pt001Phase === "LIFTING" || pt001Phase === "HOLDING") {
+      if (labPhase === "LIFTING" || labPhase === "HOLDING") {
         wakeFingers();
         ballBody.wakeUp();
       }
@@ -545,29 +592,48 @@ export function createClawLabScene(
           " rad",
         "Finger path      " + computeFingerPathLength().toFixed(3) + " m",
         "Collider model   3 capsule segments / finger",
-        "PT-001 phase     " + pt001Phase,
-        "PT-001 result    " + pt001Result,
+        "Experiment       " + experiment.toUpperCase(),
+        "Experiment phase " + labPhase,
+        "Experiment result " + experimentResult,
         "Ball             r=" +
           config.pt001BallRadius.toFixed(3) +
           " m  m=" +
           config.pt001BallMassKg.toFixed(3) +
           " kg  μ=" +
-          config.pt001BallFriction.toFixed(2),
+          activeBallFriction.toFixed(2),
         "Ball Y / lift    " +
           ballY.toFixed(3) +
           " / " +
           ballLift.toFixed(3) +
+          " m",
+        "Peak / slip loss  " +
+          peakBallLift.toFixed(3) +
+          " / " +
+          Math.max(0, peakBallLift - ballLift).toFixed(3) +
           " m",
         "Lab lift         " +
           (hubCommandY - config.hubCenterY).toFixed(3) +
           " / " +
           config.pt001LiftDistance.toFixed(3) +
           " m",
+        "Force phase      " +
+          (experiment === "pt002" &&
+          (labPhase === "LIFTING" || labPhase === "HOLDING") &&
+          hubCommandY - config.hubCenterY >= config.pt002PickupLiftDistance
+            ? "RETAINING"
+            : "PICKUP/CLOSE"),
         "Motor speed      " +
           config.motorSpeedRadiansPerSecond.toFixed(2) +
           " rad/s",
-        "Max torque       " + config.maxMotorTorque.toFixed(2) + " N·m",
-        "Controls         P run PT-001 | C close | O open | Space toggle | D debug",
+        "Active torque    " +
+          (experiment === "pt002" &&
+          (labPhase === "LIFTING" || labPhase === "HOLDING") &&
+          hubCommandY - config.hubCenterY >= config.pt002PickupLiftDistance
+            ? config.pt002RetainingTorque
+            : config.maxMotorTorque
+          ).toFixed(3) +
+          " N·m",
+        "Controls         P run active test | C close | O open | Space toggle | D debug",
         "Attachment       NONE — sphere has no parent/weld/joint to claw",
       ];
     },
