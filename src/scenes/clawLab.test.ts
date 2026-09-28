@@ -6,6 +6,7 @@ import {
   computeFingerTipSpan,
   evaluatePt002Slip,
   evaluatePt003Rotation,
+  evaluatePt004Hook,
   parseClawLabExperiment,
   quaternionAngleFromIdentity,
 } from "./clawLab";
@@ -54,6 +55,7 @@ describe("M01 claw-lab experiment selection", () => {
     expect(parseClawLabExperiment("?experiment=pt001")).toBe("pt001");
     expect(parseClawLabExperiment("?experiment=pt002")).toBe("pt002");
     expect(parseClawLabExperiment("?experiment=pt003")).toBe("pt003");
+    expect(parseClawLabExperiment("?experiment=pt004")).toBe("pt004");
     expect(parseClawLabExperiment("?experiment=unknown")).toBe("pt001");
   });
 
@@ -82,5 +84,15 @@ describe("PT-003 rotation helpers", () => {
   it("requires meaningful box rotation", () => {
     expect(evaluatePt003Rotation(0.2)).toBe(true);
     expect(evaluatePt003Rotation(0.05)).toBe(false);
+  });
+});
+
+
+describe("PT-004 hook acceptance helper", () => {
+  it("requires lift, asymmetric hanging and rotation together", () => {
+    expect(evaluatePt004Hook(0.05, 0.3, -0.08)).toBe(true);
+    expect(evaluatePt004Hook(0.01, 0.3, -0.08)).toBe(false);
+    expect(evaluatePt004Hook(0.05, 0.05, -0.08)).toBe(false);
+    expect(evaluatePt004Hook(0.05, 0.3, -0.01)).toBe(false);
   });
 });
