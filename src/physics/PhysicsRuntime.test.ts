@@ -64,19 +64,24 @@ describe("PhysicsRuntime", () => {
       joints.push(joint);
     }
 
+    const drivenJoint = joints[0]!;
+    const drivenFinger = fingers[0]!;
+    const idleFingerA = fingers[1]!;
+    const idleFingerB = fingers[2]!;
+
     for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
-      joints[0].configureMotorPosition(-0.45, 180, 18);
-      joints[0].setMotorMaxForce(2.5);
-      fingers[0].wakeUp();
+      drivenJoint.configureMotorPosition(-0.45, 180, 18);
+      drivenJoint.setMotorMaxForce(2.5);
+      drivenFinger.wakeUp();
       physics.step();
     }
 
-    expect(joints[0].limitsEnabled()).toBe(true);
-    expect(joints[0].limitsMin()).toBeCloseTo(-0.6, 5);
-    expect(joints[0].limitsMax()).toBeCloseTo(0.4, 5);
-    expect(Math.abs(fingers[0].rotation().z)).toBeGreaterThan(0.08);
-    expect(Math.abs(fingers[1].rotation().z)).toBeLessThan(0.03);
-    expect(Math.abs(fingers[2].rotation().z)).toBeLessThan(0.03);
+    expect(drivenJoint.limitsEnabled()).toBe(true);
+    expect(drivenJoint.limitsMin()).toBeCloseTo(-0.6, 5);
+    expect(drivenJoint.limitsMax()).toBeCloseTo(0.4, 5);
+    expect(Math.abs(drivenFinger.rotation().z)).toBeGreaterThan(0.08);
+    expect(Math.abs(idleFingerA.rotation().z)).toBeLessThan(0.03);
+    expect(Math.abs(idleFingerB.rotation().z)).toBeLessThan(0.03);
     expect(physics.dynamicBodyCount).toBe(3);
   });
 });
