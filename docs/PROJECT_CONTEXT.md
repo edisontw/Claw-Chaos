@@ -327,11 +327,35 @@ Current provisional geometry:
 - open tip span about 296 mm in command-space geometry
 - open/closed targets +0.22 / -0.42 rad
 
-M01 as a whole is **not complete**. COM visualization, prize-contact experiments and M01 exit criteria remain.
+### PT-001 centered ball pickup — automated PASS
+
+The first prize-contact experiment was implemented and CI-verified on 2026-09-28.
+
+Laboratory setup:
+- centered dynamic sphere
+- radius 55 mm
+- mass 80 g
+- friction 0.90
+- restitution 0.03
+- narrow static pedestal under the sphere
+- existing three independent segmented fingers/revolute joints
+- lab-only kinematic vertical hub motion for pickup verification; this is not M02 suspension/gantry behavior
+- `P` runs the deterministic PT-001 sequence: close → settle → lift → hold → result
+- collider debug remains available with `D` but is OFF by default
+
+Acceptance regression:
+- sphere is not parented to the claw
+- sphere has no weld/joint to the claw
+- sphere remains a dynamic rigid body
+- automated integration test requires the sphere to rise by at least 0.08 m from its centered reference height
+- lint/tests/build/base-path/headless claw-lab smoke PASS
+- total automated tests after this slice: 15 PASS
+
+M01 as a whole is **not complete**. COM visualization, low-friction slip, box rotation, teddy hook, blocked-finger behavior and the remaining M01 exit criteria remain.
 
 ## Current next step
 
-Proceed with **PT-001 Centered ball pickup** inside `claw-lab`: add one physically simulated sphere with explicit mass/friction, place it under the three-prong claw, and tune only documented motor/contact parameters until the ball can be supported and lifted by geometry/contact alone. Do not add attachment or scripted success logic.
+Proceed with **PT-002 Low-friction ball slip** using the same ball geometry and test cycle, changing only explicit physical parameters such as sphere/claw friction or retaining force. The expected failure must emerge as visible sliding/contact loss, never as a scripted drop.
 
 ## Design-review additions
 

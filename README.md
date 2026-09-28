@@ -24,7 +24,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 **M01 in progress — three-prong claw laboratory mechanics are live**
 
-M00 is complete. M01 now has a three-prong mechanical baseline plus a realistic-geometry refinement: cylindrical claw head, three independent Rapier revolute-joint fingers, segmented hooked rod geometry, three capsule colliders per finger, motorized open/close control, joint diagnostics and collider debug rendering. Development remains focused on gray-box claw physics rather than cabinet/arcade content.
+M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, and a passing PT-001 centered-ball pickup regression. The centered sphere is lifted through physical claw contacts only; there is no prize parenting, hidden weld, or success roll.
 
 ### First milestone
 
@@ -101,9 +101,9 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with **PT-001 centered ball pickup**.
+Continue **M01 — Claw Physics Laboratory** with **PT-002 low-friction ball slip**.
 
-The current `claw-lab` already provides:
+The current `claw-lab` now provides:
 - rigid hub plus three independent dynamic fingers,
 - Rapier revolute joints and physical motor limits,
 - configurable open/close motor command,
@@ -112,9 +112,12 @@ The current `claw-lab` already provides:
 - visible joint pivot/axis diagnostics,
 - realistic segmented hook geometry with three capsule colliders per finger,
 - centralized provisional dimensions in `docs/CLAW_GEOMETRY_BASELINE.md`,
+- centered 55 mm / 80 g PT-001 sphere with explicit friction/restitution,
+- `P` automated close → lift → hold laboratory cycle,
+- PT-001 PASS/FAIL and ball lift telemetry,
 - active GitHub Pages deployment.
 
-Next add one real dynamic sphere with explicit mass/friction and prove that three physical contacts can support and lift it. Prize parenting, hidden welds and scripted pickup success remain prohibited.
+PT-001 is automated PASS. Next reduce only explicit friction/retaining-related parameters and verify PT-002 produces a gradual physical slip/fall rather than a scripted release.
 
 ## Status
 

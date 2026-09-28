@@ -35,9 +35,22 @@ export const CLAW_LAB_CONFIG = {
   motorStiffness: 180,
   motorDamping: 18,
   maxMotorTorque: 2.5,
+
+  pt001BallRadius: 0.055,
+  pt001BallMassKg: 0.08,
+  pt001BallFriction: 0.9,
+  pt001BallRestitution: 0.03,
+  pt001BallCenterY: 0.581,
+  pt001PedestalTopY: 0.525,
+  pt001PedestalRadius: 0.04,
+  pt001LiftDistance: 0.18,
+  pt001LiftSpeedMetersPerSecond: 0.12,
+  pt001CloseSettleSeconds: 0.9,
+  pt001PassLiftDelta: 0.08,
 } as const;
 
 type ClawTargetState = "OPEN" | "CLOSED";
+type Pt001Phase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
 
 export function advanceMotorCommand(
   current: number,
@@ -46,6 +59,22 @@ export function advanceMotorCommand(
   stepSeconds: number,
 ): number {
   const maxDelta = Math.max(0, speedRadiansPerSecond * stepSeconds);
+  const delta = target - current;
+
+  if (Math.abs(delta) <= maxDelta) {
+    return target;
+  }
+
+  return current + Math.sign(delta) * maxDelta;
+}
+
+export function advanceLinearCommand(
+  current: number,
+  target: number,
+  speedMetersPerSecond: number,
+  stepSeconds: number,
+): number {
+  const maxDelta = Math.max(0, speedMetersPerSecond * stepSeconds);
   const delta = target - current;
 
   if (Math.abs(delta) <= maxDelta) {
@@ -83,7 +112,7 @@ export function computeFingerTipSpan(angleRadians: number): number {
 }
 
 function addJointDiagnostic(
-  scene: THREE.Scene,
+  parent: THREE.Object3D,
   pivot: Vec3,
   axis: Vec3,
 ): void {
@@ -93,7 +122,7 @@ function addJointDiagnostic(
   );
   marker.position.set(pivot.x, pivot.y, pivot.z);
   marker.renderOrder = 1001;
-  scene.add(marker);
+  parent.add(marker);
 
   const halfLength = 0.032;
   const points = [
@@ -113,11 +142,11 @@ function addJointDiagnostic(
     new THREE.LineBasicMaterial({ color: 0xffd166, depthTest: false }),
   );
   axisLine.renderOrder = 1001;
-  scene.add(axisLine);
+  parent.add(axisLine);
 }
 
 function addCylinder(
-  scene: THREE.Scene,
+  parent: THREE.Object3D,
   radius: number,
   height: number,
   centerY: number,
@@ -130,10 +159,10 @@ function addCylinder(
   mesh.position.y = centerY;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
-  scene.add(mesh);
+  parent.add(mesh);
 }
 
-function createFingerPoints(theta: number): Vec3[] {
+export function createFingerPoints(theta: number): Vec3[] {
   const radialX = Math.cos(theta);
   const radialZ = Math.sin(theta);
 
@@ -198,7 +227,9 @@ function createFingerVisual(
   return group;
 }
 
-function createFingerSegments(points: readonly Vec3[]): CapsuleSegmentSpec[] {
+export function createFingerSegments(
+  points: readonly Vec3[],
+): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
 
   for (let index = 1; index < points.length; index += 1) {
@@ -258,33 +289,43 @@ export function createClawLabScene(
     metalness: 0.16,
   });
 
-  addCylinder(scene, 0.017, 0.045, config.hubCenterY + 0.095, darkBand);
-  addCylinder(scene, 0.034, 0.055, config.hubCenterY + 0.045, chrome);
-  addCylinder(scene, config.housingRadius, 0.075, config.hubCenterY - 0.022, brushedMetal);
-  addCylinder(scene, 0.048, 0.018, config.hubCenterY + 0.005, darkBand);
+  const hubVisual = new THREE.Group();
+  scene.add(hubVisual);
+  addCylinder(hubVisual, 0.017, 0.045, 0.095, darkBand);
+  addCylinder(hubVisual, 0.034, 0.055, 0.045, chrome);
+  addCylinder(hubVisual, config.housingRadius, 0.075, -0.022, brushedMetal);
+  addCylinder(hubVisual, 0.048, 0.018, 0.005, darkBand);
   addCylinder(
-    scene,
+    hubVisual,
     config.collarRadius,
     config.collarHeight,
-    config.fingerPivotY + config.collarHeight * 0.45,
+    config.fingerPivotY +
+      config.collarHeight * 0.45 -
+      config.hubCenterY,
     chrome,
   );
 
-  const hubBody = physics.createStaticCylinder(
+  const hubBody = physics.createKinematicCylinder(
     { x: 0, y: config.hubCenterY, z: 0 },
     config.hubColliderHalfHeight,
     config.collarRadius,
     0.55,
   );
+  bindings.push({ mesh: hubVisual, body: hubBody });
 
   for (let index = 0; index < 3; index += 1) {
     const theta = index * (Math.PI * 2 / 3);
     const radialX = Math.cos(theta);
     const radialZ = Math.sin(theta);
-    const pivot = {
+    const pivotLocal = {
       x: radialX * config.fingerPivotRadius,
-      y: config.fingerPivotY,
+      y: config.fingerPivotY - config.hubCenterY,
       z: radialZ * config.fingerPivotRadius,
+    };
+    const pivotWorld = {
+      x: pivotLocal.x,
+      y: config.hubCenterY + pivotLocal.y,
+      z: pivotLocal.z,
     };
     const tangent = {
       x: -Math.sin(theta),
@@ -296,7 +337,7 @@ export function createClawLabScene(
     scene.add(finger);
 
     const fingerBody = physics.createDynamicCapsuleChain(
-      pivot,
+      pivotWorld,
       createFingerSegments(points),
       {
         friction: config.fingerFriction,
@@ -306,11 +347,7 @@ export function createClawLabScene(
     );
 
     const joint = physics.createRevoluteJoint(hubBody, fingerBody, {
-      anchor1: {
-        x: pivot.x,
-        y: config.fingerPivotY - config.hubCenterY,
-        z: pivot.z,
-      },
+      anchor1: pivotLocal,
       anchor2: { x: 0, y: 0, z: 0 },
       axis: tangent,
       minAngle: config.closedAngle,
@@ -325,11 +362,65 @@ export function createClawLabScene(
     fingerBodies.push(fingerBody);
     joints.push(joint);
     bindings.push({ mesh: finger, body: fingerBody });
-    addJointDiagnostic(scene, pivot, tangent);
+    addJointDiagnostic(hubVisual, pivotLocal, tangent);
   }
+
+  const pedestalHalfHeight = config.pt001PedestalTopY * 0.5;
+  const pedestalMaterial = new THREE.MeshStandardMaterial({
+    color: 0x3b4654,
+    roughness: 0.72,
+    metalness: 0.28,
+  });
+  const pedestal = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      config.pt001PedestalRadius,
+      config.pt001PedestalRadius,
+      config.pt001PedestalTopY,
+      24,
+    ),
+    pedestalMaterial,
+  );
+  pedestal.position.y = pedestalHalfHeight;
+  pedestal.castShadow = true;
+  pedestal.receiveShadow = true;
+  scene.add(pedestal);
+  physics.createStaticCylinder(
+    { x: 0, y: pedestalHalfHeight, z: 0 },
+    pedestalHalfHeight,
+    config.pt001PedestalRadius,
+    0.75,
+  );
+
+  const ball = new THREE.Mesh(
+    new THREE.SphereGeometry(config.pt001BallRadius, 32, 20),
+    new THREE.MeshStandardMaterial({
+      color: 0xf0b84f,
+      roughness: 0.48,
+      metalness: 0.04,
+    }),
+  );
+  ball.castShadow = true;
+  ball.receiveShadow = true;
+  scene.add(ball);
+
+  const ballBody = physics.createDynamicSphere(
+    { x: 0, y: config.pt001BallCenterY, z: 0 },
+    config.pt001BallRadius,
+    config.pt001BallMassKg,
+    {
+      friction: config.pt001BallFriction,
+      restitution: config.pt001BallRestitution,
+    },
+  );
+  bindings.push({ mesh: ball, body: ballBody });
 
   let targetState: ClawTargetState = "OPEN";
   let commandedAngle = 0;
+  let hubCommandY: number = config.hubCenterY;
+  let pt001Phase: Pt001Phase = "READY";
+  let pt001PhaseSeconds = 0;
+  let ballReferenceY: number = config.pt001BallCenterY;
+  let pt001Result = "NOT RUN";
 
   const wakeFingers = (): void => {
     for (const body of fingerBodies) {
@@ -340,6 +431,19 @@ export function createClawLabScene(
   const setTargetState = (nextState: ClawTargetState): void => {
     targetState = nextState;
     wakeFingers();
+  };
+
+  const startPt001 = (): void => {
+    if (pt001Phase !== "READY") {
+      return;
+    }
+
+    ballReferenceY = ballBody.translation().y;
+    pt001Phase = "CLOSING";
+    pt001PhaseSeconds = 0;
+    pt001Result = "RUNNING";
+    setTargetState("CLOSED");
+    ballBody.wakeUp();
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
@@ -354,16 +458,18 @@ export function createClawLabScene(
     } else if (event.code === "Space") {
       event.preventDefault();
       setTargetState(targetState === "OPEN" ? "CLOSED" : "OPEN");
+    } else if (event.code === "KeyP") {
+      startPt001();
     }
   };
   window.addEventListener("keydown", onKeyDown);
 
   return {
     bindings,
-    milestone: "M01",
+    milestone: "M01 / PT-001",
     camera: {
-      position: [0.62, 0.7, 0.88],
-      target: [0, 0.68, 0],
+      position: [0.62, 0.72, 0.88],
+      target: [0, 0.64, 0],
     },
     beforePhysicsStep(stepSeconds: number): void {
       const targetAngle =
@@ -383,8 +489,51 @@ export function createClawLabScene(
         );
         joint.setMotorMaxForce(config.maxMotorTorque);
       }
+
+      if (pt001Phase === "CLOSING") {
+        pt001PhaseSeconds += stepSeconds;
+        if (pt001PhaseSeconds >= config.pt001CloseSettleSeconds) {
+          pt001Phase = "LIFTING";
+          pt001PhaseSeconds = 0;
+        }
+      } else if (pt001Phase === "LIFTING") {
+        const targetHubY = config.hubCenterY + config.pt001LiftDistance;
+        hubCommandY = advanceLinearCommand(
+          hubCommandY,
+          targetHubY,
+          config.pt001LiftSpeedMetersPerSecond,
+          stepSeconds,
+        );
+
+        if (hubCommandY >= targetHubY - 1e-6) {
+          hubCommandY = targetHubY;
+          pt001Phase = "HOLDING";
+          pt001PhaseSeconds = 0;
+        }
+      } else if (pt001Phase === "HOLDING") {
+        pt001PhaseSeconds += stepSeconds;
+        if (pt001PhaseSeconds >= 0.5) {
+          pt001Phase = "COMPLETE";
+          const ballLift = ballBody.translation().y - ballReferenceY;
+          pt001Result =
+            ballLift >= config.pt001PassLiftDelta ? "PASS" : "FAIL";
+        }
+      }
+
+      if (pt001Phase === "LIFTING" || pt001Phase === "HOLDING") {
+        wakeFingers();
+        ballBody.wakeUp();
+      }
+
+      hubBody.setNextKinematicTranslation({
+        x: 0,
+        y: hubCommandY,
+        z: 0,
+      });
     },
     debugLines(): string[] {
+      const ballY = ballBody.translation().y;
+      const ballLift = ballY - ballReferenceY;
       return [
         "Claw target      " + targetState,
         "Motor command    " + commandedAngle.toFixed(3) + " rad",
@@ -396,12 +545,30 @@ export function createClawLabScene(
           " rad",
         "Finger path      " + computeFingerPathLength().toFixed(3) + " m",
         "Collider model   3 capsule segments / finger",
+        "PT-001 phase     " + pt001Phase,
+        "PT-001 result    " + pt001Result,
+        "Ball             r=" +
+          config.pt001BallRadius.toFixed(3) +
+          " m  m=" +
+          config.pt001BallMassKg.toFixed(3) +
+          " kg  μ=" +
+          config.pt001BallFriction.toFixed(2),
+        "Ball Y / lift    " +
+          ballY.toFixed(3) +
+          " / " +
+          ballLift.toFixed(3) +
+          " m",
+        "Lab lift         " +
+          (hubCommandY - config.hubCenterY).toFixed(3) +
+          " / " +
+          config.pt001LiftDistance.toFixed(3) +
+          " m",
         "Motor speed      " +
           config.motorSpeedRadiansPerSecond.toFixed(2) +
           " rad/s",
         "Max torque       " + config.maxMotorTorque.toFixed(2) + " N·m",
-        "Controls         C close | O open | Space toggle | D collider debug",
-        "Attachment       NONE — joints + contacts only",
+        "Controls         P run PT-001 | C close | O open | Space toggle | D debug",
+        "Attachment       NONE — sphere has no parent/weld/joint to claw",
       ];
     },
   };

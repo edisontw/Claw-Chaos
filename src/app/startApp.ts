@@ -45,10 +45,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   camera.lookAt(...testScene.camera.target);
 
   const debugOverlay = new DebugOverlay(root);
-  const physicsDebugRenderer = new PhysicsDebugRenderer(
-    scene,
-    selection.id === "claw-lab",
-  );
+  const physicsDebugRenderer = new PhysicsDebugRenderer(scene, false);
   const fixedStep = new FixedStepLoop(
     FIXED_TIMESTEP_SECONDS,
     MAX_PHYSICS_STEPS_PER_FRAME,

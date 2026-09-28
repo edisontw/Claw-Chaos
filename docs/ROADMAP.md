@@ -172,14 +172,43 @@ The geometry values are provisional engineering approximations from visual refer
 
 Current verification target is 14 automated tests plus the existing lint/build/base-path/browser smoke suite.
 
+### PT-001 record — 2026-09-28
+
+**Automated status: PASS**
+
+Implemented:
+- one centered dynamic sphere with explicit radius/mass/friction/restitution
+- one narrow static pedestal
+- lab-only kinematic vertical hub motion to test pickup without starting M02
+- `P` test cycle: close → settle → lift → hold → PASS/FAIL
+- debug reports ball Y, lift delta, lab lift amount and PT-001 phase/result
+- collider debug defaults OFF but remains available with `D`
+- prize remains dynamic and is never parented, welded or joined to the claw
+
+PT-001 baseline:
+- sphere radius: 0.055 m
+- mass: 0.080 kg
+- friction: 0.90
+- lift command: 0.18 m at 0.12 m/s
+- automated pass threshold: sphere rises at least 0.08 m
+
+Verification:
+- 15 automated tests PASS
+- PT-001 physics integration regression PASS
+- lint PASS
+- TypeScript/Vite production build PASS
+- GitHub Pages base-path check PASS
+- headless `claw-lab` browser smoke PASS
+
 Not yet complete:
 - COM visualization
-- centered ball / low-friction ball / box / teddy experiments
-- physical lift experiment
+- PT-002 low-friction ball slip
+- off-center box rotation
+- teddy hook
 - blocked-finger acceptance
 - M01 exit criteria as a whole
 
-**Next slice:** PT-001 centered ball pickup. Add the sphere as a real dynamic body with explicit material/mass data and prove support through three physical contacts only. No parenting, weld, or hidden success state.
+**Next slice:** PT-002 low-friction ball slip. Change only friction/retaining-related physical parameters and require gradual contact migration/slip rather than a scripted release.
 
 ---
 
