@@ -25,8 +25,8 @@ interface HookMetrics {
 
 async function simulateTeddyPlacement(
   bodyOffsetX: number,
-  verticalShift: number,
-): Promise<HookMetrics & { verticalShift: number }> {
+  supportHalfX: number,
+): Promise<HookMetrics & { supportHalfX: number }> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
 
@@ -42,7 +42,7 @@ async function simulateTeddyPlacement(
       z: 0,
     },
     {
-      x: config.pt004SupportHalfX,
+      x: supportHalfX,
       y: config.pt004SupportHalfY,
       z: config.pt004SupportHalfZ,
     },
@@ -109,7 +109,7 @@ async function simulateTeddyPlacement(
   const teddy = physics.createDynamicCompound(
     {
       x: bodyOffsetX,
-      y: config.pt004BodyCenterY + verticalShift,
+      y: config.pt004BodyCenterY,
       z: 0,
     },
     createPt004TeddyColliders(),
@@ -204,7 +204,7 @@ async function simulateTeddyPlacement(
 
   return {
     bodyOffsetX,
-    verticalShift,
+    supportHalfX,
     passiveRotation,
     peakLift,
     peakRotation,
@@ -217,18 +217,18 @@ async function simulateTeddyPlacement(
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds a vertical placement where real limb geometry forms an under-hook", async () => {
+  it("finds a support width that leaves the target arm free for a real under-hook", async () => {
     const bodyOffsetX = -0.06;
-    const verticalShifts = [-0.12, -0.10, -0.08, -0.06, -0.04, -0.02, 0];
+    const supportHalfWidths = [0.035, 0.04, 0.045, 0.05, 0.055, 0.06];
     const results = [];
 
-    for (const verticalShift of verticalShifts) {
+    for (const supportHalfX of supportHalfWidths) {
       results.push(
-        await simulateTeddyPlacement(bodyOffsetX, verticalShift),
+        await simulateTeddyPlacement(bodyOffsetX, supportHalfX),
       );
     }
 
-    console.log("PT-004 height sweep", JSON.stringify(results));
+    console.log("PT-004 support sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
