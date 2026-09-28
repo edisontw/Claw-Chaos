@@ -488,3 +488,128 @@ It should not require:
 - new "success chance",
 - new machine state.
 
+# 21. ControlProfile
+
+Machine control behavior belongs in data.
+
+```ts
+interface ControlProfile {
+  id: string;
+  movementMode: "joystick" | "digital_buttons" | "staged_axes";
+  analogMovement: boolean;
+  allowMoveDuringDescent: boolean;
+  allowMoveDuringLift: boolean;
+  earlyCloseEnabled: boolean;
+  holdBoostEnabled: boolean;
+  optionalYawControl?: boolean;
+  aimTimeLimitSeconds?: number;
+  autoDropOnTimeout?: boolean;
+}
+```
+
+This prevents one global control scheme from being incorrectly applied to all machine families.
+
+## 22. ReturnProfile
+
+```ts
+interface ReturnProfile {
+  id: string;
+  homePosition: Vec2;
+  chutePosition: Vec2;
+  releaseHeight: number;
+  releaseDelaySeconds: number;
+  postReleaseDelaySeconds: number;
+  returnSpeedScale: number;
+  liftBeforeReturn: boolean;
+}
+```
+
+The return path must remain physical.
+
+## 23. CameraProfile
+
+```ts
+interface CameraProfile {
+  id: string;
+  eyeHeightMeters: number;
+  horizontalFovDegrees: number;
+  yawMinDegrees: number;
+  yawMaxDegrees: number;
+  pitchMinDegrees: number;
+  pitchMaxDegrees: number;
+  bodyTravelX: [number, number];
+  bodyTravelZ: [number, number];
+  leanLimitMeters: number;
+}
+```
+
+Camera FOV and head-turn range are separate concepts.
+
+Use a plausible FOV and let the player turn/shift position for side inspection rather than using an extreme fisheye lens.
+
+## 24. FaultProfile
+
+```ts
+interface FaultProfile {
+  id: string;
+  detectChuteJam: boolean;
+  detectTravelFault: boolean;
+  detectPrizeOutSensorFault: boolean;
+  tiltResponse?: "ignore" | "warn" | "abort_play";
+  recoveryPolicyId: string;
+}
+```
+
+## 25. CalibrationProfile
+
+A machine/prize parameter can carry provenance:
+
+```ts
+interface CalibratedValue<T> {
+  value: T;
+  basis: "measured" | "inferred" | "tuned";
+  sourceId?: string;
+  uncertainty?: number;
+  notes?: string;
+}
+```
+
+Do not require this wrapper for every runtime scalar in early prototypes, but preserve the concept in calibration tooling/data.
+
+## 26. ReplayRecord
+
+```ts
+interface ReplayRecord {
+  schemaVersion: number;
+  buildVersion: string;
+  machineDefinitionId: string;
+  configHash: string;
+  layoutSeed: string;
+  inputEvents: Array<{
+    tick: number;
+    action: string;
+    value: number | boolean | Vec2;
+  }>;
+  checkpoints?: ReplayCheckpoint[];
+}
+```
+
+This is primarily a regression/debugging tool before it becomes a user-facing replay feature.
+
+## 27. AssetManifest and licensing
+
+Every external asset should record:
+- asset ID,
+- source/author,
+- license,
+- modification status,
+- attribution requirement,
+- redistribution permission.
+
+Avoid:
+- ripped arcade cabinet models,
+- copied manufacturer logos,
+- copyrighted character prizes,
+- unlicensed sound recordings.
+
+Procedurally generated or original generic prizes are preferred for the baseline build.
