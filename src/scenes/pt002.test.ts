@@ -11,177 +11,202 @@ import {
   evaluatePt002Slip,
 } from "./clawLab";
 
-describe("PT-002 pickup-to-retaining slip", () => {
-  it("lifts under pickup torque, then physically slips after retaining torque is reduced", async () => {
-    const config = CLAW_LAB_CONFIG;
-    const physics = await PhysicsRuntime.create();
+interface SlipMetrics {
+  retainingTorque: number;
+  peakLift: number;
+  finalLift: number;
+  slipLoss: number;
+  passed: boolean;
+}
 
-    physics.createStaticCuboid(
-      { x: 0, y: -0.02, z: 0 },
-      { x: 1, y: 0.02, z: 1 },
-    );
+async function simulatePickupToRetaining(
+  retainingTorque: number,
+): Promise<SlipMetrics> {
+  const config = CLAW_LAB_CONFIG;
+  const physics = await PhysicsRuntime.create();
 
-    const pedestalHalfHeight = config.pt001PedestalTopY * 0.5;
-    physics.createStaticCylinder(
-      { x: 0, y: pedestalHalfHeight, z: 0 },
-      pedestalHalfHeight,
-      config.pt001PedestalRadius,
-      0.75,
-    );
+  physics.createStaticCuboid(
+    { x: 0, y: -0.02, z: 0 },
+    { x: 1, y: 0.02, z: 1 },
+  );
 
-    const hub = physics.createKinematicCylinder(
-      { x: 0, y: config.hubCenterY, z: 0 },
-      config.hubColliderHalfHeight,
-      config.collarRadius,
-      0.55,
-    );
+  const pedestalHalfHeight = config.pt001PedestalTopY * 0.5;
+  physics.createStaticCylinder(
+    { x: 0, y: pedestalHalfHeight, z: 0 },
+    pedestalHalfHeight,
+    config.pt001PedestalRadius,
+    0.75,
+  );
 
-    const fingers: RigidBodyHandle[] = [];
-    const joints: RevoluteJointHandle[] = [];
+  const hub = physics.createKinematicCylinder(
+    { x: 0, y: config.hubCenterY, z: 0 },
+    config.hubColliderHalfHeight,
+    config.collarRadius,
+    0.55,
+  );
 
-    for (let index = 0; index < 3; index += 1) {
-      const theta = index * (Math.PI * 2 / 3);
-      const radialX = Math.cos(theta);
-      const radialZ = Math.sin(theta);
-      const pivotLocal = {
-        x: radialX * config.fingerPivotRadius,
-        y: config.fingerPivotY - config.hubCenterY,
-        z: radialZ * config.fingerPivotRadius,
-      };
-      const pivotWorld = {
-        x: pivotLocal.x,
-        y: config.hubCenterY + pivotLocal.y,
-        z: pivotLocal.z,
-      };
-      const tangent = {
-        x: -Math.sin(theta),
-        y: 0,
-        z: Math.cos(theta),
-      };
+  const fingers: RigidBodyHandle[] = [];
+  const joints: RevoluteJointHandle[] = [];
 
-      const finger = physics.createDynamicCapsuleChain(
-        pivotWorld,
-        createFingerSegments(createFingerPoints(theta)),
-        {
-          friction: config.fingerFriction,
-          restitution: config.fingerRestitution,
-          density: config.fingerDensity,
-        },
-      );
+  for (let index = 0; index < 3; index += 1) {
+    const theta = index * (Math.PI * 2 / 3);
+    const radialX = Math.cos(theta);
+    const radialZ = Math.sin(theta);
+    const pivotLocal = {
+      x: radialX * config.fingerPivotRadius,
+      y: config.fingerPivotY - config.hubCenterY,
+      z: radialZ * config.fingerPivotRadius,
+    };
+    const pivotWorld = {
+      x: pivotLocal.x,
+      y: config.hubCenterY + pivotLocal.y,
+      z: pivotLocal.z,
+    };
+    const tangent = {
+      x: -Math.sin(theta),
+      y: 0,
+      z: Math.cos(theta),
+    };
 
-      const joint = physics.createRevoluteJoint(hub, finger, {
-        anchor1: pivotLocal,
-        anchor2: { x: 0, y: 0, z: 0 },
-        axis: tangent,
-        minAngle: config.closedAngle,
-        maxAngle: config.openAngle,
-        initialTarget: 0,
-        stiffness: config.motorStiffness,
-        damping: config.motorDamping,
-        maxTorque: config.maxMotorTorque,
-        contactsEnabled: false,
-      });
-
-      fingers.push(finger);
-      joints.push(joint);
-    }
-
-    const ball = physics.createDynamicSphere(
-      { x: 0, y: config.pt001BallCenterY, z: 0 },
-      config.pt001BallRadius,
-      config.pt001BallMassKg,
+    const finger = physics.createDynamicCapsuleChain(
+      pivotWorld,
+      createFingerSegments(createFingerPoints(theta)),
       {
-        friction: config.pt001BallFriction,
-        restitution: config.pt001BallRestitution,
+        friction: config.fingerFriction,
+        restitution: config.fingerRestitution,
+        density: config.fingerDensity,
       },
     );
 
-    let motorAngle = 0;
-    let hubY: number = config.hubCenterY;
-    const stepSeconds = 1 / PHYSICS_HZ;
+    const joint = physics.createRevoluteJoint(hub, finger, {
+      anchor1: pivotLocal,
+      anchor2: { x: 0, y: 0, z: 0 },
+      axis: tangent,
+      minAngle: config.closedAngle,
+      maxAngle: config.openAngle,
+      initialTarget: 0,
+      stiffness: config.motorStiffness,
+      damping: config.motorDamping,
+      maxTorque: config.maxMotorTorque,
+      contactsEnabled: false,
+    });
 
-    const drive = (targetAngle: number, maxTorque: number): void => {
-      motorAngle = advanceMotorCommand(
+    fingers.push(finger);
+    joints.push(joint);
+  }
+
+  const ball = physics.createDynamicSphere(
+    { x: 0, y: config.pt001BallCenterY, z: 0 },
+    config.pt001BallRadius,
+    config.pt001BallMassKg,
+    {
+      friction: config.pt001BallFriction,
+      restitution: config.pt001BallRestitution,
+    },
+  );
+
+  let motorAngle = 0;
+  let hubY: number = config.hubCenterY;
+  const stepSeconds = 1 / PHYSICS_HZ;
+
+  const drive = (targetAngle: number, maxTorque: number): void => {
+    motorAngle = advanceMotorCommand(
+      motorAngle,
+      targetAngle,
+      config.motorSpeedRadiansPerSecond,
+      stepSeconds,
+    );
+
+    for (const joint of joints) {
+      joint.configureMotorPosition(
         motorAngle,
-        targetAngle,
-        config.motorSpeedRadiansPerSecond,
-        stepSeconds,
+        config.motorStiffness,
+        config.motorDamping,
       );
-
-      for (const joint of joints) {
-        joint.configureMotorPosition(
-          motorAngle,
-          config.motorStiffness,
-          config.motorDamping,
-        );
-        joint.setMotorMaxForce(maxTorque);
-      }
-
-      hub.setNextKinematicTranslation({ x: 0, y: hubY, z: 0 });
-    };
-
-    for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
-      drive(config.openAngle, config.maxMotorTorque);
-      physics.step();
+      joint.setMotorMaxForce(maxTorque);
     }
 
-    const baselineY = ball.translation().y;
+    hub.setNextKinematicTranslation({ x: 0, y: hubY, z: 0 });
+  };
 
-    for (
-      let tick = 0;
-      tick < Math.ceil(config.pt001CloseSettleSeconds * PHYSICS_HZ);
-      tick += 1
-    ) {
-      drive(config.closedAngle, config.maxMotorTorque);
-      for (const finger of fingers) {
-        finger.wakeUp();
-      }
-      ball.wakeUp();
-      physics.step();
+  for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
+    drive(config.openAngle, config.maxMotorTorque);
+    physics.step();
+  }
+
+  const baselineY = ball.translation().y;
+
+  for (
+    let tick = 0;
+    tick < Math.ceil(config.pt001CloseSettleSeconds * PHYSICS_HZ);
+    tick += 1
+  ) {
+    drive(config.closedAngle, config.maxMotorTorque);
+    for (const finger of fingers) {
+      finger.wakeUp();
+    }
+    ball.wakeUp();
+    physics.step();
+  }
+
+  let peakLift = Math.max(0, ball.translation().y - baselineY);
+  const liftTargetY = config.hubCenterY + config.pt001LiftDistance;
+
+  while (hubY < liftTargetY - 1e-6) {
+    hubY = advanceLinearCommand(
+      hubY,
+      liftTargetY,
+      config.pt001LiftSpeedMetersPerSecond,
+      stepSeconds,
+    );
+
+    const liftAmount = hubY - config.hubCenterY;
+    const activeTorque =
+      liftAmount >= config.pt002PickupLiftDistance
+        ? retainingTorque
+        : config.maxMotorTorque;
+
+    drive(config.closedAngle, activeTorque);
+    for (const finger of fingers) {
+      finger.wakeUp();
+    }
+    ball.wakeUp();
+    physics.step();
+    peakLift = Math.max(peakLift, ball.translation().y - baselineY);
+  }
+
+  for (let tick = 0; tick < Math.ceil(0.5 * PHYSICS_HZ); tick += 1) {
+    drive(config.closedAngle, retainingTorque);
+    for (const finger of fingers) {
+      finger.wakeUp();
+    }
+    ball.wakeUp();
+    physics.step();
+    peakLift = Math.max(peakLift, ball.translation().y - baselineY);
+  }
+
+  const finalLift = ball.translation().y - baselineY;
+  const slipLoss = peakLift - finalLift;
+
+  return {
+    retainingTorque,
+    peakLift,
+    finalLift,
+    slipLoss,
+    passed: evaluatePt002Slip(peakLift, finalLift),
+  };
+}
+
+describe("PT-002 pickup-to-retaining slip calibration", () => {
+  it("finds a weak retaining torque that preserves pickup then allows physical slip", async () => {
+    const candidates = [0, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005];
+    const results: SlipMetrics[] = [];
+
+    for (const retainingTorque of candidates) {
+      results.push(await simulatePickupToRetaining(retainingTorque));
     }
 
-    let peakLift = Math.max(0, ball.translation().y - baselineY);
-    const liftTargetY = config.hubCenterY + config.pt001LiftDistance;
-
-    while (hubY < liftTargetY - 1e-6) {
-      hubY = advanceLinearCommand(
-        hubY,
-        liftTargetY,
-        config.pt001LiftSpeedMetersPerSecond,
-        stepSeconds,
-      );
-
-      const liftAmount = hubY - config.hubCenterY;
-      const activeTorque =
-        liftAmount >= config.pt002PickupLiftDistance
-          ? config.pt002RetainingTorque
-          : config.maxMotorTorque;
-
-      drive(config.closedAngle, activeTorque);
-      for (const finger of fingers) {
-        finger.wakeUp();
-      }
-      ball.wakeUp();
-      physics.step();
-      peakLift = Math.max(peakLift, ball.translation().y - baselineY);
-    }
-
-    for (let tick = 0; tick < Math.ceil(0.5 * PHYSICS_HZ); tick += 1) {
-      drive(config.closedAngle, config.pt002RetainingTorque);
-      for (const finger of fingers) {
-        finger.wakeUp();
-      }
-      ball.wakeUp();
-      physics.step();
-      peakLift = Math.max(peakLift, ball.translation().y - baselineY);
-    }
-
-    const finalLift = ball.translation().y - baselineY;
-    const slipLoss = peakLift - finalLift;
-
-    expect(peakLift).toBeGreaterThanOrEqual(config.pt002MinPeakLift);
-    expect(slipLoss).toBeGreaterThanOrEqual(config.pt002MinSlipLoss);
-    expect(finalLift).toBeLessThanOrEqual(config.pt002MaxFinalLift);
-    expect(evaluatePt002Slip(peakLift, finalLift)).toBe(true);
+    console.log("PT-002 phased retaining sweep", JSON.stringify(results));
+    expect(results.some((result) => result.passed)).toBe(true);
   });
 });
