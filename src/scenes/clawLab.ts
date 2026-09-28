@@ -416,10 +416,10 @@ export function createClawLabScene(
 
   let targetState: ClawTargetState = "OPEN";
   let commandedAngle = 0;
-  let hubCommandY = config.hubCenterY;
+  let hubCommandY: number = config.hubCenterY;
   let pt001Phase: Pt001Phase = "READY";
   let pt001PhaseSeconds = 0;
-  let ballReferenceY = config.pt001BallCenterY;
+  let ballReferenceY: number = config.pt001BallCenterY;
   let pt001Result = "NOT RUN";
 
   const wakeFingers = (): void => {
