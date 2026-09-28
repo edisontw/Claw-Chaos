@@ -49,7 +49,7 @@ export const CLAW_LAB_CONFIG = {
   pt001PassLiftDelta: 0.08,
 
   pt002PickupLiftDistance: 0.06,
-  pt002RetainingTorque: 0.005,
+  pt002RetainingTorque: 0.003,
   pt002MinPeakLift: 0.03,
   pt002MinSlipLoss: 0.04,
   pt002MaxFinalLift: 0.03,
