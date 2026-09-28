@@ -74,7 +74,7 @@ export const CLAW_LAB_CONFIG = {
   pt004SupportHalfY: 0.25,
   pt004SupportHalfX: 0.08,
   pt004SupportHalfZ: 0.07,
-  pt004BodyCenterY: 0.638,
+  pt004BodyCenterY: 0.643,
   pt004MinPeakLift: 0.035,
   pt004MinPeakRotationRadians: 0.20,
   pt004MinAsymmetryX: 0.025,
