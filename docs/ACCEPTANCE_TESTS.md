@@ -39,6 +39,14 @@ Expected:
 Pass:
 - sphere reaches target lift height without solver instability.
 
+Implementation status — 2026-09-28:
+- **Automated PASS**
+- current lab sphere: radius 0.055 m, mass 0.080 kg, friction 0.90
+- lab-only hub lift command: 0.18 m
+- regression requires sphere lift delta >= 0.08 m
+- sphere remains a dynamic rigid body with no parent, weld, or claw-prize joint
+- manual visual realism check remains useful on the deployed build via `P`
+
 ## 4. PT-002 Low-friction ball slip
 
 Change only:
