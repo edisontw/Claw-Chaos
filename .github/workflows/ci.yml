@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify GitHub Pages base path
+        shell: bash
+        run: |
+          if grep -Eq '(src|href)="/assets/' dist/index.html; then
+            echo "Found a root-relative production asset path."
+            cat dist/index.html
+            exit 1
+          fi
+          grep -Eq '(src|href)="/Claw-Chaos/assets/' dist/index.html
+
+      - name: Preview smoke test
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/claw-chaos-preview.log 2>&1 &
+          PREVIEW_PID=$!
+          trap 'kill "$PREVIEW_PID" 2>/dev/null || true' EXIT
+
+          READY=0
+          for attempt in {1..30}; do
+            if curl --fail --silent http://127.0.0.1:4173/Claw-Chaos/ -o /tmp/claw-chaos-index.html; then
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/claw-chaos-preview.log
+            exit 1
+          fi
+
+          ASSET_PATH=$(grep -oE '/Claw-Chaos/assets/[^"]+\.js' /tmp/claw-chaos-index.html | head -n 1)
+          test -n "$ASSET_PATH"
+          curl --fail --silent "http://127.0.0.1:4173$ASSET_PATH" -o /dev/null
+          echo "Preview smoke test passed: $ASSET_PATH"
