@@ -24,7 +24,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 **M01 in progress — three-prong claw laboratory mechanics are live**
 
-M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, a passing PT-001 centered-ball pickup regression, and a passing PT-002 pickup-to-retaining slip regression. Both outcomes come from physical contacts and motor force changes; there is no prize parenting, hidden weld, scripted release, or success roll.
+M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, passing PT-001 centered-ball pickup and PT-002 retaining-force slip regressions, plus a passing PT-003 off-center box rotation regression. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation, or success roll.
 
 ### First milestone
 
@@ -101,7 +101,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with **PT-003 off-center box rotation**.
+Continue **M01 — Claw Physics Laboratory** with **PT-004 teddy limb hook**.
 
 The current `claw-lab` now provides:
 - rigid hub plus three independent dynamic fingers,
@@ -117,9 +117,11 @@ The current `claw-lab` now provides:
 - PT-001 PASS/FAIL and ball lift telemetry,
 - `?experiment=pt002` pickup→retaining-force slip mode,
 - PT-002 peak-lift/slip-loss/active-torque telemetry,
+- `?experiment=pt003` off-center rectangular-box rotation scene,
+- visible PT-003 COM and orientation markers,
 - active GitHub Pages deployment.
 
-PT-001 and PT-002 are automated PASS. PT-002 keeps the same sphere material and uses a physical force-phase change: 2.5 N·m pickup torque, then 0.003 N·m retaining torque after 0.06 m of lab lift. Next add an off-center rectangular box and verify rotation emerges from contact torque.
+PT-001, PT-002 and PT-003 are automated PASS. PT-003 uses a 0.04 m claw-to-COM offset and produces about 0.122 rad of natural rigid-body rotation without scripted angular motion. Next add a simple compound teddy and verify geometry-only limb hooking.
 
 ## Status
 
