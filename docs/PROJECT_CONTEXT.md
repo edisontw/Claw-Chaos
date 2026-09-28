@@ -324,8 +324,19 @@ Current provisional geometry:
 - pivot radius 50 mm
 - finger rod diameter 9 mm
 - segmented finger path about 246 mm
-- open tip span about 296 mm in command-space geometry
-- open/closed targets +0.22 / -0.42 rad
+- open tip span about 348 mm in command-space geometry
+- open/closed targets +0.35 / -0.42 rad
+
+### Open-angle calibration — complete
+
+After visual review against common commercial 3-prong claws, the open target was widened before PT-002:
+
+- open joint target: +0.22 → +0.35 rad
+- approximate open angle: 12.6° → 20.1°
+- command-space tip span: about 296 mm → about 348 mm
+- closed target remains -0.42 rad
+- finger geometry, friction, mass, motor speed, stiffness/damping and max torque remain unchanged
+- PT-001 must continue to pass after this calibration
 
 ### PT-001 centered ball pickup — automated PASS
 
