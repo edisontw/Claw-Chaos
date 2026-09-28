@@ -1,6 +1,6 @@
 # Physics Specification
 
-Version: 0.1  
+Version: 0.2  
 Date: 2026-09-28
 
 ## 1. Purpose
