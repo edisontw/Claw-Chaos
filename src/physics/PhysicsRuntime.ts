@@ -33,6 +33,19 @@ export interface CapsuleSegmentSpec {
   radius: number;
 }
 
+export type CompoundColliderSpec =
+  | {
+      shape: "sphere";
+      center: Vec3;
+      radius: number;
+    }
+  | {
+      shape: "capsule";
+      start: Vec3;
+      end: Vec3;
+      radius: number;
+    };
+
 export interface RevoluteJointHandle {
   configureMotorPosition(targetPos: number, stiffness: number, damping: number): void;
   setMotorMaxForce(maxForce: number): void;
@@ -210,6 +223,88 @@ export class PhysicsRuntime {
     }
 
     this.world.createCollider(collider, body);
+
+    this.dynamicBodyCountValue += 1;
+    return body;
+  }
+
+  createDynamicCompound(
+    origin: Vec3,
+    colliders: readonly CompoundColliderSpec[],
+    massKg: number,
+    material: CuboidMaterialOptions = {},
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z),
+    );
+
+    const totalVolume = colliders.reduce((sum, collider) => {
+      if (collider.shape === "sphere") {
+        return sum + (4 / 3) * Math.PI * collider.radius ** 3;
+      }
+
+      const dx = collider.end.x - collider.start.x;
+      const dy = collider.end.y - collider.start.y;
+      const dz = collider.end.z - collider.start.z;
+      const length = Math.hypot(dx, dy, dz);
+      const cylinderLength = Math.max(0, length - 2 * collider.radius);
+      const cylinderVolume =
+        Math.PI * collider.radius ** 2 * cylinderLength;
+      const sphereVolume = (4 / 3) * Math.PI * collider.radius ** 3;
+      return sum + cylinderVolume + sphereVolume;
+    }, 0);
+
+    const density =
+      totalVolume > Number.EPSILON ? massKg / totalVolume : undefined;
+
+    for (const collider of colliders) {
+      let descriptor;
+
+      if (collider.shape === "sphere") {
+        descriptor = RAPIER.ColliderDesc.ball(collider.radius).setTranslation(
+          collider.center.x,
+          collider.center.y,
+          collider.center.z,
+        );
+      } else {
+        const dx = collider.end.x - collider.start.x;
+        const dy = collider.end.y - collider.start.y;
+        const dz = collider.end.z - collider.start.z;
+        const length = Math.hypot(dx, dy, dz);
+
+        if (length <= Number.EPSILON) {
+          continue;
+        }
+
+        const center = {
+          x: (collider.start.x + collider.end.x) * 0.5,
+          y: (collider.start.y + collider.end.y) * 0.5,
+          z: (collider.start.z + collider.end.z) * 0.5,
+        };
+        const rotation = rotationFromYDirection({ x: dx, y: dy, z: dz });
+        const halfHeight = Math.max(
+          0.0001,
+          length * 0.5 - collider.radius,
+        );
+
+        descriptor = RAPIER.ColliderDesc.capsule(
+          halfHeight,
+          collider.radius,
+        )
+          .setTranslation(center.x, center.y, center.z)
+          .setRotation(rotation);
+      }
+
+      descriptor = descriptor
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08);
+
+      if (density !== undefined) {
+        descriptor = descriptor.setDensity(density);
+      }
+
+      this.world.createCollider(descriptor, body);
+    }
 
     this.dynamicBodyCountValue += 1;
     return body;
