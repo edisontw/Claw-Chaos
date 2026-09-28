@@ -59,6 +59,8 @@ without parenting or magnetically attaching the prize to the claw.
 - [Acceptance Tests](docs/ACCEPTANCE_TESTS.md)
 - [Project Context](docs/PROJECT_CONTEXT.md)
 - [Real-Machine Reference Notes](docs/REAL_MACHINE_REFERENCES.md)
+- [Real-Machine Calibration Plan](docs/CALIBRATION_PLAN.md)
+- [GitHub Pages Deployment](docs/DEPLOYMENT.md)
 
 ## Core non-negotiables
 
@@ -95,6 +97,20 @@ The design is inspired by real commercial machine behavior rather than a single 
 - Taiwan self-service claw-machine rulesets and guaranteed-prize operation
 
 See the design documents for which behaviors are simulated directly and which are approximated.
+
+## Immediate next step
+
+Start **M00 — Repository & simulation harness** from `docs/ROADMAP.md`.
+
+M00 must establish:
+- Vite/TypeScript application scaffold,
+- fixed-step physics harness,
+- test-scene loader,
+- basic CI/tests,
+- GitHub Pages-safe `/Claw-Chaos/` asset base,
+- a production build that succeeds before Pages deployment is enabled.
+
+Do not begin the full arcade environment before the physics laboratory and deployment harness are proven.
 
 ## Status
 
