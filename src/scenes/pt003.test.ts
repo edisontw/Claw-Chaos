@@ -192,6 +192,14 @@ describe("PT-003 off-center box rotation", () => {
       peakLift = Math.max(peakLift, box.translation().y - referenceY);
     }
 
+    console.log("PT-003 metrics", JSON.stringify({
+      passiveRotation,
+      peakRotation,
+      peakLift,
+      finalPosition: box.translation(),
+      finalRotation: box.rotation(),
+    }));
+
     expect(passiveRotation).toBeLessThanOrEqual(
       config.pt003MaxPassiveRotationRadians,
     );
