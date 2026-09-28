@@ -304,6 +304,29 @@ Verification:
 - GitHub Pages deployment workflow is active on `main`
 - public target remains `https://edisontw.github.io/Claw-Chaos/`
 
+### M01 geometry refinement — complete
+
+The first mechanical slice was followed by a realistic-geometry refinement on 2026-09-28:
+
+- blocky hub visuals replaced with a stacked cylindrical motor housing and lower collar
+- each finger remains one independent rigid body and one revolute joint
+- straight bar finger replaced by a three-segment outward sweep with an inward hook tip
+- each finger uses three capsule colliders attached to the same rigid body
+- visible rod centerlines follow the same segmented path as the physics colliders
+- provisional geometry is centralized in `CLAW_LAB_CONFIG`
+- calibration-ready reference values are documented in `docs/CLAW_GEOMETRY_BASELINE.md`
+- the reference dimensions are engineering approximations inferred from supplied real-claw images, not measurements of a named commercial machine
+- automated geometry tests cover path length, rod diameter and open/closed tip-span envelope
+
+Current provisional geometry:
+- motor housing OD 90 mm
+- lower collar OD 110 mm
+- pivot radius 50 mm
+- finger rod diameter 9 mm
+- segmented finger path about 246 mm
+- open tip span about 296 mm in command-space geometry
+- open/closed targets +0.22 / -0.42 rad
+
 M01 as a whole is **not complete**. COM visualization, prize-contact experiments and M01 exit criteria remain.
 
 ## Current next step
