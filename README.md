@@ -58,6 +58,7 @@ without parenting or magnetically attaching the prize to the claw.
 - [Development Roadmap](docs/ROADMAP.md)
 - [Acceptance Tests](docs/ACCEPTANCE_TESTS.md)
 - [Project Context](docs/PROJECT_CONTEXT.md)
+- [Real-Machine Reference Notes](docs/REAL_MACHINE_REFERENCES.md)
 
 ## Core non-negotiables
 
@@ -98,4 +99,3 @@ See the design documents for which behaviors are simulated directly and which ar
 ## Status
 
 This repository is the source of truth for the Claw Chaos project.
-
