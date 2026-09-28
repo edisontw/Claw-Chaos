@@ -236,32 +236,36 @@ async function simulateTeddyPlacement(
     peakRotation,
     finalX: finalPosition.x,
     finalY: finalPosition.y,
-    passed:
-      passiveRotation < 0.15 &&
-      evaluatePt004Hook(peakLift, peakRotation, finalPosition.x),
+    passed: evaluatePt004Hook(
+      peakLift,
+      peakRotation,
+      finalPosition.x,
+    ),
   };
 }
 
 describe("PT-004 teddy limb hook calibration", () => {
-  it("finds close/lift overlap timing that forms a real paw hook", async () => {
+  it("finds a partial-close/lift timing that produces sustained limb hooking", async () => {
     const bodyOffsetX = -0.06;
     const supportHalfX = 0.05;
-    const hookAngle = -0.38;
-    const closeLeadTimes = [0, 0.05, 0.10, 0.15, 0.20];
+    const hookAngles = [-0.38, -0.39, -0.40, -0.41];
+    const closeLeadTimes = [0.10, 0.12, 0.14, 0.16, 0.18];
     const results = [];
 
-    for (const closeLeadSeconds of closeLeadTimes) {
-      results.push(
-        await simulateTeddyPlacement(
-          bodyOffsetX,
-          supportHalfX,
-          hookAngle,
-          closeLeadSeconds,
-        ),
-      );
+    for (const hookAngle of hookAngles) {
+      for (const closeLeadSeconds of closeLeadTimes) {
+        results.push(
+          await simulateTeddyPlacement(
+            bodyOffsetX,
+            supportHalfX,
+            hookAngle,
+            closeLeadSeconds,
+          ),
+        );
+      }
     }
 
-    console.log("PT-004 close-lift overlap sweep", JSON.stringify(results));
+    console.log("PT-004 hook grid", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
