@@ -27,11 +27,11 @@ describe("M01 realistic three-prong geometry", () => {
     const openSpan = computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle);
     const closedSpan = computeFingerTipSpan(CLAW_LAB_CONFIG.closedAngle);
 
-    expect(openSpan).toBeGreaterThan(0.28);
-    expect(openSpan).toBeLessThan(0.31);
+    expect(openSpan).toBeGreaterThan(0.34);
+    expect(openSpan).toBeLessThan(0.36);
     expect(closedSpan).toBeGreaterThanOrEqual(0);
     expect(closedSpan).toBeLessThan(0.02);
-    expect(openSpan).toBeGreaterThan(closedSpan * 10);
+    expect(openSpan).toBeGreaterThan(closedSpan * 15);
   });
 
   it("uses three curved-path segments rather than one straight finger bar", () => {
