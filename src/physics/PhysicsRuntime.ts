@@ -137,6 +137,53 @@ export class PhysicsRuntime {
     return body;
   }
 
+  createKinematicCylinder(
+    center: Vec3,
+    halfHeight: number,
+    radius: number,
+    friction = 0.55,
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(
+        center.x,
+        center.y,
+        center.z,
+      ),
+    );
+
+    this.world.createCollider(
+      RAPIER.ColliderDesc.cylinder(halfHeight, radius).setFriction(friction),
+      body,
+    );
+
+    return body;
+  }
+
+  createDynamicSphere(
+    center: Vec3,
+    radius: number,
+    massKg: number,
+    material: CuboidMaterialOptions = {},
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic().setTranslation(center.x, center.y, center.z),
+    );
+
+    const volume = (4 / 3) * Math.PI * radius ** 3;
+    const density = massKg / volume;
+
+    this.world.createCollider(
+      RAPIER.ColliderDesc.ball(radius)
+        .setDensity(density)
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08),
+      body,
+    );
+
+    this.dynamicBodyCountValue += 1;
+    return body;
+  }
+
   createDynamicCuboid(
     center: Vec3,
     halfExtents: Vec3,
