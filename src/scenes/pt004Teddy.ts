@@ -26,16 +26,28 @@ export const PT004_TEDDY_PARTS: readonly TeddyPartVisual[] = [
   {
     kind: "capsule",
     name: "left-arm",
-    start: { x: -0.03, y: 0.025, z: 0 },
-    end: { x: -0.095, y: -0.005, z: 0 },
+    start: { x: -0.03, y: 0.02, z: 0 },
+    end: { x: -0.095, y: -0.055, z: 0 },
     radius: 0.016,
   },
   {
     kind: "capsule",
     name: "right-arm",
-    start: { x: 0.03, y: 0.025, z: 0 },
-    end: { x: 0.095, y: -0.005, z: 0 },
+    start: { x: 0.03, y: 0.02, z: 0 },
+    end: { x: 0.095, y: -0.055, z: 0 },
     radius: 0.016,
+  },
+  {
+    kind: "sphere",
+    name: "left-paw",
+    center: { x: -0.095, y: -0.055, z: 0 },
+    radius: 0.023,
+  },
+  {
+    kind: "sphere",
+    name: "right-paw",
+    center: { x: 0.095, y: -0.055, z: 0 },
+    radius: 0.023,
   },
   {
     kind: "capsule",
