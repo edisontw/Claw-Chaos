@@ -12,14 +12,16 @@ import {
 } from "./clawLab";
 
 interface SlipMetrics {
-  friction: number;
+  retainingTorque: number;
   peakLift: number;
   finalLift: number;
   slipLoss: number;
   passed: boolean;
 }
 
-async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
+async function simulateRetainingTorque(
+  retainingTorque: number,
+): Promise<SlipMetrics> {
   const config = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
 
@@ -58,7 +60,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
     const pivotWorld = {
       x: pivotLocal.x,
       y: config.hubCenterY + pivotLocal.y,
-      z: pivotLocal.z,
+      z: radialZ * config.fingerPivotRadius,
     };
     const tangent = {
       x: -Math.sin(theta),
@@ -98,7 +100,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
     config.pt001BallRadius,
     config.pt001BallMassKg,
     {
-      friction,
+      friction: config.pt001BallFriction,
       restitution: config.pt001BallRestitution,
     },
   );
@@ -107,7 +109,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
   let hubY: number = config.hubCenterY;
   const stepSeconds = 1 / PHYSICS_HZ;
 
-  const drive = (targetAngle: number): void => {
+  const drive = (targetAngle: number, maxTorque: number): void => {
     motorAngle = advanceMotorCommand(
       motorAngle,
       targetAngle,
@@ -121,14 +123,14 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
         config.motorStiffness,
         config.motorDamping,
       );
-      joint.setMotorMaxForce(config.maxMotorTorque);
+      joint.setMotorMaxForce(maxTorque);
     }
 
     hub.setNextKinematicTranslation({ x: 0, y: hubY, z: 0 });
   };
 
   for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
-    drive(config.openAngle);
+    drive(config.openAngle, config.maxMotorTorque);
     physics.step();
   }
 
@@ -139,7 +141,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
     tick < Math.ceil(config.pt001CloseSettleSeconds * PHYSICS_HZ);
     tick += 1
   ) {
-    drive(config.closedAngle);
+    drive(config.closedAngle, config.maxMotorTorque);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -157,7 +159,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
       config.pt001LiftSpeedMetersPerSecond,
       stepSeconds,
     );
-    drive(config.closedAngle);
+    drive(config.closedAngle, retainingTorque);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -167,7 +169,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
   }
 
   for (let tick = 0; tick < Math.ceil(0.5 * PHYSICS_HZ); tick += 1) {
-    drive(config.closedAngle);
+    drive(config.closedAngle, retainingTorque);
     for (const finger of fingers) {
       finger.wakeUp();
     }
@@ -180,7 +182,7 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
   const slipLoss = peakLift - finalLift;
 
   return {
-    friction,
+    retainingTorque,
     peakLift,
     finalLift,
     slipLoss,
@@ -188,16 +190,16 @@ async function simulateLowFrictionBall(friction: number): Promise<SlipMetrics> {
   };
 }
 
-describe("PT-002 low-friction ball slip calibration", () => {
-  it("finds a friction-only regime that first lifts and then slips", async () => {
-    const candidates = [0.35, 0.45, 0.55, 0.65, 0.75, 0.8];
+describe("PT-002 retaining-force slip calibration", () => {
+  it("finds a retaining torque that first lifts and then slips", async () => {
+    const candidates = [0.1, 0.2, 0.35, 0.5, 0.75, 1, 1.5, 2];
     const results: SlipMetrics[] = [];
 
-    for (const friction of candidates) {
-      results.push(await simulateLowFrictionBall(friction));
+    for (const retainingTorque of candidates) {
+      results.push(await simulateRetainingTorque(retainingTorque));
     }
 
-    console.log("PT-002 friction sweep", JSON.stringify(results));
+    console.log("PT-002 retaining sweep", JSON.stringify(results));
     expect(results.some((result) => result.passed)).toBe(true);
   });
 });
