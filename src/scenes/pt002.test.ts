@@ -197,16 +197,22 @@ async function simulatePickupToRetaining(
   };
 }
 
-describe("PT-002 pickup-to-retaining slip calibration", () => {
-  it("finds a weak retaining torque that preserves pickup then allows physical slip", async () => {
-    const candidates = [0, 0.0005, 0.001, 0.002, 0.003, 0.004, 0.005];
-    const results: SlipMetrics[] = [];
+describe("PT-002 pickup-to-retaining slip", () => {
+  it("first lifts, then physically loses support under the calibrated retaining torque", async () => {
+    const result = await simulatePickupToRetaining(
+      CLAW_LAB_CONFIG.pt002RetainingTorque,
+    );
 
-    for (const retainingTorque of candidates) {
-      results.push(await simulatePickupToRetaining(retainingTorque));
-    }
-
-    console.log("PT-002 phased retaining sweep", JSON.stringify(results));
-    expect(results.some((result) => result.passed)).toBe(true);
+    expect(result.retainingTorque).toBe(CLAW_LAB_CONFIG.pt002RetainingTorque);
+    expect(result.peakLift).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt002MinPeakLift,
+    );
+    expect(result.slipLoss).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt002MinSlipLoss,
+    );
+    expect(result.finalLift).toBeLessThanOrEqual(
+      CLAW_LAB_CONFIG.pt002MaxFinalLift,
+    );
+    expect(result.passed).toBe(true);
   });
 });
