@@ -146,6 +146,18 @@ Fail:
 - finger penetrates through box,
 - all fingers snap to identical final angle regardless of contact.
 
+Implementation status — 2026-09-29:
+- **Automated PASS**
+- isolated scene: `?scene=claw-lab&experiment=pt005`
+- one static rigid cuboid blocker is placed only in finger 0's (+X) closing path
+- all three fingers receive the same motor target, stiffness, damping and max torque
+- acceptance is measured from actual rigid-body angular travel relative to the open pose
+- calibrated blocked-finger travel: about 0.000 rad
+- calibrated free-finger travels: about 0.314 / 0.314 rad
+- PASS thresholds: each free finger >= 0.25 rad, blocked finger <= 0.22 rad, and free-minus-blocked separation >= 0.06 rad
+- no finger transform override, joint teleport, collision bypass or shared-angle enforcement
+- manual visual test: open `?scene=claw-lab&experiment=pt005`, wait for the claw to open, then press `P`
+
 ## 8. PT-006 Swing from braking
 
 Setup:
