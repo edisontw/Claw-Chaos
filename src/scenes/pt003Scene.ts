@@ -292,12 +292,6 @@ export function createPt003Scene(
     ),
   );
 
-  const comMarker = new THREE.Mesh(
-    new THREE.SphereGeometry(0.006, 12, 8),
-    new THREE.MeshBasicMaterial({ color: 0xffd166 }),
-  );
-  boxVisual.add(comMarker);
-
   const orientationMarker = new THREE.Line(
     new THREE.BufferGeometry().setFromPoints([
       new THREE.Vector3(0, config.pt003BoxSizeY * 0.52, 0),
@@ -394,6 +388,7 @@ export function createPt003Scene(
 
   return {
     bindings,
+    massPropertiesDebugTargets: [{ body: boxBody, label: "pt003-box" }],
     milestone: "M01 / PT003",
     camera: {
       position: [0.62, 0.72, 0.88],
@@ -498,9 +493,9 @@ export function createPt003Scene(
           " rad",
         "Passive rotation " + passiveRotationAtStart.toFixed(3) + " rad",
         "Peak lift        " + peakLift.toFixed(3) + " m",
-        "COM              geometric center (yellow marker)",
+        "COM debug        Rapier actual COM (yellow) / origin (magenta)",
         "Active torque    " + config.maxMotorTorque.toFixed(3) + " N·m",
-        "Controls         P run PT-003 | C close | O open | Space toggle | D debug",
+        "Controls         P run PT-003 | C close | O open | Space toggle | D collider | M COM/origin",
         "Attachment       NONE — box remains an independent dynamic body",
       ];
     },
