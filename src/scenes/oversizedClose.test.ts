@@ -15,6 +15,7 @@ interface CloseMetrics {
   openTravels: number[];
   closeTravels: number[];
   objectPosition?: { x: number; y: number; z: number };
+  stateStayedFiniteAndBounded: boolean;
 }
 
 async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics> {
