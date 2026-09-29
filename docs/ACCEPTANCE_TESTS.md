@@ -239,6 +239,23 @@ Expected:
 Fail:
 - claw remains perfectly vertical.
 
+Implementation status — 2026-09-30:
+- **Automated PASS**
+- position-based kinematic carriage drives a dynamic claw hub through a Rapier spherical joint
+- suspension length: 0.31 m
+- X/Z gantry max speed: 0.45 m/s
+- acceleration: 1.35 m/s²
+- braking: 3.5 m/s²
+- provisional angular damping: 0.55
+- calibrated laboratory run measures about 0.067 m lag during +X acceleration
+- after braking the hub swings about 0.135 m forward relative to carriage
+- peak measured swing angle is about 0.450 rad (~25.8°)
+- final measured suspension distance is about 0.310003 m
+- finite/bounded transform checks PASS at the 120 Hz fixed step
+- no claw parenting to carriage transform and no scripted swing angle is used
+- these values are a behavior-proof baseline, not final real-machine calibration
+- manual visual test: open `?scene=gantry-lab` and press `P`
+
 ## 9. PT-007 Swing amplification
 
 Input:

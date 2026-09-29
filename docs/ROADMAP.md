@@ -405,6 +405,8 @@ Final verification:
 
 # M02 — Gantry & Suspended Claw
 
+**Phase status: IN PROGRESS — slice 1 verified 2026-09-30**
+
 ## Goal
 
 Create the mechanical motion of a real cabinet.
@@ -420,11 +422,46 @@ Create the mechanical motion of a real cabinet.
 
 ## Exit criteria
 
-- claw lags under acceleration
-- hard stop produces a readable swing
-- no rigid-lock effect under the carriage
-- claw returns toward center through damping/gravity
-- motion is stable at target fixed timestep
+- claw lags under acceleration — PASS in PT-006 slice
+- hard stop produces a readable swing — PASS in PT-006 slice
+- no rigid-lock effect under the carriage — PASS in PT-006 slice
+- claw returns toward center through damping/gravity — pending dedicated damping regression
+- motion is stable at target fixed timestep — PASS for current fixed-length PT-006 slice
+
+### Slice 1 implementation record — 2026-09-30
+
+Implemented:
+- fixed-step two-axis X/Z gantry controller
+- max speed 0.45 m/s
+- acceleration 1.35 m/s²
+- braking 3.5 m/s²
+- X rails ±0.30 m; Z rails ±0.24 m
+- kinematic carriage + dynamic claw hub
+- fixed 0.31 m spherical-joint suspension
+- provisional angular damping 0.55 and linear damping 0.04
+- closed M01 finger bodies/joints reused on suspended hub
+- default `gantry-lab` scene with Arrow-key controls
+- automated `P` PT-006 sequence
+- current-phase headless browser smoke now targets `gantry-lab`
+
+PT-006 regression:
+- lag ≈ 0.067 m
+- post-brake forward swing ≈ 0.135 m
+- peak swing ≈ 0.450 rad
+- suspension distance remains ≈ 0.310 m
+- finite/bounded at 120 Hz
+
+Verification: **33 tests PASS**, lint/build/base-path/headless smoke PASS.
+
+Not yet complete:
+- variable suspension/reel length
+- descent/lift mechanics
+- dedicated damping-to-center gate
+- lift/return mechanics
+- PT-007 swing amplification
+- PT-008 momentum during descent
+
+**Next slice:** variable reel length + descent/lift with PT-008 horizontal-momentum preservation.
 
 ---
 

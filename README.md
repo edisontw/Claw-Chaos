@@ -22,9 +22,9 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M01 CLOSED — M02 is the documented next phase**
+**M02 IN PROGRESS — Gantry & Suspended Claw**
 
-M01 — Claw Physics Laboratory is complete. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
+M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
 Final M01 verification baseline:
 - 29 automated tests PASS
@@ -36,7 +36,7 @@ Final M01 verification baseline:
 - COM/origin debug is available with `M`
 - no prize parenting, hidden weld, scripted success/failure, or normal-play prize teleport was introduced
 
-The next phase is **M02 — Gantry & Suspended Claw**. No M02 mechanics are included in the M01 closure change.
+M02 slice 1 is now implemented: fixed-step X/Z carriage motion with explicit speed/acceleration/braking limits, a dynamic claw hub physically suspended from a kinematic carriage through a Rapier spherical joint, and automated PT-006 swing-from-braking verification. The closed M01 three-finger geometry and revolute joints are reused rather than replaced.
 
 ### First milestone
 
@@ -113,17 +113,22 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Begin **M02 — Gantry & Suspended Claw** from the closed M01 physics baseline.
+Continue **M02 — Gantry & Suspended Claw** from the verified fixed-length suspension baseline.
 
-M01 debug/tooling baseline carried forward:
-- `D`: Rapier collider debug
-- `M`: reusable rigid-body COM/origin debug
-- yellow marker: actual Rapier world COM
-- magenta wireframe marker: rigid-body origin
-- connector line appears when origin and COM differ
-- fixed-step physics remains authoritative
+Current M02 slice:
+- default scene: `?scene=gantry-lab`
+- Arrow keys: manual X/Z gantry motion
+- `P`: deterministic PT-006 accelerate → brake → observe swing sequence
+- carriage motion is fixed-step with explicit max speed, acceleration, braking, and rail limits
+- claw hub is dynamic and suspended through a Rapier spherical joint
+- M01 independent fingers remain dynamic/revolute-driven on the suspended hub
+- `D`: collider debug
+- `M`: COM/origin debug
+- 33 automated tests PASS after this slice
 
-Do not reintroduce prize-specific grab logic when adding gantry, suspension, swing, descent, lift, or return behavior.
+PT-006 is a behavior proof, not final real-machine calibration. Current provisional hard-brake run produces about 0.067 m lag, 0.135 m forward swing, and 0.45 rad peak swing.
+
+Next M02 slice should add **variable reel length / vertical descent-lift mechanics** while preserving horizontal momentum. That enables PT-008 and prepares early-close/automatic-close work without starting cabinet/chute mechanics.
 
 ## Status
 

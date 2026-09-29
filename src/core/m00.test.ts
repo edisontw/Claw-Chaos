@@ -49,7 +49,12 @@ describe("M00 deterministic utilities", () => {
     }
   });
 
-  it("selects both laboratory and legacy M00 scenes", () => {
+  it("selects M02, M01, and legacy M00 scenes", () => {
+    expect(parseSceneSelection("?scene=gantry-lab&seed=m02-7")).toEqual({
+      id: "gantry-lab",
+      seed: "m02-7",
+      usedFallback: false,
+    });
     expect(parseSceneSelection("?scene=claw-lab&seed=lab-7")).toEqual({
       id: "claw-lab",
       seed: "lab-7",
@@ -64,7 +69,7 @@ describe("M00 deterministic utilities", () => {
 
   it("falls back safely to the current default scene", () => {
     const selection = parseSceneSelection("?scene=not-a-scene");
-    expect(selection.id).toBe("claw-lab");
+    expect(selection.id).toBe("gantry-lab");
     expect(selection.usedFallback).toBe(true);
   });
 

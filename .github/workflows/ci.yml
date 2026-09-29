@@ -87,21 +87,21 @@ jobs:
               --enable-unsafe-swiftshader \
               --virtual-time-budget=8000 \
               --dump-dom \
-              "http://127.0.0.1:4173/Claw-Chaos/?scene=claw-lab&seed=ci-smoke" \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=gantry-lab&seed=ci-smoke" \
               > "$DOM_FILE" 2> "$LOG_FILE" || true
 
             if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
-               grep -q 'claw-lab' "$DOM_FILE"; then
+               grep -q 'gantry-lab' "$DOM_FILE"; then
               BROWSER_READY=1
               break
             fi
 
-            echo "Headless browser smoke attempt $attempt did not reach claw-lab readiness."
+            echo "Headless browser smoke attempt $attempt did not reach gantry-lab readiness."
             sleep 1
           done
 
           if [ "$BROWSER_READY" -ne 1 ]; then
-            echo "Headless browser failed to initialize claw-lab after 3 attempts."
+            echo "Headless browser failed to initialize gantry-lab after 3 attempts."
             for file in /tmp/claw-chaos-browser-*.log; do
               echo "===== $file ====="
               cat "$file"
@@ -109,4 +109,4 @@ jobs:
             exit 1
           fi
 
-          echo "Preview/browser claw-lab smoke passed: $ASSET_PATH"
+          echo "Preview/browser gantry-lab smoke passed: $ASSET_PATH"

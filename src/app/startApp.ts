@@ -15,6 +15,7 @@ import { createPt004Scene } from "../scenes/pt004Scene";
 import { createPt005Scene } from "../scenes/pt005Scene";
 import { createOversizedCloseScene } from "../scenes/oversizedCloseScene";
 import { createFallingCubeScene } from "../scenes/fallingCube";
+import { createGantryLabScene } from "../scenes/gantryLab";
 import { parseSceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
 
@@ -43,8 +44,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   const experiment = parseClawLabExperiment(window.location.search);
   const testScene: SimulationScene =
-    selection.id === "claw-lab"
-      ? experiment === "pt003"
+    selection.id === "gantry-lab"
+      ? createGantryLabScene(scene, physics)
+      : selection.id === "claw-lab"
+        ? experiment === "pt003"
         ? createPt003Scene(scene, physics)
         : experiment === "pt004"
           ? createPt004Scene(scene, physics)
