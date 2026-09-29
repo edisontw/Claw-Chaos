@@ -69,7 +69,7 @@ export const CLAW_LAB_CONFIG = {
   pt004TeddyMassKg: 0.09,
   pt004TeddyFriction: 0.75,
   pt004TeddyRestitution: 0.02,
-  pt004BodyOffsetX: -0.06,
+  pt004BodyOffsetX: -0.055,
   pt004SupportCenterY: 0.2625,
   pt004SupportHalfY: 0.2625,
   pt004SupportHalfX: 0.05,
@@ -79,8 +79,8 @@ export const CLAW_LAB_CONFIG = {
   pt004MinPeakRotationRadians: 0.20,
   pt004MinAsymmetryX: 0.025,
   pt004InitialRotationX: Math.PI / 2,
-  pt004HookAngle: -0.38,
-  pt004CloseLeadSeconds: 0.10,
+  pt004HookAngle: -0.40,
+  pt004CloseLeadSeconds: 0.16,
 } as const;
 
 export type ClawLabExperiment = "pt001" | "pt002" | "pt003" | "pt004";
