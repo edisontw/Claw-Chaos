@@ -102,9 +102,9 @@ describe("PT-004 hook acceptance helper", () => {
 
 describe("PT-005 blocked-finger acceptance helper", () => {
   it("requires one finger to remain clearly behind two independently closing fingers", () => {
-    expect(evaluatePt005BlockedFinger([0.40, 0.75, 0.74], 0)).toBe(true);
-    expect(evaluatePt005BlockedFinger([0.62, 0.75, 0.74], 0)).toBe(false);
-    expect(evaluatePt005BlockedFinger([0.40, 0.50, 0.74], 0)).toBe(false);
-    expect(evaluatePt005BlockedFinger([0.70, 0.71, 0.72], 0)).toBe(false);
+    expect(evaluatePt005BlockedFinger([0.15, 0.31, 0.30], 0)).toBe(true);
+    expect(evaluatePt005BlockedFinger([0.24, 0.31, 0.30], 0)).toBe(false);
+    expect(evaluatePt005BlockedFinger([0.15, 0.20, 0.30], 0)).toBe(false);
+    expect(evaluatePt005BlockedFinger([0.29, 0.31, 0.30], 0)).toBe(false);
   });
 });
