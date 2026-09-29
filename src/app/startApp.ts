@@ -10,6 +10,7 @@ import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
+import { createPt004Scene } from "../scenes/pt004Scene";
 import { createFallingCubeScene } from "../scenes/fallingCube";
 import { parseSceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
@@ -42,7 +43,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
     selection.id === "claw-lab"
       ? experiment === "pt003"
         ? createPt003Scene(scene, physics)
-        : createClawLabScene(scene, physics, window.location.search)
+        : experiment === "pt004"
+          ? createPt004Scene(scene, physics)
+          : createClawLabScene(scene, physics, window.location.search)
       : createFallingCubeScene(scene, physics, selection.seed);
 
   camera.position.set(...testScene.camera.position);

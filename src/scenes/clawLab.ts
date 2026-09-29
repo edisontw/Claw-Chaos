@@ -65,16 +65,36 @@ export const CLAW_LAB_CONFIG = {
   pt003SupportHalfZ: 0.015,
   pt003MinRotationRadians: 0.10,
   pt003MaxPassiveRotationRadians: 0.03,
+
+  pt004TeddyMassKg: 0.09,
+  pt004TeddyFriction: 0.75,
+  pt004TeddyRestitution: 0.02,
+  pt004BodyOffsetX: -0.055,
+  pt004SupportCenterY: 0.2625,
+  pt004SupportHalfY: 0.2625,
+  pt004SupportHalfX: 0.05,
+  pt004SupportHalfZ: 0.15,
+  pt004BodyCenterY: 0.56,
+  pt004MinPeakLift: 0.035,
+  pt004MinPeakRotationRadians: 0.20,
+  pt004MinAsymmetryX: 0.025,
+  pt004InitialRotationX: Math.PI / 2,
+  pt004HookAngle: -0.40,
+  pt004CloseLeadSeconds: 0.16,
 } as const;
 
-export type ClawLabExperiment = "pt001" | "pt002" | "pt003";
+export type ClawLabExperiment = "pt001" | "pt002" | "pt003" | "pt004";
 type ClawTargetState = "OPEN" | "CLOSED";
 type LabPhase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
 
 export function parseClawLabExperiment(search: string): ClawLabExperiment {
   const requested = new URLSearchParams(search).get("experiment");
 
-  if (requested === "pt002" || requested === "pt003") {
+  if (
+    requested === "pt002" ||
+    requested === "pt003" ||
+    requested === "pt004"
+  ) {
     return requested;
   }
 
@@ -104,6 +124,28 @@ export function quaternionAngleFromIdentity(rotation: {
 
 export function evaluatePt003Rotation(peakRotationRadians: number): boolean {
   return peakRotationRadians >= CLAW_LAB_CONFIG.pt003MinRotationRadians;
+}
+
+export function quaternionAngularDistance(
+  a: { x: number; y: number; z: number; w: number },
+  b: { x: number; y: number; z: number; w: number },
+): number {
+  const dot = Math.abs(
+    a.x * b.x + a.y * b.y + a.z * b.z + a.w * b.w,
+  );
+  return 2 * Math.acos(Math.min(1, Math.max(-1, dot)));
+}
+
+export function evaluatePt004Hook(
+  peakLift: number,
+  peakRotationRadians: number,
+  horizontalOffsetFromClaw: number,
+): boolean {
+  return (
+    peakLift >= CLAW_LAB_CONFIG.pt004MinPeakLift &&
+    peakRotationRadians >= CLAW_LAB_CONFIG.pt004MinPeakRotationRadians &&
+    Math.abs(horizontalOffsetFromClaw) >= CLAW_LAB_CONFIG.pt004MinAsymmetryX
+  );
 }
 
 export function advanceMotorCommand(
