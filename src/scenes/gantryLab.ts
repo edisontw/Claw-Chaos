@@ -318,14 +318,14 @@ export function createGantryLabScene(
   const pressed = new Set<string>();
 
   const manualInput = (): { x: number; z: number } => ({
-    x: (pressed.has("KeyD") || pressed.has("ArrowRight") ? 1 : 0) -
-      (pressed.has("KeyA") || pressed.has("ArrowLeft") ? 1 : 0),
-    z: (pressed.has("KeyS") || pressed.has("ArrowDown") ? 1 : 0) -
-      (pressed.has("KeyW") || pressed.has("ArrowUp") ? 1 : 0),
+    x: (pressed.has("ArrowRight") ? 1 : 0) -
+      (pressed.has("ArrowLeft") ? 1 : 0),
+    z: (pressed.has("ArrowDown") ? 1 : 0) -
+      (pressed.has("ArrowUp") ? 1 : 0),
   });
 
   const startPt006 = (): void => {
-    if (phase !== "READY" && phase !== "COMPLETE") {
+    if (phase !== "READY") {
       return;
     }
     phase = "ACCELERATING";
@@ -477,7 +477,7 @@ export function createGantryLabScene(
           Math.max(0, maximumRelativeX).toFixed(3) +
           " m",
         "Peak swing       " + peakSwingAngle.toFixed(3) + " rad",
-        "Controls         WASD/arrows gantry | P PT-006 | M COM | global D collider",
+        "Controls         Arrow keys gantry | P PT-006 | M COM | D collider",
         "Reel             fixed-length in this slice; variable reel is next",
       ];
     },
