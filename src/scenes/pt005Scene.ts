@@ -280,28 +280,6 @@ export function createPt005Scene(
   let openRotations = fingerBodies.map((body) => body.rotation());
   let travels = [0, 0, 0];
 
-  const drive = (targetAngle: number): void => {
-    commandedAngle = advanceMotorCommand(
-      commandedAngle,
-      targetAngle,
-      config.motorSpeedRadiansPerSecond,
-      1 / 120,
-    );
-
-    for (const joint of joints) {
-      joint.configureMotorPosition(
-        commandedAngle,
-        config.motorStiffness,
-        config.motorDamping,
-      );
-      joint.setMotorMaxForce(config.maxMotorTorque);
-    }
-
-    for (const body of fingerBodies) {
-      body.wakeUp();
-    }
-  };
-
   const startExperiment = (): void => {
     if (labPhase !== "READY") {
       return;
