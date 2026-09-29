@@ -270,14 +270,46 @@ Verification:
 - PT-003 integration regression PASS
 - lint/build/base-path/headless browser smoke PASS
 
+### PT-004 record — 2026-09-29
+
+**Automated status: PASS**
+
+Implemented:
+- isolated `?experiment=pt004` scene path
+- Tier A compound Teddy: one dynamic rigid body, multiple primitive colliders
+- head, torso, upper/forearms, paws and legs all participate in collision
+- lying starting pose with physical settling
+- right paw/forearm geometry used as the hook target
+- visible hook-region and COM/origin markers
+- same collider definition shared by scene and regression test
+- no hook flag, parenting, weld, prize joint or scripted angular/lift motion
+
+Calibrated baseline:
+- mass 0.090 kg
+- friction 0.75
+- Teddy center offset -0.055 m
+- hook target -0.40 rad
+- close lead 0.16 s
+- peak lift about 0.045 m
+- sustained hanging time above 0.035 m: about 0.492 s
+- peak rotation about 0.478 rad (~27.4°)
+- final state naturally settles back near the support after contact loss
+
+Verification:
+- 23 automated tests PASS
+- PT-001 PASS
+- PT-002 PASS
+- PT-003 PASS
+- PT-004 integration regression PASS
+- lint/build/base-path/headless browser smoke PASS
+
 Not yet complete:
 - generic COM visualization tooling
-- PT-004 teddy limb hook
-- blocked-finger acceptance
+- PT-005 blocked-finger acceptance
 - oversized-object close acceptance
 - M01 exit criteria as a whole
 
-**Next slice:** PT-004 teddy limb hook.
+**Next slice:** PT-005 blocked finger.
 
 ---
 
