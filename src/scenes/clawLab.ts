@@ -82,15 +82,15 @@ export const CLAW_LAB_CONFIG = {
   pt004HookAngle: -0.40,
   pt004CloseLeadSeconds: 0.16,
 
-  pt005BlockerCenterX: 0.105,
+  pt005BlockerCenterX: 0.070,
   pt005BlockerCenterY: 0.59,
   pt005BlockerCenterZ: 0,
-  pt005BlockerHalfX: 0.025,
+  pt005BlockerHalfX: 0.015,
   pt005BlockerHalfY: 0.06,
   pt005BlockerHalfZ: 0.025,
-  pt005MinFreeTravelRadians: 0.60,
-  pt005MaxBlockedTravelRadians: 0.55,
-  pt005MinTravelSeparationRadians: 0.15,
+  pt005MinFreeTravelRadians: 0.25,
+  pt005MaxBlockedTravelRadians: 0.22,
+  pt005MinTravelSeparationRadians: 0.06,
 } as const;
 
 export type ClawLabExperiment =
