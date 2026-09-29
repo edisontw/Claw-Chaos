@@ -158,6 +158,40 @@ Implementation status — 2026-09-29:
 - no finger transform override, joint teleport, collision bypass or shared-angle enforcement
 - manual visual test: open `?scene=claw-lab&experiment=pt005`, wait for the claw to open, then press `P`
 
+## 7a. M01-E06 Object too large for full close
+
+Setup:
+- centered oversized rigid prize,
+- prize fits inside the open claw envelope,
+- same full-close motor command as the empty control run.
+
+Expected:
+- claw reaches a substantially normal open pose before the test,
+- closing fingers stop/load on the prize surface,
+- all three fingers remain outside their nominal empty-claw close travel,
+- prize is not attached or made kinematic.
+
+Fail:
+- prize already prevents the claw from reaching the open pose,
+- fingers pass through the prize,
+- commanded closed angle is forced despite contact.
+
+Implementation status — 2026-09-29:
+- **Automated PASS**
+- dynamic box size: 0.14 × 0.08 × 0.14 m
+- mass: 1.20 kg
+- friction: 0.90
+- narrow support pedestal radius: 0.025 m
+- control open travel: about 0.083 / 0.083 / 0.083 rad
+- oversized-prize open travel: about 0.070 / 0.070 / 0.070 rad
+- open-pose difference is about 0.013 rad, below the 0.04 rad limit
+- control close travel: about 0.241 / 0.240 / 0.240 rad
+- oversized-prize close travel: about 0.052 / 0.001 / 0.001 rad
+- prize center remains essentially centered after close (X/Z drift below 0.1 mm in the calibrated run)
+- acceptance compares blocked travel against a matched empty-control run rather than assuming commanded angle equals actual rigid-body travel
+- no finger transform override, prize attachment, kinematic prize state, or collision bypass
+- manual visual test: `?scene=claw-lab&experiment=oversized`, then press `P`
+
 ## 8. PT-006 Swing from braking
 
 Setup:
