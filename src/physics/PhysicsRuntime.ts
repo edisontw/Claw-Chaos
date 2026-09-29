@@ -69,6 +69,10 @@ export interface RevoluteJointOptions {
   contactsEnabled?: boolean;
 }
 
+export interface SphericalJointHandle {
+  setContactsEnabled(enabled: boolean): void;
+}
+
 function rotationFromYDirection(direction: Vec3): Quaternion {
   const length = Math.hypot(direction.x, direction.y, direction.z);
 
@@ -150,6 +154,31 @@ export class PhysicsRuntime {
     return body;
   }
 
+  createKinematicCuboid(
+    center: Vec3,
+    halfExtents: Vec3,
+    friction = 0.55,
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(
+        center.x,
+        center.y,
+        center.z,
+      ),
+    );
+
+    this.world.createCollider(
+      RAPIER.ColliderDesc.cuboid(
+        halfExtents.x,
+        halfExtents.y,
+        halfExtents.z,
+      ).setFriction(friction),
+      body,
+    );
+
+    return body;
+  }
+
   createKinematicCylinder(
     center: Vec3,
     halfHeight: number,
@@ -169,6 +198,32 @@ export class PhysicsRuntime {
       body,
     );
 
+    return body;
+  }
+
+  createDynamicCylinder(
+    center: Vec3,
+    halfHeight: number,
+    radius: number,
+    massKg: number,
+    material: CuboidMaterialOptions = {},
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic().setTranslation(center.x, center.y, center.z),
+    );
+
+    const volume = Math.PI * radius ** 2 * (halfHeight * 2);
+    const density = massKg / volume;
+
+    this.world.createCollider(
+      RAPIER.ColliderDesc.cylinder(halfHeight, radius)
+        .setDensity(density)
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08),
+      body,
+    );
+
+    this.dynamicBodyCountValue += 1;
     return body;
   }
 
@@ -355,6 +410,25 @@ export class PhysicsRuntime {
 
     this.dynamicBodyCountValue += 1;
     return body;
+  }
+
+  createSphericalJoint(
+    body1: RigidBodyHandle,
+    body2: RigidBodyHandle,
+    anchor1: Vec3,
+    anchor2: Vec3,
+    contactsEnabled = false,
+  ): SphericalJointHandle {
+    const params = RAPIER.JointData.spherical(anchor1, anchor2);
+    const joint = this.world.createImpulseJoint(
+      params,
+      body1,
+      body2,
+      true,
+    ) as unknown as SphericalJointHandle;
+
+    joint.setContactsEnabled(contactsEnabled);
+    return joint;
   }
 
   createRevoluteJoint(
