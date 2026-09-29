@@ -20,6 +20,7 @@ interface HookMetrics {
   peakRotation: number;
   finalX: number;
   finalY: number;
+  hangSeconds: number;
   passed: boolean;
 }
 
@@ -177,9 +178,14 @@ async function simulateTeddyPlacement(
   const referenceY = teddy.translation().y;
   let peakLift = 0;
   let peakRotation = 0;
+  let hangTicks = 0;
 
   const sample = (): void => {
-    peakLift = Math.max(peakLift, teddy.translation().y - referenceY);
+    const lift = teddy.translation().y - referenceY;
+    peakLift = Math.max(peakLift, lift);
+    if (lift >= config.pt004MinPeakLift) {
+      hangTicks += 1;
+    }
     peakRotation = Math.max(
       peakRotation,
       quaternionAngularDistance(referenceRotation, teddy.rotation()),
@@ -236,6 +242,7 @@ async function simulateTeddyPlacement(
     peakRotation,
     finalX: finalPosition.x,
     finalY: finalPosition.y,
+    hangSeconds: hangTicks / PHYSICS_HZ,
     passed: evaluatePt004Hook(
       peakLift,
       peakRotation,
@@ -244,26 +251,29 @@ async function simulateTeddyPlacement(
   };
 }
 
-describe("PT-004 teddy limb hook calibration", () => {
-  it("finds the horizontal paw alignment for sustained geometric hooking", async () => {
-    const bodyOffsets = [-0.05, -0.055, -0.06, -0.065, -0.07, -0.075];
-    const supportHalfX = 0.05;
-    const hookAngle = -0.40;
-    const closeLeadSeconds = 0.16;
-    const results = [];
+describe("PT-004 teddy limb hook", () => {
+  it("hooks the right paw/forearm geometry, hangs asymmetrically, rotates, then may settle back naturally", async () => {
+    const result = await simulateTeddyPlacement(
+      CLAW_LAB_CONFIG.pt004BodyOffsetX,
+      CLAW_LAB_CONFIG.pt004SupportHalfX,
+      CLAW_LAB_CONFIG.pt004HookAngle,
+      CLAW_LAB_CONFIG.pt004CloseLeadSeconds,
+    );
 
-    for (const bodyOffsetX of bodyOffsets) {
-      results.push(
-        await simulateTeddyPlacement(
-          bodyOffsetX,
-          supportHalfX,
-          hookAngle,
-          closeLeadSeconds,
-        ),
-      );
-    }
+    console.log("PT-004 baseline metrics", JSON.stringify(result));
 
-    console.log("PT-004 lying-offset sweep", JSON.stringify(results));
-    expect(results.some((result) => result.passed)).toBe(true);
+    expect(result.passiveRotation).toBeLessThan(0.25);
+    expect(result.peakLift).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt004MinPeakLift,
+    );
+    expect(result.peakRotation).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt004MinPeakRotationRadians,
+    );
+    expect(Math.abs(result.finalX)).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt004MinAsymmetryX,
+    );
+    expect(result.hangSeconds).toBeGreaterThanOrEqual(0.10);
+    expect(result.finalY).toBeGreaterThan(0.50);
+    expect(result.passed).toBe(true);
   });
 });
