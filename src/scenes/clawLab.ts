@@ -359,7 +359,7 @@ export function createFingerPoints(theta: number): Vec3[] {
   }));
 }
 
-function createFingerVisual(
+export function createFingerVisual(
   points: readonly Vec3[],
   metalMaterial: THREE.Material,
   tipMaterial: THREE.Material,
