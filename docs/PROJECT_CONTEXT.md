@@ -442,11 +442,33 @@ Verified behavior:
 - regression thresholds require both free fingers >= 0.25 rad, blocked finger <= 0.22 rad, and at least 0.06 rad separation
 - collision remains authoritative; there is no penetration bypass or synchronized three-finger snap
 
-M01 as a whole is **not complete**. Generic COM visualization tooling, oversized-object close behavior and remaining M01 exit criteria remain.
+### M01-E06 oversized-object close — automated PASS
+
+The sixth required M01 experiment is isolated at `?scene=claw-lab&experiment=oversized`.
+
+Implementation:
+- centered dynamic box, 0.14 × 0.08 × 0.14 m
+- mass 1.20 kg, friction 0.90
+- narrow pedestal keeps the prize centered without becoming the primary blocker
+- matched control and oversized-prize runs use the same claw, motor command and timing
+- acceptance measures actual finger-body angular travel from the settled open pose
+- a separate check verifies the oversized prize does not materially prevent the claw from first reaching the open pose
+
+Verified behavior:
+- control open travel ≈ 0.083 / 0.083 / 0.083 rad
+- oversized open travel ≈ 0.070 / 0.070 / 0.070 rad
+- control close travel ≈ 0.241 / 0.240 / 0.240 rad
+- oversized close travel ≈ 0.052 / 0.001 / 0.001 rad
+- the prize remains centered to within roughly 0.1 mm X/Z drift in the calibrated regression
+- contact, not a scripted angle clamp, prevents nominal full closure
+
+All six required M01 physics experiments are now automated PASS.
+
+M01 is still **IN PROGRESS** because one deliverable remains: generic COM visualization tooling. A final M01 closure audit must then verify every listed exit criterion before moving to M02.
 
 ## Current next step
 
-Proceed with **M01 oversized-object close regression**: place a physically oversized rigid prize centrally under the claw and prove that the claw cannot reach its nominal fully-closed geometry when the object occupies the closing volume. The solver must stop/load the fingers through contact rather than allowing penetration or forcing the commanded angle.
+Implement **generic COM visualization tooling** for M01: one reusable debug helper that can display a rigid body's COM/origin marker consistently across ball, box, Teddy and oversized-prize scenes without prize-specific rendering logic. Then run the M01 exit-criteria closure audit.
 
 ## Design-review additions
 

@@ -91,6 +91,21 @@ export const CLAW_LAB_CONFIG = {
   pt005MinFreeTravelRadians: 0.25,
   pt005MaxBlockedTravelRadians: 0.22,
   pt005MinTravelSeparationRadians: 0.06,
+
+  oversizedBoxSizeX: 0.14,
+  oversizedBoxSizeY: 0.08,
+  oversizedBoxSizeZ: 0.14,
+  oversizedBoxMassKg: 1.2,
+  oversizedBoxFriction: 0.90,
+  oversizedBoxRestitution: 0.01,
+  oversizedPedestalTopY: 0.525,
+  oversizedPedestalRadius: 0.025,
+  oversizedMinControlTravelRadians: 0.20,
+  oversizedMaxBlockedTravelRatio: 0.70,
+  oversizedMinTravelLossRadians: 0.08,
+  oversizedMaxTravelSpreadRadians: 0.06,
+  oversizedMaxOpenPoseDifferenceRadians: 0.04,
+  oversizedControlTravelReferenceRadians: 0.240,
 } as const;
 
 export type ClawLabExperiment =
@@ -98,7 +113,8 @@ export type ClawLabExperiment =
   | "pt002"
   | "pt003"
   | "pt004"
-  | "pt005";
+  | "pt005"
+  | "oversized";
 type ClawTargetState = "OPEN" | "CLOSED";
 type LabPhase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
 
@@ -109,7 +125,8 @@ export function parseClawLabExperiment(search: string): ClawLabExperiment {
     requested === "pt002" ||
     requested === "pt003" ||
     requested === "pt004" ||
-    requested === "pt005"
+    requested === "pt005" ||
+    requested === "oversized"
   ) {
     return requested;
   }
@@ -191,6 +208,33 @@ export function evaluatePt005BlockedFinger(
         travel - blockedTravel >=
         CLAW_LAB_CONFIG.pt005MinTravelSeparationRadians,
     )
+  );
+}
+
+export function evaluateOversizedClose(
+  controlTravels: readonly number[],
+  blockedTravels: readonly number[],
+): boolean {
+  if (controlTravels.length !== 3 || blockedTravels.length !== 3) {
+    return false;
+  }
+
+  const controlMin = Math.min(...controlTravels);
+  const blockedMax = Math.max(...blockedTravels);
+  const blockedMin = Math.min(...blockedTravels);
+  const controlAverage =
+    controlTravels.reduce((sum, value) => sum + value, 0) / 3;
+  const blockedAverage =
+    blockedTravels.reduce((sum, value) => sum + value, 0) / 3;
+
+  return (
+    controlMin >= CLAW_LAB_CONFIG.oversizedMinControlTravelRadians &&
+    blockedAverage <=
+      controlAverage * CLAW_LAB_CONFIG.oversizedMaxBlockedTravelRatio &&
+    controlAverage - blockedAverage >=
+      CLAW_LAB_CONFIG.oversizedMinTravelLossRadians &&
+    blockedMax - blockedMin <=
+      CLAW_LAB_CONFIG.oversizedMaxTravelSpreadRadians
   );
 }
 
