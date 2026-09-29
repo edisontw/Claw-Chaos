@@ -12,7 +12,8 @@ import {
 } from "./clawLab";
 
 interface CloseMetrics {
-  travels: number[];
+  openTravels: number[];
+  closeTravels: number[];
   objectPosition?: { x: number; y: number; z: number };
 }
 
@@ -121,6 +122,7 @@ async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics>
     );
   }
 
+  const initialRotations = fingers.map((finger) => finger.rotation());
   let motorAngle = 0;
   const stepSeconds = 1 / PHYSICS_HZ;
 
@@ -153,18 +155,22 @@ async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics>
   }
 
   const openRotations = fingers.map((finger) => finger.rotation());
+  const openTravels = fingers.map((finger, index) =>
+    quaternionAngularDistance(initialRotations[index]!, finger.rotation()),
+  );
 
   for (let tick = 0; tick < Math.ceil(1.2 * PHYSICS_HZ); tick += 1) {
     drive(config.closedAngle);
     physics.step();
   }
 
-  const travels = fingers.map((finger, index) =>
+  const closeTravels = fingers.map((finger, index) =>
     quaternionAngularDistance(openRotations[index]!, finger.rotation()),
   );
 
   return {
-    travels,
+    openTravels,
+    closeTravels,
     objectPosition: oversizedPrize?.translation(),
   };
 }
@@ -177,15 +183,27 @@ describe("M01 oversized-object close regression", () => {
     console.log(
       "oversized-close metrics",
       JSON.stringify({
-        controlTravels: control.travels,
-        blockedTravels: oversized.travels,
+        controlOpenTravels: control.openTravels,
+        oversizedOpenTravels: oversized.openTravels,
+        controlCloseTravels: control.closeTravels,
+        blockedCloseTravels: oversized.closeTravels,
         objectPosition: oversized.objectPosition,
       }),
     );
 
-    expect(evaluateOversizedClose(control.travels, oversized.travels)).toBe(
-      true,
-    );
+    for (let index = 0; index < 3; index += 1) {
+      expect(
+        Math.abs(
+          control.openTravels[index]! - oversized.openTravels[index]!,
+        ),
+      ).toBeLessThanOrEqual(
+        CLAW_LAB_CONFIG.oversizedMaxOpenPoseDifferenceRadians,
+      );
+    }
+
+    expect(
+      evaluateOversizedClose(control.closeTravels, oversized.closeTravels),
+    ).toBe(true);
 
     expect(oversized.objectPosition).toBeDefined();
     expect(Math.abs(oversized.objectPosition!.x)).toBeLessThan(0.04);
