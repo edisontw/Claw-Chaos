@@ -15,7 +15,7 @@ import {
   createFingerPoints,
   createFingerSegments,
   evaluatePt004Hook,
-  quaternionAngleFromIdentity,
+  quaternionAngularDistance,
 } from "./clawLab";
 import {
   PT004_TEDDY_PARTS,
@@ -366,6 +366,14 @@ export function createPt004Scene(
 
   const teddyVisual = createTeddyVisual();
   scene.add(teddyVisual);
+  const halfInitialRotation = config.pt004InitialRotationX * 0.5;
+  const initialRotation = {
+    x: Math.sin(halfInitialRotation),
+    y: 0,
+    z: 0,
+    w: Math.cos(halfInitialRotation),
+  };
+
   const teddyBody = physics.createDynamicCompound(
     {
       x: config.pt004BodyOffsetX,
@@ -378,6 +386,7 @@ export function createPt004Scene(
       friction: config.pt004TeddyFriction,
       restitution: config.pt004TeddyRestitution,
     },
+    initialRotation,
   );
   bindings.push({ mesh: teddyVisual, body: teddyBody });
 
@@ -386,7 +395,8 @@ export function createPt004Scene(
   let hubCommandY: number = config.hubCenterY;
   let labPhase: LabPhase = "READY";
   let labPhaseSeconds = 0;
-  let referenceY = config.pt004BodyCenterY;
+  let referenceY: number = config.pt004BodyCenterY;
+  let referenceRotation = teddyBody.rotation();
   let peakLift = 0;
   let peakRotation = 0;
   let experimentResult = "NOT RUN";
@@ -408,8 +418,9 @@ export function createPt004Scene(
     }
 
     referenceY = teddyBody.translation().y;
+    referenceRotation = teddyBody.rotation();
     peakLift = 0;
-    peakRotation = quaternionAngleFromIdentity(teddyBody.rotation());
+    peakRotation = 0;
     experimentResult = "RUNNING";
     labPhase = "CLOSING";
     labPhaseSeconds = 0;
@@ -444,7 +455,11 @@ export function createPt004Scene(
     },
     beforePhysicsStep(stepSeconds: number): void {
       const targetAngle =
-        targetState === "OPEN" ? config.openAngle : config.closedAngle;
+        targetState === "OPEN"
+          ? config.openAngle
+          : labPhase === "READY"
+            ? config.closedAngle
+            : config.pt004HookAngle;
       commandedAngle = advanceMotorCommand(
         commandedAngle,
         targetAngle,
@@ -463,7 +478,7 @@ export function createPt004Scene(
 
       if (labPhase === "CLOSING") {
         labPhaseSeconds += stepSeconds;
-        if (labPhaseSeconds >= config.pt001CloseSettleSeconds) {
+        if (labPhaseSeconds >= config.pt004CloseLeadSeconds) {
           labPhase = "LIFTING";
           labPhaseSeconds = 0;
         }
@@ -506,7 +521,7 @@ export function createPt004Scene(
       );
       peakRotation = Math.max(
         peakRotation,
-        quaternionAngleFromIdentity(teddyBody.rotation()),
+        quaternionAngularDistance(referenceRotation, teddyBody.rotation()),
       );
 
       hubBody.setNextKinematicTranslation({
@@ -517,7 +532,10 @@ export function createPt004Scene(
     },
     debugLines(): string[] {
       const position = teddyBody.translation();
-      const rotation = quaternionAngleFromIdentity(teddyBody.rotation());
+      const rotation = quaternionAngularDistance(
+        referenceRotation,
+        teddyBody.rotation(),
+      );
 
       return [
         "Claw target      " + targetState,
