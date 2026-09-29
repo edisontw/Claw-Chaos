@@ -8,6 +8,7 @@ import {
   evaluatePt003Rotation,
   evaluatePt004Hook,
   evaluatePt005BlockedFinger,
+  evaluateOversizedClose,
   parseClawLabExperiment,
   quaternionAngleFromIdentity,
 } from "./clawLab";
@@ -58,6 +59,7 @@ describe("M01 claw-lab experiment selection", () => {
     expect(parseClawLabExperiment("?experiment=pt003")).toBe("pt003");
     expect(parseClawLabExperiment("?experiment=pt004")).toBe("pt004");
     expect(parseClawLabExperiment("?experiment=pt005")).toBe("pt005");
+    expect(parseClawLabExperiment("?experiment=oversized")).toBe("oversized");
     expect(parseClawLabExperiment("?experiment=unknown")).toBe("pt001");
   });
 
@@ -106,5 +108,31 @@ describe("PT-005 blocked-finger acceptance helper", () => {
     expect(evaluatePt005BlockedFinger([0.24, 0.31, 0.30], 0)).toBe(false);
     expect(evaluatePt005BlockedFinger([0.15, 0.20, 0.30], 0)).toBe(false);
     expect(evaluatePt005BlockedFinger([0.29, 0.31, 0.30], 0)).toBe(false);
+  });
+});
+
+
+describe("M01 oversized close acceptance helper", () => {
+  it("requires all three fingers to lose substantial close travel relative to control", () => {
+    expect(
+      evaluateOversizedClose(
+        [0.24, 0.24, 0.24],
+        [0.05, 0.01, 0.01],
+      ),
+    ).toBe(true);
+
+    expect(
+      evaluateOversizedClose(
+        [0.24, 0.24, 0.24],
+        [0.20, 0.20, 0.20],
+      ),
+    ).toBe(false);
+
+    expect(
+      evaluateOversizedClose(
+        [0.15, 0.15, 0.15],
+        [0.01, 0.01, 0.01],
+      ),
+    ).toBe(false);
   });
 });
