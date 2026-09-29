@@ -1,7 +1,7 @@
 # Acceptance Tests
 
-Version: 0.2  
-Date: 2026-09-28
+Version: 0.3  
+Date: 2026-09-29
 
 ## 1. Purpose
 
@@ -91,7 +91,7 @@ Implementation status — 2026-09-29:
 - box size: 0.13 × 0.08 × 0.07 m
 - mass: 0.12 kg
 - friction: 0.65
-- COM: geometric center, visualized by a yellow marker
+- COM: geometric center; generic `M` debug reads Rapier's actual `worldCom()` and shows it in yellow, with rigid-body origin in magenta
 - claw center is offset 0.04 m from the box COM
 - support footprint is 0.03 × 0.03 m and centered under the box COM
 - passive rotation before claw interaction is effectively 0
@@ -125,12 +125,13 @@ Implementation status — 2026-09-29:
 - calibrated body offset: -0.055 m from claw center
 - hook target: -0.40 rad
 - close lead before lift: 0.16 s
-- right paw/forearm is the intended geometry-only hook region
+- right paw/forearm is the intended geometry-only hook region; its cyan marker is a hook target, not a COM proxy
 - calibrated peak lift: about 0.045 m
 - sustained lift above the 0.035 m threshold: about 0.492 s
 - peak rotation relative to settled starting pose: about 0.478 rad (~27.4°)
 - final position returns near the support naturally, demonstrating that contact can later fail without a scripted release
 - no hook flag, prize parenting, weld, claw-prize joint, or kinematic prize state
+- generic `M` debug shows the Teddy's actual Rapier COM separately from its rigid-body origin
 - manual visual test: `?scene=claw-lab&experiment=pt004`, then press `P`
 
 ## 7. PT-005 Blocked finger
@@ -191,6 +192,38 @@ Implementation status — 2026-09-29:
 - acceptance compares blocked travel against a matched empty-control run rather than assuming commanded angle equals actual rigid-body travel
 - no finger transform override, prize attachment, kinematic prize state, or collision bypass
 - manual visual test: `?scene=claw-lab&experiment=oversized`, then press `P`
+
+## 7b. M01 final closure audit
+
+Implementation status — 2026-09-29:
+- **M01 CLOSED**
+- all six required M01 physics experiments are automated PASS
+- generic COM/origin tooling uses Rapier `localCom()` / `worldCom()`; no scene estimates the COM from mesh origin
+- `M` toggles COM/origin debug; `D` independently toggles Rapier collider debug
+- yellow = actual world COM
+- magenta wireframe = rigid-body origin
+- connector = origin-to-COM offset when non-zero
+- sphere, PT-003 box, compound Teddy and oversized prize use the same debug-target interface
+- debug rendering is read-only and does not affect solver state
+
+Exit criteria:
+- fingers stop physically when blocked — PASS via PT-005
+- prize is never attached to claw — PASS across M01 prize-contact experiments
+- weak retaining force can produce visible physical slip — PASS via PT-002
+- off-center prize rotates naturally — PASS via PT-003
+- hook can succeed through geometry alone — PASS via PT-004
+- oversized object prevents nominal full close through collision — PASS via M01-E06
+- no major solver explosion/jitter — PASS; M01-E06 now asserts finite/bounded rigid-body state throughout the contact-heavy open/close run
+- reusable COM visualization exists — PASS
+- contact/collider debug remains available — PASS
+
+Final automated verification:
+- 29 tests PASS
+- lint PASS
+- build PASS
+- GitHub Pages base-path PASS
+- headless browser smoke PASS
+- GitHub Pages deployment PASS after squash merge
 
 ## 8. PT-006 Swing from braking
 
