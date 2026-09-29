@@ -329,12 +329,46 @@ Verification:
 - PT-005 integration regression PASS
 - lint/build/base-path/headless browser smoke PASS
 
+### M01-E06 oversized-object close record — 2026-09-29
+
+**Automated status: PASS**
+
+Implemented:
+- isolated `?experiment=oversized` scene path
+- centered dynamic oversized box with explicit size, mass, friction and restitution
+- matched control-vs-prize integration regression
+- open-pose equivalence gate so the prize may block closing but must not invalidate the initial open state
+- close-travel comparison based on actual rigid-body quaternions
+- no angle clamp, transform override, kinematic prize state, attachment or collision bypass
+
+Calibrated baseline:
+- prize size 0.14 × 0.08 × 0.14 m
+- mass 1.20 kg
+- friction 0.90
+- control open travel about 0.083 / 0.083 / 0.083 rad
+- oversized open travel about 0.070 / 0.070 / 0.070 rad
+- control close travel about 0.241 / 0.240 / 0.240 rad
+- oversized close travel about 0.052 / 0.001 / 0.001 rad
+- prize X/Z drift remains below 0.1 mm in the calibrated run
+
+Verification:
+- 26 automated tests PASS
+- all six required M01 physics experiments PASS
+- lint/build/base-path/headless browser smoke PASS
+
+M01 required experiments:
+1. centered ball grip — PASS
+2. low-friction/retaining-force slip — PASS
+3. off-center box rotation — PASS
+4. Teddy limb hook — PASS
+5. one-finger contact — PASS
+6. object too large for full close — PASS
+
 Not yet complete:
 - generic COM visualization tooling
-- oversized-object close acceptance
-- M01 exit criteria as a whole
+- final M01 exit-criteria closure audit
 
-**Next slice:** M01 oversized-object close regression.
+**Next slice:** generic COM visualization tooling + M01 closure audit.
 
 ---
 
