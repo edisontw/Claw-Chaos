@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceGantryAxis } from "./gantryMotion";
+import { advanceGantryAxis, advanceGantryMotion } from "./gantryMotion";
 
 const config = {
   minPosition: -0.3,
@@ -31,6 +31,32 @@ describe("M02 gantry axis motion", () => {
     }
 
     expect(Math.abs(state.velocity)).toBeLessThan(1e-9);
+  });
+
+  it("advances X and Z independently from the same fixed-step controller", () => {
+    const motionConfig = {
+      x: config,
+      z: {
+        ...config,
+        minPosition: -0.24,
+        maxPosition: 0.24,
+      },
+    };
+    const state = advanceGantryMotion(
+      {
+        x: { position: 0, velocity: 0 },
+        z: { position: 0, velocity: 0 },
+      },
+      1,
+      -1,
+      motionConfig,
+      1 / 120,
+    );
+
+    expect(state.x.velocity).toBeGreaterThan(0);
+    expect(state.z.velocity).toBeLessThan(0);
+    expect(state.x.position).toBeGreaterThan(0);
+    expect(state.z.position).toBeLessThan(0);
   });
 
   it("stops cleanly at rail limits", () => {
