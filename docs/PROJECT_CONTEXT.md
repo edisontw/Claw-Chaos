@@ -281,7 +281,7 @@ M00 ended with these deliberate limitations:
 - no render interpolation between fixed physics snapshots yet
 - no claw gameplay, prize gameplay, cabinet, staff, economy, NPC, or backend had been introduced
 
-## M01 implementation status — slice 1 complete
+## M01 implementation record — CLOSED
 
 The first **M01 — Claw Physics Laboratory** slice was implemented and CI-verified on 2026-09-28.
 
@@ -464,11 +464,42 @@ Verified behavior:
 
 All six required M01 physics experiments are now automated PASS.
 
-M01 is still **IN PROGRESS** because one deliverable remains: generic COM visualization tooling. A final M01 closure audit must then verify every listed exit criterion before moving to M02.
+### M01 final closure — 2026-09-29
+
+**Status: CLOSED**
+
+Generic mass-properties debug tooling is now part of the shared debug architecture:
+- `M` toggles COM/origin visualization independently of collider debug `D`
+- yellow shows Rapier `worldCom()`
+- magenta wireframe shows the rigid-body transform origin
+- a line connects them when they differ
+- the renderer reads `localCom()` / `worldCom()` from Rapier and never mutates simulation state
+- sphere, PT-003 box, compound Teddy and oversized prize use the same registration mechanism
+- PT-003/PT-004 prize-specific COM markers were removed
+- the Teddy cyan hook-target marker remains because it is a geometry target, not a COM proxy
+
+Final closure audit:
+- blocked finger stops physically while free fingers continue — PASS
+- no prize attachment/parenting/weld — PASS
+- weak retaining force produces physical slip — PASS
+- off-center box rotates from contact torque — PASS
+- Teddy hook succeeds through geometry alone — PASS
+- oversized prize prevents nominal full close through collision — PASS
+- contact-heavy oversized regression remains finite and bounded — PASS
+- reusable COM/origin visualization — PASS
+- Rapier collider debug remains available — PASS
+
+Final verification baseline:
+- 29 automated tests PASS
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- headless Rapier/WebGL smoke PASS
+- GitHub Pages deployment PASS after merge
 
 ## Current next step
 
-Implement **generic COM visualization tooling** for M01: one reusable debug helper that can display a rigid body's COM/origin marker consistently across ball, box, Teddy and oversized-prize scenes without prize-specific rendering logic. Then run the M01 exit-criteria closure audit.
+Proceed to **M02 — Gantry & Suspended Claw**. Do not alter the closed M01 physics invariants when adding gantry motion, suspension, swing, descent, lift, return, and release behavior.
 
 ## Design-review additions
 
