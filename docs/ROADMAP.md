@@ -91,6 +91,8 @@ Known M00 limitations:
 
 # M01 — Claw Physics Laboratory
 
+**Phase status: CLOSED — 2026-09-29**
+
 ## Goal
 
 Prove a physically driven 3-prong claw before building a cabinet.
@@ -112,8 +114,8 @@ Gray room containing:
 - open/close motor target
 - configurable close torque
 - configurable material friction
-- COM visualization
-- collision/contact debug view
+- COM visualization — COMPLETE via reusable Rapier mass-properties debug renderer
+- collision/contact debug view — COMPLETE
 
 ## Required experiments
 
@@ -364,11 +366,40 @@ M01 required experiments:
 5. one-finger contact — PASS
 6. object too large for full close — PASS
 
-Not yet complete:
-- generic COM visualization tooling
-- final M01 exit-criteria closure audit
+### M01 final closure record — 2026-09-29
 
-**Next slice:** generic COM visualization tooling + M01 closure audit.
+**Status: CLOSED**
+
+Generic COM/origin debug:
+- shared renderer under `src/debug/`
+- `M` toggles mass-properties visualization
+- actual Rapier `worldCom()` is shown in yellow
+- rigid-body origin is shown by a magenta wireframe marker
+- a connector appears when origin and COM differ
+- `localCom()` / `worldCom()` are read only; debug rendering does not modify physics
+- ball, PT-003 box, compound Teddy and oversized prize register through the same scene-level debug-target contract
+- prize-specific PT-003/PT-004 COM marker code removed
+
+Exit-criteria audit:
+- fingers stop physically when blocked — PASS (PT-005)
+- prize is never attached to claw — PASS (PT-001/002/003/004/oversized invariants)
+- weak-retaining/low-support prize can visibly slip out — PASS (PT-002)
+- off-center prize rotates naturally — PASS (PT-003)
+- hook can succeed through geometry alone — PASS (PT-004)
+- oversized object prevents full close through collision — PASS (M01-E06)
+- no major solver explosion/jitter — PASS; contact-heavy oversized regression now checks finite/bounded rigid-body state throughout the run
+- reusable COM visualization exists — PASS
+- contact/collider debug remains available — PASS
+
+Final verification:
+- 29 automated tests PASS
+- lint PASS
+- build PASS
+- GitHub Pages base-path PASS
+- headless browser smoke PASS
+- GitHub Pages deploy PASS after squash merge
+
+**Documented next phase: M02 — Gantry & Suspended Claw.**
 
 ---
 

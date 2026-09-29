@@ -658,6 +658,7 @@ export function createClawLabScene(
 
   return {
     bindings,
+    massPropertiesDebugTargets: [{ body: ballBody, label: "ball" }],
     milestone: "M01 / " + experiment.toUpperCase(),
     camera: {
       position: [0.62, 0.72, 0.88],
@@ -796,7 +797,7 @@ export function createClawLabScene(
             : config.maxMotorTorque
           ).toFixed(3) +
           " N·m",
-        "Controls         P run active test | C close | O open | Space toggle | D debug",
+        "Controls         P run active test | C close | O open | Space toggle | D collider | M COM/origin",
         "Attachment       NONE — sphere has no parent/weld/joint to claw",
       ];
     },

@@ -11,10 +11,16 @@ export interface CameraPreset {
   target: [number, number, number];
 }
 
+export interface MassPropertiesDebugTarget {
+  body: RigidBodyHandle;
+  label?: string;
+}
+
 export interface SimulationScene {
   bindings: RenderBinding[];
   camera: CameraPreset;
   milestone: string;
+  massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   debugLines?(): string[];
 }

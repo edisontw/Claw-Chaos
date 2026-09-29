@@ -8,6 +8,7 @@ export interface DebugSnapshot {
   dynamicBodies: number;
   droppedCatchUpSeconds: number;
   physicsDebugVisible: boolean;
+  massPropertiesDebugVisible: boolean;
   extraLines?: string[];
 }
 
@@ -31,6 +32,7 @@ export class DebugOverlay {
       "Seed             " + snapshot.seed,
       "Dynamic bodies   " + snapshot.dynamicBodies,
       "Collider debug   " + (snapshot.physicsDebugVisible ? "ON" : "OFF"),
+      "COM/origin debug  " + (snapshot.massPropertiesDebugVisible ? "ON" : "OFF"),
       "Dropped catch-up " + snapshot.droppedCatchUpSeconds.toFixed(4) + " s",
       ...(snapshot.extraLines ?? []),
     ].join("\n");

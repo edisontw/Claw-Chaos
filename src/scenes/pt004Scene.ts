@@ -201,12 +201,6 @@ function createTeddyVisual(): THREE.Group {
   rightArmMarker.position.set(0.065, -0.065, 0);
   teddy.add(rightArmMarker);
 
-  const comMarker = new THREE.Mesh(
-    new THREE.SphereGeometry(0.006, 12, 8),
-    new THREE.MeshBasicMaterial({ color: 0xffd166 }),
-  );
-  teddy.add(comMarker);
-
   return teddy;
 }
 
@@ -448,6 +442,7 @@ export function createPt004Scene(
 
   return {
     bindings,
+    massPropertiesDebugTargets: [{ body: teddyBody, label: "pt004-teddy" }],
     milestone: "M01 / PT004",
     camera: {
       position: [0.62, 0.72, 0.88],
@@ -561,8 +556,8 @@ export function createPt004Scene(
           peakRotation.toFixed(3) +
           " rad",
         "Hook target      right arm (cyan marker)",
-        "COM              compound-body origin (yellow marker)",
-        "Controls         P run PT-004 | C close | O open | Space toggle | D debug",
+        "COM debug        Rapier actual COM (yellow) / origin (magenta)",
+        "Controls         P run PT-004 | C close | O open | Space toggle | D collider | M COM/origin",
         "Attachment       NONE — teddy remains one independent dynamic compound body",
       ];
     },

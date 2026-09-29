@@ -22,9 +22,21 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M01 in progress — three-prong claw laboratory mechanics are live**
+**M01 CLOSED — M02 is the documented next phase**
 
-M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, and all six required physics experiments passing: centered pickup, retaining-force slip, off-center rotation, Teddy limb hook, blocked-finger independence, and oversized-object full-close blocking. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation/hook, or success roll.
+M01 — Claw Physics Laboratory is complete. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
+
+Final M01 verification baseline:
+- 29 automated tests PASS
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- headless Rapier/WebGL smoke PASS
+- collider debug remains available with `D`
+- COM/origin debug is available with `M`
+- no prize parenting, hidden weld, scripted success/failure, or normal-play prize teleport was introduced
+
+The next phase is **M02 — Gantry & Suspended Claw**. No M02 mechanics are included in the M01 closure change.
 
 ### First milestone
 
@@ -101,32 +113,17 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with **generic COM visualization tooling and the final M01 closure audit**.
+Begin **M02 — Gantry & Suspended Claw** from the closed M01 physics baseline.
 
-The current `claw-lab` now provides:
-- rigid hub plus three independent dynamic fingers,
-- Rapier revolute joints and physical motor limits,
-- configurable open/close motor command,
-- `C` close, `O` open, `Space` toggle,
-- `D` collider debug,
-- visible joint pivot/axis diagnostics,
-- realistic segmented hook geometry with three capsule colliders per finger,
-- centralized provisional dimensions in `docs/CLAW_GEOMETRY_BASELINE.md`,
-- centered 55 mm / 80 g PT-001 sphere with explicit friction/restitution,
-- `P` automated close → lift → hold laboratory cycle,
-- PT-001 PASS/FAIL and ball lift telemetry,
-- `?experiment=pt002` pickup→retaining-force slip mode,
-- PT-002 peak-lift/slip-loss/active-torque telemetry,
-- `?experiment=pt003` off-center rectangular-box rotation scene,
-- visible PT-003 COM and orientation markers,
-- `?experiment=pt004` compound Teddy limb-hook scene,
-- shared Teddy compound collider definition with visible hook-region/COM markers,
-- `?experiment=pt005` one-finger blocker scene with per-finger angular-travel telemetry,
-- `?experiment=oversized` dynamic oversized-prize close-block scene,
-- matched empty-control vs oversized-prize close regression,
-- active GitHub Pages deployment.
+M01 debug/tooling baseline carried forward:
+- `D`: Rapier collider debug
+- `M`: reusable rigid-body COM/origin debug
+- yellow marker: actual Rapier world COM
+- magenta wireframe marker: rigid-body origin
+- connector line appears when origin and COM differ
+- fixed-step physics remains authoritative
 
-All six required M01 physics experiments are automated PASS. The oversized regression allows a near-normal open pose, then reduces actual close travel from about 0.240 rad in the matched control to roughly 0.052 / 0.001 / 0.001 rad through contact alone. Next consolidate COM markers into reusable tooling and perform the final M01 exit-criteria audit before starting M02.
+Do not reintroduce prize-specific grab logic when adding gantry, suspension, swing, descent, lift, or return behavior.
 
 ## Status
 

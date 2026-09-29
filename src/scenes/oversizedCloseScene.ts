@@ -341,6 +341,7 @@ export function createOversizedCloseScene(
 
   return {
     bindings,
+    massPropertiesDebugTargets: [{ body: boxBody, label: "oversized-prize" }],
     milestone: "M01 / OVERSIZED",
     camera: {
       position: [0.62, 0.73, 0.88],
@@ -427,7 +428,7 @@ export function createOversizedCloseScene(
           " / " +
           position.z.toFixed(3) +
           " m",
-        "Controls         P run oversized close | D collider debug",
+        "Controls         P run oversized close | D collider | M COM/origin",
         "Attachment       NONE — prize remains dynamic",
       ];
     },
