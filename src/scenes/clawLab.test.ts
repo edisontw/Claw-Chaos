@@ -7,6 +7,7 @@ import {
   evaluatePt002Slip,
   evaluatePt003Rotation,
   evaluatePt004Hook,
+  evaluatePt005BlockedFinger,
   parseClawLabExperiment,
   quaternionAngleFromIdentity,
 } from "./clawLab";
@@ -56,6 +57,7 @@ describe("M01 claw-lab experiment selection", () => {
     expect(parseClawLabExperiment("?experiment=pt002")).toBe("pt002");
     expect(parseClawLabExperiment("?experiment=pt003")).toBe("pt003");
     expect(parseClawLabExperiment("?experiment=pt004")).toBe("pt004");
+    expect(parseClawLabExperiment("?experiment=pt005")).toBe("pt005");
     expect(parseClawLabExperiment("?experiment=unknown")).toBe("pt001");
   });
 
@@ -94,5 +96,15 @@ describe("PT-004 hook acceptance helper", () => {
     expect(evaluatePt004Hook(0.01, 0.3, -0.08)).toBe(false);
     expect(evaluatePt004Hook(0.05, 0.05, -0.08)).toBe(false);
     expect(evaluatePt004Hook(0.05, 0.3, -0.01)).toBe(false);
+  });
+});
+
+
+describe("PT-005 blocked-finger acceptance helper", () => {
+  it("requires one finger to remain clearly behind two independently closing fingers", () => {
+    expect(evaluatePt005BlockedFinger([0.40, 0.75, 0.74], 0)).toBe(true);
+    expect(evaluatePt005BlockedFinger([0.62, 0.75, 0.74], 0)).toBe(false);
+    expect(evaluatePt005BlockedFinger([0.40, 0.50, 0.74], 0)).toBe(false);
+    expect(evaluatePt005BlockedFinger([0.70, 0.71, 0.72], 0)).toBe(false);
   });
 });
