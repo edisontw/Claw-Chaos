@@ -1,6 +1,6 @@
 # Project Context
 
-Last updated: 2026-09-28
+Last updated: 2026-09-29
 
 ## Product identity
 
@@ -400,11 +400,34 @@ Baseline:
 
 PT-003 calibration also established that a 0.024 m support footprint was too unstable and caused near-180° tumble, while 0.040 m nearly locked the box; 0.030 m produced a stable and readable off-center rotation.
 
-M01 as a whole is **not complete**. Generic COM visualization tooling, teddy hook, blocked-finger behavior, oversized-object close behavior and remaining M01 exit criteria remain.
+### PT-004 teddy limb hook — automated PASS
+
+PT-004 is isolated at `?scene=claw-lab&experiment=pt004`.
+
+Implementation:
+- Tier A plush approximation: one dynamic rigid body with compound head/torso/arm/paw/leg colliders
+- Teddy begins in a lying pose and settles physically before the test starts
+- mass 0.090 kg, friction 0.75
+- calibrated Teddy center offset: -0.055 m
+- calibrated hook target: -0.40 rad
+- close lead before lift: 0.16 s
+- cyan marker identifies the intended right paw/forearm hook region
+- yellow marker shows the compound-body origin/COM reference
+- scene and integration test share the same Teddy collider definition
+
+Verified behavior:
+- peak lift about 0.045 m
+- lift remains above the 0.035 m threshold for about 0.492 s
+- peak rotation about 0.478 rad (~27.4°) relative to the settled starting pose
+- hanging remains asymmetric rather than snapping to the claw center
+- Teddy can settle back onto the support after losing contact
+- no hook state, attachment, weld, prize joint, transform override, or scripted release
+
+M01 as a whole is **not complete**. Generic COM visualization tooling, blocked-finger behavior, oversized-object close behavior and remaining M01 exit criteria remain.
 
 ## Current next step
 
-Proceed with **PT-004 Teddy limb hook**: add a simple compound teddy rigid-body approximation and prove that a claw tip can catch a limb/neck region through geometry alone, allowing asymmetric hanging and natural rotation.
+Proceed with **PT-005 Blocked finger**: place an oversized rigid object in one finger's closing path and prove that the contacted finger stops/loads physically while the other two fingers remain independently driven.
 
 ## Design-review additions
 
