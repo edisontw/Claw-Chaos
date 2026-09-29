@@ -12,6 +12,7 @@ import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
 import { createPt004Scene } from "../scenes/pt004Scene";
 import { createPt005Scene } from "../scenes/pt005Scene";
+import { createOversizedCloseScene } from "../scenes/oversizedCloseScene";
 import { createFallingCubeScene } from "../scenes/fallingCube";
 import { parseSceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
@@ -48,7 +49,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
           ? createPt004Scene(scene, physics)
           : experiment === "pt005"
             ? createPt005Scene(scene, physics)
-            : createClawLabScene(scene, physics, window.location.search)
+            : experiment === "oversized"
+              ? createOversizedCloseScene(scene, physics)
+              : createClawLabScene(scene, physics, window.location.search)
       : createFallingCubeScene(scene, physics, selection.seed);
 
   camera.position.set(...testScene.camera.position);
