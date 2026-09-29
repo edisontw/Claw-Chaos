@@ -81,9 +81,24 @@ export const CLAW_LAB_CONFIG = {
   pt004InitialRotationX: Math.PI / 2,
   pt004HookAngle: -0.40,
   pt004CloseLeadSeconds: 0.16,
+
+  pt005BlockerCenterX: 0.105,
+  pt005BlockerCenterY: 0.59,
+  pt005BlockerCenterZ: 0,
+  pt005BlockerHalfX: 0.025,
+  pt005BlockerHalfY: 0.06,
+  pt005BlockerHalfZ: 0.025,
+  pt005MinFreeTravelRadians: 0.60,
+  pt005MaxBlockedTravelRadians: 0.55,
+  pt005MinTravelSeparationRadians: 0.15,
 } as const;
 
-export type ClawLabExperiment = "pt001" | "pt002" | "pt003" | "pt004";
+export type ClawLabExperiment =
+  | "pt001"
+  | "pt002"
+  | "pt003"
+  | "pt004"
+  | "pt005";
 type ClawTargetState = "OPEN" | "CLOSED";
 type LabPhase = "READY" | "CLOSING" | "LIFTING" | "HOLDING" | "COMPLETE";
 
@@ -93,7 +108,8 @@ export function parseClawLabExperiment(search: string): ClawLabExperiment {
   if (
     requested === "pt002" ||
     requested === "pt003" ||
-    requested === "pt004"
+    requested === "pt004" ||
+    requested === "pt005"
   ) {
     return requested;
   }
@@ -145,6 +161,36 @@ export function evaluatePt004Hook(
     peakLift >= CLAW_LAB_CONFIG.pt004MinPeakLift &&
     peakRotationRadians >= CLAW_LAB_CONFIG.pt004MinPeakRotationRadians &&
     Math.abs(horizontalOffsetFromClaw) >= CLAW_LAB_CONFIG.pt004MinAsymmetryX
+  );
+}
+
+export function evaluatePt005BlockedFinger(
+  fingerTravelRadians: readonly number[],
+  blockedIndex = 0,
+): boolean {
+  if (fingerTravelRadians.length !== 3) {
+    return false;
+  }
+
+  const blockedTravel = fingerTravelRadians[blockedIndex];
+  if (blockedTravel === undefined) {
+    return false;
+  }
+
+  const freeTravels = fingerTravelRadians.filter(
+    (_, index) => index !== blockedIndex,
+  );
+
+  return (
+    blockedTravel <= CLAW_LAB_CONFIG.pt005MaxBlockedTravelRadians &&
+    freeTravels.every(
+      (travel) => travel >= CLAW_LAB_CONFIG.pt005MinFreeTravelRadians,
+    ) &&
+    freeTravels.every(
+      (travel) =>
+        travel - blockedTravel >=
+        CLAW_LAB_CONFIG.pt005MinTravelSeparationRadians,
+    )
   );
 }
 
