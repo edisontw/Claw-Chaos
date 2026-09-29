@@ -303,13 +303,38 @@ Verification:
 - PT-004 integration regression PASS
 - lint/build/base-path/headless browser smoke PASS
 
+### PT-005 record — 2026-09-29
+
+**Automated status: PASS**
+
+Implemented:
+- isolated `?experiment=pt005` scene path
+- one static rigid cuboid blocker on finger 0 (+X side)
+- same motor command and motor-force parameters applied to all three independent joints
+- angular travel measured from each finger rigid body's open-pose quaternion
+- debug telemetry shows all three actual finger travels
+- no per-finger target override, teleport, collision bypass or forced shared final angle
+
+Calibrated baseline:
+- blocked finger travel about 0.000 rad
+- free finger travels about 0.314 / 0.314 rad
+- acceptance: free >= 0.25 rad, blocked <= 0.22 rad, free-minus-blocked >= 0.06 rad
+
+Verification:
+- 25 automated tests PASS
+- PT-001 PASS
+- PT-002 PASS
+- PT-003 PASS
+- PT-004 PASS
+- PT-005 integration regression PASS
+- lint/build/base-path/headless browser smoke PASS
+
 Not yet complete:
 - generic COM visualization tooling
-- PT-005 blocked-finger acceptance
 - oversized-object close acceptance
 - M01 exit criteria as a whole
 
-**Next slice:** PT-005 blocked finger.
+**Next slice:** M01 oversized-object close regression.
 
 ---
 

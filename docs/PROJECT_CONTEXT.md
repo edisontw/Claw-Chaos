@@ -423,11 +423,30 @@ Verified behavior:
 - Teddy can settle back onto the support after losing contact
 - no hook state, attachment, weld, prize joint, transform override, or scripted release
 
-M01 as a whole is **not complete**. Generic COM visualization tooling, blocked-finger behavior, oversized-object close behavior and remaining M01 exit criteria remain.
+### PT-005 blocked finger — automated PASS
+
+PT-005 is isolated at `?scene=claw-lab&experiment=pt005`.
+
+Implementation:
+- one static rigid cuboid blocker intersects only the +X finger's close path
+- each finger remains a separate dynamic body with its own Rapier revolute joint
+- all three joints receive the same close command and motor-force parameters
+- the result is measured from actual rigid-body angular travel from the open reference pose
+- no per-finger scripted stop or final-angle override is used
+
+Verified behavior:
+- blocked finger travel: about 0.000 rad
+- free finger 1 travel: about 0.314 rad
+- free finger 2 travel: about 0.314 rad
+- free fingers therefore continue closing independently while the contacted finger remains physically blocked
+- regression thresholds require both free fingers >= 0.25 rad, blocked finger <= 0.22 rad, and at least 0.06 rad separation
+- collision remains authoritative; there is no penetration bypass or synchronized three-finger snap
+
+M01 as a whole is **not complete**. Generic COM visualization tooling, oversized-object close behavior and remaining M01 exit criteria remain.
 
 ## Current next step
 
-Proceed with **PT-005 Blocked finger**: place an oversized rigid object in one finger's closing path and prove that the contacted finger stops/loads physically while the other two fingers remain independently driven.
+Proceed with **M01 oversized-object close regression**: place a physically oversized rigid prize centrally under the claw and prove that the claw cannot reach its nominal fully-closed geometry when the object occupies the closing volume. The solver must stop/load the fingers through contact rather than allowing penetration or forcing the commanded angle.
 
 ## Design-review additions
 
