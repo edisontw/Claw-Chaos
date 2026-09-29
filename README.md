@@ -24,7 +24,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 **M01 in progress — three-prong claw laboratory mechanics are live**
 
-M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, passing PT-001 centered-ball pickup and PT-002 retaining-force slip regressions, plus a passing PT-003 off-center box rotation regression. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation, or success roll.
+M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, passing PT-001 centered-ball pickup, PT-002 retaining-force slip, PT-003 off-center box rotation, and PT-004 Teddy limb-hook regressions. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation/hook, or success roll.
 
 ### First milestone
 
@@ -101,7 +101,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with **PT-004 teddy limb hook**.
+Continue **M01 — Claw Physics Laboratory** with **PT-005 blocked finger**.
 
 The current `claw-lab` now provides:
 - rigid hub plus three independent dynamic fingers,
@@ -119,9 +119,11 @@ The current `claw-lab` now provides:
 - PT-002 peak-lift/slip-loss/active-torque telemetry,
 - `?experiment=pt003` off-center rectangular-box rotation scene,
 - visible PT-003 COM and orientation markers,
+- `?experiment=pt004` compound Teddy limb-hook scene,
+- shared Teddy compound collider definition with visible hook-region/COM markers,
 - active GitHub Pages deployment.
 
-PT-001, PT-002 and PT-003 are automated PASS. PT-003 uses a 0.04 m claw-to-COM offset and produces about 0.122 rad of natural rigid-body rotation without scripted angular motion. Next add a simple compound teddy and verify geometry-only limb hooking.
+PT-001 through PT-004 are automated PASS. PT-004 uses a real compound Teddy body and produces about 45 mm peak lift, ~0.49 s of sustained hanging, and ~27° of natural rotation before it can settle back after contact loss. Next verify one blocked finger can load/stop independently while the other fingers continue.
 
 ## Status
 
