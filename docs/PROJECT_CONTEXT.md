@@ -501,6 +501,50 @@ Final verification baseline:
 
 Proceed to **M02 — Gantry & Suspended Claw**. Do not alter the closed M01 physics invariants when adding gantry motion, suspension, swing, descent, lift, return, and release behavior.
 
+## M02 implementation status — slice 1 complete
+
+M02 — Gantry & Suspended Claw started on 2026-09-30 from the closed M01 baseline.
+
+Implemented:
+- `gantry-lab` is now the default public/development scene
+- fixed-step X/Z carriage controller
+- explicit max speed, acceleration, braking/deceleration, and rail limits
+- position-based kinematic carriage body
+- dynamic claw hub
+- fixed-length 0.31 m suspension through a Rapier spherical joint
+- provisional angular/linear damping
+- M01 three independent dynamic fingers and revolute joints reused on the suspended hub
+- visual suspension cable follows the same hub orientation implied by the physical pendulum
+- Arrow-key manual X/Z movement
+- `P` deterministic PT-006 accelerate → hard brake → observe sequence
+- existing `D` collider debug and `M` COM/origin debug remain available
+
+PT-006 automated baseline:
+- acceleration lag: about 0.067 m
+- forward swing after braking: about 0.135 m
+- peak swing angle: about 0.450 rad (~25.8°)
+- suspension distance: 0.310003 m against 0.310 m target
+- carriage reaches zero X velocity after braking
+- finite/bounded stability gate: PASS
+- no rigid-lock or transform parenting is used
+
+Verification:
+- 33 automated tests PASS
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- headless `gantry-lab` WebGL smoke PASS
+
+These motion values are provisional laboratory behavior, not measured manufacturer calibration.
+
+M02 remains **IN PROGRESS**.
+
+Next slice:
+- variable reel/suspension length
+- vertical descent/lift velocity and acceleration limits
+- preserve horizontal momentum while reel length changes
+- automate PT-008 momentum-during-descent
+
 ## Design-review additions
 
 The 2026-09-28 second-pass review identified and formalized several previously under-specified areas:
