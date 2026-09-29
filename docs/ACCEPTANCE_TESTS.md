@@ -115,6 +115,24 @@ Fail:
 - hook impossible despite valid geometry,
 - entire teddy snaps rigidly to claw center.
 
+Implementation status — 2026-09-29:
+- **Automated PASS**
+- plush approximation: Tier A single dynamic rigid body with compound colliders
+- collider parts: head, torso, articulated-looking upper/forearms, paws, and legs
+- mass: 0.090 kg
+- friction: 0.75
+- initial pose: lying teddy (X rotation = π/2)
+- calibrated body offset: -0.055 m from claw center
+- hook target: -0.40 rad
+- close lead before lift: 0.16 s
+- right paw/forearm is the intended geometry-only hook region
+- calibrated peak lift: about 0.045 m
+- sustained lift above the 0.035 m threshold: about 0.492 s
+- peak rotation relative to settled starting pose: about 0.478 rad (~27.4°)
+- final position returns near the support naturally, demonstrating that contact can later fail without a scripted release
+- no hook flag, prize parenting, weld, claw-prize joint, or kinematic prize state
+- manual visual test: `?scene=claw-lab&experiment=pt004`, then press `P`
+
 ## 7. PT-005 Blocked finger
 
 Setup:
