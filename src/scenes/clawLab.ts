@@ -92,18 +92,19 @@ export const CLAW_LAB_CONFIG = {
   pt005MaxBlockedTravelRadians: 0.22,
   pt005MinTravelSeparationRadians: 0.06,
 
-  oversizedBoxSizeX: 0.18,
-  oversizedBoxSizeY: 0.10,
-  oversizedBoxSizeZ: 0.18,
-  oversizedBoxMassKg: 1.5,
+  oversizedBoxSizeX: 0.14,
+  oversizedBoxSizeY: 0.08,
+  oversizedBoxSizeZ: 0.14,
+  oversizedBoxMassKg: 1.2,
   oversizedBoxFriction: 0.90,
   oversizedBoxRestitution: 0.01,
   oversizedPedestalTopY: 0.525,
-  oversizedPedestalRadius: 0.04,
+  oversizedPedestalRadius: 0.025,
   oversizedMinControlTravelRadians: 0.25,
   oversizedMaxBlockedTravelRatio: 0.70,
   oversizedMinTravelLossRadians: 0.08,
   oversizedMaxTravelSpreadRadians: 0.06,
+  oversizedMaxOpenPoseDifferenceRadians: 0.04,
 } as const;
 
 export type ClawLabExperiment =
