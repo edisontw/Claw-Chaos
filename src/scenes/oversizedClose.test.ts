@@ -124,7 +124,33 @@ async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics>
 
   const initialRotations = fingers.map((finger) => finger.rotation());
   let motorAngle = 0;
+  let stateStayedFiniteAndBounded = true;
   const stepSeconds = 1 / PHYSICS_HZ;
+
+  const sampleStability = (): void => {
+    const bodies = oversizedPrize === undefined
+      ? fingers
+      : [...fingers, oversizedPrize];
+
+    for (const body of bodies) {
+      const position = body.translation();
+      const rotation = body.rotation();
+      const values = [
+        position.x,
+        position.y,
+        position.z,
+        rotation.x,
+        rotation.y,
+        rotation.z,
+        rotation.w,
+      ];
+
+      stateStayedFiniteAndBounded =
+        stateStayedFiniteAndBounded &&
+        values.every(Number.isFinite) &&
+        Math.hypot(position.x, position.y, position.z) < 2;
+    }
+  };
 
   const drive = (targetAngle: number): void => {
     motorAngle = advanceMotorCommand(
@@ -152,6 +178,7 @@ async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics>
   for (let tick = 0; tick < Math.ceil(1.0 * PHYSICS_HZ); tick += 1) {
     drive(config.openAngle);
     physics.step();
+    sampleStability();
   }
 
   const openRotations = fingers.map((finger) => finger.rotation());
@@ -162,6 +189,7 @@ async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics>
   for (let tick = 0; tick < Math.ceil(1.2 * PHYSICS_HZ); tick += 1) {
     drive(config.closedAngle);
     physics.step();
+    sampleStability();
   }
 
   const closeTravels = fingers.map((finger, index) =>
@@ -172,6 +200,7 @@ async function simulateClose(withOversizedPrize: boolean): Promise<CloseMetrics>
     openTravels,
     closeTravels,
     objectPosition: oversizedPrize?.translation(),
+    stateStayedFiniteAndBounded,
   };
 }
 
@@ -205,6 +234,8 @@ describe("M01 oversized-object close regression", () => {
       evaluateOversizedClose(control.closeTravels, oversized.closeTravels),
     ).toBe(true);
 
+    expect(control.stateStayedFiniteAndBounded).toBe(true);
+    expect(oversized.stateStayedFiniteAndBounded).toBe(true);
     expect(oversized.objectPosition).toBeDefined();
     expect(Math.abs(oversized.objectPosition!.x)).toBeLessThan(0.04);
     expect(Math.abs(oversized.objectPosition!.z)).toBeLessThan(0.04);
