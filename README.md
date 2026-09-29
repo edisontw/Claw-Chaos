@@ -24,7 +24,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 **M01 in progress — three-prong claw laboratory mechanics are live**
 
-M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, passing PT-001 centered-ball pickup, PT-002 retaining-force slip, PT-003 off-center box rotation, PT-004 Teddy limb-hook, and PT-005 blocked-finger independence regressions. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation/hook, or success roll.
+M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, and all six required physics experiments passing: centered pickup, retaining-force slip, off-center rotation, Teddy limb hook, blocked-finger independence, and oversized-object full-close blocking. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation/hook, or success roll.
 
 ### First milestone
 
@@ -101,7 +101,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with the **oversized-object close regression**.
+Continue **M01 — Claw Physics Laboratory** with **generic COM visualization tooling and the final M01 closure audit**.
 
 The current `claw-lab` now provides:
 - rigid hub plus three independent dynamic fingers,
@@ -122,9 +122,11 @@ The current `claw-lab` now provides:
 - `?experiment=pt004` compound Teddy limb-hook scene,
 - shared Teddy compound collider definition with visible hook-region/COM markers,
 - `?experiment=pt005` one-finger blocker scene with per-finger angular-travel telemetry,
+- `?experiment=oversized` dynamic oversized-prize close-block scene,
+- matched empty-control vs oversized-prize close regression,
 - active GitHub Pages deployment.
 
-PT-001 through PT-005 are automated PASS. PT-005 applies the same close command to all three joints but records about 0.000 rad travel for the physically blocked finger versus about 0.314 rad for each free finger. Next verify a centrally oversized rigid prize prevents nominal full closure through contact alone.
+All six required M01 physics experiments are automated PASS. The oversized regression allows a near-normal open pose, then reduces actual close travel from about 0.240 rad in the matched control to roughly 0.052 / 0.001 / 0.001 rad through contact alone. Next consolidate COM markers into reusable tooling and perform the final M01 exit-criteria audit before starting M02.
 
 ## Status
 
