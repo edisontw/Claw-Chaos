@@ -24,7 +24,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 **M01 in progress — three-prong claw laboratory mechanics are live**
 
-M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, passing PT-001 centered-ball pickup, PT-002 retaining-force slip, PT-003 off-center box rotation, and PT-004 Teddy limb-hook regressions. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation/hook, or success roll.
+M00 is complete. M01 now has a three-prong mechanical baseline, realistic segmented claw geometry, passing PT-001 centered-ball pickup, PT-002 retaining-force slip, PT-003 off-center box rotation, PT-004 Teddy limb-hook, and PT-005 blocked-finger independence regressions. Outcomes come from rigid-body contacts and explicit motor forces; there is no prize parenting, hidden weld, scripted release/rotation/hook, or success roll.
 
 ### First milestone
 
@@ -101,7 +101,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M01 — Claw Physics Laboratory** with **PT-005 blocked finger**.
+Continue **M01 — Claw Physics Laboratory** with the **oversized-object close regression**.
 
 The current `claw-lab` now provides:
 - rigid hub plus three independent dynamic fingers,
@@ -121,9 +121,10 @@ The current `claw-lab` now provides:
 - visible PT-003 COM and orientation markers,
 - `?experiment=pt004` compound Teddy limb-hook scene,
 - shared Teddy compound collider definition with visible hook-region/COM markers,
+- `?experiment=pt005` one-finger blocker scene with per-finger angular-travel telemetry,
 - active GitHub Pages deployment.
 
-PT-001 through PT-004 are automated PASS. PT-004 uses a real compound Teddy body and produces about 45 mm peak lift, ~0.49 s of sustained hanging, and ~27° of natural rotation before it can settle back after contact loss. Next verify one blocked finger can load/stop independently while the other fingers continue.
+PT-001 through PT-005 are automated PASS. PT-005 applies the same close command to all three joints but records about 0.000 rad travel for the physically blocked finger versus about 0.314 rad for each free finger. Next verify a centrally oversized rigid prize prevents nominal full closure through contact alone.
 
 ## Status
 
