@@ -7,6 +7,7 @@ import {
 import { FixedStepLoop } from "../core/FixedStepLoop";
 import { DebugOverlay } from "../debug/DebugOverlay";
 import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
+import { RigidBodyMassPropertiesDebugRenderer } from "../debug/RigidBodyMassPropertiesDebug";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
@@ -59,6 +60,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   const debugOverlay = new DebugOverlay(root);
   const physicsDebugRenderer = new PhysicsDebugRenderer(scene, false);
+  const massPropertiesDebugRenderer =
+    new RigidBodyMassPropertiesDebugRenderer(
+      scene,
+      testScene.massPropertiesDebugTargets ?? [],
+      false,
+    );
   const fixedStep = new FixedStepLoop(
     FIXED_TIMESTEP_SECONDS,
     MAX_PHYSICS_STEPS_PER_FRAME,
@@ -73,8 +80,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let firstFrameRendered = false;
 
   const onKeyDown = (event: KeyboardEvent): void => {
-    if (!event.repeat && event.code === "KeyD") {
+    if (event.repeat) {
+      return;
+    }
+
+    if (event.code === "KeyD") {
       physicsDebugRenderer.toggle();
+    } else if (event.code === "KeyM") {
+      massPropertiesDebugRenderer.toggle();
     }
   };
   window.addEventListener("keydown", onKeyDown);
@@ -119,6 +132,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
     syncRenderTransforms();
     physicsDebugRenderer.update(physics.debugRender());
+    massPropertiesDebugRenderer.update();
     renderer.render(scene, camera);
 
     if (!firstFrameRendered) {
@@ -136,6 +150,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
       dynamicBodies: physics.dynamicBodyCount,
       droppedCatchUpSeconds,
       physicsDebugVisible: physicsDebugRenderer.visible,
+      massPropertiesDebugVisible: massPropertiesDebugRenderer.visible,
       extraLines: testScene.debugLines?.(),
     });
 
