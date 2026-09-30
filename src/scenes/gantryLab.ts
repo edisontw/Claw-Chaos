@@ -21,10 +21,10 @@ import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 import type { SimulationScene } from "./types";
 
 export const M02_FINGER_TRANSPORT_CONFIG = {
-  stiffness: 900,
-  damping: 70,
-  maxTorque: 8.0,
-  angularDamping: 4.0,
+  stiffness: 2400,
+  damping: 160,
+  maxTorque: 20.0,
+  angularDamping: 8.0,
   maxRelativeDeflectionRadians: 0.035,
 } as const;
 
