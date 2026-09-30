@@ -704,9 +704,45 @@ Regression status:
 - production M01 grasp/contact and M02 mechanics — unchanged
 - automated suite — **46 tests PASS**
 
+## M03 implementation status — slice 3 / final closure verified 2026-10-01
+
+**Status: CLOSED**
+
+The final M03 regression builds a diagonal swing using only the existing 0.40 s X/Z reversal cadence, then starts physical DROP while the swing still has both meaningful displacement and relative horizontal velocity.
+
+Measured amplified-descent response:
+- pre-DROP diagonal resultant peak ≈ 34.05 mm
+- DROP trigger state: X/Z offsets ≈ 9.85 / 9.85 mm; resultant ≈ 13.94 mm
+- DROP trigger relative horizontal speed ≈ 0.191 m/s
+- world horizontal speed at DROP start ≈ 0.625 m/s
+- first DROP tick world horizontal speed ≈ 0.694 m/s; retention ratio ≈ 1.11
+- first DROP tick relative horizontal speed ≈ 0.301 m/s
+- physical descent ≈ 0.28029 m over 146 fixed ticks
+- max descent X/Z offsets ≈ 21.55 / 21.55 mm
+- max descent resultant ≈ 30.47 mm
+- hub horizontal travel from DROP start ≈ 61.69 mm
+- bottom payout = 0.280 m
+- maximum suspension-length error ≈ 0.0000030 m (~0.003 mm)
+- final suspension distance ≈ 0.3100001 m
+- finite/bounded stability PASS
+
+M03 closure audit:
+- preserved horizontal momentum — PASS
+- lateral swing — PASS
+- front/back swing — PASS
+- diagonal swing — PASS
+- phase-building through reversals — PASS
+- wrong cadence decays rather than receiving scripted energy — PASS
+- descent while amplified swing remains active — PASS
+- no special swing button — PASS
+- no angle/velocity injection, hidden swing force, transform parenting, or descent-time state reset — PASS
+- PT-006/PT-007/PT-008/home-return regressions — PASS
+- M01 grasp/contact semantics — unchanged
+- full suite — **47 automated tests PASS**
+
 ## Current next step
 
-Continue **M03 — Swing Techniques** with deliberate descent while an amplified swing is still active. Do not change the directional swing calibration unless a later physical regression demonstrates a real conflict.
+Proceed to **M04 — Drop, Early Close, Force Phases** from the closed M03 baseline. M04 should add the authentic play-cycle state machine and early-close/force-phase behavior without changing the closed swing mechanics unless a dedicated regression demonstrates a physical conflict.
 
 ## Design-review additions
 
