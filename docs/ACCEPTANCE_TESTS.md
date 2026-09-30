@@ -391,6 +391,17 @@ Expected:
 - fingers take time to close,
 - lift occurs after configured close/settle logic.
 
+Implementation status — 2026-10-01:
+- **Slice-1 automated PASS for DROP → DESCENDING → EARLY CLOSE**
+- first action moves READY → DESCENDING
+- second action during descent records close reason EARLY
+- measured early action payout ≈ 0.10227 m
+- finger command moves from +0.35 rad toward -0.42 rad at the unchanged 1.6 rad/s command rate
+- close command requires 58 fixed ticks ≈ 0.4833 s, proving close is not instantaneous
+- reel continues descending during closing; payout reaches ≈ 0.23760 m when the close command completes
+- closing uses the existing M01 contact motor stiffness/damping/max torque
+- physical lift after close/settle remains pending slice 2
+
 ## 12. PT-010 Automatic close
 
 Input:
@@ -399,6 +410,15 @@ Input:
 
 Expected:
 - claw closes at configured travel/floor condition.
+
+Implementation status — 2026-10-01:
+- **Automated PASS for configured travel-close path**
+- current pre-cabinet proxy is payout threshold 0.275 m
+- measured transition payout ≈ 0.27562 m
+- close reason is AUTO
+- close command again requires 58 ticks ≈ 0.4833 s
+- reel physically reaches max payout 0.280 m
+- later cabinet/floor contact can replace or augment this travel threshold without changing the state-machine contract
 
 ## 13. PT-011 Force-phase slip
 
