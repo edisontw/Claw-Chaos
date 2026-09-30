@@ -346,6 +346,7 @@ export class PhysicsRuntime {
       this.world.createCollider(descriptor, body);
     }
 
+    body.recomputeMassPropertiesFromColliders();
     this.dynamicBodyCountValue += 1;
     return body;
   }
