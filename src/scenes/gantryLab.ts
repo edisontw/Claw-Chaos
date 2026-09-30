@@ -23,9 +23,9 @@ import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 import type { SimulationScene } from "./types";
 
 export const M02_FINGER_TRANSPORT_CONFIG = {
-  stiffness: 2400,
-  damping: 160,
-  maxTorque: 20.0,
+  stiffness: 6000,
+  damping: 340,
+  maxTorque: 50.0,
   angularDamping: 8.0,
   maxRelativeDeflectionRadians: 0.035,
 } as const;
@@ -45,8 +45,8 @@ export const M02_GANTRY_CONFIG = {
   suspensionLength: 0.31,
   suspensionAngularDamping: 3.0,
   suspensionLinearDamping: 0.12,
-  suspensionSpringStiffness: 55,
-  suspensionSpringDamping: 8.5,
+  suspensionSpringStiffness: 170,
+  suspensionSpringDamping: 1.0,
   suspensionSpringMaxForce: 4.0,
   hubMassKg: 0.32,
   reelMinPayout: 0,

@@ -551,6 +551,8 @@ PT-007 swing amplification belongs to M03 and is intentionally not required to c
 
 # M03 — Swing Techniques
 
+**Status: IN PROGRESS — slice 1 verified 2026-09-30**
+
 ## Goal
 
 Make "甩爪" a real, learnable interaction.
@@ -564,16 +566,39 @@ Make "甩爪" a real, learnable interaction.
 - phase-building through reversals
 - descent while swinging
 
+## Slice 1 — PT-007 lateral swing amplification
+
+Implemented and verified:
+- repeated X-axis carriage reversals only; no swing button
+- all swing energy enters through the same fixed-step gantry acceleration/braking path used by M02
+- suspension recalibrated to 170 N/m horizontal stiffness, 1.0 N·s/m damping, 4 N corrective-force clamp
+- OPEN/transport finger hold strengthened independently to stiffness 6000, damping 340, max torque 50 so the claw fingers remain mechanically rigid while the suspension is more responsive
+- PT-006 hard-brake gate remains PASS under the new calibration
+- PT-008 DROP/LIFT momentum gate remains PASS
+- M02 physical home-return regression remains PASS
+
+PT-007 measured timing response:
+- 0.30 s half-period: 11.86 mm early peak → 8.41 mm late peak (off-cadence decay)
+- 0.38 s half-period: 20.02 mm → 20.40 mm
+- 0.40 s half-period: 20.86 mm → 24.17 mm (**+15.9% amplification**)
+- 0.42 s half-period: 20.32 mm → 22.53 mm
+- 0.46 s half-period: 15.99 mm → 15.28 mm (off-cadence decay)
+- 0.40 s peak angle: about 0.078 rad (~4.5°)
+- finite/bounded stability PASS at 120 Hz
+
+This establishes a learnable timing window: correct reversal timing builds swing while clearly wrong cadence loses amplitude.
+
 ## Exit criteria
 
-A tester can intentionally reproduce:
-- left/right swing,
-- front/back swing,
-- diagonal swing,
-- larger swing through timed reversal,
-- off-axis descent caused by momentum.
+Current status:
+- left/right swing — **PASS**
+- larger swing through timed reversal — **PASS (PT-007)**
+- front/back swing — pending dedicated regression
+- diagonal swing — pending dedicated regression
+- off-axis descent caused by deliberately built momentum — pending dedicated M03 regression
+- no special swing button — **PASS**
 
-No special swing button is used.
+**Next slice:** front/back + diagonal swing reproduction using the same suspension and gantry model, then deliberate descent during an amplified swing.
 
 ---
 
