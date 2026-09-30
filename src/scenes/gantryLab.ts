@@ -25,6 +25,7 @@ import {
   applyM04Action,
   createM04PlayState,
   m04FingerShouldClose,
+  m04ForcePhase,
   m04ReelCommand,
 } from "./m04PlayCycle";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
@@ -395,6 +396,8 @@ export function createGantryLabScene(
     closedAngleRadians: claw.closedAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
+    closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
+    pickupLiftDistanceMeters: M04_PLAY_CONFIG.pickupLiftDistanceMeters,
   };
 
   let motion: GantryMotionState = {
@@ -724,6 +727,7 @@ export function createGantryLabScene(
           fingerCommandRadians: fingerCommand,
         },
         playConfig,
+        0,
       );
 
       const reelAtTop =
@@ -788,6 +792,7 @@ export function createGantryLabScene(
       );
 
       const closingFinger = m04FingerShouldClose(playCycle);
+      const forcePhase = m04ForcePhase(playCycle);
       const fingerTarget = closingFinger
         ? claw.closedAngle
         : claw.openAngle;
@@ -804,7 +809,13 @@ export function createGantryLabScene(
           fingerCommandRadians: fingerCommand,
         },
         playConfig,
+        stepSeconds,
       );
+      const activeForcePhase = m04ForcePhase(playCycle);
+      const activeContactTorque =
+        activeForcePhase === "RETAINING"
+          ? claw.pt002RetainingTorque
+          : claw.maxMotorTorque;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
@@ -817,7 +828,7 @@ export function createGantryLabScene(
         );
         joint.setMotorMaxForce(
           closingFinger
-            ? claw.maxMotorTorque
+            ? activeContactTorque
             : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
@@ -872,6 +883,14 @@ export function createGantryLabScene(
           (playCycle.closeStartPayoutMeters === null
             ? "-"
             : playCycle.closeStartPayoutMeters.toFixed(3) + " m"),
+        "M04 force phase  " + m04ForcePhase(playCycle),
+        "M04 phase time   " +
+          playCycle.phaseElapsedSeconds.toFixed(3) +
+          " s",
+        "M04 pickup start " +
+          (playCycle.pickupStartPayoutMeters === null
+            ? "-"
+            : playCycle.pickupStartPayoutMeters.toFixed(3) + " m"),
         "Finger command   " + fingerCommand.toFixed(3) + " rad",
         "PT-006 phase     " + pt006Phase,
         "PT-006 result    " + pt006Result,
@@ -908,13 +927,20 @@ export function createGantryLabScene(
           ).toFixed(0) +
           " / " +
           (m04FingerShouldClose(playCycle)
-            ? claw.maxMotorTorque
+            ? m04ForcePhase(playCycle) === "RETAINING"
+              ? claw.pt002RetainingTorque
+              : claw.maxMotorTorque
             : M02_FINGER_TRANSPORT_CONFIG.maxTorque
-          ).toFixed(1),
+          ).toFixed(3),
         "Controls         Arrows aim | Space DROP / EARLY CLOSE | H HOME",
         "Auto close       " +
           M04_PLAY_CONFIG.autoClosePayoutMeters.toFixed(3) +
           " m travel",
+        "Settle / pickup   " +
+          M04_PLAY_CONFIG.closeSettleSeconds.toFixed(2) +
+          " s / " +
+          M04_PLAY_CONFIG.pickupLiftDistanceMeters.toFixed(2) +
+          " m",
         "Tests            P PT-006 | T PT-008 | M COM | D colliders",
       ];
     },
