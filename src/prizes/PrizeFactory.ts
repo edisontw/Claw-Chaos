@@ -146,15 +146,24 @@ function chooseVariant(
     "variant family",
   );
   const rng = createSeededRandom(seed);
+  if (family.colorIds.length === 0 || family.finishIds.length === 0) {
+    throw new Error(`Invalid empty visual variant family: ${family.id}`);
+  }
+
   const colorIndex = Math.floor(rng.next() * family.colorIds.length);
   const finishIndex = Math.floor(rng.next() * family.finishIds.length);
-  const colorId = family.colorIds[colorIndex] ?? family.colorIds[0];
-  const finishId = family.finishIds[finishIndex] ?? family.finishIds[0];
+  const colorId = family.colorIds[colorIndex];
+  const finishId = family.finishIds[finishIndex];
+
+  if (colorId === undefined || finishId === undefined) {
+    throw new Error(`Invalid visual variant family: ${family.id}`);
+  }
+
   const colorHex =
     PRIZE_COLOR_PALETTE[colorId as keyof typeof PRIZE_COLOR_PALETTE];
 
-  if (colorHex === undefined || finishId === undefined) {
-    throw new Error(`Invalid visual variant family: ${family.id}`);
+  if (colorHex === undefined) {
+    throw new Error(`Unknown prize color: ${colorId}`);
   }
 
   return { colorId, colorHex, finishId };
