@@ -569,4 +569,6 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         boosted.liftAfterRetaining0p8sMeters,
     ).toBeGreaterThan(0.015);
     expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
-  });});
+  });
+});
+
