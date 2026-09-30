@@ -20,6 +20,14 @@ import { advanceReel, type ReelConfig, type ReelState } from "./reelMotion";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 import type { SimulationScene } from "./types";
 
+export const M02_FINGER_TRANSPORT_CONFIG = {
+  stiffness: 2400,
+  damping: 160,
+  maxTorque: 20.0,
+  angularDamping: 8.0,
+  maxRelativeDeflectionRadians: 0.035,
+} as const;
+
 export const M02_GANTRY_CONFIG = {
   carriageY: 1.18,
   carriageHalfX: 0.075,
@@ -686,10 +694,10 @@ export function createGantryLabScene(
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
-          claw.motorStiffness,
-          claw.motorDamping,
+          M02_FINGER_TRANSPORT_CONFIG.stiffness,
+          M02_FINGER_TRANSPORT_CONFIG.damping,
         );
-        joint.setMotorMaxForce(claw.maxMotorTorque);
+        joint.setMotorMaxForce(M02_FINGER_TRANSPORT_CONFIG.maxTorque);
       }
       for (const body of fingerBodies) {
         body.wakeUp();
@@ -751,6 +759,12 @@ export function createGantryLabScene(
           gantry.suspensionSpringStiffness.toFixed(1) +
           " / " +
           gantry.suspensionSpringDamping.toFixed(1),
+        "Finger hold k/c/T " +
+          M02_FINGER_TRANSPORT_CONFIG.stiffness.toFixed(0) +
+          " / " +
+          M02_FINGER_TRANSPORT_CONFIG.damping.toFixed(0) +
+          " / " +
+          M02_FINGER_TRANSPORT_CONFIG.maxTorque.toFixed(1),
         "Controls         Arrows gantry | Space DROP/LIFT | P PT-006 | T PT-008",
         "Debug            M COM/origin | D colliders",
       ];

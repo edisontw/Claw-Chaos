@@ -569,8 +569,26 @@ PT-008 automated baseline:
 - descent and lift each complete in about 146 fixed ticks (~1.22 s)
 - finite/bounded stability gate: PASS
 
-Verification after slice 2:
-- 40 automated tests PASS
+### M02 open-finger transport rigidity refinement
+
+Visual review found that the suspended hub motion was realistic but the three open finger links still looked too compliant during gantry acceleration and hard braking. This was isolated from the closed M01 grasp/contact behavior.
+
+M02-only OPEN/transport profile:
+- motor stiffness: 2400
+- motor damping: 160
+- max motor torque: 20.0 N·m
+- finger angular damping: 8.0
+- M01 contact/closing profile remains unchanged at stiffness 180 / damping 18 / max torque 2.5 N·m
+
+Automated transport-rigidity regression:
+- measures each finger's rotation relative to the moving hub, not world-space claw swing
+- first stronger-hold attempt still allowed ~0.079 / 0.042 / 0.042 rad peak flex and was rejected
+- final calibrated peaks: ~0.0348 / 0.0189 / 0.0191 rad
+- acceptance ceiling: 0.035 rad (~2.0°) per finger
+- PT-006 suspension metrics and PT-008 DROP/LIFT metrics remain unchanged
+
+Verification after slice 2 + transport refinement:
+- 41 automated tests PASS
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS

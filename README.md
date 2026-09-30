@@ -125,11 +125,12 @@ Current M02 lab:
 - reel max speed: 0.28 m/s
 - reel acceleration / braking: 0.9 / 1.4 m/s²
 - claw hub remains dynamic; DROP/LIFT moves a kinematic reel anchor, not the claw transform
+- M02 OPEN/transport finger hold uses a stiffer profile than M01 grasp/contact motors, so the three open fingers stay mechanically rigid during movement and hard braking
 - `D`: collider debug
 - `M`: COM/origin debug
-- 40 automated tests PASS after this slice
+- 41 automated tests PASS after the transport-rigidity refinement
 
-PT-008 baseline descends about 0.280 m, preserves measurable horizontal motion during DROP, reaches about 10.2 mm maximum horizontal offset during descent, and physically lifts back about 0.280 m to the top.
+PT-008 baseline descends about 0.280 m, preserves measurable horizontal motion during DROP, reaches about 10.2 mm maximum horizontal offset during descent, and physically lifts back about 0.280 m to the top. The M02 open-finger transport gate limits relative finger flex during gantry acceleration/hard braking to about 0.035 rad (~2°) maximum.
 
 Next M02 slice should complete the **lift → carriage return/home path** and perform the final M02 closure audit. Do not start early-close/automatic-close mechanics until M02 is closed.
 
