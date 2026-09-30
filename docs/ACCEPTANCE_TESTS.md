@@ -556,6 +556,13 @@ Expected:
 - prize can swing/rotate/slip during return,
 - no teleport to chute.
 
+M02 prerequisite status — 2026-09-30:
+- mechanical return path is **automated PASS**
+- fixed-step carriage target-return uses the same speed/acceleration/braking limits as manual motion
+- regression returns from ~0.317 m off home to ~1.76 mm error without teleport
+- dynamic hub keeps measurable residual swing during return (~10.7 mm max relative offset)
+- full PT-031 remains pending a physically carried prize and configured chute target
+
 ## PT-032 Release timing
 
 Expected:
@@ -568,6 +575,12 @@ Expected:
 Expected:
 - after release/chute check, machine returns to configured ready/home state,
 - next play cannot start while the machine is in an unsafe intermediate state.
+
+M02 prerequisite status — 2026-09-30:
+- mechanical lift-completion → home-return transition is **automated PASS**
+- conflicting DROP/test triggers are locked during `RETURNING_HOME`
+- home completion requires both position and velocity tolerances
+- full PT-033 lifecycle remains pending release/chute check and next-play state machinery
 
 ## PT-034 Aim timer
 
@@ -594,6 +607,14 @@ When enabled:
 Expected:
 - lower/upper reel limit cannot create high-energy bounce or numerical explosion,
 - cable length never exceeds configured safe tolerance.
+
+Implementation status — 2026-09-30:
+- **Automated PASS**
+- fixed-step reel controller uses limit-aware braking before endpoints
+- payout stays within 0.00–0.28 m
+- PT-008 completes both lower-limit DROP and upper-limit LIFT without energetic bounce
+- final spherical suspension distance remains ~0.310 m
+- finite/bounded stability checks PASS at 120 Hz
 
 ## PT-038 Collision-mask integrity
 
