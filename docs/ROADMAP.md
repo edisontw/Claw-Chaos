@@ -551,7 +551,7 @@ PT-007 swing amplification belongs to M03 and is intentionally not required to c
 
 # M03 — Swing Techniques
 
-**Status: IN PROGRESS — slice 1 verified 2026-09-30**
+**Status: IN PROGRESS — slices 1–2 verified through 2026-10-01**
 
 ## Goal
 
@@ -590,15 +590,34 @@ This establishes a learnable timing window: correct reversal timing builds swing
 
 ## Exit criteria
 
+## Slice 2 — front/back + diagonal swing reproduction
+
+Implemented and verified:
+- Z-axis front/back pumping uses the same normal gantry acceleration/braking path as PT-007
+- synchronized X/Z reversals generate diagonal swing through the same suspension model
+- no production physics constants or M01 grasp/contact semantics changed
+- no hidden swing force, angle/velocity injection, scripted oscillation, or transform parenting
+
+Measured response:
+- Z 0.40 s: 20.86 mm early peak → 24.17 mm late peak (+15.9%)
+- Z off-cadence 0.30 s: 11.86 mm → 8.41 mm (decays)
+- diagonal 0.40 s: late X/Z peaks ≈ 24.08 / 24.08 mm
+- diagonal late resultant ≈ 34.05 mm; peak angle ≈ 0.110 rad (~6.3°)
+- maximum suspension-length error ≈ 0.003 mm
+- finite/bounded stability PASS at 120 Hz
+- full suite after this slice: **46 automated tests PASS**
+
+## Exit criteria
+
 Current status:
 - left/right swing — **PASS**
 - larger swing through timed reversal — **PASS (PT-007)**
-- front/back swing — pending dedicated regression
-- diagonal swing — pending dedicated regression
+- front/back swing — **PASS**
+- diagonal swing — **PASS**
 - off-axis descent caused by deliberately built momentum — pending dedicated M03 regression
 - no special swing button — **PASS**
 
-**Next slice:** front/back + diagonal swing reproduction using the same suspension and gantry model, then deliberate descent during an amplified swing.
+**Next slice:** deliberate descent while an amplified swing is active, preserving horizontal momentum and the now-verified 2D directional swing behavior.
 
 ---
 
