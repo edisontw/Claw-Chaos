@@ -154,7 +154,6 @@ describe("M02 open-finger transport rigidity", () => {
           stiffness: gantry.suspensionSpringStiffness,
           damping: gantry.suspensionSpringDamping,
           maxForce: gantry.suspensionSpringMaxForce,
-          maxDampingForce: gantry.suspensionDampingForceLimit,
         },
         dt,
       );
