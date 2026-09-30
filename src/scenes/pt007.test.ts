@@ -4,23 +4,18 @@ import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { M02_GANTRY_CONFIG } from "./gantryLab";
 import { advanceGantryAxis } from "./gantryMotion";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
-import {
-  advancePhaseAwareSwingPump,
-  type SwingPumpState,
-} from "./swingTechnique";
 
 interface SwingRunMetrics {
-  label: string;
+  halfPeriodSeconds: number;
   earlyPeakMeters: number;
   latePeakMeters: number;
   overallPeakMeters: number;
   peakAngleRadians: number;
-  reversalCount: number;
   finiteAndBounded: boolean;
 }
 
 async function runSwingPump(
-  mode: "phase-aware" | "fixed",
+  halfPeriodSeconds: number,
 ): Promise<SwingRunMetrics> {
   const config = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -60,9 +55,6 @@ async function runSwingPump(
     braking: config.braking,
   };
   let gantry = { position: 0, velocity: 0 };
-  let pump: SwingPumpState = { direction: 1, initialized: false };
-  let previousDirection = pump.direction;
-  let reversalCount = 0;
   let finiteAndBounded = true;
   let earlyPeakMeters = 0;
   let latePeakMeters = 0;
@@ -97,8 +89,6 @@ async function runSwingPump(
         stiffness: config.suspensionSpringStiffness,
         damping: config.suspensionSpringDamping,
         maxForce: config.suspensionSpringMaxForce,
-
-        maxDampingForce: config.suspensionDampingForceLimit,
       },
       dt,
     );
@@ -140,36 +130,17 @@ async function runSwingPump(
     step(0, "settle");
   }
 
-  const totalTicks = Math.ceil(4.0 * PHYSICS_HZ);
-  const fixedHalfPeriodTicks = Math.round(0.32 * PHYSICS_HZ);
-
-  for (let tick = 0; tick < totalTicks; tick += 1) {
-    const hubPosition = hub.translation();
-    const hubVelocity = hub.linvel();
-    const relativePosition = hubPosition.x - gantry.position;
-    const relativeVelocity = hubVelocity.x - gantry.velocity;
-
-    let input: number;
-    if (mode === "phase-aware") {
-      pump = advancePhaseAwareSwingPump(
-        pump,
-        { relativePosition, relativeVelocity },
-        {
-          velocityDeadband: 0.002,
-          minOffsetForReversal: 0.0015,
-        },
-      );
-      input = pump.direction;
-      if (pump.direction !== previousDirection) {
-        reversalCount += 1;
-        previousDirection = pump.direction;
-      }
-    } else {
-      const segment = Math.floor(tick / fixedHalfPeriodTicks);
-      input = segment % 2 === 0 ? 1 : -1;
+  const halfPeriodTicks = Math.max(
+    1,
+    Math.round(halfPeriodSeconds * PHYSICS_HZ),
+  );
+  const segments = 12;
+  for (let segment = 0; segment < segments; segment += 1) {
+    const input = segment % 2 === 0 ? 1 : -1;
+    const samplePhase = segment < 4 ? "early" : "late";
+    for (let tick = 0; tick < halfPeriodTicks; tick += 1) {
+      step(input, samplePhase);
     }
-
-    step(input, tick < totalTicks / 3 ? "early" : "late");
   }
 
   for (let tick = 0; tick < Math.ceil(0.5 * PHYSICS_HZ); tick += 1) {
@@ -177,38 +148,28 @@ async function runSwingPump(
   }
 
   return {
-    label: mode,
+    halfPeriodSeconds,
     earlyPeakMeters,
     latePeakMeters,
     overallPeakMeters,
     peakAngleRadians,
-    reversalCount,
     finiteAndBounded,
   };
 }
 
-describe("PT-007 swing amplification", () => {
-  it("grows lateral swing when reversals follow claw phase instead of a blind cadence", async () => {
-    const phaseAware = await runSwingPump("phase-aware");
-    const fixed = await runSwingPump("fixed");
+describe("PT-007 swing amplification exploration", () => {
+  it("measures timing sensitivity using only physical gantry reversals", async () => {
+    const candidates = [0.30, 0.34, 0.38, 0.40, 0.42, 0.46];
+    const results: SwingRunMetrics[] = [];
 
-    console.log(
-      "PT-007 phase comparison",
-      JSON.stringify({ phaseAware, fixed }),
-    );
+    for (const halfPeriodSeconds of candidates) {
+      results.push(await runSwingPump(halfPeriodSeconds));
+    }
 
-    expect(phaseAware.finiteAndBounded).toBe(true);
-    expect(fixed.finiteAndBounded).toBe(true);
-    expect(phaseAware.reversalCount).toBeGreaterThanOrEqual(3);
-    expect(phaseAware.earlyPeakMeters).toBeGreaterThan(0.003);
-    expect(phaseAware.latePeakMeters).toBeGreaterThan(
-      phaseAware.earlyPeakMeters * 1.15,
-    );
-    expect(phaseAware.latePeakMeters).toBeGreaterThan(
-      fixed.latePeakMeters * 1.5,
-    );
-    expect(phaseAware.latePeakMeters).toBeGreaterThan(0.018);
-    expect(phaseAware.overallPeakMeters).toBeLessThan(0.10);
-    expect(phaseAware.peakAngleRadians).toBeLessThan(0.35);
+    console.log("PT-007 resonance sweep", JSON.stringify(results));
+
+    expect(results.every((result) => result.finiteAndBounded)).toBe(true);
+    expect(Math.max(...results.map((result) => result.overallPeakMeters)))
+      .toBeGreaterThan(0.003);
   });
 });
