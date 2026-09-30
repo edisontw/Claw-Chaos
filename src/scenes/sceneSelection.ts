@@ -1,6 +1,6 @@
 import { DEFAULT_SCENE_ID, DEFAULT_SCENE_SEED } from "../config/simulation";
 
-export const SCENE_IDS = ["gantry-lab", "claw-lab", "falling-cube"] as const;
+export const SCENE_IDS = ["gantry-lab", "prize-lab", "claw-lab", "falling-cube"] as const;
 
 export type SceneId = (typeof SCENE_IDS)[number];
 
