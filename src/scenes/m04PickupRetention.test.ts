@@ -488,7 +488,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
   it("calibrates a limited HOLD BOOST against the same near-slip sphere", async () => {
-    const candidates = [0.03, 0.10, 0.25, 0.50, 1.00];
+    const candidates = [0.004, 0.005, 0.0075, 0.010, 0.015, 0.020, 0.030];
     const baseline = await simulateM04PickupRetention();
     const boosted = [];
 
