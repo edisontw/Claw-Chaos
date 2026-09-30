@@ -646,33 +646,58 @@ Final status:
 
 # M04 — Drop, Early Close, Force Phases
 
+**Status: IN PROGRESS — slice 1 verified 2026-10-01**
+
 ## Goal
 
 Complete the first authentic claw-machine play cycle.
 
 ## Deliverables
 
-- machine state machine
-- DROP
-- DESCENDING
-- player-triggered EARLY CLOSE ("收爪")
-- automatic floor/travel close
-- CLOSE torque phase
-- PICKUP torque phase
-- RETAINING torque phase
-- optional HOLD BOOST
-- return
-- release
+- machine state machine — IN PROGRESS
+- DROP — PASS
+- DESCENDING — PASS
+- player-triggered EARLY CLOSE ("收爪") — PASS
+- automatic floor/travel close — PASS for configured travel threshold
+- CLOSE torque phase — first close profile wired; prize-contact phase validation pending
+- PICKUP torque phase — pending
+- RETAINING torque phase — pending
+- optional HOLD BOOST — pending
+- return — pending M04 lifecycle integration
+- release — pending
+
+## Slice 1 — DROP / EARLY CLOSE / AUTO CLOSE
+
+Implemented:
+- READY → DESCENDING → CLOSING → CLOSED_AT_DEPTH state path
+- first action starts physical reel descent
+- second action during descent selects EARLY close reason
+- no second action selects AUTO close at 0.275 m payout
+- closing is not instantaneous: command remains limited to 1.6 rad/s at 120 Hz
+- M01 contact motor parameters are reused unchanged for CLOSING
+- M02 hard OPEN/transport motor remains limited to aiming/transport state
+- no transform snap, finger teleport, hidden close force, or reel teleport
+
+Measured:
+- early action payout ≈ 0.10227 m
+- early close duration = 58 ticks ≈ 0.4833 s
+- payout at early close completion ≈ 0.23760 m
+- auto-close transition payout ≈ 0.27562 m
+- final auto path payout = 0.280 m
+- full suite = **49 automated tests PASS**
 
 ## Exit criteria
 
-- pressing action during descent closes early
-- closing takes time and can be physically blocked
-- strong close + weak retaining force can produce delayed slip
-- hold boost changes force, not attachment
-- player can deliberately allow release by withholding boost
-- state transitions do not zero prize motion
+Current status:
+- pressing action during descent closes early — **PASS**
+- closing takes time — **PASS**
+- closing can be physically blocked — preserved from M01; dedicated integrated M04 prize-contact gate pending
+- strong close + weak retaining force can produce delayed slip — pending slice 2+
+- hold boost changes force, not attachment — pending
+- player can deliberately allow release by withholding boost — pending
+- state transitions do not zero prize motion — pending carried-prize lifecycle validation
 
+**Next slice:** close-settle → physical LIFT → PICKUP/RETAINING force transition.
 ---
 
 # M05 — Prize Physics Library v1

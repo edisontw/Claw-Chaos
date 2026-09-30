@@ -740,9 +740,40 @@ M03 closure audit:
 - M01 grasp/contact semantics — unchanged
 - full suite — **47 automated tests PASS**
 
+## M04 implementation status — slice 1 verified 2026-10-01
+
+**Status: IN PROGRESS**
+
+Implemented:
+- explicit play-cycle states: READY → DESCENDING → CLOSING → CLOSED_AT_DEPTH
+- first action starts physical DROP through the existing reel controller
+- second action during DESCENDING triggers EARLY CLOSE immediately
+- no second action triggers AUTO CLOSE at 0.275 m configured travel
+- finger target still advances only through the fixed 120 Hz motor-command ramp
+- closing switches from the M02 OPEN transport profile back to the unchanged M01 contact motor profile
+- gantry aiming input is locked after DROP begins
+- PT-006/PT-008 test paths are isolated from an active M04 cycle
+
+Measured regression:
+- EARLY CLOSE action at payout ≈ 0.10227 m
+- close command completes in 58 ticks ≈ 0.4833 s
+- reel continues descending while the claw closes, reaching ≈ 0.23760 m at close completion
+- AUTO CLOSE transition occurs at payout ≈ 0.27562 m
+- automatic path reaches max payout 0.280 m
+- close target reaches -0.42 rad through normal command progression
+- full suite: **49 automated tests PASS**
+
+Not yet implemented in M04:
+- close-settle timer
+- automatic physical lift after close
+- PICKUP torque phase
+- RETAINING torque phase
+- HOLD BOOST
+- full return/release lifecycle
+
 ## Current next step
 
-Proceed to **M04 — Drop, Early Close, Force Phases** from the closed M03 baseline. M04 should add the authentic play-cycle state machine and early-close/force-phase behavior without changing the closed swing mechanics unless a dedicated regression demonstrates a physical conflict.
+Continue **M04 slice 2** with close-settle → physical LIFT and explicit PICKUP → RETAINING force phases. Preserve M01 contact blocking/slip behavior and all closed M02/M03 motion regressions.
 
 ## Design-review additions
 

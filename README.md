@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M03 CLOSED — Swing Techniques**
+**M04 IN PROGRESS — Drop, Early Close, Force Phases**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -115,7 +115,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Proceed to **M04 — Drop, Early Close, Force Phases** from the closed M03 swing baseline.
+Continue **M04 — Drop, Early Close, Force Phases** with slice 2: after the now-verified timed close, add close-settle → physical LIFT and introduce the PICKUP/RETAINING force transition without changing the closed M03 swing baseline.
 
 Closed M02 lab controls:
 - default scene: `?scene=gantry-lab`
@@ -163,7 +163,23 @@ M03 final closure baseline:
 - finite/bounded PASS
 - **47 automated tests PASS**
 
-M03 is **CLOSED**. The next phase is M04 — Drop, Early Close, Force Phases.
+M03 is **CLOSED**.
+
+M04 slice 1 current baseline:
+- first `Space`: physical DROP / DESCENDING
+- second `Space` during descent: EARLY CLOSE
+- no second action: AUTO CLOSE at configured travel threshold 0.275 m
+- EARLY CLOSE test trigger payout ≈ 0.10227 m
+- closing command duration: 58 fixed ticks ≈ 0.4833 s
+- payout continues during early closing to ≈ 0.23760 m
+- AUTO CLOSE trigger payout ≈ 0.27562 m
+- automatic path reaches physical max payout 0.280 m
+- closing uses the unchanged M01 contact motor profile (180 / 18 / 2.5 N·m)
+- OPEN/aiming retains the M02 transport profile
+- no instant-close transform, no finger teleport, no hidden close force
+- **49 automated tests PASS**
+
+M04 remains **IN PROGRESS**. Slice 2 is close-settle → physical lift → PICKUP/RETAINING force phases.
 
 ## Status
 
