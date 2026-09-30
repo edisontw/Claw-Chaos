@@ -157,8 +157,8 @@ async function runSwingPump(
   };
 }
 
-describe("PT-007 swing amplification exploration", () => {
-  it("measures timing sensitivity using only physical gantry reversals", async () => {
+describe("PT-007 swing amplification", () => {
+  it("amplifies swing only near the physical reversal cadence without numerical runaway", async () => {
     const candidates = [0.30, 0.34, 0.38, 0.40, 0.42, 0.46];
     const results: SwingRunMetrics[] = [];
 
@@ -168,8 +168,25 @@ describe("PT-007 swing amplification exploration", () => {
 
     console.log("PT-007 resonance sweep", JSON.stringify(results));
 
+    const resonant = results.find(
+      (result) => result.halfPeriodSeconds === 0.4,
+    );
+    const offCadence = results.find(
+      (result) => result.halfPeriodSeconds === 0.3,
+    );
+
     expect(results.every((result) => result.finiteAndBounded)).toBe(true);
-    expect(Math.max(...results.map((result) => result.overallPeakMeters)))
-      .toBeGreaterThan(0.003);
+    expect(resonant).toBeDefined();
+    expect(offCadence).toBeDefined();
+    expect(resonant!.earlyPeakMeters).toBeGreaterThan(0.015);
+    expect(resonant!.latePeakMeters).toBeGreaterThan(
+      resonant!.earlyPeakMeters * 1.12,
+    );
+    expect(resonant!.latePeakMeters).toBeGreaterThan(0.022);
+    expect(resonant!.overallPeakMeters).toBeLessThan(0.05);
+    expect(resonant!.peakAngleRadians).toBeLessThan(0.16);
+    expect(offCadence!.latePeakMeters).toBeLessThan(
+      offCadence!.earlyPeakMeters,
+    );
   });
 });
