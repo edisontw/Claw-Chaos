@@ -10,7 +10,6 @@ import {
   advanceMotorCommand,
   createFingerPoints,
   createFingerSegments,
-  evaluatePt002Slip,
 } from "./clawLab";
 import {
   M02_FINGER_TRANSPORT_CONFIG,
