@@ -659,9 +659,9 @@ Complete the first authentic claw-machine play cycle.
 - DESCENDING — PASS
 - player-triggered EARLY CLOSE ("收爪") — PASS
 - automatic floor/travel close — PASS for configured travel threshold
-- CLOSE torque phase — first close profile wired; prize-contact phase validation pending
-- PICKUP torque phase — pending
-- RETAINING torque phase — pending
+- CLOSE torque phase — PASS with M01 contact profile
+- PICKUP torque phase — PASS
+- RETAINING torque phase — PASS with physical delayed-slip regression
 - optional HOLD BOOST — pending
 - return — pending M04 lifecycle integration
 - release — pending
@@ -686,18 +686,42 @@ Measured:
 - final auto path payout = 0.280 m
 - full suite = **49 automated tests PASS**
 
+## Slice 2 — settle / physical LIFT / PICKUP / RETAINING
+
+Implemented:
+- CLOSED_AT_DEPTH settles for 0.90 s before lift command begins
+- measured discrete settle duration: 109 ticks ≈ 0.908 s
+- reel reverses through the existing acceleration/braking controller; no vertical transform snap
+- PICKUP is an explicit force phase
+- after ≈ 0.06027 m reel recovery, state changes to RETAINING
+- measured PICKUP duration: 44 ticks ≈ 0.367 s
+- CLOSE/PICKUP use the existing 2.5 N·m M01 contact torque
+- RETAINING uses the calibrated 0.003 N·m weak torque
+- reel continues physically to payout 0
+
+Suspended-claw prize regression:
+- peak sphere lift ≈ 43.65 mm
+- lift at RETAINING start ≈ 21.56 mm
+- weak-retaining slip loss ≈ 44.45 mm
+- final sphere height ≈ 0.80 mm below its support baseline
+- final payout = 0.000 m
+- max suspension error ≈ 0.056 mm
+- finite/bounded PASS
+- no attachment, scripted prize release, teleport, or velocity clearing
+- full suite: **51 tests PASS**
+
 ## Exit criteria
 
 Current status:
 - pressing action during descent closes early — **PASS**
 - closing takes time — **PASS**
-- closing can be physically blocked — preserved from M01; dedicated integrated M04 prize-contact gate pending
-- strong close + weak retaining force can produce delayed slip — pending slice 2+
-- hold boost changes force, not attachment — pending
+- closing can be physically blocked — preserved from M01; dedicated broader M04 object-contact matrix remains later
+- strong close + weak retaining force can produce delayed slip — **PASS**
+- hold boost changes force, not attachment — pending slice 3
 - player can deliberately allow release by withholding boost — pending
 - state transitions do not zero prize motion — pending carried-prize lifecycle validation
 
-**Next slice:** close-settle → physical LIFT → PICKUP/RETAINING force transition.
+**Next slice:** HOLD BOOST as a temporary physical torque increase, followed by top-completion → return → release lifecycle integration.
 ---
 
 # M05 — Prize Physics Library v1
