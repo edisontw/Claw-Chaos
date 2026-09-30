@@ -434,6 +434,24 @@ Fail:
 - retaining phase change has no physical effect,
 - prize abruptly teleports out.
 
+Implementation status — 2026-10-01:
+- **Automated PASS**
+- M04 close completion is followed by a 0.90 s settle window; measured fixed-step duration = 109 ticks ≈ 0.908 s
+- reel then reverses physically into PICKUP through the unchanged M02 reel acceleration/braking controller
+- PICKUP uses 2.5 N·m, matching the closed M01 contact baseline
+- after ≈ 0.06027 m physical reel recovery (44 ticks ≈ 0.367 s), phase changes to RETAINING
+- RETAINING uses 0.003 N·m
+- suspended-claw sphere regression peak lift ≈ 0.04365 m
+- sphere remains ≈ 0.02156 m lifted at the RETAINING transition
+- subsequent weak-force slip loss ≈ 0.04445 m
+- final sphere lift ≈ −0.00080 m, remaining near the support rather than being teleported away
+- final reel payout = 0.000 m
+- maximum suspension-length error ≈ 0.000056 m
+- regression scene raises the M01 sphere/support placement by 0.015 m to produce the intended grip geometry under the suspended M04 claw; claw physics and prize material parameters are unchanged
+- no prize parent, weld, prize joint, kinematic conversion, scripted release, or velocity reset
+- finite/bounded PASS
+- full suite: **51 automated tests PASS**
+
 ## 14. PT-012 Hold boost
 
 Setup:
