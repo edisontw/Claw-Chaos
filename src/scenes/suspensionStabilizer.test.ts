@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 
 const config = {
-  stiffness: 55,
+  stiffness: 140,
   damping: 8.5,
   maxForce: 4,
+  maxDampingForce: 0.58,
 };
 
 describe("M02 suspension stabilizer", () => {
@@ -46,6 +47,29 @@ describe("M02 suspension stabilizer", () => {
 
     expect(impulse.x).toBeLessThan(0);
     expect(impulse.z).toBeCloseTo(0, 12);
+  });
+
+  it("caps viscous damping separately from the restoring spring", () => {
+    const dt = 1 / 120;
+    const impulse = computeSuspensionStabilizerImpulse(
+      {
+        anchorX: 0,
+        anchorZ: 0,
+        anchorVelocityX: 0,
+        anchorVelocityZ: 0,
+        hubX: 0,
+        hubZ: 0,
+        hubVelocityX: 10,
+        hubVelocityZ: 0,
+      },
+      config,
+      dt,
+    );
+
+    expect(Math.abs(impulse.x)).toBeCloseTo(
+      config.maxDampingForce * dt,
+      10,
+    );
   });
 
   it("limits the applied corrective force", () => {
