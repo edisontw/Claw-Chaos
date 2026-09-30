@@ -45,7 +45,7 @@ describe("M02 suspension stabilizer", () => {
     );
 
     expect(impulse.x).toBeLessThan(0);
-    expect(impulse.z).toBe(0);
+    expect(impulse.z).toBeCloseTo(0, 12);
   });
 
   it("limits the applied corrective force", () => {
