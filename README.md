@@ -115,13 +115,16 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M04 — Drop, Early Close, Force Phases** with slice 2: after the now-verified timed close, add close-settle → physical LIFT and introduce the PICKUP/RETAINING force transition without changing the closed M03 swing baseline.
+Continue **M04 — Drop, Early Close, Force Phases** with slice 3: add HOLD BOOST semantics, then integrate physical top completion → return → release while preserving the now-verified PICKUP/RETAINING behavior.
 
-Closed M02 lab controls:
+Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
-- Arrow keys: manual X/Z gantry motion
-- `Space`: physical DROP/LIFT; reaching the top after LIFT starts automatic home return
-- `H`: start physical home return when reel is already at the top
+- Arrow keys: manual X/Z aiming while READY
+- first `Space`: physical DROP
+- second `Space` during descent: EARLY CLOSE
+- no second action: AUTO CLOSE near maximum payout
+- after close: settle → physical LIFT → PICKUP → RETAINING runs automatically
+- `H`: legacy M02 home-return test path when the M04 play cycle is READY and reel is at top
 - `P`: deterministic PT-006 hard-brake swing regression
 - `T`: deterministic PT-008 momentum-during-descent regression
 - `D`: collider debug
@@ -179,7 +182,23 @@ M04 slice 1 current baseline:
 - no instant-close transform, no finger teleport, no hidden close force
 - **49 automated tests PASS**
 
-M04 remains **IN PROGRESS**. Slice 2 is close-settle → physical lift → PICKUP/RETAINING force phases.
+M04 slice 2 current baseline:
+- close completion enters a dedicated settle state before lift
+- close-settle window: 0.90 s; measured fixed-step transition = 109 ticks ≈ 0.908 s
+- physical reel LIFT begins only after settle
+- PICKUP phase remains on the M01 strong contact torque: 2.5 N·m
+- RETAINING starts after ≈ 0.06027 m of physical reel recovery (44 ticks ≈ 0.367 s)
+- RETAINING torque: 0.003 N·m
+- suspended-claw physical ball regression: peak lift ≈ 43.65 mm
+- ball lift at RETAINING transition ≈ 21.56 mm
+- weak-retaining slip loss ≈ 44.45 mm
+- final ball height returns near its support (≈ −0.80 mm relative to baseline), rather than being teleported/released
+- reel physically returns to payout 0.000 m
+- maximum suspension-length error ≈ 0.056 mm
+- no prize parent/weld/joint, prize teleport, or velocity reset
+- **51 automated tests PASS**
+
+M04 remains **IN PROGRESS**. Slice 3 is HOLD BOOST plus physical top-completion / return / release lifecycle.
 
 ## Status
 
