@@ -46,6 +46,8 @@ interface PickupRetentionMetrics {
   retainingReached: boolean;
   topReached: boolean;
   boostUsedSeconds: number;
+  retainingTransitionSpeedBeforeMetersPerSecond: number;
+  retainingTransitionSpeedAfterMetersPerSecond: number;
   finiteAndBounded: boolean;
 }
 
@@ -205,6 +207,8 @@ async function simulateM04PickupRetention(
   let fingerCommand = 0;
   let maxSuspensionErrorMeters = 0;
   let finiteAndBounded = true;
+  let retainingTransitionSpeedBeforeMetersPerSecond = Number.NaN;
+  let retainingTransitionSpeedAfterMetersPerSecond = Number.NaN;
 
   const step = (): void => {
     const reelCommand = m04ReelCommand(play);
@@ -246,6 +250,7 @@ async function simulateM04PickupRetention(
       true,
     );
 
+    const phaseBeforeImmediateAdvance = play.phase;
     play = advanceM04PlayState(
       play,
       {
@@ -255,6 +260,17 @@ async function simulateM04PickupRetention(
       playConfig,
       0,
     );
+    const enteredRetaining =
+      phaseBeforeImmediateAdvance === "PICKUP" &&
+      play.phase === "RETAINING";
+    if (enteredRetaining) {
+      const velocity = ball.linvel();
+      retainingTransitionSpeedBeforeMetersPerSecond = Math.hypot(
+        velocity.x,
+        velocity.y,
+        velocity.z,
+      );
+    }
 
     const closing = m04FingerShouldClose(play);
     fingerCommand = advanceMotorCommand(
@@ -314,6 +330,15 @@ async function simulateM04PickupRetention(
     hub.wakeUp();
     ball.wakeUp();
     physics.step();
+
+    if (enteredRetaining) {
+      const velocity = ball.linvel();
+      retainingTransitionSpeedAfterMetersPerSecond = Math.hypot(
+        velocity.x,
+        velocity.y,
+        velocity.z,
+      );
+    }
 
     const currentHub = hub.translation();
     const currentAnchor = reelAnchor.translation();
@@ -430,6 +455,8 @@ async function simulateM04PickupRetention(
     retainingReached,
     topReached,
     boostUsedSeconds: play.holdBoostUsedSeconds,
+    retainingTransitionSpeedBeforeMetersPerSecond,
+    retainingTransitionSpeedAfterMetersPerSecond,
     finiteAndBounded,
   };
 }
@@ -464,6 +491,12 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(metrics.liftAtRetainingStartMeters).toBeGreaterThan(
       0.015,
     );
+    expect(
+      metrics.retainingTransitionSpeedBeforeMetersPerSecond,
+    ).toBeGreaterThan(0.01);
+    expect(
+      metrics.retainingTransitionSpeedAfterMetersPerSecond,
+    ).toBeGreaterThan(0.01);
     expect(metrics.slipLossMeters).toBeGreaterThanOrEqual(
       CLAW_LAB_CONFIG.pt002MinSlipLoss,
     );
@@ -487,34 +520,53 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   });
 
-  it("calibrates a limited HOLD BOOST against the same near-slip sphere", async () => {
-    const candidates = [0.004, 0.005, 0.0075, 0.010, 0.015, 0.020, 0.030];
+  it("temporarily delays slip with the calibrated HOLD BOOST, then returns to weak retaining force", async () => {
     const baseline = await simulateM04PickupRetention();
-    const boosted = [];
-
-    for (const holdBoostTorque of candidates) {
-      boosted.push({
-        holdBoostTorque,
-        ...(await simulateM04PickupRetention(holdBoostTorque)),
-      });
-    }
+    const boosted = await simulateM04PickupRetention(
+      M04_PLAY_CONFIG.holdBoostTorque,
+    );
 
     console.log(
-      "M04 hold-boost torque sweep",
+      "M04 calibrated hold-boost metrics",
       JSON.stringify({
-        baseline,
-        boosted,
+        torque: M04_PLAY_CONFIG.holdBoostTorque,
+        durationSeconds: M04_PLAY_CONFIG.holdBoostDurationSeconds,
+        baselineLiftAt0p4s:
+          baseline.liftAfterRetaining0p4sMeters,
+        boostedLiftAt0p4s:
+          boosted.liftAfterRetaining0p4sMeters,
+        boostedLiftAt0p8s:
+          boosted.liftAfterRetaining0p8sMeters,
+        boostedLiftAt1p2s:
+          boosted.liftAfterRetaining1p2sMeters,
+        boostUsedSeconds: boosted.boostUsedSeconds,
+        baselineFinalLift: baseline.finalLiftMeters,
+        boostedFinalLift: boosted.finalLiftMeters,
       }),
     );
 
     expect(baseline.finiteAndBounded).toBe(true);
-    expect(boosted.every((result) => result.finiteAndBounded)).toBe(true);
+    expect(boosted.finiteAndBounded).toBe(true);
+    expect(baseline.liftAfterRetaining0p4sMeters).toBeLessThan(
+      0.005,
+    );
+    expect(boosted.liftAfterRetaining0p4sMeters).toBeGreaterThan(
+      0.015,
+    );
     expect(
-      boosted.every(
-        (result) =>
-          result.boostUsedSeconds <=
-          M04_PLAY_CONFIG.holdBoostDurationSeconds + 1e-9,
-      ),
-    ).toBe(true);
-  });
-});
+      boosted.liftAfterRetaining0p4sMeters -
+        baseline.liftAfterRetaining0p4sMeters,
+    ).toBeGreaterThan(0.015);
+    expect(boosted.boostUsedSeconds).toBeCloseTo(
+      M04_PLAY_CONFIG.holdBoostDurationSeconds,
+      8,
+    );
+    expect(boosted.liftAfterRetaining0p8sMeters).toBeLessThan(
+      0.005,
+    );
+    expect(
+      boosted.liftAfterRetaining0p4sMeters -
+        boosted.liftAfterRetaining0p8sMeters,
+    ).toBeGreaterThan(0.015);
+    expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
+  });});
