@@ -109,6 +109,8 @@ describe("M02 lift-to-home return", () => {
           stiffness: config.suspensionSpringStiffness,
           damping: config.suspensionSpringDamping,
           maxForce: config.suspensionSpringMaxForce,
+
+          maxDampingForce: config.suspensionDampingForceLimit,
         },
         dt,
       );
