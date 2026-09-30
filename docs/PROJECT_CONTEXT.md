@@ -841,9 +841,44 @@ M04 closure scope:
 - the pre-cabinet mechanical play cycle is complete
 - full carried-prize return to a modeled chute, chute-edge collision, chute sensor, and prize-out validation remain later M05/M06 acceptance work and are not claimed complete here
 
+## M05 implementation status — slice 1 verified 2026-10-01
+
+**Status: IN PROGRESS**
+
+Implemented:
+- new `src/prizes/` module with stable prize/profile IDs
+- data-driven PrizeFactory is the normal spawn path for M05 starter prizes
+- eight starter shape families are live: cube, box, tall_box, flat_box, sphere, ellipsoid, cylinder, capsule
+- four reusable physical material profiles
+- three reusable mass profiles: light / standard / heavy
+- five reusable COM profiles: centered / bottom-heavy / top-heavy / left-offset / right-offset
+- eight colors and matte/gloss finish selection through deterministic variant seeds
+- explicit Rapier mass-properties body constructor supports authored mass, local COM and principal angular inertia while collision geometry contributes zero extra mass
+- COM therefore affects the actual rigid-body mass properties and is visible through existing `M` debug tooling
+- ellipsoid collision is currently a stable three-sphere approximation; capsule uses the existing endpoint-based capsule primitive
+- new `?scene=prize-lab` shows all eight definitions while leaving `gantry-lab` as the default public scene
+
+Regression:
+- deterministic variant resolution PASS
+- authored light-profile mass is immediately readable from Rapier after spawn
+- left-offset COM resolves into Rapier `localCom()` rather than metadata only
+- all eight starter shapes settle for four simulated seconds without falling through the floor or becoming non-finite
+- calibrated run ends with all eight linear speeds = 0
+- full suite: **57 automated tests PASS**
+- lint/build/GitHub Pages base-path/browser `gantry-lab` smoke PASS
+
+Not yet complete in M05:
+- pillow
+- simple teddy
+- simple animal
+- explicit behavioral comparison for material profile differences
+- explicit behavioral comparison for centered vs offset COM
+- 10–15 object pile 60-second stability gate
+- formal 100+ variant enumeration gate
+
 ## Current next step
 
-Proceed to **M05 — Prize Physics Library v1**. Build the reusable data-driven prize factory plus initial geometry/material/mass/COM profiles without changing the closed M01–M04 physics invariants.
+Continue **M05 slice 2** with pillow / simple teddy / simple animal compound templates, then add PT-021 material differentiation, PT-022 COM differentiation, and start the 10–15 prize pile-stability gate. Preserve the closed M01–M04 physics and use PrizeFactory rather than one-off prize spawn code.
 
 ## Design-review additions
 
