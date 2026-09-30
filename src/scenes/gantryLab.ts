@@ -464,7 +464,8 @@ export function createGantryLabScene(
     if (
       pt006Phase !== "READY" ||
       pt008Phase !== "READY" ||
-      reel.payout > 0.001
+      reel.payout > 0.001 ||
+      homeReturnPhase === "RETURNING_HOME"
     ) {
       return;
     }
@@ -481,7 +482,8 @@ export function createGantryLabScene(
     if (
       pt008Phase !== "READY" ||
       pt006Phase !== "READY" ||
-      reel.payout > 0.001
+      reel.payout > 0.001 ||
+      homeReturnPhase === "RETURNING_HOME"
     ) {
       return;
     }
@@ -520,7 +522,8 @@ export function createGantryLabScene(
       pt006Phase !== "BRAKING" &&
       pt008Phase !== "ACCELERATING" &&
       pt008Phase !== "BRAKING" &&
-      pt008Phase !== "DROPPING"
+      pt008Phase !== "DROPPING" &&
+      homeReturnPhase !== "RETURNING_HOME"
     ) {
       event.preventDefault();
       if (manualReelCommand === 0) {
