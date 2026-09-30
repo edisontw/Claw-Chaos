@@ -594,13 +594,66 @@ Verification after slice 2 + transport refinement:
 - GitHub Pages base-path PASS
 - headless `gantry-lab` WebGL smoke PASS
 
-M02 remains **IN PROGRESS**.
+### M02 slice 3 — lift completion / physical home return
 
-Next slice:
-- automatic lift completion state
-- physical carriage return/home path after lift
-- preserve residual swing during return
-- final M02 closure audit
+Implemented on 2026-09-30:
+- reel-top completion is detected only after payout reaches the upper limit and reel velocity settles
+- manual LIFT reaching the top transitions into `RETURNING_HOME`
+- `H` can start the same home-return path when the reel is already at the top
+- RETURNING_HOME locks conflicting DROP/test triggers until the return finishes
+- X/Z return uses a braking-aware fixed-step target controller built on the same gantry speed/acceleration/braking limits
+- configured provisional mechanical home: X=0, Z=0
+- home completion tolerance: 3 mm position and 0.02 m/s axis velocity
+- dynamic hub, spherical suspension, stabilizer and finger joints remain active throughout return
+- no carriage/hub teleport, snap-to-home transform, or residual-velocity clearing is used
+
+Automated lift-to-home regression:
+- starts about 0.3167 m off home before DROP/LIFT
+- physical DROP: 146 ticks
+- physical LIFT: 146 ticks
+- residual hub horizontal speed at return start: about 0.4208 m/s in the stress regression
+- residual hub offset at return start: about 3.33 mm
+- max hub/carriage relative offset during return: about 10.74 mm
+- physical return distance: about 0.3677 m
+- max diagonal carriage movement per fixed tick: about 5.30 mm, within the 0.45 m/s per-axis speed envelope
+- return completes in 125 ticks (~1.04 s)
+- final home error: about 1.76 mm
+- final X/Z velocities: about 0.0065 / 0.0139 m/s
+- final reel payout: 0.000 m
+- final spherical suspension distance: about 0.3100 m
+- finite/bounded stability gate: PASS
+
+### M02 final closure — 2026-09-30
+
+**Status: CLOSED**
+
+Closure audit:
+- X/Z carriage with explicit speed/acceleration/braking limits — PASS
+- rail-limit handling without energetic bounce — PASS
+- dynamic claw suspended without rigid transform lock — PASS
+- realistic small hard-stop swing and fast recentering — PASS
+- OPEN transport fingers remain mechanically stiff while M01 contact compliance is preserved — PASS
+- variable reel payout with bounded acceleration/braking — PASS
+- DROP preserves horizontal momentum — PASS
+- full physical LIFT to top — PASS
+- automatic lift-completion transition — PASS
+- physical carriage return/home path — PASS
+- residual swing remains physical during return — PASS
+- fixed 120 Hz stability and finite/bounded transforms — PASS
+- no prize/claw parenting, hidden weld, scripted success/failure, or normal-play teleport introduced — PASS
+
+Final M02 verification baseline:
+- 43 automated tests PASS
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- headless `gantry-lab` WebGL smoke PASS
+
+Full prize-carry return/release/chute lifecycle acceptance remains for later gameplay/cabinet phases; M02 closes the mechanical gantry/suspension/reel/home-return substrate required by those tests.
+
+## Current next step
+
+Proceed to **M03 — Swing Techniques**, beginning with PT-007 controlled swing amplification while retaining the closed M02 default small-swing calibration.
 
 ## Design-review additions
 
