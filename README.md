@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M02 CLOSED — Gantry & Suspended Claw**
+**M03 IN PROGRESS — Swing Techniques**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -37,6 +37,8 @@ Final M01 verification baseline:
 - no prize parenting, hidden weld, scripted success/failure, or normal-play prize teleport was introduced
 
 M02 is complete. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, PT-008 horizontal-momentum preservation, and a rigid OPEN/transport finger profile. Slice 3 adds lift-completion detection and a braking-aware physical carriage return/home path. The closed M01 three-finger grasp/contact behavior remains unchanged.
+
+M03 slice 1 is now verified: PT-007 proves that repeated X-axis reversals near the physical resonance cadence can deliberately grow swing, while off-cadence reversals decay. No special swing button, direct swing-angle write, hidden force injection, or transform parenting is used.
 
 ### First milestone
 
@@ -113,7 +115,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Proceed to **M03 — Swing Techniques** from the closed M02 mechanical-motion baseline.
+Continue **M03 — Swing Techniques** with front/back and diagonal swing reproduction, then validate descent while a deliberately amplified swing is still in progress.
 
 Closed M02 lab controls:
 - default scene: `?scene=gantry-lab`
@@ -136,7 +138,19 @@ M02 closure baseline:
 - no hub/carriage teleport or transform parenting
 - **43 automated tests PASS**
 
-M03 should now add deliberate swing-building through timed direction reversals (PT-007) without weakening the realistic small-swing default calibration.
+M03 slice 1 current calibration:
+- suspension horizontal spring stiffness: 170 N/m
+- horizontal damping: 1.0 N·s/m
+- corrective-force clamp: 4 N
+- transport-only OPEN finger hold: stiffness 6000, damping 340, max torque 50
+- PT-006 hard-brake peak swing ≈ 0.049 rad (~2.8°)
+- PT-007 at 0.40 s half-period: early peak ≈ 20.9 mm → late peak ≈ 24.2 mm (+15.9%)
+- PT-007 off-cadence 0.30 s: ≈ 11.9 mm → 8.4 mm (decays)
+- current OPEN transport finger flex ≤ 0.0328 rad (~1.9°)
+- PT-008 DROP/LIFT and M02 home-return regressions remain PASS
+- **44 automated tests PASS** after removing calibration-only exploration tests
+
+M03 remains IN PROGRESS: front/back swing, diagonal swing, and deliberate off-axis descent after swing-building are still pending dedicated acceptance.
 
 ## Status
 
