@@ -450,7 +450,9 @@ Implementation status — 2026-10-01:
 - regression scene raises the M01 sphere/support placement by 0.015 m to produce the intended grip geometry under the suspended M04 claw; claw physics and prize material parameters are unchanged
 - no prize parent, weld, prize joint, kinematic conversion, scripted release, or velocity reset
 - finite/bounded PASS
-- full suite: **51 automated tests PASS**
+- M04 slice 3 additionally verifies prize speed remains continuous across PICKUP → RETAINING: ≈ 0.19819 m/s immediately before and ≈ 0.19436 m/s immediately after the transition
+- no state-transition velocity clearing is used
+- full M04 closure suite: **54 automated tests PASS**
 
 ## 14. PT-012 Hold boost
 
@@ -463,6 +465,20 @@ Expected:
 
 Fail:
 - boost creates a hidden parent/weld.
+
+Implementation status — 2026-10-01:
+- **Automated PASS**
+- prototype input: hold `Shift`
+- BOOST is active only during RETAINING/RETURNING and only while requested
+- base RETAINING torque = 0.003 N·m
+- calibrated BOOST torque = 0.010 N·m
+- maximum BOOST budget = 0.80 s of actual use per play cycle
+- same near-slip sphere without BOOST is already near its support at RETAINING +0.4 s: lift ≈ -0.000064 m
+- with BOOST, lift at the same time ≈ 0.019257 m
+- at/after the 0.80 s budget limit, force returns to the base retaining value; measured lift ≈ -0.002071 m and the prize subsequently falls physically
+- the chosen 0.010 N·m is the smallest tested torque with a clear 0.4 s stabilization benefit; ≥0.015 N·m produced no useful additional benefit in the calibration sweep
+- no parent, weld, prize joint, kinematic conversion, teleport, or hidden success state
+- full suite: **54 automated tests PASS**
 
 ## 15. PT-013 Carried-prize swing
 
@@ -678,7 +694,13 @@ M02 prerequisite status — 2026-09-30:
 - fixed-step carriage target-return uses the same speed/acceleration/braking limits as manual motion
 - regression returns from ~0.317 m off home to ~1.76 mm error without teleport
 - dynamic hub keeps measurable residual swing during return (~10.7 mm max relative offset)
-- full PT-031 remains pending a physically carried prize and configured chute target
+
+M04 lifecycle integration — 2026-10-01:
+- **mechanical RETURN integration PASS**
+- reel-top completion moves RETAINING → RETURNING automatically
+- M04 RETURN uses the same braking-aware gantry target controller, not a transform jump
+- lifecycle regression reaches the home/release target at fixed tick 149 with ≈ 1.834 mm position error
+- full PT-031 remains pending a physically carried prize plus modeled chute target/cabinet collision geometry
 
 ## PT-032 Release timing
 
@@ -686,6 +708,15 @@ Expected:
 - fingers physically open at configured release point/height,
 - prize leaves contact through gravity/momentum/contact loss,
 - no direct prize transform into chute.
+
+M04 mechanical prerequisite — 2026-10-01:
+- **Automated PASS for motor-driven release timing**
+- RELEASING begins only after the home position/velocity gate
+- finger command starts at -0.42 rad and advances physically to +0.35 rad
+- opening takes 58 fixed ticks ≈ 0.4833 s at the unchanged 1.6 rad/s command rate
+- READY is not entered until the open-angle tolerance is reached
+- no finger snap and no prize transform/release script
+- full prize contact loss over a modeled chute remains pending cabinet/chute integration
 
 ## PT-033 Home cycle
 
@@ -697,7 +728,15 @@ M02 prerequisite status — 2026-09-30:
 - mechanical lift-completion → home-return transition is **automated PASS**
 - conflicting DROP/test triggers are locked during `RETURNING_HOME`
 - home completion requires both position and velocity tolerances
-- full PT-033 lifecycle remains pending release/chute check and next-play state machinery
+
+M04 state lifecycle — 2026-10-01:
+- **Automated PASS for the pre-cabinet play-cycle state machine**
+- reel-top → RETURNING at fixed tick 63
+- RETURNING → RELEASING at tick 149
+- RELEASING → READY only after physical opening completes at tick 206
+- next DROP action is therefore unavailable during RETURNING/RELEASING
+- final reel payout = 0.000 m
+- actual chute sensor/check/result handling remains M06 scope
 
 ## PT-034 Aim timer
 
