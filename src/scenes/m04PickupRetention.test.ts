@@ -10,6 +10,7 @@ import {
   advanceMotorCommand,
   createFingerPoints,
   createFingerSegments,
+  evaluatePt002Slip,
 } from "./clawLab";
 import {
   M02_FINGER_TRANSPORT_CONFIG,
@@ -27,6 +28,8 @@ import {
 import { advanceReel, type ReelState } from "./reelMotion";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 
+const M04_TEST_BALL_HEIGHT_OFFSET_METERS = 0.015;
+
 interface PickupRetentionMetrics {
   peakLiftMeters: number;
   liftAtRetainingStartMeters: number;
@@ -41,11 +44,7 @@ interface PickupRetentionMetrics {
   finiteAndBounded: boolean;
 }
 
-async function simulateM04PickupRetention(
-  pickupTorque: number,
-  pickupLiftDistanceMeters: number,
-  ballHeightOffsetMeters = 0,
-): Promise<PickupRetentionMetrics> {
+async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
   const claw = CLAW_LAB_CONFIG;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -63,7 +62,9 @@ async function simulateM04PickupRetention(
   const m01HubToBallCenter =
     claw.hubCenterY - claw.pt001BallCenterY;
   const ballCenterY =
-    bottomHubY - m01HubToBallCenter + ballHeightOffsetMeters;
+    bottomHubY -
+    m01HubToBallCenter +
+    M04_TEST_BALL_HEIGHT_OFFSET_METERS;
   const pedestalTopY =
     ballCenterY - claw.pt001BallRadius;
   const pedestalHalfHeight = pedestalTopY * 0.5;
@@ -183,7 +184,8 @@ async function simulateM04PickupRetention(
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
-    pickupLiftDistanceMeters,
+    pickupLiftDistanceMeters:
+      M04_PLAY_CONFIG.pickupLiftDistanceMeters,
   };
 
   let play = createM04PlayState();
@@ -264,9 +266,7 @@ async function simulateM04PickupRetention(
     const torque =
       forcePhase === "RETAINING"
         ? claw.pt002RetainingTorque
-        : forcePhase === "PICKUP"
-          ? pickupTorque
-          : claw.maxMotorTorque;
+        : claw.maxMotorTorque;
 
     for (const joint of joints) {
       joint.configureMotorPosition(
@@ -390,40 +390,56 @@ async function simulateM04PickupRetention(
   };
 }
 
-describe("M04 physical pickup-to-retaining calibration", () => {
-  it("sweeps prize height while keeping M01 contact and M04 phase forces unchanged", async () => {
-    const offsets = [
-      -0.020,
-      -0.015,
-      -0.010,
-      -0.005,
-      0,
-      0.005,
-      0.010,
-      0.015,
-      0.020,
-    ];
-
-    const results = [];
-    for (const ballHeightOffsetMeters of offsets) {
-      const metrics = await simulateM04PickupRetention(
-        CLAW_LAB_CONFIG.maxMotorTorque,
-        M04_PLAY_CONFIG.pickupLiftDistanceMeters,
-        ballHeightOffsetMeters,
-      );
-      results.push({
-        ballHeightOffsetMeters,
-        ...metrics,
-      });
-    }
+describe("M04 physical pickup-to-retaining force transition", () => {
+  it("physically lifts the ball, then allows delayed slip under weak retaining torque", async () => {
+    const metrics = await simulateM04PickupRetention();
 
     console.log(
-      "M04 pickup-retaining prize-height sweep",
-      JSON.stringify(results),
+      "M04 physical pickup-retaining metrics",
+      JSON.stringify({
+        testBallHeightOffsetMeters:
+          M04_TEST_BALL_HEIGHT_OFFSET_METERS,
+        ...metrics,
+      }),
     );
 
-    expect(results.every((result) => result.finiteAndBounded)).toBe(true);
-    expect(results.every((result) => result.retainingReached)).toBe(true);
-    expect(results.every((result) => result.topReached)).toBe(true);
+    expect(metrics.finiteAndBounded).toBe(true);
+    expect(metrics.retainingReached).toBe(true);
+    expect(metrics.topReached).toBe(true);
+    expect(metrics.pickupStartPayoutMeters).toBeGreaterThan(0.25);
+    expect(
+      metrics.pickupStartPayoutMeters -
+        metrics.retainingStartPayoutMeters,
+    ).toBeGreaterThanOrEqual(
+      M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    );
+
+    expect(metrics.peakLiftMeters).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt002MinPeakLift,
+    );
+    expect(metrics.liftAtRetainingStartMeters).toBeGreaterThan(
+      0.015,
+    );
+    expect(metrics.slipLossMeters).toBeGreaterThanOrEqual(
+      CLAW_LAB_CONFIG.pt002MinSlipLoss,
+    );
+    expect(metrics.finalLiftMeters).toBeLessThanOrEqual(
+      CLAW_LAB_CONFIG.pt002MaxFinalLift,
+    );
+    expect(metrics.finalLiftMeters).toBeGreaterThan(-0.01);
+    expect(
+      evaluatePt002Slip(
+        metrics.peakLiftMeters,
+        metrics.finalLiftMeters,
+      ),
+    ).toBe(true);
+
+    expect(metrics.finalPayoutMeters).toBeCloseTo(
+      M02_GANTRY_CONFIG.reelMinPayout,
+      4,
+    );
+    expect(metrics.maxSuspensionErrorMeters).toBeLessThan(
+      0.002,
+    );
   });
 });
