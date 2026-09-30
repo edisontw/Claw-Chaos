@@ -76,6 +76,7 @@ describe("PT-006 swing from braking", () => {
           stiffness: config.suspensionSpringStiffness,
           damping: config.suspensionSpringDamping,
           maxForce: config.suspensionSpringMaxForce,
+          maxDampingForce: config.suspensionDampingForceLimit,
         },
         dt,
       );
