@@ -23,6 +23,7 @@ import {
   createM04PlayState,
   m04FingerShouldClose,
   m04ForcePhase,
+  m04HoldBoostActive,
   m04ReelCommand,
 } from "./m04PlayCycle";
 import { advanceReel, type ReelState } from "./reelMotion";
@@ -44,7 +45,9 @@ interface PickupRetentionMetrics {
   finiteAndBounded: boolean;
 }
 
-async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
+async function simulateM04PickupRetention(
+  holdBoostTorque = 0,
+): Promise<PickupRetentionMetrics> {
   const claw = CLAW_LAB_CONFIG;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -181,11 +184,16 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
   const playConfig = {
     autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
     closedAngleRadians: claw.closedAngle,
+    openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
     pickupLiftDistanceMeters:
       M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    holdBoostDurationSeconds:
+      M04_PLAY_CONFIG.holdBoostDurationSeconds,
+    releaseCompletionToleranceRadians:
+      M04_PLAY_CONFIG.releaseCompletionToleranceRadians,
   };
 
   let play = createM04PlayState();
@@ -257,15 +265,26 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        holdBoostRequested: boostRequested,
       },
       playConfig,
       dt,
     );
 
     const forcePhase = m04ForcePhase(play);
+    const boostRequested =
+      holdBoostTorque > 0 &&
+      (play.phase === "RETAINING" || play.phase === "RETURNING");
+    const boostActive = m04HoldBoostActive(
+      play,
+      boostRequested,
+      playConfig,
+    );
     const torque =
       forcePhase === "RETAINING"
-        ? claw.pt002RetainingTorque
+        ? boostActive
+          ? holdBoostTorque
+          : claw.pt002RetainingTorque
         : claw.maxMotorTorque;
 
     for (const joint of joints) {
