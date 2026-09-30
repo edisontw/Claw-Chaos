@@ -88,7 +88,7 @@ describe("M04 top-return-release lifecycle", () => {
       x: { position: 0.22, velocity: 0.08 },
       z: { position: -0.16, velocity: -0.05 },
     };
-    let fingerCommand = CLAW_LAB_CONFIG.closedAngle;
+    let fingerCommand: number = CLAW_LAB_CONFIG.closedAngle;
 
     let returningTick = -1;
     let releasingTick = -1;
