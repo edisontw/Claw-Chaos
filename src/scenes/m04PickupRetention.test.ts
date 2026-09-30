@@ -260,6 +260,16 @@ async function simulateM04PickupRetention(
       dt,
     );
 
+    const forcePhase = m04ForcePhase(play);
+    const boostRequested =
+      holdBoostTorque > 0 &&
+      (play.phase === "RETAINING" || play.phase === "RETURNING");
+    const boostActive = m04HoldBoostActive(
+      play,
+      boostRequested,
+      playConfig,
+    );
+
     play = advanceM04PlayState(
       play,
       {
@@ -269,16 +279,6 @@ async function simulateM04PickupRetention(
       },
       playConfig,
       dt,
-    );
-
-    const forcePhase = m04ForcePhase(play);
-    const boostRequested =
-      holdBoostTorque > 0 &&
-      (play.phase === "RETAINING" || play.phase === "RETURNING");
-    const boostActive = m04HoldBoostActive(
-      play,
-      boostRequested,
-      playConfig,
     );
     const torque =
       forcePhase === "RETAINING"
