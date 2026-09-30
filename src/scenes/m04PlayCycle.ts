@@ -4,7 +4,7 @@ export const M04_PLAY_CONFIG = {
   closeSettleSeconds: 0.90,
   pickupLiftDistanceMeters: 0.06,
   holdBoostDurationSeconds: 0.80,
-  holdBoostTorque: 0.25,
+  holdBoostTorque: 0.010,
   releaseCompletionToleranceRadians: 0.005,
 } as const;
 
