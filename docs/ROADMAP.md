@@ -479,7 +479,26 @@ PT-008 regression:
 - final suspension distance ≈ 0.3100 m
 - finite/bounded at 120 Hz
 
-Verification: **40 tests PASS**, lint/build/base-path/headless smoke PASS.
+### Open-finger transport rigidity refinement — 2026-09-30
+
+The M01 finger motors are intentionally compliant enough for physical contact to stop one finger. Reusing that same profile while the claw was simply moving made all three open fingers look too soft.
+
+M02 transport-only profile:
+- stiffness 2400
+- damping 160
+- max torque 20.0 N·m
+- finger angular damping 8.0
+- M01 contact profile is unchanged
+
+Measured peak relative finger flex during gantry acceleration + hard braking:
+- finger 1 ≈ 0.0348 rad (~1.99°)
+- finger 2 ≈ 0.0189 rad (~1.08°)
+- finger 3 ≈ 0.0191 rad (~1.10°)
+- acceptance ceiling = 0.035 rad per finger
+
+PT-006 and PT-008 regressions remain unchanged.
+
+Verification: **41 tests PASS**, lint/build/base-path/headless smoke PASS.
 
 Not yet complete:
 - automatic post-lift state transition
