@@ -46,6 +46,38 @@ export type CompoundColliderSpec =
       radius: number;
     };
 
+export type PrimitiveColliderSpec =
+  | {
+      shape: "cuboid";
+      center?: Vec3;
+      halfExtents: Vec3;
+      rotation?: Quaternion;
+    }
+  | {
+      shape: "sphere";
+      center?: Vec3;
+      radius: number;
+    }
+  | {
+      shape: "cylinder";
+      center?: Vec3;
+      halfHeight: number;
+      radius: number;
+      rotation?: Quaternion;
+    }
+  | {
+      shape: "capsule";
+      start: Vec3;
+      end: Vec3;
+      radius: number;
+    };
+
+export interface DynamicMassPropertiesSpec {
+  massKg: number;
+  centerOfMass: Vec3;
+  principalAngularInertia: Vec3;
+}
+
 export interface RevoluteJointHandle {
   configureMotorPosition(targetPos: number, stiffness: number, damping: number): void;
   setMotorMaxForce(maxForce: number): void;
@@ -208,6 +240,114 @@ export class PhysicsRuntime {
       body,
     );
 
+    return body;
+  }
+
+  createDynamicBodyWithMassProperties(
+    origin: Vec3,
+    colliders: readonly PrimitiveColliderSpec[],
+    massProperties: DynamicMassPropertiesSpec,
+    material: CuboidMaterialOptions = {},
+    rotation: Quaternion = { x: 0, y: 0, z: 0, w: 1 },
+  ): RigidBodyHandle {
+    const body = this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(origin.x, origin.y, origin.z)
+        .setRotation(rotation)
+        .setAdditionalMassProperties(
+          massProperties.massKg,
+          massProperties.centerOfMass,
+          massProperties.principalAngularInertia,
+          { x: 0, y: 0, z: 0, w: 1 },
+        ),
+    );
+
+    for (const collider of colliders) {
+      let descriptor;
+
+      if (collider.shape === "cuboid") {
+        descriptor = RAPIER.ColliderDesc.cuboid(
+          collider.halfExtents.x,
+          collider.halfExtents.y,
+          collider.halfExtents.z,
+        );
+        if (collider.center) {
+          descriptor = descriptor.setTranslation(
+            collider.center.x,
+            collider.center.y,
+            collider.center.z,
+          );
+        }
+        if (collider.rotation) {
+          descriptor = descriptor.setRotation(collider.rotation);
+        }
+      } else if (collider.shape === "sphere") {
+        descriptor = RAPIER.ColliderDesc.ball(collider.radius);
+        if (collider.center) {
+          descriptor = descriptor.setTranslation(
+            collider.center.x,
+            collider.center.y,
+            collider.center.z,
+          );
+        }
+      } else if (collider.shape === "cylinder") {
+        descriptor = RAPIER.ColliderDesc.cylinder(
+          collider.halfHeight,
+          collider.radius,
+        );
+        if (collider.center) {
+          descriptor = descriptor.setTranslation(
+            collider.center.x,
+            collider.center.y,
+            collider.center.z,
+          );
+        }
+        if (collider.rotation) {
+          descriptor = descriptor.setRotation(collider.rotation);
+        }
+      } else {
+        const dx = collider.end.x - collider.start.x;
+        const dy = collider.end.y - collider.start.y;
+        const dz = collider.end.z - collider.start.z;
+        const length = Math.hypot(dx, dy, dz);
+
+        if (length <= Number.EPSILON) {
+          continue;
+        }
+
+        const center = {
+          x: (collider.start.x + collider.end.x) * 0.5,
+          y: (collider.start.y + collider.end.y) * 0.5,
+          z: (collider.start.z + collider.end.z) * 0.5,
+        };
+        const capsuleRotation = rotationFromYDirection({
+          x: dx,
+          y: dy,
+          z: dz,
+        });
+        const halfHeight = Math.max(
+          0.0001,
+          length * 0.5 - collider.radius,
+        );
+
+        descriptor = RAPIER.ColliderDesc.capsule(
+          halfHeight,
+          collider.radius,
+        )
+          .setTranslation(center.x, center.y, center.z)
+          .setRotation(capsuleRotation);
+      }
+
+      descriptor = descriptor
+        .setDensity(0)
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08);
+
+      this.world.createCollider(descriptor, body);
+    }
+
+    body.recomputeMassPropertiesFromColliders();
+    this.dynamicBodyCountValue += 1;
     return body;
   }
 

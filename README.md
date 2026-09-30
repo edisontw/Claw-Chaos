@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M04 CLOSED — Drop, Early Close, Force Phases**
+**M05 IN PROGRESS — Prize Physics Library v1**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -41,6 +41,8 @@ M02 is complete. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw
 M03 is now closed. Slice 1 PT-007 proves timing-sensitive lateral swing amplification, slice 2 verifies the same model for front/back and synchronized diagonal swing, and slice 3 proves that a deliberately amplified diagonal swing remains physical during DROP. No special swing button, direct swing-angle/velocity write, hidden force injection, transform parenting, or descent-time state reset is used.
 
 M04 is now closed. The play-cycle state machine covers physical DROP, EARLY/AUTO CLOSE, close settle, PICKUP, weak RETAINING, limited player HOLD BOOST, physical reel-top completion, braking-aware carriage return, motor-driven RELEASE, and return to READY. HOLD BOOST is a real temporary torque change only; it does not attach the prize or override contact physics.
+
+M05 has started. Slice 1 adds a data-driven `PrizeFactory`, reusable material/mass/COM profiles, deterministic visual variants, explicit Rapier mass properties, eight starter prize shapes, and an isolated `?scene=prize-lab` for visual/physics inspection. The default `gantry-lab` and closed M01–M04 physics remain unchanged.
 
 ### First milestone
 
@@ -117,7 +119,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Proceed to **M05 — Prize Physics Library v1**. Build the reusable data-driven prize factory and initial geometry/material/mass/COM profiles without adding prize-specific grab logic or altering the closed M01–M04 physics invariants.
+Continue **M05 — Prize Physics Library v1** with slice 2: add the remaining pillow / simple teddy / simple animal compound prize templates, then begin material/COM behavioral differentiation and a 10–15 prize pile-stability regression. Preserve the slice-1 PrizeFactory as the only normal spawn path.
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
@@ -216,7 +218,21 @@ M04 slice 3 / closure baseline:
 - no prize parent/weld/joint, hidden hold attachment, teleport, or velocity reset
 - **54 automated tests PASS**
 
-M04 is **CLOSED**. The next phase is **M05 — Prize Physics Library v1**. Full carried-prize return to a modeled chute, chute-edge interaction, and chute sensing remain later cabinet/prize acceptance work.
+M04 is **CLOSED**. Full carried-prize return to a modeled chute, chute-edge interaction, and chute sensing remain later cabinet/prize acceptance work.
+
+M05 slice 1 baseline:
+- new `src/prizes/` data model and PrizeFactory
+- 8 starter definitions: cube, box, tall box, flat box, sphere, ellipsoid, cylinder, capsule
+- 4 material profiles, 3 mass profiles, 5 COM profiles
+- 8 colors × 2 finish variants per starter definition
+- explicit Rapier mass + local COM + principal inertia; colliders contribute zero extra mass
+- COM profiles therefore change actual rigid-body mass properties rather than debug-only metadata
+- ellipsoid uses a stable three-sphere collider approximation; capsule uses a real compound capsule collider
+- `?scene=prize-lab` visualizes all eight definitions and supports `M` COM/origin plus `D` collider debug
+- four-second isolated settling regression leaves every starter body finite, above the floor, and fully stopped in the calibrated run
+- **57 automated tests PASS**
+
+M05 remains **IN PROGRESS**. Pillow, simple teddy, simple animal, behavioral material/COM differentiation, and the 10–15 object pile stability gate remain for later slices.
 
 ## Status
 

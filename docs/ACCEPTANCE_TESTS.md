@@ -517,6 +517,11 @@ Fail:
 - gradual self-propelled drift,
 - spontaneous pile explosion.
 
+M05 slice-1 foundation — 2026-10-01:
+- eight different PrizeFactory starter bodies settle independently for four simulated seconds
+- all eight remain finite/above floor and finish with measured linear speed = 0 in the calibrated regression
+- **PT-015 remains pending** because this is not yet a 10–15 prize contact pile and does not yet run the required 60-second post-settle observation.
+
 ## 18. PT-016 Wake propagation
 
 Setup:
@@ -576,6 +581,12 @@ Compare:
 Expected:
 - measurable difference in slip/drag behavior.
 
+M05 slice-1 foundation — 2026-10-01:
+- four reusable material profiles now resolve through PrizeFactory
+- profile data separates static/dynamic friction and restitution
+- current Rapier spawn path applies the profile's dynamic-friction value as its single collider friction coefficient
+- **PT-021 remains pending** until the same prize is exercised under a controlled drag/slip test with measured separation.
+
 ## 24. PT-022 COM differentiation
 
 Compare:
@@ -584,6 +595,12 @@ Compare:
 
 Expected:
 - different rotation/stability under same approximate grip.
+
+M05 slice-1 foundation — 2026-10-01:
+- five reusable COM profiles now resolve through PrizeFactory
+- authored COM is written into Rapier's real local mass properties, not stored as visual/debug metadata only
+- automated regression verifies a left-offset box reports the expected nonzero Rapier `localCom()`
+- **PT-022 remains pending** until centered and side-offset versions are subjected to the same grip/contact sequence and show a measured rotational/stability difference.
 
 ## 25. PT-023 Restock settle
 
@@ -627,6 +644,11 @@ Data/content test:
 - generator can enumerate at least 100 valid visual prize variants from configured base assets and variant families.
 
 No 100-class implementation is allowed.
+
+M05 slice-1 foundation — 2026-10-01:
+- 8 starter definitions × 8 colors × 2 finish variants provide a theoretical 128 visible combinations
+- deterministic variant seeds are implemented
+- **PT-027 remains pending** until an explicit enumeration/uniqueness regression verifies at least 100 generated valid variants.
 
 ## 30. PT-028 Pure Simulation fixed parameters
 
