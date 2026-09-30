@@ -246,15 +246,16 @@ Implementation status — 2026-09-30:
 - X/Z gantry max speed: 0.45 m/s
 - acceleration: 1.35 m/s²
 - braking: 3.5 m/s²
-- horizontal spring stiffness: 55 N/m
-- horizontal damping: 8.5 N·s/m
+- current M03-compatible horizontal spring stiffness: 170 N/m
+- current horizontal damping: 1.0 N·s/m
 - corrective-force clamp: 4 N
 - angular damping: 3.0
-- calibrated laboratory run measures about 0.0035 m lag during +X acceleration
-- after braking the hub swings about 0.011 m forward relative to carriage
-- peak measured swing angle is about 0.036 rad (~2.1°)
-- final measured suspension distance is about 0.310003 m
-- final residual horizontal offset is effectively zero after the observation window
+- current regression measures about 0.00303 m lag during +X acceleration
+- after braking the hub swings about 0.01522 m forward relative to carriage
+- peak measured swing angle is about 0.0491 rad (~2.8°)
+- final measured suspension distance is about 0.310000 m
+- final residual horizontal offset is about 0.00076 m
+- OPEN transport finger flex remains below the existing 0.035 rad (~2°) gate after the M03 recalibration
 - finite/bounded transform checks PASS at the 120 Hz fixed step
 - no claw parenting to carriage transform and no scripted swing angle is used
 - these values are a behavior-proof baseline, not final real-machine calibration
@@ -271,6 +272,19 @@ Expected:
 Fail:
 - swing unaffected by timing,
 - unbounded numerical energy explosion.
+
+Implementation status — 2026-09-30:
+- **Automated PASS**
+- uses only normal X-axis gantry input reversals; there is no swing button or direct angle/velocity injection
+- suspension and gantry remain fixed-step and physically authoritative
+- 0.40 s reversal half-period: early peak ≈ 0.02086 m → late peak ≈ 0.02417 m (**+15.9%**)
+- 0.40 s peak swing angle ≈ 0.0781 rad (~4.5°)
+- nearby 0.42 s cadence also grows: ≈ 0.02032 m → 0.02253 m
+- off-cadence 0.30 s decays: ≈ 0.01186 m → 0.00841 m
+- off-cadence 0.46 s also decays slightly: ≈ 0.01599 m → 0.01528 m
+- all tested cadences remain finite/bounded at 120 Hz
+- current gate requires the 0.40 s cadence to grow by at least 12%, exceed 0.022 m late amplitude, remain below 0.05 m overall amplitude, and keep peak angle below 0.16 rad
+- no hidden success/failure logic, parenting, or special-case swing force is used
 
 ## 10. PT-008 Momentum during descent
 
@@ -289,15 +303,15 @@ Implementation status — 2026-09-30:
 - reel max speed: 0.28 m/s
 - acceleration / braking: 0.9 / 1.4 m/s²
 - the existing 0.31 m spherical suspension remains physically authoritative below the reel anchor
-- measured descent: about 0.2802 m
-- maximum horizontal offset during descent: about 0.0102 m
-- horizontal speed immediately before DROP: about 0.00581 m/s
-- first physics tick after DROP begins: about 0.01195 m/s
+- measured descent: about 0.28017 m
+- maximum horizontal offset during descent: about 0.01032 m
+- horizontal speed immediately before DROP: about 0.1348 m/s
+- first physics tick after DROP begins: about 0.1777 m/s
 - DROP therefore does not zero or rigidly align horizontal motion
 - the same regression then reverses the reel and physically lifts the hub about 0.2800 m back to the top
 - final payout returns to 0.000 m
 - final spherical suspension distance remains about 0.3100 m
-- finite/bounded transform checks PASS at 120 Hz
+- finite/bounded transform checks PASS at 120 Hz under the current M03-compatible suspension calibration
 - no claw transform teleport or parent-lock is used
 - manual visual test: open `?scene=gantry-lab`, use Arrow keys to create motion, then press `Space`; press `T` for the deterministic PT-008 sequence
 
