@@ -792,7 +792,6 @@ export function createGantryLabScene(
       );
 
       const closingFinger = m04FingerShouldClose(playCycle);
-      const forcePhase = m04ForcePhase(playCycle);
       const fingerTarget = closingFinger
         ? claw.closedAngle
         : claw.openAngle;
