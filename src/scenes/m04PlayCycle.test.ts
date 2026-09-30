@@ -303,9 +303,9 @@ describe("M04 DROP / close / lift state machine", () => {
   });
 
   it("activates HOLD BOOST only while requested in RETAINING/RETURNING and exhausts its fixed budget", () => {
-    let state = {
+    let state: M04PlayState = {
       ...createM04PlayState(),
-      phase: "RETAINING" as const,
+      phase: "RETAINING",
     };
 
     expect(m04HoldBoostActive(state, false, playConfig)).toBe(false);
