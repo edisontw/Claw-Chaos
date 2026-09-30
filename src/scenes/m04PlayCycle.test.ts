@@ -8,6 +8,7 @@ import {
   applyM04Action,
   createM04PlayState,
   m04FingerShouldClose,
+  m04HoldBoostActive,
   m04ForcePhase,
   m04ReelCommand,
   type M04PlayState,
@@ -25,10 +26,14 @@ const reelConfig = {
 const playConfig = {
   autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
   closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
+  openAngleRadians: CLAW_LAB_CONFIG.openAngle,
   closeCompletionToleranceRadians:
     M04_PLAY_CONFIG.closeCompletionToleranceRadians,
   closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
   pickupLiftDistanceMeters: M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+  holdBoostDurationSeconds: M04_PLAY_CONFIG.holdBoostDurationSeconds,
+  releaseCompletionToleranceRadians:
+    M04_PLAY_CONFIG.releaseCompletionToleranceRadians,
 };
 
 function settleOpenCommand(): number {
@@ -295,5 +300,50 @@ describe("M04 DROP / close / lift state machine", () => {
     );
     expect(reel.velocity).toBeLessThan(0);
     expect(fingerCommand).toBeCloseTo(CLAW_LAB_CONFIG.closedAngle, 6);
+  });
+
+  it("activates HOLD BOOST only while requested in RETAINING/RETURNING and exhausts its fixed budget", () => {
+    let state: M04PlayState = {
+      ...createM04PlayState(),
+      phase: "RETAINING",
+    };
+
+    expect(m04HoldBoostActive(state, false, playConfig)).toBe(false);
+    expect(m04HoldBoostActive(state, true, playConfig)).toBe(true);
+
+    const steps = Math.ceil(
+      M04_PLAY_CONFIG.holdBoostDurationSeconds / dt,
+    ) + 2;
+
+    for (let tick = 0; tick < steps; tick += 1) {
+      state = advanceM04PlayState(
+        state,
+        {
+          reelPayoutMeters: 0.15,
+          fingerCommandRadians: CLAW_LAB_CONFIG.closedAngle,
+          holdBoostRequested: true,
+        },
+        playConfig,
+        dt,
+      );
+    }
+
+    expect(state.holdBoostUsedSeconds).toBeCloseTo(
+      M04_PLAY_CONFIG.holdBoostDurationSeconds,
+      8,
+    );
+    expect(m04HoldBoostActive(state, true, playConfig)).toBe(false);
+
+    const returning = {
+      ...state,
+      phase: "RETURNING" as const,
+    };
+    expect(m04HoldBoostActive(returning, true, playConfig)).toBe(false);
+
+    const releasing = {
+      ...createM04PlayState(),
+      phase: "RELEASING" as const,
+    };
+    expect(m04HoldBoostActive(releasing, true, playConfig)).toBe(false);
   });
 });

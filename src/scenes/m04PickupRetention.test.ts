@@ -23,6 +23,7 @@ import {
   createM04PlayState,
   m04FingerShouldClose,
   m04ForcePhase,
+  m04HoldBoostActive,
   m04ReelCommand,
 } from "./m04PlayCycle";
 import { advanceReel, type ReelState } from "./reelMotion";
@@ -33,6 +34,9 @@ const M04_TEST_BALL_HEIGHT_OFFSET_METERS = 0.015;
 interface PickupRetentionMetrics {
   peakLiftMeters: number;
   liftAtRetainingStartMeters: number;
+  liftAfterRetaining0p4sMeters: number;
+  liftAfterRetaining0p8sMeters: number;
+  liftAfterRetaining1p2sMeters: number;
   finalLiftMeters: number;
   slipLossMeters: number;
   pickupStartPayoutMeters: number;
@@ -41,10 +45,15 @@ interface PickupRetentionMetrics {
   maxSuspensionErrorMeters: number;
   retainingReached: boolean;
   topReached: boolean;
+  boostUsedSeconds: number;
+  retainingTransitionSpeedBeforeMetersPerSecond: number;
+  retainingTransitionSpeedAfterMetersPerSecond: number;
   finiteAndBounded: boolean;
 }
 
-async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
+async function simulateM04PickupRetention(
+  holdBoostTorque = 0,
+): Promise<PickupRetentionMetrics> {
   const claw = CLAW_LAB_CONFIG;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -181,11 +190,16 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
   const playConfig = {
     autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
     closedAngleRadians: claw.closedAngle,
+    openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
     pickupLiftDistanceMeters:
       M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    holdBoostDurationSeconds:
+      M04_PLAY_CONFIG.holdBoostDurationSeconds,
+    releaseCompletionToleranceRadians:
+      M04_PLAY_CONFIG.releaseCompletionToleranceRadians,
   };
 
   let play = createM04PlayState();
@@ -193,6 +207,8 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
   let fingerCommand = 0;
   let maxSuspensionErrorMeters = 0;
   let finiteAndBounded = true;
+  let retainingTransitionSpeedBeforeMetersPerSecond = Number.NaN;
+  let retainingTransitionSpeedAfterMetersPerSecond = Number.NaN;
 
   const step = (): void => {
     const reelCommand = m04ReelCommand(play);
@@ -234,6 +250,7 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
       true,
     );
 
+    const phaseBeforeImmediateAdvance = play.phase;
     play = advanceM04PlayState(
       play,
       {
@@ -243,6 +260,17 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
       playConfig,
       0,
     );
+    const enteredRetaining =
+      phaseBeforeImmediateAdvance === "PICKUP" &&
+      play.phase === "RETAINING";
+    if (enteredRetaining) {
+      const velocity = ball.linvel();
+      retainingTransitionSpeedBeforeMetersPerSecond = Math.hypot(
+        velocity.x,
+        velocity.y,
+        velocity.z,
+      );
+    }
 
     const closing = m04FingerShouldClose(play);
     fingerCommand = advanceMotorCommand(
@@ -252,20 +280,31 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
       dt,
     );
 
+    const forcePhase = m04ForcePhase(play);
+    const boostRequested =
+      holdBoostTorque > 0 &&
+      (play.phase === "RETAINING" || play.phase === "RETURNING");
+    const boostActive = m04HoldBoostActive(
+      play,
+      boostRequested,
+      playConfig,
+    );
+
     play = advanceM04PlayState(
       play,
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        holdBoostRequested: boostRequested,
       },
       playConfig,
       dt,
     );
-
-    const forcePhase = m04ForcePhase(play);
     const torque =
       forcePhase === "RETAINING"
-        ? claw.pt002RetainingTorque
+        ? boostActive
+          ? holdBoostTorque
+          : claw.pt002RetainingTorque
         : claw.maxMotorTorque;
 
     for (const joint of joints) {
@@ -291,6 +330,15 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
     hub.wakeUp();
     ball.wakeUp();
     physics.step();
+
+    if (enteredRetaining) {
+      const velocity = ball.linvel();
+      retainingTransitionSpeedAfterMetersPerSecond = Math.hypot(
+        velocity.x,
+        velocity.y,
+        velocity.z,
+      );
+    }
 
     const currentHub = hub.translation();
     const currentAnchor = reelAnchor.translation();
@@ -338,6 +386,10 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
   let retainingReached = false;
   let topReached = false;
   let retainingHoldTicks = 0;
+  let retainingTicks = 0;
+  let liftAfterRetaining0p4sMeters = Number.NaN;
+  let liftAfterRetaining0p8sMeters = Number.NaN;
+  let liftAfterRetaining1p2sMeters = Number.NaN;
 
   for (let tick = 0; tick < PHYSICS_HZ * 8; tick += 1) {
     const previousPhase = play.phase;
@@ -353,6 +405,19 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
     ) {
       retainingReached = true;
       liftAtRetainingStartMeters = lift;
+    }
+
+    if (play.phase === "RETAINING" && retainingReached) {
+      retainingTicks += 1;
+      if (retainingTicks === Math.round(0.4 * PHYSICS_HZ)) {
+        liftAfterRetaining0p4sMeters = lift;
+      }
+      if (retainingTicks === Math.round(0.8 * PHYSICS_HZ)) {
+        liftAfterRetaining0p8sMeters = lift;
+      }
+      if (retainingTicks === Math.round(1.2 * PHYSICS_HZ)) {
+        liftAfterRetaining1p2sMeters = lift;
+      }
     }
 
     if (
@@ -376,6 +441,9 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
   return {
     peakLiftMeters,
     liftAtRetainingStartMeters,
+    liftAfterRetaining0p4sMeters,
+    liftAfterRetaining0p8sMeters,
+    liftAfterRetaining1p2sMeters,
     finalLiftMeters,
     slipLossMeters,
     pickupStartPayoutMeters:
@@ -386,6 +454,9 @@ async function simulateM04PickupRetention(): Promise<PickupRetentionMetrics> {
     maxSuspensionErrorMeters,
     retainingReached,
     topReached,
+    boostUsedSeconds: play.holdBoostUsedSeconds,
+    retainingTransitionSpeedBeforeMetersPerSecond,
+    retainingTransitionSpeedAfterMetersPerSecond,
     finiteAndBounded,
   };
 }
@@ -420,6 +491,12 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(metrics.liftAtRetainingStartMeters).toBeGreaterThan(
       0.015,
     );
+    expect(
+      metrics.retainingTransitionSpeedBeforeMetersPerSecond,
+    ).toBeGreaterThan(0.01);
+    expect(
+      metrics.retainingTransitionSpeedAfterMetersPerSecond,
+    ).toBeGreaterThan(0.01);
     expect(metrics.slipLossMeters).toBeGreaterThanOrEqual(
       CLAW_LAB_CONFIG.pt002MinSlipLoss,
     );
@@ -442,4 +519,56 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       0.002,
     );
   });
+
+  it("temporarily delays slip with the calibrated HOLD BOOST, then returns to weak retaining force", async () => {
+    const baseline = await simulateM04PickupRetention();
+    const boosted = await simulateM04PickupRetention(
+      M04_PLAY_CONFIG.holdBoostTorque,
+    );
+
+    console.log(
+      "M04 calibrated hold-boost metrics",
+      JSON.stringify({
+        torque: M04_PLAY_CONFIG.holdBoostTorque,
+        durationSeconds: M04_PLAY_CONFIG.holdBoostDurationSeconds,
+        baselineLiftAt0p4s:
+          baseline.liftAfterRetaining0p4sMeters,
+        boostedLiftAt0p4s:
+          boosted.liftAfterRetaining0p4sMeters,
+        boostedLiftAt0p8s:
+          boosted.liftAfterRetaining0p8sMeters,
+        boostedLiftAt1p2s:
+          boosted.liftAfterRetaining1p2sMeters,
+        boostUsedSeconds: boosted.boostUsedSeconds,
+        baselineFinalLift: baseline.finalLiftMeters,
+        boostedFinalLift: boosted.finalLiftMeters,
+      }),
+    );
+
+    expect(baseline.finiteAndBounded).toBe(true);
+    expect(boosted.finiteAndBounded).toBe(true);
+    expect(baseline.liftAfterRetaining0p4sMeters).toBeLessThan(
+      0.005,
+    );
+    expect(boosted.liftAfterRetaining0p4sMeters).toBeGreaterThan(
+      0.015,
+    );
+    expect(
+      boosted.liftAfterRetaining0p4sMeters -
+        baseline.liftAfterRetaining0p4sMeters,
+    ).toBeGreaterThan(0.015);
+    expect(boosted.boostUsedSeconds).toBeCloseTo(
+      M04_PLAY_CONFIG.holdBoostDurationSeconds,
+      8,
+    );
+    expect(boosted.liftAfterRetaining0p8sMeters).toBeLessThan(
+      0.005,
+    );
+    expect(
+      boosted.liftAfterRetaining0p4sMeters -
+        boosted.liftAfterRetaining0p8sMeters,
+    ).toBeGreaterThan(0.015);
+    expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
+  });
 });
+

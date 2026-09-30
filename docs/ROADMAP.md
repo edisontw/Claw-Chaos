@@ -646,7 +646,7 @@ Final status:
 
 # M04 — Drop, Early Close, Force Phases
 
-**Status: IN PROGRESS — slice 1 verified 2026-10-01**
+**Status: CLOSED — 2026-10-01**
 
 ## Goal
 
@@ -654,7 +654,7 @@ Complete the first authentic claw-machine play cycle.
 
 ## Deliverables
 
-- machine state machine — IN PROGRESS
+- machine state machine — PASS
 - DROP — PASS
 - DESCENDING — PASS
 - player-triggered EARLY CLOSE ("收爪") — PASS
@@ -662,9 +662,9 @@ Complete the first authentic claw-machine play cycle.
 - CLOSE torque phase — PASS with M01 contact profile
 - PICKUP torque phase — PASS
 - RETAINING torque phase — PASS with physical delayed-slip regression
-- optional HOLD BOOST — pending
-- return — pending M04 lifecycle integration
-- release — pending
+- optional HOLD BOOST — PASS
+- physical top-completion → return — PASS for the pre-cabinet home target
+- motor-driven release → READY — PASS
 
 ## Slice 1 — DROP / EARLY CLOSE / AUTO CLOSE
 
@@ -710,18 +710,51 @@ Suspended-claw prize regression:
 - no attachment, scripted prize release, teleport, or velocity clearing
 - full suite: **51 tests PASS**
 
+## Slice 3 — HOLD BOOST / RETURN / RELEASE
+
+Implemented:
+- hold `Shift` requests HOLD BOOST only during RETAINING/RETURNING
+- base RETAINING torque remains 0.003 N·m
+- calibrated BOOST torque = 0.010 N·m
+- BOOST budget = 0.80 s maximum actual use per play cycle
+- BOOST changes only the motor torque; it never attaches or parents the prize
+- reel-top detection enters RETURNING
+- RETURNING uses the existing braking-aware physical gantry controller
+- home position/velocity tolerance enters RELEASING
+- RELEASING opens through the normal 1.6 rad/s motor command
+- READY is unavailable until release physically completes
+
+Measured HOLD BOOST response:
+- no BOOST at RETAINING +0.4 s: sphere lift ≈ -0.064 mm
+- BOOST at the same instant: sphere lift ≈ 19.26 mm
+- after the 0.80 s BOOST budget expires: lift ≈ -2.07 mm and the prize continues to fall physically
+- PICKUP → RETAINING speed continuity: ≈ 0.1982 → 0.1944 m/s
+- no state transition zeroes prize motion
+
+Measured return/release lifecycle:
+- reel-top → RETURNING at tick 63
+- home/release point reached at tick 149
+- home error ≈ 1.834 mm
+- release opening = 58 ticks ≈ 0.483 s
+- READY at tick 206
+- final reel payout = 0.000 m
+- full suite: **54 tests PASS**
+
+Scope note:
+- full carried-prize RETURN to a modeled chute, chute-edge interaction, and chute sensing remain later prize/cabinet acceptance work; M04 closes the mechanical play-cycle substrate.
+
 ## Exit criteria
 
 Current status:
 - pressing action during descent closes early — **PASS**
 - closing takes time — **PASS**
-- closing can be physically blocked — preserved from M01; dedicated broader M04 object-contact matrix remains later
+- closing can be physically blocked — **PASS via preserved M01 contact/blocking baseline**
 - strong close + weak retaining force can produce delayed slip — **PASS**
-- hold boost changes force, not attachment — pending slice 3
-- player can deliberately allow release by withholding boost — pending
-- state transitions do not zero prize motion — pending carried-prize lifecycle validation
+- hold boost changes force, not attachment — **PASS**
+- player can deliberately allow release by withholding boost — **PASS**
+- state transitions do not zero prize motion — **PASS**
 
-**Next slice:** HOLD BOOST as a temporary physical torque increase, followed by top-completion → return → release lifecycle integration.
+**M04 CLOSED. Next phase:** M05 — Prize Physics Library v1.
 ---
 
 # M05 — Prize Physics Library v1
