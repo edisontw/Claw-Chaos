@@ -512,7 +512,8 @@ Implemented:
 - position-based kinematic carriage body
 - dynamic claw hub
 - fixed-length 0.31 m suspension through a Rapier spherical joint
-- provisional angular/linear damping
+- stiff, strongly damped horizontal suspension response layered on the spherical length constraint
+- spring stiffness 55 N/m, damping 8.5 N·s/m, corrective-force clamp 4 N
 - M01 three independent dynamic fingers and revolute joints reused on the suspended hub
 - visual suspension cable follows the same hub orientation implied by the physical pendulum
 - Arrow-key manual X/Z movement
@@ -520,11 +521,12 @@ Implemented:
 - existing `D` collider debug and `M` COM/origin debug remain available
 
 PT-006 automated baseline:
-- acceleration lag: about 0.067 m
-- forward swing after braking: about 0.135 m
-- peak swing angle: about 0.450 rad (~25.8°)
+- acceleration lag: about 0.0035 m
+- forward swing after braking: about 0.011 m
+- peak swing angle: about 0.036 rad (~2.1°)
 - suspension distance: 0.310003 m against 0.310 m target
 - carriage reaches zero X velocity after braking
+- residual horizontal offset after the braking observation: < 0.001 mm
 - finite/bounded stability gate: PASS
 - no rigid-lock or transform parenting is used
 

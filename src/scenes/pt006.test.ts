@@ -7,6 +7,7 @@ import {
   type Pt006Metrics,
 } from "./gantryLab";
 import { advanceGantryAxis } from "./gantryMotion";
+import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 
 describe("PT-006 swing from braking", () => {
   it("produces inertial lag and forward swing from physical suspension", async () => {
@@ -51,16 +52,39 @@ describe("PT-006 swing from braking", () => {
     };
     let gantry = { position: 0, velocity: 0 };
 
-    const setCarriage = (): void => {
+    const setCarriageAndStabilize = (): void => {
       carriage.setNextKinematicTranslation({
         x: gantry.position,
         y: config.carriageY,
         z: 0,
       });
+
+      const position = hub.translation();
+      const velocity = hub.linvel();
+      const impulse = computeSuspensionStabilizerImpulse(
+        {
+          anchorX: gantry.position,
+          anchorZ: 0,
+          anchorVelocityX: gantry.velocity,
+          anchorVelocityZ: 0,
+          hubX: position.x,
+          hubZ: position.z,
+          hubVelocityX: velocity.x,
+          hubVelocityZ: velocity.z,
+        },
+        {
+          stiffness: config.suspensionSpringStiffness,
+          damping: config.suspensionSpringDamping,
+          maxForce: config.suspensionSpringMaxForce,
+        },
+        dt,
+      );
+
+      hub.applyImpulse({ x: impulse.x, y: 0, z: impulse.z }, true);
     };
 
     for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
-      setCarriage();
+      setCarriageAndStabilize();
       physics.step();
     }
 
@@ -101,7 +125,7 @@ describe("PT-006 swing from braking", () => {
     );
     for (let tick = 0; tick < accelerationTicks; tick += 1) {
       gantry = advanceGantryAxis(gantry, 1, axisConfig, dt);
-      setCarriage();
+      setCarriageAndStabilize();
       physics.step();
       sample();
     }
@@ -115,18 +139,22 @@ describe("PT-006 swing from braking", () => {
     );
     for (let tick = 0; tick < brakingTicks; tick += 1) {
       gantry = advanceGantryAxis(gantry, 0, axisConfig, dt);
-      setCarriage();
+      setCarriageAndStabilize();
       physics.step();
       sample();
     }
 
+    const finalHub = hub.translation();
     const metrics: Pt006Metrics = {
       lagMeters,
       forwardSwingMeters: Math.max(0, maximumRelativeX),
       peakSwingAngleRadians: peakSwingAngle,
+      residualOffsetMeters: Math.hypot(
+        finalHub.x - gantry.position,
+        finalHub.z,
+      ),
     };
 
-    const finalHub = hub.translation();
     const suspensionDistance = Math.hypot(
       finalHub.x - gantry.position,
       anchorY - finalHub.y,
@@ -147,11 +175,23 @@ describe("PT-006 swing from braking", () => {
     expect(metrics.lagMeters).toBeGreaterThanOrEqual(
       config.pt006MinLagMeters,
     );
+    expect(metrics.lagMeters).toBeLessThanOrEqual(
+      config.pt006MaxLagMeters,
+    );
     expect(metrics.forwardSwingMeters).toBeGreaterThanOrEqual(
       config.pt006MinForwardSwingMeters,
     );
+    expect(metrics.forwardSwingMeters).toBeLessThanOrEqual(
+      config.pt006MaxForwardSwingMeters,
+    );
     expect(metrics.peakSwingAngleRadians).toBeGreaterThanOrEqual(
       config.pt006MinSwingAngleRadians,
+    );
+    expect(metrics.peakSwingAngleRadians).toBeLessThanOrEqual(
+      config.pt006MaxSwingAngleRadians,
+    );
+    expect(metrics.residualOffsetMeters).toBeLessThanOrEqual(
+      config.pt006MaxResidualOffsetMeters,
     );
     expect(evaluatePt006Swing(metrics)).toBe(true);
   });

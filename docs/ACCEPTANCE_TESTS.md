@@ -246,11 +246,15 @@ Implementation status — 2026-09-30:
 - X/Z gantry max speed: 0.45 m/s
 - acceleration: 1.35 m/s²
 - braking: 3.5 m/s²
-- provisional angular damping: 0.55
-- calibrated laboratory run measures about 0.067 m lag during +X acceleration
-- after braking the hub swings about 0.135 m forward relative to carriage
-- peak measured swing angle is about 0.450 rad (~25.8°)
+- horizontal spring stiffness: 55 N/m
+- horizontal damping: 8.5 N·s/m
+- corrective-force clamp: 4 N
+- angular damping: 3.0
+- calibrated laboratory run measures about 0.0035 m lag during +X acceleration
+- after braking the hub swings about 0.011 m forward relative to carriage
+- peak measured swing angle is about 0.036 rad (~2.1°)
 - final measured suspension distance is about 0.310003 m
+- final residual horizontal offset is effectively zero after the observation window
 - finite/bounded transform checks PASS at the 120 Hz fixed step
 - no claw parenting to carriage transform and no scripted swing angle is used
 - these values are a behavior-proof baseline, not final real-machine calibration

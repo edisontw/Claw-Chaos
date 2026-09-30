@@ -438,16 +438,17 @@ Implemented:
 - X rails ±0.30 m; Z rails ±0.24 m
 - kinematic carriage + dynamic claw hub
 - fixed 0.31 m spherical-joint suspension
-- provisional angular damping 0.55 and linear damping 0.04
+- stiff/damped horizontal suspension: 55 N/m spring, 8.5 N·s/m damping, 4 N corrective-force clamp
+- angular damping 3.0 and linear damping 0.12
 - closed M01 finger bodies/joints reused on suspended hub
 - default `gantry-lab` scene with Arrow-key controls
 - automated `P` PT-006 sequence
 - current-phase headless browser smoke now targets `gantry-lab`
 
 PT-006 regression:
-- lag ≈ 0.067 m
-- post-brake forward swing ≈ 0.135 m
-- peak swing ≈ 0.450 rad
+- lag ≈ 0.0035 m
+- post-brake forward swing ≈ 0.011 m
+- peak swing ≈ 0.036 rad
 - suspension distance remains ≈ 0.310 m
 - finite/bounded at 120 Hz
 
