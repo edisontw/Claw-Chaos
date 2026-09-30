@@ -504,7 +504,7 @@ export function createGantryLabScene(
   return {
     bindings,
     massPropertiesDebugTargets: [{ body: hubBody, label: "suspended-claw-hub" }],
-    milestone: "M02 / PT006 + PT008",
+    milestone: "M02 / PT006 + PT008 DROP-LIFT",
     camera: {
       position: [0.78, 0.82, 1.08],
       target: [0, 0.72, 0],
