@@ -771,9 +771,41 @@ Not yet implemented in M04:
 - HOLD BOOST
 - full return/release lifecycle
 
+## M04 implementation status — slice 2 verified 2026-10-01
+
+Implemented:
+- CLOSED_AT_DEPTH now has a dedicated fixed-step settle window before reel reversal
+- settle baseline = 0.90 s, intentionally aligned with the proven M01 close/contact stabilization window
+- after settle, reel command reverses physically into PICKUP
+- PICKUP begins from the physical payout present after close/settle; no snap to a lift start position
+- after 0.06 m of physical reel recovery the force phase changes to RETAINING
+- CLOSE/PICKUP currently share the proven M01 2.5 N·m contact torque while remaining separate state-machine phases
+- RETAINING uses the existing calibrated 0.003 N·m weak torque
+- reel continues physically to payout 0 under RETAINING
+- production debug reports play phase, force phase, phase time, pickup-start payout and active motor torque
+
+Measured controller regression:
+- auto-close completes at payout 0.280 m
+- close-settle transition = 109 fixed ticks ≈ 0.908 s
+- PICKUP → RETAINING = 44 ticks ≈ 0.367 s
+- physical reel recovery at transition ≈ 0.06027 m
+- RETAINING starts at payout ≈ 0.21973 m
+
+Physical prize regression:
+- uses the M01 sphere/material/contact parameters with a 15 mm higher support placement calibrated for the suspended M04 claw; this is regression-scene placement, not a production prize rule
+- peak physical ball lift ≈ 0.04365 m
+- lift still present at RETAINING start ≈ 0.02156 m
+- weak-force slip loss ≈ 0.04445 m
+- final lift ≈ −0.00080 m, i.e. returns near support rather than falling to the floor
+- final reel payout = 0.000 m
+- maximum suspension-length error ≈ 0.000056 m
+- finite/bounded PASS
+- no prize attachment, weld, kinematic prize state, teleport, scripted drop, or motion reset
+- full suite: **51 automated tests PASS**
+
 ## Current next step
 
-Continue **M04 slice 2** with close-settle → physical LIFT and explicit PICKUP → RETAINING force phases. Preserve M01 contact blocking/slip behavior and all closed M02/M03 motion regressions.
+Continue **M04 slice 3** with HOLD BOOST as a real temporary torque change, then integrate top completion → return → release. Preserve the physical slip path so withholding/releasing boost can still allow loss of support.
 
 ## Design-review additions
 

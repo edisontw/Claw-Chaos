@@ -8,6 +8,7 @@ import {
   applyM04Action,
   createM04PlayState,
   m04FingerShouldClose,
+  m04ForcePhase,
   m04ReelCommand,
   type M04PlayState,
 } from "./m04PlayCycle";
@@ -26,6 +27,8 @@ const playConfig = {
   closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
   closeCompletionToleranceRadians:
     M04_PLAY_CONFIG.closeCompletionToleranceRadians,
+  closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
+  pickupLiftDistanceMeters: M04_PLAY_CONFIG.pickupLiftDistanceMeters,
 };
 
 function settleOpenCommand(): number {
@@ -56,7 +59,18 @@ function stepCycle(
     reelConfig,
     dt,
   );
-  const target = m04FingerShouldClose(state)
+
+  let stateNext = advanceM04PlayState(
+    state,
+    {
+      reelPayoutMeters: reelNext.payout,
+      fingerCommandRadians: fingerCommand,
+    },
+    playConfig,
+    0,
+  );
+
+  const target = m04FingerShouldClose(stateNext)
     ? CLAW_LAB_CONFIG.closedAngle
     : CLAW_LAB_CONFIG.openAngle;
   const fingerNext = advanceMotorCommand(
@@ -65,13 +79,15 @@ function stepCycle(
     CLAW_LAB_CONFIG.motorSpeedRadiansPerSecond,
     dt,
   );
-  const stateNext = advanceM04PlayState(
-    state,
+
+  stateNext = advanceM04PlayState(
+    stateNext,
     {
       reelPayoutMeters: reelNext.payout,
       fingerCommandRadians: fingerNext,
     },
     playConfig,
+    dt,
   );
 
   return {
@@ -81,7 +97,7 @@ function stepCycle(
   };
 }
 
-describe("M04 DROP / early close / automatic close state machine", () => {
+describe("M04 DROP / close / lift state machine", () => {
   it("turns the second action during descent into a timed EARLY CLOSE without stopping descent", () => {
     let state = applyM04Action(createM04PlayState(), 0);
     let reel: ReelState = { payout: 0, velocity: 0 };
@@ -123,7 +139,7 @@ describe("M04 DROP / early close / automatic close state machine", () => {
     expect(reel.payout).toBeGreaterThan(payoutAtAction);
 
     let closeTicks = 1;
-    while (state.phase !== "CLOSED_AT_DEPTH" && closeTicks < PHYSICS_HZ * 2) {
+    while (state.phase === "CLOSING" && closeTicks < PHYSICS_HZ * 2) {
       ({ state, reel, fingerCommand } = stepCycle(
         state,
         reel,
@@ -182,7 +198,7 @@ describe("M04 DROP / early close / automatic close state machine", () => {
     );
 
     let closeTicks = 0;
-    while (state.phase !== "CLOSED_AT_DEPTH" && closeTicks < PHYSICS_HZ * 2) {
+    while (state.phase === "CLOSING" && closeTicks < PHYSICS_HZ * 2) {
       ({ state, reel, fingerCommand } = stepCycle(
         state,
         reel,
@@ -203,5 +219,81 @@ describe("M04 DROP / early close / automatic close state machine", () => {
     expect(state.phase).toBe("CLOSED_AT_DEPTH");
     expect(closeTicks).toBeGreaterThan(40);
     expect(reel.payout).toBeCloseTo(M02_GANTRY_CONFIG.reelMaxPayout, 4);
+  });
+
+  it("settles before physical LIFT, then switches PICKUP to RETAINING after 0.06 m of reel recovery", () => {
+    let state = applyM04Action(createM04PlayState(), 0);
+    let reel: ReelState = { payout: 0, velocity: 0 };
+    let fingerCommand = settleOpenCommand();
+
+    while (state.phase !== "CLOSED_AT_DEPTH") {
+      ({ state, reel, fingerCommand } = stepCycle(
+        state,
+        reel,
+        fingerCommand,
+      ));
+    }
+
+    const closeCompletePayout = reel.payout;
+    let settleTicks = 0;
+    let minPayoutDuringSettle = reel.payout;
+    let maxPayoutDuringSettle = reel.payout;
+
+    while (state.phase === "CLOSED_AT_DEPTH") {
+      ({ state, reel, fingerCommand } = stepCycle(
+        state,
+        reel,
+        fingerCommand,
+      ));
+      settleTicks += 1;
+      minPayoutDuringSettle = Math.min(minPayoutDuringSettle, reel.payout);
+      maxPayoutDuringSettle = Math.max(maxPayoutDuringSettle, reel.payout);
+    }
+
+    expect(state.phase).toBe("PICKUP");
+    expect(settleTicks).toBeGreaterThanOrEqual(
+      Math.floor(M04_PLAY_CONFIG.closeSettleSeconds * PHYSICS_HZ),
+    );
+    expect(m04ForcePhase(state)).toBe("PICKUP");
+    expect(state.pickupStartPayoutMeters).not.toBeNull();
+
+    const pickupStartPayout = state.pickupStartPayoutMeters!;
+    expect(pickupStartPayout).toBeGreaterThanOrEqual(closeCompletePayout);
+    expect(maxPayoutDuringSettle - minPayoutDuringSettle).toBeLessThan(0.05);
+
+    let pickupTicks = 0;
+    while (state.phase === "PICKUP" && pickupTicks < PHYSICS_HZ * 2) {
+      ({ state, reel, fingerCommand } = stepCycle(
+        state,
+        reel,
+        fingerCommand,
+      ));
+      pickupTicks += 1;
+    }
+
+    const physicalLiftAtRetention = pickupStartPayout - reel.payout;
+
+    console.log("M04 pickup-retaining metrics", JSON.stringify({
+      closeCompletePayout,
+      settleTicks,
+      settleSeconds: settleTicks / PHYSICS_HZ,
+      pickupStartPayout,
+      pickupTicks,
+      pickupSeconds: pickupTicks / PHYSICS_HZ,
+      retainingStartPayout: reel.payout,
+      physicalLiftAtRetention,
+      finalFingerCommand: fingerCommand,
+    }));
+
+    expect(state.phase).toBe("RETAINING");
+    expect(m04ForcePhase(state)).toBe("RETAINING");
+    expect(physicalLiftAtRetention).toBeGreaterThanOrEqual(
+      M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    );
+    expect(physicalLiftAtRetention).toBeLessThan(
+      M04_PLAY_CONFIG.pickupLiftDistanceMeters + 0.005,
+    );
+    expect(reel.velocity).toBeLessThan(0);
+    expect(fingerCommand).toBeCloseTo(CLAW_LAB_CONFIG.closedAngle, 6);
   });
 });
