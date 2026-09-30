@@ -26,6 +26,7 @@ import {
   createM04PlayState,
   m04FingerShouldClose,
   m04ForcePhase,
+  m04HoldBoostActive,
   m04ReelCommand,
 } from "./m04PlayCycle";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
@@ -394,10 +395,15 @@ export function createGantryLabScene(
   const playConfig = {
     autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
     closedAngleRadians: claw.closedAngle,
+    openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
+    releaseCompletionToleranceRadians:
+      M04_PLAY_CONFIG.releaseCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
     pickupLiftDistanceMeters: M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    holdBoostDurationSeconds:
+      M04_PLAY_CONFIG.holdBoostDurationSeconds,
   };
 
   let motion: GantryMotionState = {
@@ -409,6 +415,7 @@ export function createGantryLabScene(
   let homeReturnPhase: HomeReturnPhase = "READY";
   let playCycle = createM04PlayState();
   let fingerCommand = 0;
+  let holdBoostActive = false;
 
   let pt006Phase: Pt006Phase = "READY";
   let pt006Seconds = 0;
@@ -568,7 +575,7 @@ export function createGantryLabScene(
   return {
     bindings,
     massPropertiesDebugTargets: [{ body: hubBody, label: "suspended-claw-hub" }],
-    milestone: "M04 / DROP + EARLY/AUTO CLOSE",
+    milestone: "M04 / BOOST + RETURN + RELEASE",
     camera: {
       position: [0.78, 0.82, 1.08],
       target: [0, 0.72, 0],
@@ -700,7 +707,10 @@ export function createGantryLabScene(
         }
       }
 
-      if (homeReturnPhase === "RETURNING_HOME") {
+      if (
+        homeReturnPhase === "RETURNING_HOME" ||
+        playCycle.phase === "RETURNING"
+      ) {
         motion = advanceGantryMotionTowardPosition(
           motion,
           gantry.homeX,
@@ -720,19 +730,42 @@ export function createGantryLabScene(
 
       const wasLifting = reelCommand < 0;
       reel = advanceReel(reel, reelCommand, reelConfig, stepSeconds);
+
+      const m04HomeTolerance = {
+        position: gantry.homePositionTolerance,
+        velocity: gantry.homeVelocityTolerance,
+      };
+      const m04HomeReached =
+        isGantryAxisAtTarget(
+          motion.x,
+          gantry.homeX,
+          m04HomeTolerance,
+        ) &&
+        isGantryAxisAtTarget(
+          motion.z,
+          gantry.homeZ,
+          m04HomeTolerance,
+        );
+      const holdBoostRequested =
+        pressed.has("ShiftLeft") || pressed.has("ShiftRight");
+
+      const reelAtTop =
+        reel.payout <= gantry.reelMinPayout + 1e-5 &&
+        Math.abs(reel.velocity) < 1e-4;
+
       playCycle = advanceM04PlayState(
         playCycle,
         {
           reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
+          reelAtTop,
+          homeReached: m04HomeReached,
+          holdBoostRequested,
         },
         playConfig,
         0,
       );
 
-      const reelAtTop =
-        reel.payout <= gantry.reelMinPayout + 1e-5 &&
-        Math.abs(reel.velocity) < 1e-4;
       if (
         wasLifting &&
         reelAtTop &&
@@ -792,6 +825,11 @@ export function createGantryLabScene(
       );
 
       const closingFinger = m04FingerShouldClose(playCycle);
+      holdBoostActive = m04HoldBoostActive(
+        playCycle,
+        holdBoostRequested,
+        playConfig,
+      );
       const fingerTarget = closingFinger
         ? claw.closedAngle
         : claw.openAngle;
@@ -806,6 +844,9 @@ export function createGantryLabScene(
         {
           reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
+          reelAtTop,
+          homeReached: m04HomeReached,
+          holdBoostRequested,
         },
         playConfig,
         stepSeconds,
@@ -813,7 +854,9 @@ export function createGantryLabScene(
       const activeForcePhase = m04ForcePhase(playCycle);
       const activeContactTorque =
         activeForcePhase === "RETAINING"
-          ? claw.pt002RetainingTorque
+          ? holdBoostActive
+            ? M04_PLAY_CONFIG.holdBoostTorque
+            : claw.pt002RetainingTorque
           : claw.maxMotorTorque;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
@@ -890,6 +933,13 @@ export function createGantryLabScene(
           (playCycle.pickupStartPayoutMeters === null
             ? "-"
             : playCycle.pickupStartPayoutMeters.toFixed(3) + " m"),
+        "M04 boost        " +
+          (holdBoostActive ? "ACTIVE" : "off") +
+          " " +
+          playCycle.holdBoostUsedSeconds.toFixed(2) +
+          " / " +
+          M04_PLAY_CONFIG.holdBoostDurationSeconds.toFixed(2) +
+          " s",
         "Finger command   " + fingerCommand.toFixed(3) + " rad",
         "PT-006 phase     " + pt006Phase,
         "PT-006 result    " + pt006Result,
@@ -927,11 +977,13 @@ export function createGantryLabScene(
           " / " +
           (m04FingerShouldClose(playCycle)
             ? m04ForcePhase(playCycle) === "RETAINING"
-              ? claw.pt002RetainingTorque
+              ? holdBoostActive
+                ? M04_PLAY_CONFIG.holdBoostTorque
+                : claw.pt002RetainingTorque
               : claw.maxMotorTorque
             : M02_FINGER_TRANSPORT_CONFIG.maxTorque
           ).toFixed(3),
-        "Controls         Arrows aim | Space DROP / EARLY CLOSE | H HOME",
+        "Controls         Arrows aim | Space DROP/CLOSE | hold Shift BOOST",
         "Auto close       " +
           M04_PLAY_CONFIG.autoClosePayoutMeters.toFixed(3) +
           " m travel",
@@ -940,6 +992,11 @@ export function createGantryLabScene(
           " s / " +
           M04_PLAY_CONFIG.pickupLiftDistanceMeters.toFixed(2) +
           " m",
+        "BOOST T / budget  " +
+          M04_PLAY_CONFIG.holdBoostTorque.toFixed(3) +
+          " N·m / " +
+          M04_PLAY_CONFIG.holdBoostDurationSeconds.toFixed(2) +
+          " s",
         "Tests            P PT-006 | T PT-008 | M COM | D colliders",
       ];
     },
