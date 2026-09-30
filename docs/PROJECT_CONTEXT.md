@@ -1,6 +1,6 @@
 # Project Context
 
-Last updated: 2026-09-29
+Last updated: 2026-09-30
 
 ## Product identity
 
@@ -651,9 +651,39 @@ Final M02 verification baseline:
 
 Full prize-carry return/release/chute lifecycle acceptance remains for later gameplay/cabinet phases; M02 closes the mechanical gantry/suspension/reel/home-return substrate required by those tests.
 
+## M03 implementation status — slice 1 verified 2026-09-30
+
+**Status: IN PROGRESS**
+
+PT-007 lateral swing amplification is now automated and PASS.
+
+Current M03-compatible mechanical calibration:
+- horizontal suspension spring: 170 N/m
+- horizontal damping: 1.0 N·s/m
+- corrective-force clamp: 4 N
+- OPEN/transport-only finger hold: stiffness 6000, damping 340, max torque 50
+- M01 grasp/contact motor semantics remain unchanged
+
+Measured PT-007 timing response:
+- 0.30 s reversal half-period decays from about 11.86 mm to 8.41 mm
+- 0.40 s reversal half-period grows from about 20.86 mm to 24.17 mm (+15.9%)
+- 0.42 s also grows to about 22.53 mm
+- 0.46 s decays slightly
+- 0.40 s peak angle is about 0.078 rad (~4.5°)
+- finite/bounded stability PASS at 120 Hz
+
+The same calibration revalidates the closed M02 gates:
+- PT-006 lag ≈ 3.03 mm, forward swing ≈ 15.22 mm, peak angle ≈ 0.049 rad
+- OPEN finger transport maximum deflection ≈ 0.03272 rad (< 0.035 rad gate)
+- PT-008 physical DROP/LIFT and horizontal-momentum preservation — PASS
+- physical lift-completion → home return — PASS
+- no transform parenting, direct swing-angle injection, or hidden swing force introduced
+
+The committed suite contains **44 automated tests** after removing calibration-only exploration files.
+
 ## Current next step
 
-Proceed to **M03 — Swing Techniques**, beginning with PT-007 controlled swing amplification while retaining the closed M02 default small-swing calibration.
+Continue **M03 — Swing Techniques** with dedicated front/back and diagonal swing regressions, then validate deliberate descent while amplified swing is still active.
 
 ## Design-review additions
 
