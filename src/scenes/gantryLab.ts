@@ -481,7 +481,8 @@ export function createGantryLabScene(
       pt006Phase !== "READY" ||
       pt008Phase !== "READY" ||
       reel.payout > 0.001 ||
-      homeReturnPhase === "RETURNING_HOME"
+      homeReturnPhase === "RETURNING_HOME" ||
+      playCycle.phase !== "READY"
     ) {
       return;
     }
@@ -564,7 +565,7 @@ export function createGantryLabScene(
   return {
     bindings,
     massPropertiesDebugTargets: [{ body: hubBody, label: "suspended-claw-hub" }],
-    milestone: "M02 / PT006 + PT008 DROP-LIFT",
+    milestone: "M04 / DROP + EARLY/AUTO CLOSE",
     camera: {
       position: [0.78, 0.82, 1.08],
       target: [0, 0.72, 0],
@@ -895,12 +896,21 @@ export function createGantryLabScene(
           gantry.suspensionSpringStiffness.toFixed(1) +
           " / " +
           gantry.suspensionSpringDamping.toFixed(1),
-        "Finger hold k/c/T " +
-          M02_FINGER_TRANSPORT_CONFIG.stiffness.toFixed(0) +
+        "Finger motor k/c/T " +
+          (m04FingerShouldClose(playCycle)
+            ? claw.motorStiffness
+            : M02_FINGER_TRANSPORT_CONFIG.stiffness
+          ).toFixed(0) +
           " / " +
-          M02_FINGER_TRANSPORT_CONFIG.damping.toFixed(0) +
+          (m04FingerShouldClose(playCycle)
+            ? claw.motorDamping
+            : M02_FINGER_TRANSPORT_CONFIG.damping
+          ).toFixed(0) +
           " / " +
-          M02_FINGER_TRANSPORT_CONFIG.maxTorque.toFixed(1),
+          (m04FingerShouldClose(playCycle)
+            ? claw.maxMotorTorque
+            : M02_FINGER_TRANSPORT_CONFIG.maxTorque
+          ).toFixed(1),
         "Controls         Arrows aim | Space DROP / EARLY CLOSE | H HOME",
         "Auto close       " +
           M04_PLAY_CONFIG.autoClosePayoutMeters.toFixed(3) +
