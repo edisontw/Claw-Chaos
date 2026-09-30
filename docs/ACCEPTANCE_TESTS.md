@@ -313,6 +313,44 @@ Acceptance gates:
 - suspension-length error < 0.002 m
 - all checked transforms/states finite and bounded
 
+### M03 slice 3 — amplified swing through DROP
+
+Implementation status — 2026-10-01:
+- **Automated PASS**
+- starts from the same synchronized X/Z 0.40 s reversal technique validated in slice 2
+- no production physics constants changed
+- DROP is triggered only after the physical swing still has meaningful resultant offset and relative horizontal velocity
+- carriage input returns to zero and brakes normally while reel payout begins through the existing fixed-step controller
+- pre-DROP resultant peak ≈ 0.03405 m
+- DROP start X/Z offsets ≈ 0.00985 / 0.00985 m; resultant ≈ 0.01394 m
+- DROP start world horizontal speed ≈ 0.6253 m/s
+- DROP start relative horizontal speed ≈ 0.1910 m/s
+- first DROP tick world horizontal speed ≈ 0.6941 m/s; retention ratio ≈ 1.110
+- first DROP tick relative horizontal speed ≈ 0.3010 m/s
+- physical descent ≈ 0.28029 m over 146 fixed ticks
+- maximum descent X/Z offsets ≈ 0.02155 / 0.02155 m
+- maximum descent resultant ≈ 0.03047 m
+- hub horizontal travel from DROP start ≈ 0.06169 m
+- bottom payout = 0.2800 m
+- maximum suspension-length error ≈ 0.0000030 m
+- final suspension distance ≈ 0.3100001 m
+- finite/bounded stability PASS
+- no direct angle/velocity injection, hidden swing force, transform parenting, or descent-time state reset
+- full suite: **47 automated tests PASS**
+
+Acceptance gates:
+- pre-DROP amplified resultant > 0.025 m
+- DROP trigger resultant > 0.008 m and relative horizontal speed > 0.08 m/s
+- first DROP tick horizontal speed remains non-zero and world-speed retention ratio > 0.20
+- physical descent >= PT-008 minimum descent gate
+- descent X and Z offsets each > 0.010 m
+- descent resultant > 0.018 m but < 0.080 m
+- horizontal hub travel from DROP start > 0.010 m
+- suspension-length error < 0.002 m and final distance remains ≈ 0.31 m
+- all transforms, controller states and reel states remain finite/bounded
+
+**M03 final closure: PASS.**
+
 ## 10. PT-008 Momentum during descent
 
 Setup:
