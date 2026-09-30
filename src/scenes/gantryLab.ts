@@ -47,7 +47,7 @@ export const M02_GANTRY_CONFIG = {
   suspensionLinearDamping: 0.12,
   suspensionSpringStiffness: 55,
   suspensionSpringDamping: 8.5,
-  suspensionSpringMaxForce: 4.0,
+  suspensionSpringMaxForce: 1.5,
   hubMassKg: 0.32,
   reelMinPayout: 0,
   reelMaxPayout: 0.28,
