@@ -30,8 +30,7 @@ export function createPrizeLabScene(
   const bindings = [];
   const massPropertiesDebugTargets = [];
 
-  for (let index = 0; index < PRIZE_DEFINITIONS.length; index += 1) {
-    const definition = PRIZE_DEFINITIONS[index];
+  for (const [index, definition] of PRIZE_DEFINITIONS.entries()) {
     const column = index % 4;
     const row = Math.floor(index / 4);
     const prize = createPrize(physics, definition, {
