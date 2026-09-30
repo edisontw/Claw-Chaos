@@ -1,7 +1,7 @@
 export const M04_PLAY_CONFIG = {
   autoClosePayoutMeters: 0.275,
   closeCompletionToleranceRadians: 0.005,
-  closeSettleSeconds: 0.30,
+  closeSettleSeconds: 0.90,
   pickupLiftDistanceMeters: 0.06,
 } as const;
 
