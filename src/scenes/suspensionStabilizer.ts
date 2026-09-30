@@ -2,6 +2,7 @@ export interface SuspensionStabilizerConfig {
   stiffness: number;
   damping: number;
   maxForce: number;
+  maxDampingForce?: number;
 }
 
 export interface SuspensionHorizontalState {
@@ -30,10 +31,24 @@ export function computeSuspensionStabilizerImpulse(
   const relativeVelocityX = state.hubVelocityX - state.anchorVelocityX;
   const relativeVelocityZ = state.hubVelocityZ - state.anchorVelocityZ;
 
-  let forceX =
-    -config.stiffness * offsetX - config.damping * relativeVelocityX;
-  let forceZ =
-    -config.stiffness * offsetZ - config.damping * relativeVelocityZ;
+  const springForceX = -config.stiffness * offsetX;
+  const springForceZ = -config.stiffness * offsetZ;
+  let dampingForceX = -config.damping * relativeVelocityX;
+  let dampingForceZ = -config.damping * relativeVelocityZ;
+
+  const maxDampingForce = config.maxDampingForce ?? Number.POSITIVE_INFINITY;
+  const dampingMagnitude = Math.hypot(dampingForceX, dampingForceZ);
+  if (
+    dampingMagnitude > maxDampingForce &&
+    dampingMagnitude > Number.EPSILON
+  ) {
+    const dampingScale = maxDampingForce / dampingMagnitude;
+    dampingForceX *= dampingScale;
+    dampingForceZ *= dampingScale;
+  }
+
+  let forceX = springForceX + dampingForceX;
+  let forceZ = springForceZ + dampingForceZ;
 
   const magnitude = Math.hypot(forceX, forceZ);
   if (magnitude > config.maxForce && magnitude > Number.EPSILON) {
