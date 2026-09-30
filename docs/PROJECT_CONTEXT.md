@@ -803,9 +803,47 @@ Physical prize regression:
 - no prize attachment, weld, kinematic prize state, teleport, scripted drop, or motion reset
 - full suite: **51 automated tests PASS**
 
+## M04 implementation status — slice 3 / final closure verified 2026-10-01
+
+**Status: CLOSED**
+
+Implemented:
+- prototype HOLD BOOST input is hold `Shift`
+- BOOST is eligible only during RETAINING and RETURNING
+- base RETAINING torque remains 0.003 N·m
+- calibrated HOLD BOOST torque = 0.010 N·m
+- BOOST has a maximum 0.80 s actual-use budget per play cycle; time is consumed only while BOOST is active
+- reel-top completion moves the M04 state machine from RETAINING → RETURNING
+- RETURNING reuses the same braking-aware M02 gantry target controller; the carriage is not teleported
+- reaching the home position/velocity tolerance moves RETURNING → RELEASING
+- RELEASING opens the physical finger motor from -0.42 rad toward +0.35 rad at the existing 1.6 rad/s command rate
+- the machine returns to READY only after the open target is physically reached
+
+Measured HOLD BOOST regression:
+- near-slip sphere with no BOOST: lift at 0.4 s after RETAINING ≈ -0.000064 m
+- same sphere with 0.010 N·m BOOST: lift at 0.4 s ≈ 0.019257 m
+- at the 0.80 s BOOST limit the prize has returned to ≈ -0.002071 m relative lift and continues to fall under the base retaining force
+- PICKUP → RETAINING prize speed remains continuous: ≈ 0.19819 → 0.19436 m/s across the state transition
+- no prize velocity clear/reset occurs
+
+Measured lifecycle regression:
+- reel top → RETURNING at fixed tick 63
+- RETURNING → RELEASING at tick 149
+- home-position error at release ≈ 0.001834 m
+- physical opening takes 58 ticks ≈ 0.4833 s
+- READY is reached at tick 206 only after finger command reaches +0.35 rad
+- final payout = 0.000 m
+- no prize attachment, weld, hidden hold joint, normal-play teleport, or state-transition velocity reset
+- full suite: **54 automated tests PASS**
+- lint/build/GitHub Pages base-path/headless `gantry-lab` smoke PASS
+
+M04 closure scope:
+- the pre-cabinet mechanical play cycle is complete
+- full carried-prize return to a modeled chute, chute-edge collision, chute sensor, and prize-out validation remain later M05/M06 acceptance work and are not claimed complete here
+
 ## Current next step
 
-Continue **M04 slice 3** with HOLD BOOST as a real temporary torque change, then integrate top completion → return → release. Preserve the physical slip path so withholding/releasing boost can still allow loss of support.
+Proceed to **M05 — Prize Physics Library v1**. Build the reusable data-driven prize factory plus initial geometry/material/mass/COM profiles without changing the closed M01–M04 physics invariants.
 
 ## Design-review additions
 
