@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M04 IN PROGRESS — Drop, Early Close, Force Phases**
+**M04 CLOSED — Drop, Early Close, Force Phases**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -39,6 +39,8 @@ Final M01 verification baseline:
 M02 is complete. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, PT-008 horizontal-momentum preservation, and a rigid OPEN/transport finger profile. Slice 3 adds lift-completion detection and a braking-aware physical carriage return/home path. The closed M01 three-finger grasp/contact behavior remains unchanged.
 
 M03 is now closed. Slice 1 PT-007 proves timing-sensitive lateral swing amplification, slice 2 verifies the same model for front/back and synchronized diagonal swing, and slice 3 proves that a deliberately amplified diagonal swing remains physical during DROP. No special swing button, direct swing-angle/velocity write, hidden force injection, transform parenting, or descent-time state reset is used.
+
+M04 is now closed. The play-cycle state machine covers physical DROP, EARLY/AUTO CLOSE, close settle, PICKUP, weak RETAINING, limited player HOLD BOOST, physical reel-top completion, braking-aware carriage return, motor-driven RELEASE, and return to READY. HOLD BOOST is a real temporary torque change only; it does not attach the prize or override contact physics.
 
 ### First milestone
 
@@ -115,7 +117,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M04 — Drop, Early Close, Force Phases** with slice 3: add HOLD BOOST semantics, then integrate physical top completion → return → release while preserving the now-verified PICKUP/RETAINING behavior.
+Proceed to **M05 — Prize Physics Library v1**. Build the reusable data-driven prize factory and initial geometry/material/mass/COM profiles without adding prize-specific grab logic or altering the closed M01–M04 physics invariants.
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
@@ -123,7 +125,8 @@ Current `gantry-lab` controls:
 - first `Space`: physical DROP
 - second `Space` during descent: EARLY CLOSE
 - no second action: AUTO CLOSE near maximum payout
-- after close: settle → physical LIFT → PICKUP → RETAINING runs automatically
+- after close: settle → physical LIFT → PICKUP → RETAINING → RETURN → RELEASE runs automatically
+- hold `Shift` during RETAINING/RETURNING: limited HOLD BOOST
 - `H`: legacy M02 home-return test path when the M04 play cycle is READY and reel is at top
 - `P`: deterministic PT-006 hard-brake swing regression
 - `T`: deterministic PT-008 momentum-during-descent regression
@@ -198,7 +201,22 @@ M04 slice 2 current baseline:
 - no prize parent/weld/joint, prize teleport, or velocity reset
 - **51 automated tests PASS**
 
-M04 remains **IN PROGRESS**. Slice 3 is HOLD BOOST plus physical top-completion / return / release lifecycle.
+M04 slice 3 / closure baseline:
+- prototype HOLD BOOST input: hold `Shift`
+- base RETAINING torque: 0.003 N·m
+- calibrated BOOST torque: 0.010 N·m
+- BOOST budget: maximum 0.80 s of actual use per play cycle
+- near-slip sphere at 0.4 s after RETAINING: no BOOST ≈ −0.06 mm lift; BOOST ≈ 19.26 mm lift
+- after the 0.80 s BOOST budget expires, force returns to base retaining torque and the same prize physically slips/falls
+- PICKUP → RETAINING prize speed remains continuous: ≈ 0.1982 → 0.1944 m/s across the transition
+- lifecycle regression: reel-top → RETURNING at tick 63
+- off-home carriage reaches release/home at tick 149 with ≈ 1.83 mm position error
+- fingers physically open from −0.42 rad to +0.35 rad in 58 ticks ≈ 0.483 s
+- READY is reached only after release completes at tick 206
+- no prize parent/weld/joint, hidden hold attachment, teleport, or velocity reset
+- **54 automated tests PASS**
+
+M04 is **CLOSED**. The next phase is **M05 — Prize Physics Library v1**. Full carried-prize return to a modeled chute, chute-edge interaction, and chute sensing remain later cabinet/prize acceptance work.
 
 ## Status
 
