@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M02 IN PROGRESS — Gantry & Suspended Claw**
+**M02 CLOSED — Gantry & Suspended Claw**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -36,7 +36,7 @@ Final M01 verification baseline:
 - COM/origin debug is available with `M`
 - no prize parenting, hidden weld, scripted success/failure, or normal-play prize teleport was introduced
 
-M02 now includes two verified slices. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, and PT-008 horizontal-momentum preservation during descent. The closed M01 three-finger geometry and revolute joints remain unchanged.
+M02 is complete. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, PT-008 horizontal-momentum preservation, and a rigid OPEN/transport finger profile. Slice 3 adds lift-completion detection and a braking-aware physical carriage return/home path. The closed M01 three-finger grasp/contact behavior remains unchanged.
 
 ### First milestone
 
@@ -113,26 +113,30 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M02 — Gantry & Suspended Claw** from the verified reel/drop baseline.
+Proceed to **M03 — Swing Techniques** from the closed M02 mechanical-motion baseline.
 
-Current M02 lab:
+Closed M02 lab controls:
 - default scene: `?scene=gantry-lab`
 - Arrow keys: manual X/Z gantry motion
-- `Space`: toggle physical DROP/LIFT
-- `P`: deterministic PT-006 accelerate → brake → observe small swing
-- `T`: deterministic PT-008 swing → DROP → verify horizontal momentum
-- reel payout: 0–0.28 m
-- reel max speed: 0.28 m/s
-- reel acceleration / braking: 0.9 / 1.4 m/s²
-- claw hub remains dynamic; DROP/LIFT moves a kinematic reel anchor, not the claw transform
-- M02 OPEN/transport finger hold uses a stiffer profile than M01 grasp/contact motors, so the three open fingers stay mechanically rigid during movement and hard braking
+- `Space`: physical DROP/LIFT; reaching the top after LIFT starts automatic home return
+- `H`: start physical home return when reel is already at the top
+- `P`: deterministic PT-006 hard-brake swing regression
+- `T`: deterministic PT-008 momentum-during-descent regression
 - `D`: collider debug
 - `M`: COM/origin debug
-- 41 automated tests PASS after the transport-rigidity refinement
 
-PT-008 baseline descends about 0.280 m, preserves measurable horizontal motion during DROP, reaches about 10.2 mm maximum horizontal offset during descent, and physically lifts back about 0.280 m to the top. The M02 open-finger transport gate limits relative finger flex during gantry acceleration/hard braking to about 0.035 rad (~2°) maximum.
+M02 closure baseline:
+- hard-brake peak swing ≈ 0.036 rad (~2.1°)
+- OPEN transport finger flex ≤ 0.035 rad (~2°)
+- DROP descent ≈ 0.280 m with horizontal momentum preserved
+- full physical LIFT back to payout 0
+- lift-completion → home return uses the same X/Z speed/acceleration/braking limits
+- closure regression starts ~0.317 m off home and returns to ~1.76 mm home error in 125 fixed ticks
+- residual hub swing remains physical during return; max relative offset ≈ 10.7 mm
+- no hub/carriage teleport or transform parenting
+- **43 automated tests PASS**
 
-Next M02 slice should complete the **lift → carriage return/home path** and perform the final M02 closure audit. Do not start early-close/automatic-close mechanics until M02 is closed.
+M03 should now add deliberate swing-building through timed direction reversals (PT-007) without weakening the realistic small-swing default calibration.
 
 ## Status
 

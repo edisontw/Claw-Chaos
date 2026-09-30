@@ -76,3 +76,84 @@ export function advanceGantryMotion(
     z: advanceGantryAxis(state.z, inputZ, config.z, stepSeconds),
   };
 }
+
+
+export interface GantryTargetTolerance {
+  position: number;
+  velocity: number;
+}
+
+export function advanceGantryAxisTowardPosition(
+  state: GantryAxisState,
+  targetPosition: number,
+  config: GantryAxisConfig,
+  stepSeconds: number,
+): GantryAxisState {
+  const target = Math.max(
+    config.minPosition,
+    Math.min(config.maxPosition, targetPosition),
+  );
+  const remaining = target - state.position;
+
+  if (Math.abs(remaining) <= Number.EPSILON && Math.abs(state.velocity) <= 1e-9) {
+    return state;
+  }
+
+  const direction = Math.sign(remaining);
+  const stoppingLimitedSpeed = Math.sqrt(
+    Math.max(0, 2 * config.braking * Math.abs(remaining)),
+  );
+  const desiredSpeed = Math.min(config.maxSpeed, stoppingLimitedSpeed);
+  const desiredVelocity = direction * desiredSpeed;
+
+  const reducingSpeed =
+    Math.abs(desiredVelocity) < Math.abs(state.velocity) ||
+    (desiredVelocity !== 0 &&
+      state.velocity !== 0 &&
+      Math.sign(desiredVelocity) !== Math.sign(state.velocity));
+  const response = reducingSpeed ? config.braking : config.acceleration;
+  const velocity = moveToward(
+    state.velocity,
+    desiredVelocity,
+    Math.max(0, response * stepSeconds),
+  );
+
+  return {
+    position: state.position + velocity * stepSeconds,
+    velocity,
+  };
+}
+
+export function isGantryAxisAtTarget(
+  state: GantryAxisState,
+  targetPosition: number,
+  tolerance: GantryTargetTolerance,
+): boolean {
+  return (
+    Math.abs(state.position - targetPosition) <= tolerance.position &&
+    Math.abs(state.velocity) <= tolerance.velocity
+  );
+}
+
+export function advanceGantryMotionTowardPosition(
+  state: GantryMotionState,
+  targetX: number,
+  targetZ: number,
+  config: GantryMotionConfig,
+  stepSeconds: number,
+): GantryMotionState {
+  return {
+    x: advanceGantryAxisTowardPosition(
+      state.x,
+      targetX,
+      config.x,
+      stepSeconds,
+    ),
+    z: advanceGantryAxisTowardPosition(
+      state.z,
+      targetZ,
+      config.z,
+      stepSeconds,
+    ),
+  };
+}

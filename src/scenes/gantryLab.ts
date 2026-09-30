@@ -13,6 +13,8 @@ import {
 } from "./clawLab";
 import {
   advanceGantryMotion,
+  advanceGantryMotionTowardPosition,
+  isGantryAxisAtTarget,
   type GantryMotionConfig,
   type GantryMotionState,
 } from "./gantryMotion";
@@ -52,6 +54,10 @@ export const M02_GANTRY_CONFIG = {
   reelMaxSpeed: 0.28,
   reelAcceleration: 0.9,
   reelBraking: 1.4,
+  homeX: 0,
+  homeZ: 0,
+  homePositionTolerance: 0.003,
+  homeVelocityTolerance: 0.02,
   pt006AccelerationSeconds: 0.80,
   pt006BrakeObservationSeconds: 1.60,
   pt006MinLagMeters: 0.003,
@@ -79,6 +85,12 @@ export type Pt008Phase =
   | "ACCELERATING"
   | "BRAKING"
   | "DROPPING"
+  | "COMPLETE";
+
+export type HomeReturnPhase =
+  | "READY"
+  | "LIFTING"
+  | "RETURNING_HOME"
   | "COMPLETE";
 
 export interface Pt006Metrics {
@@ -377,6 +389,7 @@ export function createGantryLabScene(
   };
   let reel: ReelState = { payout: 0, velocity: 0 };
   let manualReelCommand = 0;
+  let homeReturnPhase: HomeReturnPhase = "READY";
   let fingerCommand = 0;
 
   let pt006Phase: Pt006Phase = "READY";
@@ -429,11 +442,30 @@ export function createGantryLabScene(
     );
   };
 
+  const startHomeReturn = (): void => {
+    const atTop =
+      reel.payout <= gantry.reelMinPayout + 1e-5 &&
+      Math.abs(reel.velocity) < 1e-4;
+    if (
+      !atTop ||
+      pt006Phase === "ACCELERATING" ||
+      pt006Phase === "BRAKING" ||
+      pt008Phase === "ACCELERATING" ||
+      pt008Phase === "BRAKING" ||
+      pt008Phase === "DROPPING"
+    ) {
+      return;
+    }
+    manualReelCommand = 0;
+    homeReturnPhase = "RETURNING_HOME";
+  };
+
   const startPt006 = (): void => {
     if (
       pt006Phase !== "READY" ||
       pt008Phase !== "READY" ||
-      reel.payout > 0.001
+      reel.payout > 0.001 ||
+      homeReturnPhase === "RETURNING_HOME"
     ) {
       return;
     }
@@ -450,7 +482,8 @@ export function createGantryLabScene(
     if (
       pt008Phase !== "READY" ||
       pt006Phase !== "READY" ||
-      reel.payout > 0.001
+      reel.payout > 0.001 ||
+      homeReturnPhase === "RETURNING_HOME"
     ) {
       return;
     }
@@ -479,13 +512,18 @@ export function createGantryLabScene(
       startPt008();
       return;
     }
+    if (event.code === "KeyH") {
+      startHomeReturn();
+      return;
+    }
     if (
       event.code === "Space" &&
       pt006Phase !== "ACCELERATING" &&
       pt006Phase !== "BRAKING" &&
       pt008Phase !== "ACCELERATING" &&
       pt008Phase !== "BRAKING" &&
-      pt008Phase !== "DROPPING"
+      pt008Phase !== "DROPPING" &&
+      homeReturnPhase !== "RETURNING_HOME"
     ) {
       event.preventDefault();
       if (manualReelCommand === 0) {
@@ -494,6 +532,8 @@ export function createGantryLabScene(
       } else {
         manualReelCommand *= -1;
       }
+      homeReturnPhase =
+        manualReelCommand < 0 ? "LIFTING" : "READY";
       return;
     }
 
@@ -634,20 +674,57 @@ export function createGantryLabScene(
               : "FAIL";
           }
         }
-      } else {
+      } else if (homeReturnPhase !== "RETURNING_HOME") {
         const input = manualInput();
         inputX = input.x;
         inputZ = input.z;
       }
 
-      motion = advanceGantryMotion(
-        motion,
-        inputX,
-        inputZ,
-        motionConfig,
-        stepSeconds,
-      );
+      if (homeReturnPhase === "RETURNING_HOME") {
+        motion = advanceGantryMotionTowardPosition(
+          motion,
+          gantry.homeX,
+          gantry.homeZ,
+          motionConfig,
+          stepSeconds,
+        );
+      } else {
+        motion = advanceGantryMotion(
+          motion,
+          inputX,
+          inputZ,
+          motionConfig,
+          stepSeconds,
+        );
+      }
+
+      const wasLifting = reelCommand < 0;
       reel = advanceReel(reel, reelCommand, reelConfig, stepSeconds);
+
+      const reelAtTop =
+        reel.payout <= gantry.reelMinPayout + 1e-5 &&
+        Math.abs(reel.velocity) < 1e-4;
+      if (
+        wasLifting &&
+        reelAtTop &&
+        homeReturnPhase === "LIFTING"
+      ) {
+        manualReelCommand = 0;
+        homeReturnPhase = "RETURNING_HOME";
+      }
+
+      if (homeReturnPhase === "RETURNING_HOME") {
+        const tolerance = {
+          position: gantry.homePositionTolerance,
+          velocity: gantry.homeVelocityTolerance,
+        };
+        if (
+          isGantryAxisAtTarget(motion.x, gantry.homeX, tolerance) &&
+          isGantryAxisAtTarget(motion.z, gantry.homeZ, tolerance)
+        ) {
+          homeReturnPhase = "COMPLETE";
+        }
+      }
 
       carriageBody.setNextKinematicTranslation({
         x: motion.x.position,
@@ -755,6 +832,14 @@ export function createGantryLabScene(
           pt008MaxHorizontalOffset.toFixed(3) +
           " m",
         "PT-008 v retain  " + pt008Retention.toFixed(2),
+        "Home return      " +
+          homeReturnPhase +
+          " err " +
+          Math.hypot(
+            motion.x.position - gantry.homeX,
+            motion.z.position - gantry.homeZ,
+          ).toFixed(3) +
+          " m",
         "Spring k / c     " +
           gantry.suspensionSpringStiffness.toFixed(1) +
           " / " +
@@ -765,8 +850,8 @@ export function createGantryLabScene(
           M02_FINGER_TRANSPORT_CONFIG.damping.toFixed(0) +
           " / " +
           M02_FINGER_TRANSPORT_CONFIG.maxTorque.toFixed(1),
-        "Controls         Arrows gantry | Space DROP/LIFT | P PT-006 | T PT-008",
-        "Debug            M COM/origin | D colliders",
+        "Controls         Arrows gantry | Space DROP/LIFT | H HOME",
+        "Tests            P PT-006 | T PT-008 | M COM | D colliders",
       ];
     },
   };

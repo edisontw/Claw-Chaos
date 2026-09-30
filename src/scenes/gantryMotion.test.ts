@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { advanceGantryAxis, advanceGantryMotion } from "./gantryMotion";
+import {
+  advanceGantryAxis,
+  advanceGantryAxisTowardPosition,
+  advanceGantryMotion,
+  isGantryAxisAtTarget,
+} from "./gantryMotion";
 
 const config = {
   minPosition: -0.3,
@@ -57,6 +62,32 @@ describe("M02 gantry axis motion", () => {
     expect(state.z.velocity).toBeLessThan(0);
     expect(state.x.position).toBeGreaterThan(0);
     expect(state.z.position).toBeLessThan(0);
+  });
+
+  it("returns toward a target with braking-aware speed and no teleport", () => {
+    let state = { position: 0.24, velocity: 0.18 };
+    const dt = 1 / 120;
+    let maxStep = 0;
+
+    for (let tick = 0; tick < 360; tick += 1) {
+      const previous = state;
+      state = advanceGantryAxisTowardPosition(state, 0, config, dt);
+      maxStep = Math.max(maxStep, Math.abs(state.position - previous.position));
+
+      if (
+        isGantryAxisAtTarget(
+          state,
+          0,
+          { position: 0.002, velocity: 0.02 },
+        )
+      ) {
+        break;
+      }
+    }
+
+    expect(maxStep).toBeLessThanOrEqual(config.maxSpeed * dt + 1e-9);
+    expect(Math.abs(state.position)).toBeLessThanOrEqual(0.002);
+    expect(Math.abs(state.velocity)).toBeLessThanOrEqual(0.02);
   });
 
   it("stops cleanly at rail limits", () => {

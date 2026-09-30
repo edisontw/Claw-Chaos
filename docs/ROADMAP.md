@@ -405,7 +405,7 @@ Final verification:
 
 # M02 — Gantry & Suspended Claw
 
-**Phase status: IN PROGRESS — slices 1–2 verified 2026-09-30**
+**Phase status: CLOSED — verified 2026-09-30**
 
 ## Goal
 
@@ -418,7 +418,7 @@ Create the mechanical motion of a real cabinet.
 - suspension constraint — PASS
 - configurable suspension length/damping — PASS for current reel-anchor model
 - vertical reel control — PASS
-- lift/return mechanics — vertical lift PASS; carriage return/home pending
+- lift/return mechanics — PASS
 
 ## Exit criteria
 
@@ -500,14 +500,52 @@ PT-006 and PT-008 regressions remain unchanged.
 
 Verification: **41 tests PASS**, lint/build/base-path/headless smoke PASS.
 
-Not yet complete:
-- automatic post-lift state transition
-- physical carriage return/home path
-- final M02 closure audit
+### Slice 3 implementation record — 2026-09-30
 
-PT-007 swing amplification belongs to M03 and is intentionally not required to close M02.
+Implemented:
+- reel-top completion gate before return
+- `RETURNING_HOME` state
+- braking-aware fixed-step X/Z target return controller
+- provisional home X=0 / Z=0
+- 3 mm position and 0.02 m/s velocity completion tolerances
+- automatic home return after manual LIFT reaches the top
+- `H` manual home-return trigger when reel is already at top
+- conflicting DROP/test controls locked during automatic return
+- residual dynamic hub/suspension motion preserved throughout return
 
-**Next slice:** lift completion + physical return/home path + M02 final closure audit.
+Closure regression:
+- start distance from home ≈ 0.3167 m
+- physical return distance ≈ 0.3677 m
+- return-start residual hub offset ≈ 0.00333 m
+- max hub/carriage relative offset during return ≈ 0.01074 m
+- max diagonal carriage step ≈ 0.00530 m at 120 Hz
+- return duration = 125 ticks (~1.04 s)
+- final home error ≈ 0.00176 m
+- final X/Z velocity ≈ 0.0065 / 0.0139 m/s
+- reel payout remains 0
+- suspension distance remains ≈ 0.3100 m
+- finite/bounded PASS
+
+### M02 closure audit
+
+- X/Z carriage and rail limits — PASS
+- acceleration/braking limits — PASS
+- suspended dynamic claw without rigid lock — PASS
+- small hard-stop swing and damping return — PASS
+- OPEN finger transport rigidity — PASS
+- vertical reel DROP/LIFT — PASS
+- horizontal momentum during descent — PASS
+- reel limit stability — PASS
+- lift-completion state — PASS
+- physical carriage return/home — PASS
+- residual swing preserved during return — PASS
+- 120 Hz numerical stability — PASS
+
+Final verification: **43 tests PASS**, lint/build/base-path/headless smoke PASS.
+
+PT-007 swing amplification belongs to M03 and is intentionally not required to close M02. Full carried-prize return/release/chute lifecycle is also deferred to the later gameplay/cabinet phases that introduce those systems.
+
+**Next phase:** M03 — Swing Techniques.
 
 ---
 
