@@ -44,6 +44,7 @@ interface PickupRetentionMetrics {
 async function simulateM04PickupRetention(
   pickupTorque: number,
   pickupLiftDistanceMeters: number,
+  ballHeightOffsetMeters = 0,
 ): Promise<PickupRetentionMetrics> {
   const claw = CLAW_LAB_CONFIG;
   const gantry = M02_GANTRY_CONFIG;
@@ -62,7 +63,7 @@ async function simulateM04PickupRetention(
   const m01HubToBallCenter =
     claw.hubCenterY - claw.pt001BallCenterY;
   const ballCenterY =
-    bottomHubY - m01HubToBallCenter;
+    bottomHubY - m01HubToBallCenter + ballHeightOffsetMeters;
   const pedestalTopY =
     ballCenterY - claw.pt001BallRadius;
   const pedestalHalfHeight = pedestalTopY * 0.5;
@@ -390,54 +391,34 @@ async function simulateM04PickupRetention(
 }
 
 describe("M04 physical pickup-to-retaining calibration", () => {
-  it("compares pickup torque and pickup-distance candidates under the suspended claw", async () => {
-    const cases = [
-      {
-        label: "baseline",
-        pickupTorque: CLAW_LAB_CONFIG.maxMotorTorque,
-        pickupLiftDistanceMeters: 0.06,
-      },
-      {
-        label: "distance-0.10",
-        pickupTorque: CLAW_LAB_CONFIG.maxMotorTorque,
-        pickupLiftDistanceMeters: 0.10,
-      },
-      {
-        label: "distance-0.14",
-        pickupTorque: CLAW_LAB_CONFIG.maxMotorTorque,
-        pickupLiftDistanceMeters: 0.14,
-      },
-      {
-        label: "torque-3.5",
-        pickupTorque: 3.5,
-        pickupLiftDistanceMeters: 0.06,
-      },
-      {
-        label: "torque-5.0",
-        pickupTorque: 5.0,
-        pickupLiftDistanceMeters: 0.06,
-      },
-      {
-        label: "torque-7.5",
-        pickupTorque: 7.5,
-        pickupLiftDistanceMeters: 0.06,
-      },
+  it("sweeps prize height while keeping M01 contact and M04 phase forces unchanged", async () => {
+    const offsets = [
+      -0.020,
+      -0.015,
+      -0.010,
+      -0.005,
+      0,
+      0.005,
+      0.010,
+      0.015,
+      0.020,
     ];
 
     const results = [];
-    for (const candidate of cases) {
+    for (const ballHeightOffsetMeters of offsets) {
       const metrics = await simulateM04PickupRetention(
-        candidate.pickupTorque,
-        candidate.pickupLiftDistanceMeters,
+        CLAW_LAB_CONFIG.maxMotorTorque,
+        M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+        ballHeightOffsetMeters,
       );
       results.push({
-        ...candidate,
+        ballHeightOffsetMeters,
         ...metrics,
       });
     }
 
     console.log(
-      "M04 pickup-retaining calibration sweep",
+      "M04 pickup-retaining prize-height sweep",
       JSON.stringify(results),
     );
 
