@@ -3,6 +3,9 @@ export const M04_PLAY_CONFIG = {
   closeCompletionToleranceRadians: 0.005,
   closeSettleSeconds: 0.90,
   pickupLiftDistanceMeters: 0.06,
+  holdBoostDurationSeconds: 0.80,
+  holdBoostTorque: 0.25,
+  releaseCompletionToleranceRadians: 0.005,
 } as const;
 
 export type M04PlayPhase =
@@ -11,7 +14,9 @@ export type M04PlayPhase =
   | "CLOSING"
   | "CLOSED_AT_DEPTH"
   | "PICKUP"
-  | "RETAINING";
+  | "RETAINING"
+  | "RETURNING"
+  | "RELEASING";
 
 export type M04CloseReason = "EARLY" | "AUTO" | null;
 
@@ -28,19 +33,26 @@ export interface M04PlayState {
   closeStartPayoutMeters: number | null;
   pickupStartPayoutMeters: number | null;
   retainingStartPayoutMeters: number | null;
+  holdBoostUsedSeconds: number;
 }
 
 export interface M04PlayObservation {
   reelPayoutMeters: number;
   fingerCommandRadians: number;
+  reelAtTop?: boolean;
+  homeReached?: boolean;
+  holdBoostRequested?: boolean;
 }
 
 export interface M04PlayConfig {
   autoClosePayoutMeters: number;
   closedAngleRadians: number;
+  openAngleRadians: number;
   closeCompletionToleranceRadians: number;
+  releaseCompletionToleranceRadians: number;
   closeSettleSeconds: number;
   pickupLiftDistanceMeters: number;
+  holdBoostDurationSeconds: number;
 }
 
 export function createM04PlayState(): M04PlayState {
@@ -51,6 +63,7 @@ export function createM04PlayState(): M04PlayState {
     closeStartPayoutMeters: null,
     pickupStartPayoutMeters: null,
     retainingStartPayoutMeters: null,
+    holdBoostUsedSeconds: 0,
   };
 }
 
@@ -76,6 +89,18 @@ export function applyM04Action(
   }
 
   return state;
+}
+
+export function m04HoldBoostActive(
+  state: M04PlayState,
+  requested: boolean,
+  config: Pick<M04PlayConfig, "holdBoostDurationSeconds">,
+): boolean {
+  return (
+    requested &&
+    (state.phase === "RETAINING" || state.phase === "RETURNING") &&
+    state.holdBoostUsedSeconds < config.holdBoostDurationSeconds
+  );
 }
 
 export function advanceM04PlayState(
@@ -137,13 +162,50 @@ export function advanceM04PlayState(
       phase: "RETAINING",
       phaseElapsedSeconds: 0,
       retainingStartPayoutMeters: observation.reelPayoutMeters,
+      holdBoostUsedSeconds: 0,
     };
   }
 
+  if (state.phase === "RETAINING" && observation.reelAtTop) {
+    return {
+      ...state,
+      phase: "RETURNING",
+      phaseElapsedSeconds: 0,
+    };
+  }
+
+  if (state.phase === "RETURNING" && observation.homeReached) {
+    return {
+      ...state,
+      phase: "RELEASING",
+      phaseElapsedSeconds: 0,
+    };
+  }
+
+  if (
+    state.phase === "RELEASING" &&
+    observation.fingerCommandRadians >=
+      config.openAngleRadians - config.releaseCompletionToleranceRadians
+  ) {
+    return createM04PlayState();
+  }
+
   if (stepSeconds > 0 && state.phase !== "READY") {
+    const boostActive = m04HoldBoostActive(
+      state,
+      observation.holdBoostRequested ?? false,
+      config,
+    );
+
     return {
       ...state,
       phaseElapsedSeconds: state.phaseElapsedSeconds + stepSeconds,
+      holdBoostUsedSeconds: boostActive
+        ? Math.min(
+            config.holdBoostDurationSeconds,
+            state.holdBoostUsedSeconds + stepSeconds,
+          )
+        : state.holdBoostUsedSeconds,
     };
   }
 
@@ -165,7 +227,8 @@ export function m04FingerShouldClose(state: M04PlayState): boolean {
     state.phase === "CLOSING" ||
     state.phase === "CLOSED_AT_DEPTH" ||
     state.phase === "PICKUP" ||
-    state.phase === "RETAINING"
+    state.phase === "RETAINING" ||
+    state.phase === "RETURNING"
   );
 }
 
@@ -173,7 +236,7 @@ export function m04ForcePhase(state: M04PlayState): M04ForcePhase {
   if (state.phase === "PICKUP") {
     return "PICKUP";
   }
-  if (state.phase === "RETAINING") {
+  if (state.phase === "RETAINING" || state.phase === "RETURNING") {
     return "RETAINING";
   }
   if (m04FingerShouldClose(state)) {
