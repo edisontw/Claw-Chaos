@@ -308,6 +308,43 @@ metadata
 
 PrizeFactory must be the only normal path for spawning prize gameplay entities.
 
+### M05 slice-1 implementation note — 2026-10-01
+
+The first runtime implementation now lives under `src/prizes/`.
+
+Current resolved spawn path:
+
+```text
+PrizeDefinition
++ material profile
++ mass profile
++ COM profile
++ deterministic variant seed
+        ↓
+resolvePrizeSpec
+        ↓
+explicit mass / local COM / principal inertia
++ primitive/compound collider template
++ render object
+        ↓
+PrizeFactory
+```
+
+Important implementation details:
+- collision geometry is created with zero density for the new PrizeFactory path,
+- total mass, local center of mass and principal angular inertia are authored explicitly on the Rapier rigid body,
+- this prevents collider topology from accidentally changing intended prize mass/COM,
+- reusable mass/COM profile overrides therefore change real physics mass properties,
+- material profiles remain separate from visual finish/color selection,
+- the current Rapier runtime path exposes one contact-friction coefficient, so slice 1 applies `dynamicFriction` while retaining `staticFriction` in data for later calibration/engine policy,
+- ellipsoid collision currently uses a documented three-sphere approximation,
+- visual variants are deterministic from a seed.
+
+Slice-1 implemented shape families:
+`cube`, `box`, `tall_box`, `flat_box`, `sphere`, `ellipsoid`, `cylinder`, and `capsule`.
+
+Pillow and articulated/compound teddy/animal templates remain later M05 slices.
+
 ## 11. LayoutDefinition
 
 ```ts
