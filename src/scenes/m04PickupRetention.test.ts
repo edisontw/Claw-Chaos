@@ -34,6 +34,9 @@ const M04_TEST_BALL_HEIGHT_OFFSET_METERS = 0.015;
 interface PickupRetentionMetrics {
   peakLiftMeters: number;
   liftAtRetainingStartMeters: number;
+  liftAfterRetaining0p4sMeters: number;
+  liftAfterRetaining0p8sMeters: number;
+  liftAfterRetaining1p2sMeters: number;
   finalLiftMeters: number;
   slipLossMeters: number;
   pickupStartPayoutMeters: number;
@@ -42,6 +45,7 @@ interface PickupRetentionMetrics {
   maxSuspensionErrorMeters: number;
   retainingReached: boolean;
   topReached: boolean;
+  boostUsedSeconds: number;
   finiteAndBounded: boolean;
 }
 
@@ -357,6 +361,10 @@ async function simulateM04PickupRetention(
   let retainingReached = false;
   let topReached = false;
   let retainingHoldTicks = 0;
+  let retainingTicks = 0;
+  let liftAfterRetaining0p4sMeters = Number.NaN;
+  let liftAfterRetaining0p8sMeters = Number.NaN;
+  let liftAfterRetaining1p2sMeters = Number.NaN;
 
   for (let tick = 0; tick < PHYSICS_HZ * 8; tick += 1) {
     const previousPhase = play.phase;
@@ -372,6 +380,19 @@ async function simulateM04PickupRetention(
     ) {
       retainingReached = true;
       liftAtRetainingStartMeters = lift;
+    }
+
+    if (play.phase === "RETAINING" && retainingReached) {
+      retainingTicks += 1;
+      if (retainingTicks === Math.round(0.4 * PHYSICS_HZ)) {
+        liftAfterRetaining0p4sMeters = lift;
+      }
+      if (retainingTicks === Math.round(0.8 * PHYSICS_HZ)) {
+        liftAfterRetaining0p8sMeters = lift;
+      }
+      if (retainingTicks === Math.round(1.2 * PHYSICS_HZ)) {
+        liftAfterRetaining1p2sMeters = lift;
+      }
     }
 
     if (
@@ -395,6 +416,9 @@ async function simulateM04PickupRetention(
   return {
     peakLiftMeters,
     liftAtRetainingStartMeters,
+    liftAfterRetaining0p4sMeters,
+    liftAfterRetaining0p8sMeters,
+    liftAfterRetaining1p2sMeters,
     finalLiftMeters,
     slipLossMeters,
     pickupStartPayoutMeters:
@@ -405,6 +429,7 @@ async function simulateM04PickupRetention(
     maxSuspensionErrorMeters,
     retainingReached,
     topReached,
+    boostUsedSeconds: play.holdBoostUsedSeconds,
     finiteAndBounded,
   };
 }
@@ -460,5 +485,36 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(metrics.maxSuspensionErrorMeters).toBeLessThan(
       0.002,
     );
+  });
+
+  it("calibrates a limited HOLD BOOST against the same near-slip sphere", async () => {
+    const candidates = [0.03, 0.10, 0.25, 0.50, 1.00];
+    const baseline = await simulateM04PickupRetention();
+    const boosted = [];
+
+    for (const holdBoostTorque of candidates) {
+      boosted.push({
+        holdBoostTorque,
+        ...(await simulateM04PickupRetention(holdBoostTorque)),
+      });
+    }
+
+    console.log(
+      "M04 hold-boost torque sweep",
+      JSON.stringify({
+        baseline,
+        boosted,
+      }),
+    );
+
+    expect(baseline.finiteAndBounded).toBe(true);
+    expect(boosted.every((result) => result.finiteAndBounded)).toBe(true);
+    expect(
+      boosted.every(
+        (result) =>
+          result.boostUsedSeconds <=
+          M04_PLAY_CONFIG.holdBoostDurationSeconds + 1e-9,
+      ),
+    ).toBe(true);
   });
 });
