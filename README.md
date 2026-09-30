@@ -126,7 +126,7 @@ Current M02 slice:
 - `M`: COM/origin debug
 - 33 automated tests PASS after this slice
 
-PT-006 is a behavior proof, not final real-machine calibration. Current provisional hard-brake run produces about 0.067 m lag, 0.135 m forward swing, and 0.45 rad peak swing.
+PT-006 is a behavior proof, not final real-machine calibration. Current provisional hard-brake run produces about 0.0035 m lag, 0.011 m forward swing, and 0.036 rad (~2.1°) peak swing.
 
 Next M02 slice should add **variable reel length / vertical descent-lift mechanics** while preserving horizontal momentum. That enables PT-008 and prepares early-close/automatic-close work without starting cabinet/chute mechanics.
 
