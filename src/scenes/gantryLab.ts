@@ -16,6 +16,7 @@ import {
   type GantryMotionConfig,
   type GantryMotionState,
 } from "./gantryMotion";
+import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 import type { SimulationScene } from "./types";
 
 export const M02_GANTRY_CONFIG = {
@@ -31,14 +32,21 @@ export const M02_GANTRY_CONFIG = {
   acceleration: 1.35,
   braking: 3.5,
   suspensionLength: 0.31,
-  suspensionAngularDamping: 0.55,
-  suspensionLinearDamping: 0.04,
+  suspensionAngularDamping: 3.0,
+  suspensionLinearDamping: 0.12,
+  suspensionSpringStiffness: 55,
+  suspensionSpringDamping: 8.5,
+  suspensionSpringMaxForce: 4.0,
   hubMassKg: 0.32,
   pt006AccelerationSeconds: 0.80,
   pt006BrakeObservationSeconds: 1.60,
-  pt006MinLagMeters: 0.015,
-  pt006MinForwardSwingMeters: 0.015,
-  pt006MinSwingAngleRadians: 0.04,
+  pt006MinLagMeters: 0.003,
+  pt006MaxLagMeters: 0.025,
+  pt006MinForwardSwingMeters: 0.004,
+  pt006MaxForwardSwingMeters: 0.035,
+  pt006MinSwingAngleRadians: 0.015,
+  pt006MaxSwingAngleRadians: 0.12,
+  pt006MaxResidualOffsetMeters: 0.008,
 } as const;
 
 export type Pt006Phase =
@@ -51,14 +59,22 @@ export interface Pt006Metrics {
   lagMeters: number;
   forwardSwingMeters: number;
   peakSwingAngleRadians: number;
+  residualOffsetMeters: number;
 }
 
 export function evaluatePt006Swing(metrics: Pt006Metrics): boolean {
   return (
     metrics.lagMeters >= M02_GANTRY_CONFIG.pt006MinLagMeters &&
+    metrics.lagMeters <= M02_GANTRY_CONFIG.pt006MaxLagMeters &&
     metrics.forwardSwingMeters >= M02_GANTRY_CONFIG.pt006MinForwardSwingMeters &&
+    metrics.forwardSwingMeters <=
+      M02_GANTRY_CONFIG.pt006MaxForwardSwingMeters &&
     metrics.peakSwingAngleRadians >=
-      M02_GANTRY_CONFIG.pt006MinSwingAngleRadians
+      M02_GANTRY_CONFIG.pt006MinSwingAngleRadians &&
+    metrics.peakSwingAngleRadians <=
+      M02_GANTRY_CONFIG.pt006MaxSwingAngleRadians &&
+    metrics.residualOffsetMeters <=
+      M02_GANTRY_CONFIG.pt006MaxResidualOffsetMeters
   );
 }
 
@@ -392,10 +408,15 @@ export function createGantryLabScene(
         phaseSeconds += stepSeconds;
         if (phaseSeconds >= gantry.pt006BrakeObservationSeconds) {
           phase = "COMPLETE";
+          const currentHub = hubBody.translation();
           result = evaluatePt006Swing({
             lagMeters: Math.abs(Math.min(0, minimumRelativeX)),
             forwardSwingMeters: Math.max(0, maximumRelativeX),
             peakSwingAngleRadians: peakSwingAngle,
+            residualOffsetMeters: Math.hypot(
+              currentHub.x - motion.x.position,
+              currentHub.z - motion.z.position,
+            ),
           })
             ? "PASS"
             : "FAIL";
@@ -419,6 +440,31 @@ export function createGantryLabScene(
         y: gantry.carriageY,
         z: motion.z.position,
       });
+
+      const hubVelocity = hubBody.linvel();
+      const currentHub = hubBody.translation();
+      const stabilizerImpulse = computeSuspensionStabilizerImpulse(
+        {
+          anchorX: motion.x.position,
+          anchorZ: motion.z.position,
+          anchorVelocityX: motion.x.velocity,
+          anchorVelocityZ: motion.z.velocity,
+          hubX: currentHub.x,
+          hubZ: currentHub.z,
+          hubVelocityX: hubVelocity.x,
+          hubVelocityZ: hubVelocity.z,
+        },
+        {
+          stiffness: gantry.suspensionSpringStiffness,
+          damping: gantry.suspensionSpringDamping,
+          maxForce: gantry.suspensionSpringMaxForce,
+        },
+        stepSeconds,
+      );
+      hubBody.applyImpulse(
+        { x: stabilizerImpulse.x, y: 0, z: stabilizerImpulse.z },
+        true,
+      );
 
       fingerCommand = advanceMotorCommand(
         fingerCommand,
@@ -466,9 +512,9 @@ export function createGantryLabScene(
           relativeZ.toFixed(3) +
           " m",
         "Swing angle      " + swingAngle.toFixed(3) + " rad",
-        "Suspension       fixed " +
+        "Suspension       stiff damped " +
           gantry.suspensionLength.toFixed(3) +
-          " m spherical joint",
+          " m",
         "PT-006 phase     " + phase,
         "PT-006 result    " + result,
         "Lag / forward    " +
@@ -477,6 +523,10 @@ export function createGantryLabScene(
           Math.max(0, maximumRelativeX).toFixed(3) +
           " m",
         "Peak swing       " + peakSwingAngle.toFixed(3) + " rad",
+        "Spring k / c      " +
+          gantry.suspensionSpringStiffness.toFixed(1) +
+          " / " +
+          gantry.suspensionSpringDamping.toFixed(1),
         "Controls         Arrow keys gantry | P PT-006 | M COM | D collider",
         "Reel             fixed-length in this slice; variable reel is next",
       ];
