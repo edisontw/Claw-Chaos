@@ -282,6 +282,25 @@ Expected:
 - descending path has horizontal displacement,
 - claw does not instantly align under carriage.
 
+Implementation status — 2026-09-30:
+- **Automated PASS**
+- a collider-free kinematic reel anchor moves vertically while the claw hub remains dynamic
+- reel payout range: 0.00–0.28 m
+- reel max speed: 0.28 m/s
+- acceleration / braking: 0.9 / 1.4 m/s²
+- the existing 0.31 m spherical suspension remains physically authoritative below the reel anchor
+- measured descent: about 0.2802 m
+- maximum horizontal offset during descent: about 0.0102 m
+- horizontal speed immediately before DROP: about 0.00581 m/s
+- first physics tick after DROP begins: about 0.01195 m/s
+- DROP therefore does not zero or rigidly align horizontal motion
+- the same regression then reverses the reel and physically lifts the hub about 0.2800 m back to the top
+- final payout returns to 0.000 m
+- final spherical suspension distance remains about 0.3100 m
+- finite/bounded transform checks PASS at 120 Hz
+- no claw transform teleport or parent-lock is used
+- manual visual test: open `?scene=gantry-lab`, use Arrow keys to create motion, then press `Space`; press `T` for the deterministic PT-008 sequence
+
 ## 11. PT-009 Early close
 
 Input:
