@@ -38,7 +38,7 @@ Final M01 verification baseline:
 
 M02 is complete. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, PT-008 horizontal-momentum preservation, and a rigid OPEN/transport finger profile. Slice 3 adds lift-completion detection and a braking-aware physical carriage return/home path. The closed M01 three-finger grasp/contact behavior remains unchanged.
 
-M03 slice 1 is now verified: PT-007 proves that repeated X-axis reversals near the physical resonance cadence can deliberately grow swing, while off-cadence reversals decay. No special swing button, direct swing-angle write, hidden force injection, or transform parenting is used.
+M03 slice 1 is verified: PT-007 proves that repeated X-axis reversals near the physical resonance cadence can deliberately grow swing, while off-cadence reversals decay. M03 slice 2 now verifies the same physical model on Z-axis front/back motion and synchronized X/Z diagonal reversals. No special swing button, direct swing-angle write, hidden force injection, or transform parenting is used.
 
 ### First milestone
 
@@ -115,7 +115,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M03 — Swing Techniques** with front/back and diagonal swing reproduction, then validate descent while a deliberately amplified swing is still in progress.
+Continue **M03 — Swing Techniques** with the next acceptance slice: validate descent while a deliberately amplified swing is still in progress.
 
 Closed M02 lab controls:
 - default scene: `?scene=gantry-lab`
@@ -148,9 +148,14 @@ M03 slice 1 current calibration:
 - PT-007 off-cadence 0.30 s: ≈ 11.9 mm → 8.4 mm (decays)
 - current OPEN transport finger flex ≤ 0.0328 rad (~1.9°)
 - PT-008 DROP/LIFT and M02 home-return regressions remain PASS
-- **44 automated tests PASS** after removing calibration-only exploration tests
+- M03 slice 2 front/back at 0.40 s: Z early peak ≈ 20.86 mm → late peak ≈ 24.17 mm (+15.9%)
+- M03 slice 2 front/back off-cadence 0.30 s: ≈ 11.86 mm → 8.41 mm (decays)
+- M03 slice 2 diagonal at 0.40 s: late X/Z peaks ≈ 24.08 / 24.08 mm; late resultant ≈ 34.05 mm
+- diagonal peak angle ≈ 0.110 rad (~6.3°); maximum suspension-length error ≈ 0.003 mm
+- all directional swing runs remain finite/bounded
+- **46 automated tests PASS**
 
-M03 remains IN PROGRESS: front/back swing, diagonal swing, and deliberate off-axis descent after swing-building are still pending dedicated acceptance.
+M03 remains IN PROGRESS: deliberate off-axis descent while an amplified swing is active is the next dedicated acceptance slice.
 
 ## Status
 

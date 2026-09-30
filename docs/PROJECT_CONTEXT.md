@@ -681,9 +681,32 @@ The same calibration revalidates the closed M02 gates:
 
 The committed suite contains **44 automated tests** after removing calibration-only exploration files.
 
+## M03 implementation status — slice 2 verified 2026-10-01
+
+Front/back and diagonal swing now have dedicated physical regressions with no production-physics changes.
+
+Measured directional response:
+- Z-axis 0.40 s half-period: early peak ≈ 20.86 mm → late peak ≈ 24.17 mm (+15.9%)
+- Z-axis off-cadence 0.30 s: early peak ≈ 11.86 mm → late peak ≈ 8.41 mm (decays)
+- synchronized X/Z 0.40 s diagonal: early resultant ≈ 31.16 mm → late resultant ≈ 34.05 mm
+- diagonal late component peaks: X ≈ 24.08 mm, Z ≈ 24.08 mm
+- diagonal peak swing angle ≈ 0.110 rad (~6.3°)
+- maximum measured suspension-length error ≈ 0.000003 m (~0.003 mm)
+- all transforms and motion states remain finite/bounded
+
+Regression status:
+- left/right swing — PASS
+- front/back swing — PASS
+- diagonal swing — PASS
+- timing-sensitive amplification — PASS
+- off-cadence decay — PASS
+- PT-006/PT-007/PT-008/home-return gates — preserved
+- production M01 grasp/contact and M02 mechanics — unchanged
+- automated suite — **46 tests PASS**
+
 ## Current next step
 
-Continue **M03 — Swing Techniques** with dedicated front/back and diagonal swing regressions, then validate deliberate descent while amplified swing is still active.
+Continue **M03 — Swing Techniques** with deliberate descent while an amplified swing is still active. Do not change the directional swing calibration unless a later physical regression demonstrates a real conflict.
 
 ## Design-review additions
 

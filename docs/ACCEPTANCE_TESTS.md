@@ -286,6 +286,33 @@ Implementation status — 2026-09-30:
 - current gate requires the 0.40 s cadence to grow by at least 12%, exceed 0.022 m late amplitude, remain below 0.05 m overall amplitude, and keep peak angle below 0.16 rad
 - no hidden success/failure logic, parenting, or special-case swing force is used
 
+### M03 slice 2 — front/back + diagonal swing
+
+Implementation status — 2026-10-01:
+- **Automated PASS**
+- Z-axis front/back uses only normal Z gantry acceleration/braking through the same 120 Hz suspension physics
+- favorable 0.40 s half-period: early Z peak ≈ 0.02086 m → late Z peak ≈ 0.02417 m (+15.9%)
+- off-cadence 0.30 s: early Z peak ≈ 0.01186 m → late Z peak ≈ 0.00841 m (decays)
+- synchronized X/Z 0.40 s reversals produce late component peaks ≈ 0.02408 / 0.02408 m
+- diagonal late resultant ≈ 0.03405 m; peak angle ≈ 0.1101 rad (~6.3°)
+- maximum suspension-length error across the diagonal run ≈ 0.0000030 m
+- all transforms and X/Z motion states remain finite/bounded
+- no production physics constants changed for this slice
+- no direct swing-angle/velocity injection, hidden swing force, scripted oscillation, or transform parenting
+- existing PT-006/PT-007/PT-008/home-return regressions remain required and unchanged
+- full suite: **46 automated tests PASS**
+
+Acceptance gates:
+- front/back resonant late peak > 0.022 m and > 1.10× early peak
+- front/back 0.30 s off-cadence late peak < early peak
+- front/back overall resultant < 0.05 m and peak angle < 0.16 rad
+- diagonal late X and Z components each > 0.012 m
+- diagonal late resultant > 0.018 m and overall resultant < 0.08 m
+- diagonal component ratio remains within 0.75–1.25
+- peak diagonal angle < 0.22 rad
+- suspension-length error < 0.002 m
+- all checked transforms/states finite and bounded
+
 ## 10. PT-008 Momentum during descent
 
 Setup:
