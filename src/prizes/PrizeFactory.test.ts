@@ -68,8 +68,13 @@ describe("M05 PrizeFactory slice 1", () => {
     });
 
     expect(second.variant).toEqual(first.variant);
+    const lightProfile = PRIZE_MASS_PROFILES["mass/light"];
+    expect(lightProfile).toBeDefined();
+    if (!lightProfile) {
+      throw new Error("mass/light profile missing");
+    }
     expect(first.massKg).toBeCloseTo(
-      definition.nominalMassKg * PRIZE_MASS_PROFILES["mass/light"].multiplier,
+      definition.nominalMassKg * lightProfile.multiplier,
       8,
     );
     expect(first.centerOfMass.x).toBeLessThan(0);
