@@ -405,7 +405,7 @@ Final verification:
 
 # M02 — Gantry & Suspended Claw
 
-**Phase status: IN PROGRESS — slice 1 verified 2026-09-30**
+**Phase status: IN PROGRESS — slices 1–2 verified 2026-09-30**
 
 ## Goal
 
@@ -415,18 +415,18 @@ Create the mechanical motion of a real cabinet.
 
 - X/Z carriage
 - speed/acceleration/braking limits
-- suspension constraint
-- configurable suspension length/damping
-- vertical reel control
-- lift/return mechanics
+- suspension constraint — PASS
+- configurable suspension length/damping — PASS for current reel-anchor model
+- vertical reel control — PASS
+- lift/return mechanics — vertical lift PASS; carriage return/home pending
 
 ## Exit criteria
 
 - claw lags under acceleration — PASS in PT-006 slice
 - hard stop produces a readable swing — PASS in PT-006 slice
 - no rigid-lock effect under the carriage — PASS in PT-006 slice
-- claw returns toward center through damping/gravity — pending dedicated damping regression
-- motion is stable at target fixed timestep — PASS for current fixed-length PT-006 slice
+- claw returns toward center through damping/gravity — PASS through PT-006 residual-offset gate
+- motion is stable at target fixed timestep — PASS through PT-006 and PT-008
 
 ### Slice 1 implementation record — 2026-09-30
 
@@ -452,17 +452,43 @@ PT-006 regression:
 - suspension distance remains ≈ 0.310 m
 - finite/bounded at 120 Hz
 
-Verification: **33 tests PASS**, lint/build/base-path/headless smoke PASS.
+Verification after the stiff-suspension refinement: **36 tests PASS**, lint/build/base-path/headless smoke PASS.
+
+### Slice 2 implementation record — 2026-09-30
+
+Implemented:
+- collider-free kinematic reel anchor
+- payout range 0.00–0.28 m
+- reel max speed 0.28 m/s
+- reel acceleration 0.9 m/s²
+- reel braking 1.4 m/s²
+- limit-aware deceleration before reel endpoints
+- manual `Space` DROP/LIFT
+- automated `T` PT-008 sequence
+- dynamic claw remains on the Rapier spherical suspension while reel anchor moves vertically
+- horizontal momentum is never explicitly zeroed during descent
+- full bottom-to-top physical lift regression
+
+PT-008 regression:
+- descent ≈ 0.2802 m
+- max horizontal offset while descending ≈ 0.0102 m
+- DROP-start horizontal speed ≈ 0.00581 m/s
+- first DROP-tick horizontal speed ≈ 0.01195 m/s
+- bottom payout = 0.280 m
+- lift back to top ≈ 0.2800 m
+- final suspension distance ≈ 0.3100 m
+- finite/bounded at 120 Hz
+
+Verification: **40 tests PASS**, lint/build/base-path/headless smoke PASS.
 
 Not yet complete:
-- variable suspension/reel length
-- descent/lift mechanics
-- dedicated damping-to-center gate
-- lift/return mechanics
-- PT-007 swing amplification
-- PT-008 momentum during descent
+- automatic post-lift state transition
+- physical carriage return/home path
+- final M02 closure audit
 
-**Next slice:** variable reel length + descent/lift with PT-008 horizontal-momentum preservation.
+PT-007 swing amplification belongs to M03 and is intentionally not required to close M02.
+
+**Next slice:** lift completion + physical return/home path + M02 final closure audit.
 
 ---
 
