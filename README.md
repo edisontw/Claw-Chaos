@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M03 IN PROGRESS — Swing Techniques**
+**M03 CLOSED — Swing Techniques**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -38,7 +38,7 @@ Final M01 verification baseline:
 
 M02 is complete. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, PT-008 horizontal-momentum preservation, and a rigid OPEN/transport finger profile. Slice 3 adds lift-completion detection and a braking-aware physical carriage return/home path. The closed M01 three-finger grasp/contact behavior remains unchanged.
 
-M03 slice 1 is verified: PT-007 proves that repeated X-axis reversals near the physical resonance cadence can deliberately grow swing, while off-cadence reversals decay. M03 slice 2 now verifies the same physical model on Z-axis front/back motion and synchronized X/Z diagonal reversals. No special swing button, direct swing-angle write, hidden force injection, or transform parenting is used.
+M03 is now closed. Slice 1 PT-007 proves timing-sensitive lateral swing amplification, slice 2 verifies the same model for front/back and synchronized diagonal swing, and slice 3 proves that a deliberately amplified diagonal swing remains physical during DROP. No special swing button, direct swing-angle/velocity write, hidden force injection, transform parenting, or descent-time state reset is used.
 
 ### First milestone
 
@@ -115,7 +115,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M03 — Swing Techniques** with the next acceptance slice: validate descent while a deliberately amplified swing is still in progress.
+Proceed to **M04 — Drop, Early Close, Force Phases** from the closed M03 swing baseline.
 
 Closed M02 lab controls:
 - default scene: `?scene=gantry-lab`
@@ -138,7 +138,7 @@ M02 closure baseline:
 - no hub/carriage teleport or transform parenting
 - **43 automated tests PASS**
 
-M03 slice 1 current calibration:
+M03 final closure baseline:
 - suspension horizontal spring stiffness: 170 N/m
 - horizontal damping: 1.0 N·s/m
 - corrective-force clamp: 4 N
@@ -153,9 +153,17 @@ M03 slice 1 current calibration:
 - M03 slice 2 diagonal at 0.40 s: late X/Z peaks ≈ 24.08 / 24.08 mm; late resultant ≈ 34.05 mm
 - diagonal peak angle ≈ 0.110 rad (~6.3°); maximum suspension-length error ≈ 0.003 mm
 - all directional swing runs remain finite/bounded
-- **46 automated tests PASS**
+- amplified diagonal swing before DROP: resultant peak ≈ 34.05 mm
+- DROP starts with ≈ 13.94 mm resultant offset and ≈ 0.191 m/s relative horizontal speed
+- first DROP tick retains/increases physical horizontal speed; world-speed ratio ≈ 1.11
+- physical descent ≈ 0.28029 m over 146 fixed ticks
+- descent max X/Z offsets ≈ 21.55 / 21.55 mm; resultant ≈ 30.47 mm
+- hub travels ≈ 61.69 mm horizontally during descent
+- maximum suspension-length error ≈ 0.003 mm; final suspension distance ≈ 0.310000 m
+- finite/bounded PASS
+- **47 automated tests PASS**
 
-M03 remains IN PROGRESS: deliberate off-axis descent while an amplified swing is active is the next dedicated acceptance slice.
+M03 is **CLOSED**. The next phase is M04 — Drop, Early Close, Force Phases.
 
 ## Status
 

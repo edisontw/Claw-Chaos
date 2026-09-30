@@ -551,7 +551,7 @@ PT-007 swing amplification belongs to M03 and is intentionally not required to c
 
 # M03 — Swing Techniques
 
-**Status: IN PROGRESS — slices 1–2 verified through 2026-10-01**
+**Status: CLOSED — 2026-10-01**
 
 ## Goal
 
@@ -607,17 +607,40 @@ Measured response:
 - finite/bounded stability PASS at 120 Hz
 - full suite after this slice: **46 automated tests PASS**
 
+## Slice 3 — amplified swing through physical descent
+
+Implemented and verified:
+- builds the existing synchronized X/Z 0.40 s swing without changing calibration
+- DROP is triggered only after the physical swing has both meaningful offset and relative horizontal velocity
+- direction input is released; carriage braking and reel payout continue through the normal fixed-step controllers
+- horizontal state is never cleared when descent starts
+- no direct angle/velocity write, hidden swing force, transform parenting, or descent-time reset
+
+Measured response:
+- pre-DROP resultant peak ≈ 34.05 mm
+- DROP start resultant offset ≈ 13.94 mm
+- DROP start relative horizontal speed ≈ 0.191 m/s
+- first DROP tick world horizontal-speed retention ratio ≈ 1.11
+- descent ≈ 0.28029 m over 146 ticks
+- max descent X/Z offsets ≈ 21.55 / 21.55 mm
+- max descent resultant ≈ 30.47 mm
+- horizontal hub travel during descent ≈ 61.69 mm
+- maximum suspension-length error ≈ 0.003 mm
+- finite/bounded stability PASS
+- full suite after this slice: **47 automated tests PASS**
+
 ## Exit criteria
 
-Current status:
+Final status:
+- preserved horizontal momentum — **PASS**
 - left/right swing — **PASS**
 - larger swing through timed reversal — **PASS (PT-007)**
 - front/back swing — **PASS**
 - diagonal swing — **PASS**
-- off-axis descent caused by deliberately built momentum — pending dedicated M03 regression
+- off-axis descent caused by deliberately built momentum — **PASS**
 - no special swing button — **PASS**
 
-**Next slice:** deliberate descent while an amplified swing is active, preserving horizontal momentum and the now-verified 2D directional swing behavior.
+**M03 CLOSED. Next phase:** M04 — Drop, Early Close, Force Phases.
 
 ---
 
