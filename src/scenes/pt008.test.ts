@@ -99,8 +99,6 @@ describe("PT-008 momentum during descent", () => {
           stiffness: config.suspensionSpringStiffness,
           damping: config.suspensionSpringDamping,
           maxForce: config.suspensionSpringMaxForce,
-
-          maxDampingForce: config.suspensionDampingForceLimit,
         },
         dt,
       );
