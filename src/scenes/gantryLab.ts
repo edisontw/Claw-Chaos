@@ -16,6 +16,7 @@ import {
   type GantryMotionConfig,
   type GantryMotionState,
 } from "./gantryMotion";
+import { advanceReel, type ReelConfig, type ReelState } from "./reelMotion";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 import type { SimulationScene } from "./types";
 
@@ -38,6 +39,11 @@ export const M02_GANTRY_CONFIG = {
   suspensionSpringDamping: 8.5,
   suspensionSpringMaxForce: 4.0,
   hubMassKg: 0.32,
+  reelMinPayout: 0,
+  reelMaxPayout: 0.28,
+  reelMaxSpeed: 0.28,
+  reelAcceleration: 0.9,
+  reelBraking: 1.4,
   pt006AccelerationSeconds: 0.80,
   pt006BrakeObservationSeconds: 1.60,
   pt006MinLagMeters: 0.003,
@@ -47,6 +53,11 @@ export const M02_GANTRY_CONFIG = {
   pt006MinSwingAngleRadians: 0.015,
   pt006MaxSwingAngleRadians: 0.12,
   pt006MaxResidualOffsetMeters: 0.008,
+  pt008AccelerationSeconds: 0.65,
+  pt008BrakeLeadSeconds: 0.14,
+  pt008MinDescentMeters: 0.20,
+  pt008MinHorizontalOffsetMeters: 0.0015,
+  pt008MinVelocityRetentionRatio: 0.35,
 } as const;
 
 export type Pt006Phase =
@@ -55,11 +66,24 @@ export type Pt006Phase =
   | "BRAKING"
   | "COMPLETE";
 
+export type Pt008Phase =
+  | "READY"
+  | "ACCELERATING"
+  | "BRAKING"
+  | "DROPPING"
+  | "COMPLETE";
+
 export interface Pt006Metrics {
   lagMeters: number;
   forwardSwingMeters: number;
   peakSwingAngleRadians: number;
   residualOffsetMeters: number;
+}
+
+export interface Pt008Metrics {
+  descentMeters: number;
+  maxHorizontalOffsetMeters: number;
+  velocityRetentionRatio: number;
 }
 
 export function evaluatePt006Swing(metrics: Pt006Metrics): boolean {
@@ -75,6 +99,16 @@ export function evaluatePt006Swing(metrics: Pt006Metrics): boolean {
       M02_GANTRY_CONFIG.pt006MaxSwingAngleRadians &&
     metrics.residualOffsetMeters <=
       M02_GANTRY_CONFIG.pt006MaxResidualOffsetMeters
+  );
+}
+
+export function evaluatePt008Momentum(metrics: Pt008Metrics): boolean {
+  return (
+    metrics.descentMeters >= M02_GANTRY_CONFIG.pt008MinDescentMeters &&
+    metrics.maxHorizontalOffsetMeters >=
+      M02_GANTRY_CONFIG.pt008MinHorizontalOffsetMeters &&
+    metrics.velocityRetentionRatio >=
+      M02_GANTRY_CONFIG.pt008MinVelocityRetentionRatio
   );
 }
 
@@ -211,24 +245,26 @@ export function createGantryLabScene(
     claw.fingerPivotY + claw.collarHeight * 0.45 - claw.hubCenterY,
     chrome,
   );
+  scene.add(hubVisual);
 
-  const cableStartY = claw.hubColliderHalfHeight;
-  const cableLength = gantry.suspensionLength - cableStartY;
   const cable = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.0022, 0.0022, cableLength, 10),
+    new THREE.CylinderGeometry(0.0022, 0.0022, 1, 10),
     new THREE.MeshStandardMaterial({
       color: 0x30353c,
       roughness: 0.48,
       metalness: 0.72,
     }),
   );
-  cable.position.y = cableStartY + cableLength * 0.5;
   cable.castShadow = true;
-  hubVisual.add(cable);
-  scene.add(hubVisual);
+  scene.add(cable);
 
   const anchorY = gantry.carriageY - gantry.carriageHalfY;
   const initialHubY = anchorY - gantry.suspensionLength;
+  const reelAnchorBody = physics.createKinematicBody({
+    x: 0,
+    y: anchorY,
+    z: 0,
+  });
   const hubBody = physics.createDynamicCylinder(
     { x: 0, y: initialHubY, z: 0 },
     claw.hubColliderHalfHeight,
@@ -244,9 +280,9 @@ export function createGantryLabScene(
   bindings.push({ mesh: hubVisual, body: hubBody });
 
   physics.createSphericalJoint(
-    carriageBody,
+    reelAnchorBody,
     hubBody,
-    { x: 0, y: -gantry.carriageHalfY, z: 0 },
+    { x: 0, y: 0, z: 0 },
     { x: 0, y: gantry.suspensionLength, z: 0 },
     false,
   );
@@ -319,19 +355,45 @@ export function createGantryLabScene(
       braking: gantry.braking,
     },
   };
+  const reelConfig: ReelConfig = {
+    minPayout: gantry.reelMinPayout,
+    maxPayout: gantry.reelMaxPayout,
+    maxSpeed: gantry.reelMaxSpeed,
+    acceleration: gantry.reelAcceleration,
+    braking: gantry.reelBraking,
+  };
 
   let motion: GantryMotionState = {
     x: { position: 0, velocity: 0 },
     z: { position: 0, velocity: 0 },
   };
+  let reel: ReelState = { payout: 0, velocity: 0 };
+  let manualReelCommand = 0;
   let fingerCommand = 0;
-  let phase: Pt006Phase = "READY";
-  let phaseSeconds = 0;
-  let result = "NOT RUN";
+
+  let pt006Phase: Pt006Phase = "READY";
+  let pt006Seconds = 0;
+  let pt006Result = "NOT RUN";
   let minimumRelativeX = 0;
   let maximumRelativeX = 0;
   let peakSwingAngle = 0;
+
+  let pt008Phase: Pt008Phase = "READY";
+  let pt008Seconds = 0;
+  let pt008Result = "NOT RUN";
+  let pt008DropTicks = 0;
+  let pt008StartHubY = initialHubY;
+  let pt008MinHubY = initialHubY;
+  let pt008MaxHorizontalOffset = 0;
+  let pt008DropStartSpeed = 0;
+  let pt008FirstTickSpeed = 0;
+
   const pressed = new Set<string>();
+  const cableUp = new THREE.Vector3(0, 1, 0);
+  const cableTop = new THREE.Vector3();
+  const cableBottom = new THREE.Vector3();
+  const cableDirection = new THREE.Vector3();
+  const cableMidpoint = new THREE.Vector3();
 
   const manualInput = (): { x: number; z: number } => ({
     x: (pressed.has("ArrowRight") ? 1 : 0) -
@@ -340,26 +402,93 @@ export function createGantryLabScene(
       (pressed.has("ArrowUp") ? 1 : 0),
   });
 
+  const updateCableVisual = (): void => {
+    const hub = hubBody.translation();
+    cableTop.set(motion.x.position, anchorY, motion.z.position);
+    cableBottom.set(
+      hub.x,
+      hub.y + claw.hubColliderHalfHeight,
+      hub.z,
+    );
+    cableDirection.subVectors(cableTop, cableBottom);
+    const length = Math.max(0.001, cableDirection.length());
+    cableMidpoint.addVectors(cableTop, cableBottom).multiplyScalar(0.5);
+    cable.position.copy(cableMidpoint);
+    cable.scale.set(1, length, 1);
+    cable.quaternion.setFromUnitVectors(
+      cableUp,
+      cableDirection.normalize(),
+    );
+  };
+
   const startPt006 = (): void => {
-    if (phase !== "READY") {
+    if (
+      pt006Phase !== "READY" ||
+      pt008Phase !== "READY" ||
+      reel.payout > 0.001
+    ) {
       return;
     }
-    phase = "ACCELERATING";
-    phaseSeconds = 0;
-    result = "RUNNING";
+    pt006Phase = "ACCELERATING";
+    pt006Seconds = 0;
+    pt006Result = "RUNNING";
     minimumRelativeX = 0;
     maximumRelativeX = 0;
     peakSwingAngle = 0;
+    manualReelCommand = 0;
+  };
+
+  const startPt008 = (): void => {
+    if (
+      pt008Phase !== "READY" ||
+      pt006Phase !== "READY" ||
+      reel.payout > 0.001
+    ) {
+      return;
+    }
+    pt008Phase = "ACCELERATING";
+    pt008Seconds = 0;
+    pt008Result = "RUNNING";
+    pt008DropTicks = 0;
+    pt008StartHubY = hubBody.translation().y;
+    pt008MinHubY = pt008StartHubY;
+    pt008MaxHorizontalOffset = 0;
+    pt008DropStartSpeed = 0;
+    pt008FirstTickSpeed = 0;
+    manualReelCommand = 0;
   };
 
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.repeat) {
       return;
     }
+
     if (event.code === "KeyP") {
       startPt006();
       return;
     }
+    if (event.code === "KeyT") {
+      startPt008();
+      return;
+    }
+    if (
+      event.code === "Space" &&
+      pt006Phase !== "ACCELERATING" &&
+      pt006Phase !== "BRAKING" &&
+      pt008Phase !== "ACCELERATING" &&
+      pt008Phase !== "BRAKING" &&
+      pt008Phase !== "DROPPING"
+    ) {
+      event.preventDefault();
+      if (manualReelCommand === 0) {
+        manualReelCommand =
+          reel.payout < gantry.reelMaxPayout * 0.5 ? 1 : -1;
+      } else {
+        manualReelCommand *= -1;
+      }
+      return;
+    }
+
     pressed.add(event.code);
   };
 
@@ -370,10 +499,12 @@ export function createGantryLabScene(
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
 
+  updateCableVisual();
+
   return {
     bindings,
     massPropertiesDebugTargets: [{ body: hubBody, label: "suspended-claw-hub" }],
-    milestone: "M02 / PT006",
+    milestone: "M02 / PT006 + PT008",
     camera: {
       position: [0.78, 0.82, 1.08],
       target: [0, 0.72, 0],
@@ -387,39 +518,113 @@ export function createGantryLabScene(
         hubPosition,
       );
 
-      if (phase === "ACCELERATING") {
+      if (pt006Phase === "ACCELERATING") {
         minimumRelativeX = Math.min(minimumRelativeX, relativeX);
-      } else if (phase === "BRAKING") {
+      } else if (pt006Phase === "BRAKING") {
         maximumRelativeX = Math.max(maximumRelativeX, relativeX);
         peakSwingAngle = Math.max(peakSwingAngle, swingAngle);
       }
 
       let inputX = 0;
       let inputZ = 0;
+      let reelCommand = manualReelCommand;
 
-      if (phase === "ACCELERATING") {
-        inputX = 1;
-        phaseSeconds += stepSeconds;
-        if (phaseSeconds >= gantry.pt006AccelerationSeconds) {
-          phase = "BRAKING";
-          phaseSeconds = 0;
+      if (
+        pt008Phase === "ACCELERATING" ||
+        pt008Phase === "BRAKING" ||
+        pt008Phase === "DROPPING"
+      ) {
+        reelCommand = 0;
+
+        if (pt008Phase === "ACCELERATING") {
+          inputX = 1;
+          pt008Seconds += stepSeconds;
+          if (pt008Seconds >= gantry.pt008AccelerationSeconds) {
+            pt008Phase = "BRAKING";
+            pt008Seconds = 0;
+          }
+        } else if (pt008Phase === "BRAKING") {
+          pt008Seconds += stepSeconds;
+          if (pt008Seconds >= gantry.pt008BrakeLeadSeconds) {
+            pt008Phase = "DROPPING";
+            pt008Seconds = 0;
+            pt008DropTicks = 0;
+          }
+        } else {
+          const velocity = hubBody.linvel();
+          const offset = Math.hypot(
+            hubPosition.x - motion.x.position,
+            hubPosition.z - motion.z.position,
+          );
+
+          if (pt008DropTicks === 0) {
+            pt008StartHubY = hubPosition.y;
+            pt008MinHubY = hubPosition.y;
+            pt008DropStartSpeed = Math.hypot(velocity.x, velocity.z);
+          } else {
+            pt008MinHubY = Math.min(pt008MinHubY, hubPosition.y);
+            pt008MaxHorizontalOffset = Math.max(
+              pt008MaxHorizontalOffset,
+              offset,
+            );
+            if (pt008DropTicks === 1) {
+              pt008FirstTickSpeed = Math.hypot(velocity.x, velocity.z);
+            }
+          }
+
+          const atBottom =
+            reel.payout >= gantry.reelMaxPayout - 1e-5 &&
+            Math.abs(reel.velocity) < 1e-4;
+
+          if (atBottom) {
+            pt008Phase = "COMPLETE";
+            manualReelCommand = 0;
+            const retention =
+              pt008DropStartSpeed > 1e-6
+                ? pt008FirstTickSpeed / pt008DropStartSpeed
+                : 0;
+            pt008Result = evaluatePt008Momentum({
+              descentMeters: pt008StartHubY - pt008MinHubY,
+              maxHorizontalOffsetMeters: pt008MaxHorizontalOffset,
+              velocityRetentionRatio: retention,
+            })
+              ? "PASS"
+              : "FAIL";
+          } else {
+            reelCommand = 1;
+            pt008DropTicks += 1;
+          }
         }
-      } else if (phase === "BRAKING") {
-        phaseSeconds += stepSeconds;
-        if (phaseSeconds >= gantry.pt006BrakeObservationSeconds) {
-          phase = "COMPLETE";
-          const currentHub = hubBody.translation();
-          result = evaluatePt006Swing({
-            lagMeters: Math.abs(Math.min(0, minimumRelativeX)),
-            forwardSwingMeters: Math.max(0, maximumRelativeX),
-            peakSwingAngleRadians: peakSwingAngle,
-            residualOffsetMeters: Math.hypot(
-              currentHub.x - motion.x.position,
-              currentHub.z - motion.z.position,
-            ),
-          })
-            ? "PASS"
-            : "FAIL";
+      } else if (
+        pt006Phase === "ACCELERATING" ||
+        pt006Phase === "BRAKING"
+      ) {
+        reelCommand = 0;
+
+        if (pt006Phase === "ACCELERATING") {
+          inputX = 1;
+          pt006Seconds += stepSeconds;
+          if (pt006Seconds >= gantry.pt006AccelerationSeconds) {
+            pt006Phase = "BRAKING";
+            pt006Seconds = 0;
+          }
+        } else {
+          pt006Seconds += stepSeconds;
+          if (pt006Seconds >= gantry.pt006BrakeObservationSeconds) {
+            pt006Phase = "COMPLETE";
+            const currentHub = hubBody.translation();
+            pt006Result = evaluatePt006Swing({
+              lagMeters: Math.abs(Math.min(0, minimumRelativeX)),
+              forwardSwingMeters: Math.max(0, maximumRelativeX),
+              peakSwingAngleRadians: peakSwingAngle,
+              residualOffsetMeters: Math.hypot(
+                currentHub.x - motion.x.position,
+                currentHub.z - motion.z.position,
+              ),
+            })
+              ? "PASS"
+              : "FAIL";
+          }
         }
       } else {
         const input = manualInput();
@@ -434,10 +639,16 @@ export function createGantryLabScene(
         motionConfig,
         stepSeconds,
       );
+      reel = advanceReel(reel, reelCommand, reelConfig, stepSeconds);
 
       carriageBody.setNextKinematicTranslation({
         x: motion.x.position,
         y: gantry.carriageY,
+        z: motion.z.position,
+      });
+      reelAnchorBody.setNextKinematicTranslation({
+        x: motion.x.position,
+        y: anchorY - reel.payout,
         z: motion.z.position,
       });
 
@@ -484,6 +695,7 @@ export function createGantryLabScene(
         body.wakeUp();
       }
       hubBody.wakeUp();
+      updateCableVisual();
     },
     debugLines(): string[] {
       const hub = hubBody.translation();
@@ -494,6 +706,10 @@ export function createGantryLabScene(
         motion.z.position,
         hub,
       );
+      const pt008Retention =
+        pt008DropStartSpeed > 1e-6
+          ? pt008FirstTickSpeed / pt008DropStartSpeed
+          : 0;
 
       return [
         "Gantry X / Z     " +
@@ -512,23 +728,31 @@ export function createGantryLabScene(
           relativeZ.toFixed(3) +
           " m",
         "Swing angle      " + swingAngle.toFixed(3) + " rad",
-        "Suspension       stiff damped " +
-          gantry.suspensionLength.toFixed(3) +
+        "Reel payout      " +
+          reel.payout.toFixed(3) +
+          " m @ " +
+          reel.velocity.toFixed(3) +
+          " m/s",
+        "Effective cable  " +
+          (gantry.suspensionLength + reel.payout).toFixed(3) +
           " m",
-        "PT-006 phase     " + phase,
-        "PT-006 result    " + result,
-        "Lag / forward    " +
-          Math.abs(Math.min(0, minimumRelativeX)).toFixed(3) +
-          " / " +
-          Math.max(0, maximumRelativeX).toFixed(3) +
+        "PT-006 phase     " + pt006Phase,
+        "PT-006 result    " + pt006Result,
+        "PT-008 phase     " + pt008Phase,
+        "PT-008 result    " + pt008Result,
+        "PT-008 descent   " +
+          Math.max(0, pt008StartHubY - pt008MinHubY).toFixed(3) +
           " m",
-        "Peak swing       " + peakSwingAngle.toFixed(3) + " rad",
-        "Spring k / c      " +
+        "PT-008 horiz max " +
+          pt008MaxHorizontalOffset.toFixed(3) +
+          " m",
+        "PT-008 v retain  " + pt008Retention.toFixed(2),
+        "Spring k / c     " +
           gantry.suspensionSpringStiffness.toFixed(1) +
           " / " +
           gantry.suspensionSpringDamping.toFixed(1),
-        "Controls         Arrow keys gantry | P PT-006 | M COM | D collider",
-        "Reel             fixed-length in this slice; variable reel is next",
+        "Controls         Arrows gantry | Space DROP/LIFT | P PT-006 | T PT-008",
+        "Debug            M COM/origin | D colliders",
       ];
     },
   };
