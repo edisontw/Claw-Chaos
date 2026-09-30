@@ -154,6 +154,16 @@ export class PhysicsRuntime {
     return body;
   }
 
+  createKinematicBody(center: Vec3): RigidBodyHandle {
+    return this.world.createRigidBody(
+      RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(
+        center.x,
+        center.y,
+        center.z,
+      ),
+    );
+  }
+
   createKinematicCuboid(
     center: Vec3,
     halfExtents: Vec3,

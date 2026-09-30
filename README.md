@@ -36,7 +36,7 @@ Final M01 verification baseline:
 - COM/origin debug is available with `M`
 - no prize parenting, hidden weld, scripted success/failure, or normal-play prize teleport was introduced
 
-M02 slice 1 is now implemented: fixed-step X/Z carriage motion with explicit speed/acceleration/braking limits, a dynamic claw hub physically suspended from a kinematic carriage through a Rapier spherical joint, and automated PT-006 swing-from-braking verification. The closed M01 three-finger geometry and revolute joints are reused rather than replaced.
+M02 now includes two verified slices. Slice 1 provides fixed-step X/Z carriage motion, a dynamic claw hub on a stiff/damped spherical suspension, and PT-006 swing-from-braking. Slice 2 adds variable reel payout, physical DROP/LIFT motion, and PT-008 horizontal-momentum preservation during descent. The closed M01 three-finger geometry and revolute joints remain unchanged.
 
 ### First milestone
 
@@ -113,22 +113,25 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M02 — Gantry & Suspended Claw** from the verified fixed-length suspension baseline.
+Continue **M02 — Gantry & Suspended Claw** from the verified reel/drop baseline.
 
-Current M02 slice:
+Current M02 lab:
 - default scene: `?scene=gantry-lab`
 - Arrow keys: manual X/Z gantry motion
-- `P`: deterministic PT-006 accelerate → brake → observe swing sequence
-- carriage motion is fixed-step with explicit max speed, acceleration, braking, and rail limits
-- claw hub is dynamic and suspended through a Rapier spherical joint
-- M01 independent fingers remain dynamic/revolute-driven on the suspended hub
+- `Space`: toggle physical DROP/LIFT
+- `P`: deterministic PT-006 accelerate → brake → observe small swing
+- `T`: deterministic PT-008 swing → DROP → verify horizontal momentum
+- reel payout: 0–0.28 m
+- reel max speed: 0.28 m/s
+- reel acceleration / braking: 0.9 / 1.4 m/s²
+- claw hub remains dynamic; DROP/LIFT moves a kinematic reel anchor, not the claw transform
 - `D`: collider debug
 - `M`: COM/origin debug
-- 33 automated tests PASS after this slice
+- 40 automated tests PASS after this slice
 
-PT-006 is a behavior proof, not final real-machine calibration. Current provisional hard-brake run produces about 0.0035 m lag, 0.011 m forward swing, and 0.036 rad (~2.1°) peak swing.
+PT-008 baseline descends about 0.280 m, preserves measurable horizontal motion during DROP, reaches about 10.2 mm maximum horizontal offset during descent, and physically lifts back about 0.280 m to the top.
 
-Next M02 slice should add **variable reel length / vertical descent-lift mechanics** while preserving horizontal momentum. That enables PT-008 and prepares early-close/automatic-close work without starting cabinet/chute mechanics.
+Next M02 slice should complete the **lift → carriage return/home path** and perform the final M02 closure audit. Do not start early-close/automatic-close mechanics until M02 is closed.
 
 ## Status
 
