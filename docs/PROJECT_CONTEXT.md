@@ -531,7 +531,7 @@ PT-006 automated baseline:
 - no rigid-lock or transform parenting is used
 
 Verification:
-- 33 automated tests PASS
+- 36 automated tests PASS after the stiff-suspension refinement
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
@@ -539,13 +539,50 @@ Verification:
 
 These motion values are provisional laboratory behavior, not measured manufacturer calibration.
 
+### M02 slice 2 — variable reel / DROP-LIFT / PT-008
+
+Implemented on 2026-09-30:
+- collider-free kinematic reel anchor follows the gantry in X/Z
+- reel payout changes only through a fixed-step velocity controller
+- payout range: 0.00–0.28 m
+- reel max speed: 0.28 m/s
+- reel acceleration: 0.9 m/s²
+- reel braking: 1.4 m/s²
+- limit-aware braking reduces speed before upper/lower reel limits
+- dynamic claw hub remains attached to the reel anchor through the existing 0.31 m Rapier spherical constraint
+- horizontal spring/damping remains active during descent and lift
+- `Space` toggles manual DROP/LIFT
+- `T` runs deterministic PT-008
+- visible cable extends from carriage guide to the dynamic hub
+- no hub teleport, parent-to-carriage transform, or discontinuous cable-length assignment is used
+
+PT-008 automated baseline:
+- physical descent: about 0.2802 m
+- maximum horizontal offset during descent: about 0.0102 m
+- horizontal speed before DROP: about 0.00581 m/s
+- first DROP-tick horizontal speed: about 0.01195 m/s
+- horizontal velocity is therefore not cleared by DROP; phase dynamics may increase it
+- bottom payout: 0.280 m
+- physical lift back to top: about 0.2800 m
+- final payout: 0.000 m
+- spherical suspension distance after lift: about 0.3100 m
+- descent and lift each complete in about 146 fixed ticks (~1.22 s)
+- finite/bounded stability gate: PASS
+
+Verification after slice 2:
+- 40 automated tests PASS
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- headless `gantry-lab` WebGL smoke PASS
+
 M02 remains **IN PROGRESS**.
 
 Next slice:
-- variable reel/suspension length
-- vertical descent/lift velocity and acceleration limits
-- preserve horizontal momentum while reel length changes
-- automate PT-008 momentum-during-descent
+- automatic lift completion state
+- physical carriage return/home path after lift
+- preserve residual swing during return
+- final M02 closure audit
 
 ## Design-review additions
 
