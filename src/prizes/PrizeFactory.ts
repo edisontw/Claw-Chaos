@@ -7,6 +7,7 @@ import type {
   Quaternion,
   Vec3,
 } from "../physics/PhysicsRuntime";
+import { createCompoundPrizeProfile } from "./compoundProfiles";
 import {
   PRIZE_COLOR_PALETTE,
   PRIZE_COM_PROFILES,
@@ -129,9 +130,14 @@ function buildColliders(definition: PrizeDefinition): PrimitiveColliderSpec[] {
       ];
     }
 
+    case "pillow":
+    case "plush_humanoid":
+    case "plush_animal":
+      return createCompoundPrizeProfile(definition).colliders;
+
     default:
       throw new Error(
-        `M05 slice 1 does not yet implement collider family: ${definition.shapeFamily}`,
+        `PrizeFactory does not implement collider family: ${definition.shapeFamily}`,
       );
   }
 }
@@ -229,6 +235,85 @@ function configureMesh(mesh: THREE.Mesh): THREE.Mesh {
   return mesh;
 }
 
+function addCapsuleVisual(
+  parent: THREE.Object3D,
+  start: Vec3,
+  end: Vec3,
+  radius: number,
+  material: THREE.Material,
+): void {
+  const startVector = new THREE.Vector3(start.x, start.y, start.z);
+  const endVector = new THREE.Vector3(end.x, end.y, end.z);
+  const direction = endVector.clone().sub(startVector);
+  const length = direction.length();
+  const cylinderHeight = Math.max(0.001, length - 2 * radius);
+  const yAxis = new THREE.Vector3(0, 1, 0);
+
+  const rod = configureMesh(
+    new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, cylinderHeight, 16),
+      material,
+    ),
+  );
+  rod.position.copy(startVector).add(endVector).multiplyScalar(0.5);
+  if (length > Number.EPSILON) {
+    rod.quaternion.setFromUnitVectors(yAxis, direction.clone().normalize());
+  }
+  parent.add(rod);
+
+  for (const point of [startVector, endVector]) {
+    const cap = configureMesh(
+      new THREE.Mesh(new THREE.SphereGeometry(radius, 16, 10), material),
+    );
+    cap.position.copy(point);
+    parent.add(cap);
+  }
+}
+
+function buildCompoundVisual(
+  definition: PrizeDefinition,
+  material: THREE.Material,
+): THREE.Group {
+  const group = new THREE.Group();
+  const profile = createCompoundPrizeProfile(definition);
+
+  for (const part of profile.visualParts) {
+    if (part.shape === "sphere") {
+      const mesh = configureMesh(
+        new THREE.Mesh(
+          new THREE.SphereGeometry(part.radius, 18, 12),
+          material,
+        ),
+      );
+      mesh.position.set(part.center.x, part.center.y, part.center.z);
+      group.add(mesh);
+    } else if (part.shape === "cuboid") {
+      const mesh = configureMesh(
+        new THREE.Mesh(
+          new THREE.BoxGeometry(
+            part.halfExtents.x * 2,
+            part.halfExtents.y * 2,
+            part.halfExtents.z * 2,
+          ),
+          material,
+        ),
+      );
+      mesh.position.set(part.center.x, part.center.y, part.center.z);
+      group.add(mesh);
+    } else {
+      addCapsuleVisual(
+        group,
+        part.start,
+        part.end,
+        part.radius,
+        material,
+      );
+    }
+  }
+
+  return group;
+}
+
 function buildVisual(spec: ResolvedPrizeSpec): THREE.Object3D {
   const { x, y, z } = spec.definition.dimensions;
   const material = createVisualMaterial(spec);
@@ -271,28 +356,24 @@ function buildVisual(spec: ResolvedPrizeSpec): THREE.Object3D {
     case "capsule": {
       const group = new THREE.Group();
       const radius = Math.min(x, z) * 0.5;
-      const cylinderHeight = Math.max(0.001, y - 2 * radius);
-      const cylinder = configureMesh(
-        new THREE.Mesh(
-          new THREE.CylinderGeometry(radius, radius, cylinderHeight, 20),
-          material,
-        ),
+      addCapsuleVisual(
+        group,
+        { x: 0, y: -y * 0.5, z: 0 },
+        { x: 0, y: y * 0.5, z: 0 },
+        radius,
+        material,
       );
-      const top = configureMesh(
-        new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 12), material),
-      );
-      const bottom = configureMesh(
-        new THREE.Mesh(new THREE.SphereGeometry(radius, 20, 12), material),
-      );
-      top.position.y = cylinderHeight * 0.5;
-      bottom.position.y = -cylinderHeight * 0.5;
-      group.add(cylinder, top, bottom);
       return group;
     }
 
+    case "pillow":
+    case "plush_humanoid":
+    case "plush_animal":
+      return buildCompoundVisual(spec.definition, material);
+
     default:
       throw new Error(
-        `M05 slice 1 does not yet implement visual family: ${spec.definition.shapeFamily}`,
+        `PrizeFactory does not implement visual family: ${spec.definition.shapeFamily}`,
       );
   }
 }
