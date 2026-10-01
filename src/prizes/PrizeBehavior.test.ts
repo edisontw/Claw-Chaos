@@ -64,6 +64,32 @@ async function simulateMaterialSlide(materialId: string): Promise<{
   };
 }
 
+async function simulateMassImpulse(massProfileId: string): Promise<{
+  xSpeedMetersPerSecond: number;
+  massKg: number;
+}> {
+  const physics = await PhysicsRuntime.create();
+  const prize = createPrize(
+    physics,
+    getPrizeDefinition("prize/box_standard"),
+    {
+      position: { x: 0, y: 1.2, z: 0 },
+      materialId: "material/plastic",
+      massProfileId,
+      comProfileId: "com/centered",
+      variantSeed: `m05-mass-${massProfileId}`,
+    },
+  );
+
+  prize.body.applyImpulse({ x: 0.03, y: 0, z: 0 }, true);
+  const velocity = prize.body.linvel();
+
+  return {
+    xSpeedMetersPerSecond: velocity.x,
+    massKg: prize.body.mass(),
+  };
+}
+
 async function simulateComImpulse(comProfileId: string): Promise<{
   rotationRadians: number;
   peakAngularSpeedRadiansPerSecond: number;
@@ -126,6 +152,21 @@ describe("M05 prize behavior differentiation", () => {
     ).toBeGreaterThan(0.02);
     expect(plastic.finalSpeedMetersPerSecond).toBeLessThan(0.05);
     expect(rubber.finalSpeedMetersPerSecond).toBeLessThan(0.05);
+  });
+
+  it("changes response to the same impulse through reusable mass profiles", async () => {
+    const light = await simulateMassImpulse("mass/light");
+    const heavy = await simulateMassImpulse("mass/heavy");
+
+    console.log(
+      "M05 mass-profile impulse metrics",
+      JSON.stringify({ light, heavy }),
+    );
+
+    expect(light.massKg).toBeLessThan(heavy.massKg);
+    expect(light.xSpeedMetersPerSecond).toBeGreaterThan(
+      heavy.xSpeedMetersPerSecond * 1.5,
+    );
   });
 
   it("PT-022 produces rotation from an offset COM under the same center impulse", async () => {
