@@ -22,7 +22,7 @@ The project goal is not to fake a claw-machine result with a hidden success roll
 
 ## Current phase
 
-**M05 IN PROGRESS — Prize Physics Library v1**
+**M05 CLOSED — Prize Physics Library v1**
 
 M01 — Claw Physics Laboratory is complete and remains the locked physics-contact baseline. The three-prong claw now has six automated physics experiments covering centered pickup, pickup→retaining-force slip, off-center rotation, Teddy limb hook, independent blocked-finger behavior, and oversized-object close blocking. Generic COM/origin visualization now reads Rapier's actual rigid-body mass properties and is shared across the sphere, box, Teddy, oversized prize, and future registered bodies.
 
@@ -42,7 +42,7 @@ M03 is now closed. Slice 1 PT-007 proves timing-sensitive lateral swing amplific
 
 M04 is now closed. The play-cycle state machine covers physical DROP, EARLY/AUTO CLOSE, close settle, PICKUP, weak RETAINING, limited player HOLD BOOST, physical reel-top completion, braking-aware carriage return, motor-driven RELEASE, and return to READY. HOLD BOOST is a real temporary torque change only; it does not attach the prize or override contact physics.
 
-M05 has started. Slice 1 adds a data-driven `PrizeFactory`, reusable material/mass/COM profiles, deterministic visual variants, explicit Rapier mass properties, eight starter prize shapes, and an isolated `?scene=prize-lab` for visual/physics inspection. The default `gantry-lab` and closed M01–M04 physics remain unchanged.
+M05 is now closed. PrizeFactory is the single normal spawn path for 11 starter definitions, including rigid primitives plus pillow, simple Teddy and simple animal compound prizes. Reusable material/mass/COM profiles now produce measured behavioral differences, deterministic visual variants enumerate 176 valid combinations, and a 12-prize contact pile settles and remains stable for a 60-second post-settle regression. The default `gantry-lab` and closed M01–M04 physics remain unchanged.
 
 ### First milestone
 
@@ -119,7 +119,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M05 — Prize Physics Library v1** with slice 2: add the remaining pillow / simple teddy / simple animal compound prize templates, then begin material/COM behavioral differentiation and a 10–15 prize pile-stability regression. Preserve the slice-1 PrizeFactory as the only normal spawn path.
+Proceed to **M06 — Cabinet & Chute**. Build the first physically bounded cabinet shell, glass/play-area collision, prize chute geometry and sensor semantics around the closed M01–M05 mechanics without turning chute contact into an automatic win.
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
@@ -220,19 +220,20 @@ M04 slice 3 / closure baseline:
 
 M04 is **CLOSED**. Full carried-prize return to a modeled chute, chute-edge interaction, and chute sensing remain later cabinet/prize acceptance work.
 
-M05 slice 1 baseline:
-- new `src/prizes/` data model and PrizeFactory
-- 8 starter definitions: cube, box, tall box, flat box, sphere, ellipsoid, cylinder, capsule
-- 4 material profiles, 3 mass profiles, 5 COM profiles
-- 8 colors × 2 finish variants per starter definition
-- explicit Rapier mass + local COM + principal inertia; colliders contribute zero extra mass
-- COM profiles therefore change actual rigid-body mass properties rather than debug-only metadata
-- ellipsoid uses a stable three-sphere collider approximation; capsule uses a real compound capsule collider
-- `?scene=prize-lab` visualizes all eight definitions and supports `M` COM/origin plus `D` collider debug
-- four-second isolated settling regression leaves every starter body finite, above the floor, and fully stopped in the calibrated run
-- **57 automated tests PASS**
+M05 final closure baseline:
+- 11 PrizeFactory definitions: cube, box, tall box, flat box, sphere, ellipsoid, cylinder, capsule, pillow, simple Teddy and simple animal
+- 5 material profiles, 3 mass profiles, 5 COM profiles
+- 8 colors × 2 finish variants across 11 definitions = **176 formally enumerated unique visible variants**
+- explicit Rapier total mass + local COM + principal inertia; colliders contribute zero extra mass
+- material behavior PT-021: same box/impulse setup slides ≈ 124.20 mm with plastic versus ≈ 92.23 mm with rubber
+- mass behavior: same 0.03 N·s impulse gives ≈ 0.3333 m/s for light 0.090 kg versus ≈ 0.1852 m/s for heavy 0.162 kg
+- COM behavior PT-022: centered COM remains at 0 rad while left-offset COM reaches ≈ 0.40385 rad with peak angular speed ≈ 1.6154 rad/s under the same center impulse
+- PT-015: 12-prize contact pile reaches sleep in ≈ 2.317 s; after another 60 simulated seconds, maximum drift = 0 and all 12 remain sleeping
+- pillow/Teddy/animal use stable compound primitive collision profiles; no prize-specific grab code
+- `?scene=prize-lab` visualizes all 11 definitions with `M` COM/origin and `D` collider debug
+- **62 automated tests PASS**
 
-M05 remains **IN PROGRESS**. Pillow, simple teddy, simple animal, behavioral material/COM differentiation, and the 10–15 object pile stability gate remain for later slices.
+M05 is **CLOSED**. The next phase is **M06 — Cabinet & Chute**.
 
 ## Status
 
