@@ -1,7 +1,6 @@
 import * as THREE from "three";
 import {
   M06_CABINET_CONFIG,
-  createCabinetPartDefinitions,
   createCabinetPhysics,
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
