@@ -141,13 +141,13 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       joints.push(joint);
     }
 
-    const definition = getPrizeDefinition("prize/sphere_ball");
-    const radius = definition.dimensions.x * 0.5;
-    const hubToPrizeCenter =
+    const definition = getPrizeDefinition("prize/cube_small");
+    const prizeHalfHeight = definition.dimensions.y * 0.5;
+    const captureCenterOffset =
       claw.hubCenterY - claw.pt001BallCenterY;
     const prizeCenterY =
-      initialHubY - hubToPrizeCenter + 0.018;
-    const pedestalTopY = prizeCenterY - radius;
+      initialHubY - captureCenterOffset + 0.018;
+    const pedestalTopY = prizeCenterY - prizeHalfHeight;
     const pedestalHalfHeight =
       (pedestalTopY - M06_CABINET_CONFIG.playDeckY) * 0.5;
 
@@ -173,7 +173,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       materialId: "material/rubber",
       massProfileId: "mass/light",
       comProfileId: "com/centered",
-      variantSeed: "m06-return-release",
+      variantSeed: "m06-return-release-cube",
     });
     const sensor = new ChuteSensor();
 
@@ -436,7 +436,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         p.y > -0.34 &&
         p.y < 1.0;
 
-      const event = sensor.pollPrize("m06-carried-ball", prize.body);
+      const event = sensor.pollPrize("m06-carried-cube", prize.body);
       if (event) {
         sensorEvents += 1;
         sensorTick ??= tick;
@@ -512,7 +512,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
       physics.step();
       expect(
-        sensor.pollPrize("m06-carried-ball", prize.body),
+        sensor.pollPrize("m06-carried-cube", prize.body),
       ).toBeNull();
     }
     expect(sensor.winCount).toBe(1);
