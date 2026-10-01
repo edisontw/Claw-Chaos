@@ -122,7 +122,10 @@ describe("M06 chute sensor", () => {
       getPrizeDefinition("prize/box_flat"),
       {
         position: {
-          x: M06_CABINET_CONFIG.chuteCenterX,
+          x:
+            M06_CABINET_CONFIG.chuteCenterX -
+            M06_CABINET_CONFIG.chuteOpeningHalfX -
+            0.04,
           y: M06_CABINET_CONFIG.playDeckY + 0.09,
           z: M06_CABINET_CONFIG.chuteCenterZ,
         },
