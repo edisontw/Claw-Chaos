@@ -17,6 +17,7 @@ import { createOversizedCloseScene } from "../scenes/oversizedCloseScene";
 import { createFallingCubeScene } from "../scenes/fallingCube";
 import { createGantryLabScene } from "../scenes/gantryLab";
 import { createPrizeLabScene } from "../scenes/prizeLab";
+import { createCabinetLabScene } from "../scenes/cabinetLab";
 import { parseSceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
 
@@ -47,6 +48,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   const testScene: SimulationScene =
     selection.id === "gantry-lab"
       ? createGantryLabScene(scene, physics)
+      : selection.id === "cabinet-lab"
+        ? createCabinetLabScene(scene, physics)
       : selection.id === "prize-lab"
         ? createPrizeLabScene(scene, physics, selection.seed)
       : selection.id === "claw-lab"

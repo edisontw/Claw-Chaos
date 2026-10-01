@@ -547,6 +547,15 @@ Setup:
 Expected:
 - no win until valid chute sensor condition is satisfied.
 
+M06 slice 1 — 2026-10-01:
+- **Automated PASS**
+- `prize/box_flat` is dropped physically over the chute opening and settles bridging the lip
+- final body Y ≈ 0.022487 m
+- minimum world-COM Y ≈ 0.022045 m
+- chute sensor event count = 0
+- chute sensor win count = 0
+- no scripted support, freeze or sensor override is used.
+
 ## 20. PT-018 Chute win
 
 Setup:
@@ -556,6 +565,17 @@ Expected:
 - sensor records correct prize,
 - win fires once,
 - inventory/state update occurs once.
+
+M06 slice 1 — 2026-10-01:
+- **Automated PASS for physical sensor entry + exactly-once record**
+- `prize/cube_small` falls under gravity through the real floor opening
+- first sensor entry occurs at fixed tick 33 ≈ 0.275 s
+- event identifies `pt018-cube`
+- event count = 1
+- sensor win count = 1
+- final cube Y ≈ -0.252569 m on the lower chute catch
+- continued polling for another simulated second produces no duplicate event
+- broader machine inventory/result UI state remains M06 slice 2+ integration scope.
 
 ## 21. PT-019 Bridge box progression
 
@@ -817,6 +837,12 @@ Verify:
 - claw cannot trigger prize-out,
 - player boundary cannot physically shove prizes through glass,
 - decorative objects do not affect active prize physics unless explicitly configured.
+
+M06 slice 1 foundation — 2026-10-01:
+- chute-sensor no-push requirement — **PASS by construction**
+- current sensor is a pure observation volume over Rapier `worldCom()`; it creates no collider, impulse, joint or force
+- one-shot state records entry only after the prize is already physically inside the configured volume
+- claw-trigger and player-boundary sub-gates remain pending later cabinet/player integration.
 
 ## PT-039 Physics watchdog
 
