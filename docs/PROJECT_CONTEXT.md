@@ -915,10 +915,6 @@ Approximation note:
 - M05 provides physics-ready primitive/compound prize archetypes and basic color/finish variation, not final art production
 - future texture/pattern art is cosmetic content expansion and does not require new grab/success logic
 
-## Current next step
-
-Proceed to **M06 — Cabinet & Chute**. Add physical cabinet/play-area boundaries, readable glass, chute geometry and a sensor/result gate. Preserve the key rule that a prize touching or resting on the chute lip is not a win; a prize must physically satisfy the configured chute sensor condition.
-
 ## M06 implementation status — slice 1 verified 2026-10-01
 
 **Status: IN PROGRESS**
