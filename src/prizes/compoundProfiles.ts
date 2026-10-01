@@ -92,61 +92,66 @@ function teddyProfile(dimensions: Vec3): CompoundPrizeProfile {
   const sz = dimensions.z / 0.09;
   const radialScale = Math.min(sx, sz);
 
+  // Keep the M05 data-driven Teddy aligned with the PT-004 Tier-A
+  // collision silhouette: two-segment arms and enlarged paws are the
+  // physical geometry that makes limb hooking possible.
   const parts: PrizeVisualPart[] = [
     {
       shape: "sphere",
-      center: { x: 0, y: 0.078 * sy, z: 0 },
-      radius: 0.036 * radialScale,
+      center: { x: 0, y: 0.085 * sy, z: 0 },
+      radius: 0.035 * radialScale,
     },
     {
       shape: "capsule",
-      start: { x: 0, y: -0.045 * sy, z: 0 },
-      end: { x: 0, y: 0.038 * sy, z: 0 },
-      radius: 0.034 * radialScale,
+      start: { x: 0, y: -0.040 * sy, z: 0 },
+      end: { x: 0, y: 0.040 * sy, z: 0 },
+      radius: 0.035 * radialScale,
     },
     {
       shape: "capsule",
-      start: { x: -0.027 * sx, y: 0.020 * sy, z: 0 },
-      end: { x: -0.090 * sx, y: -0.020 * sy, z: 0 },
-      radius: 0.014 * radialScale,
+      start: { x: -0.030 * sx, y: 0.020 * sy, z: 0 },
+      end: { x: -0.100 * sx, y: 0.015 * sy, z: 0 },
+      radius: 0.013 * radialScale,
     },
     {
       shape: "capsule",
-      start: { x: 0.027 * sx, y: 0.020 * sy, z: 0 },
-      end: { x: 0.090 * sx, y: -0.020 * sy, z: 0 },
-      radius: 0.014 * radialScale,
+      start: { x: -0.100 * sx, y: 0.015 * sy, z: 0 },
+      end: { x: -0.065 * sx, y: -0.065 * sy, z: 0 },
+      radius: 0.013 * radialScale,
+    },
+    {
+      shape: "capsule",
+      start: { x: 0.030 * sx, y: 0.020 * sy, z: 0 },
+      end: { x: 0.100 * sx, y: 0.015 * sy, z: 0 },
+      radius: 0.013 * radialScale,
+    },
+    {
+      shape: "capsule",
+      start: { x: 0.100 * sx, y: 0.015 * sy, z: 0 },
+      end: { x: 0.065 * sx, y: -0.065 * sy, z: 0 },
+      radius: 0.013 * radialScale,
     },
     {
       shape: "sphere",
-      center: { x: -0.092 * sx, y: -0.025 * sy, z: 0 },
-      radius: 0.023 * radialScale,
+      center: { x: -0.065 * sx, y: -0.065 * sy, z: 0 },
+      radius: 0.030 * radialScale,
     },
     {
       shape: "sphere",
-      center: { x: 0.092 * sx, y: -0.025 * sy, z: 0 },
-      radius: 0.023 * radialScale,
+      center: { x: 0.065 * sx, y: -0.065 * sy, z: 0 },
+      radius: 0.030 * radialScale,
     },
     {
       shape: "capsule",
       start: { x: -0.020 * sx, y: -0.050 * sy, z: 0 },
-      end: { x: -0.036 * sx, y: -0.112 * sy, z: 0 },
+      end: { x: -0.035 * sx, y: -0.125 * sy, z: 0 },
       radius: 0.018 * radialScale,
     },
     {
       shape: "capsule",
       start: { x: 0.020 * sx, y: -0.050 * sy, z: 0 },
-      end: { x: 0.036 * sx, y: -0.112 * sy, z: 0 },
+      end: { x: 0.035 * sx, y: -0.125 * sy, z: 0 },
       radius: 0.018 * radialScale,
-    },
-    {
-      shape: "sphere",
-      center: { x: -0.022 * sx, y: 0.108 * sy, z: 0 },
-      radius: 0.015 * radialScale,
-    },
-    {
-      shape: "sphere",
-      center: { x: 0.022 * sx, y: 0.108 * sy, z: 0 },
-      radius: 0.015 * radialScale,
     },
   ];
 
