@@ -844,28 +844,63 @@ Final verification:
 
 # M06 — Cabinet & Chute
 
+**Status: IN PROGRESS — slice 1 verified 2026-10-01**
+
 ## Goal
 
 Move the working simulation into a real cabinet.
 
 ## Deliverables
 
-- cabinet frame
-- glass collision/rendering
-- play-area walls
-- chute geometry
-- chute sensor
-- control panel
-- basic cabinet lighting
-- machine limits
+- cabinet frame — PASS for gray-box shell
+- glass collision/rendering — PASS for physical transparent front/side glass
+- play-area walls — PASS
+- chute geometry — PASS for real floor opening + enclosed drop channel
+- chute sensor — PASS for non-contact one-shot sensor foundation
+- control panel — PASS for gray-box visual placeholder
+- basic cabinet lighting — PASS for gray-box cabinet light
+- machine limits — PASS for current M02 rail envelope inside cabinet bounds
+- integrate M02–M04 gantry/claw into cabinet — pending slice 2
+- return/release over physical chute — pending slice 2
+
+## Slice 1 — cabinet / chute foundation
+
+Implemented:
+- shared `src/cabinet/` geometry and chute-sensor modules
+- play-area half extents X ±0.46 m / Z ±0.36 m
+- physical floor split around an actual chute opening
+- front + side transparent glass colliders, back wall and ceiling
+- enclosed chute channel with lower catch surface
+- sensor is an observation volume based on prize Rapier world COM; it has no collider and cannot push/support prizes
+- each prize ID is recorded at most once
+- `?scene=cabinet-lab` renders cabinet frame/glass/chute, sensor wire volume, control panel, light and PrizeFactory prizes
+
+Measured acceptance:
+- cabinet containment peak |X| ≈ 0.407590 m / |Z| ≈ 0.307604 m, finite/bounded
+- current M02 carriage + carriage half-size remains within legal cabinet X/Z bounds
+- PT-017 flat box physically rests across chute lip:
+  - final Y ≈ 0.022487 m
+  - minimum COM Y ≈ 0.022045 m
+  - win events = 0
+- PT-018 small cube physically enters sensor:
+  - first event tick = 33 ≈ 0.275 s
+  - event count = 1
+  - final Y ≈ -0.252569 m
+  - duplicate polling remains suppressed
+- full suite = **66 automated tests PASS**
+- lint/build/base-path/browser smoke PASS
 
 ## Exit criteria
 
-- prizes cannot escape through cabinet
-- chute accepts a prize only after physical entry
-- prize touching chute lip does not auto-win
-- claw cannot travel outside legal play area
-- glass remains readable enough for gameplay
+Current status:
+- prizes cannot escape through cabinet — **PASS in isolated cabinet regression**
+- chute accepts a prize only after physical entry — **PASS, PT-018**
+- prize touching chute lip does not auto-win — **PASS, PT-017**
+- claw cannot travel outside legal play area — **PASS for configured M02 rail envelope; integrated cabinet regression pending**
+- glass remains readable enough for gameplay — **PARTIAL**; conservative transparent material implemented, first-person manual acceptance remains later
+- full working claw/return/release lifecycle inside cabinet — pending slice 2
+
+**Next slice:** integrate the closed gantry/claw/play-cycle into the cabinet and prove physical carried-prize RETURN → motor-driven RELEASE → chute sensor without prize teleport.
 
 ---
 
