@@ -27,9 +27,16 @@ import {
   M04_PLAY_CONFIG,
   advanceM04PlayState,
   m04FingerShouldClose,
+  m04ForcePhase,
   m04HoldBoostActive,
+  m04ReelCommand,
   type M04PlayState,
 } from "../scenes/m04PlayCycle";
+import {
+  advanceReel,
+  type ReelConfig,
+  type ReelState,
+} from "../scenes/reelMotion";
 import { computeSuspensionStabilizerImpulse } from "../scenes/suspensionStabilizer";
 import {
   M06_CABINET_CONFIG,
@@ -40,18 +47,20 @@ import { ChuteSensor } from "./chuteSensor";
 const dt = 1 / PHYSICS_HZ;
 
 describe("M06 carried-prize cabinet lifecycle", () => {
-  it("physically returns a held prize over the chute, releases it by motor opening, then records one sensor win", async () => {
+  it("physically hooks, lifts, returns, motor-releases and senses a PrizeFactory Teddy without teleport", async () => {
     const physics = await PhysicsRuntime.create();
     const claw = CLAW_LAB_CONFIG;
     const gantry = M02_GANTRY_CONFIG;
     createCabinetPhysics(physics);
 
-    const startX = 0.18;
+    const startX = 0.145;
     const startZ = 0.13;
     const targetX = M06_CABINET_CONFIG.chuteCenterX;
     const targetZ = M06_CABINET_CONFIG.chuteCenterZ;
+    const initialPayout = 0.18;
     const anchorY = gantry.carriageY - gantry.carriageHalfY;
-    const initialHubY = anchorY - gantry.suspensionLength;
+    const initialAnchorY = anchorY - initialPayout;
+    const initialHubY = initialAnchorY - gantry.suspensionLength;
 
     const carriage = physics.createKinematicCuboid(
       { x: startX, y: gantry.carriageY, z: startZ },
@@ -64,7 +73,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     );
     const reelAnchor = physics.createKinematicBody({
       x: startX,
-      y: anchorY,
+      y: initialAnchorY,
       z: startZ,
     });
     const hub = physics.createDynamicCylinder(
@@ -131,7 +140,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
           axis: tangent,
           minAngle: claw.closedAngle,
           maxAngle: claw.openAngle,
-          initialTarget: claw.openAngle,
+          initialTarget: 0,
           stiffness: claw.motorStiffness,
           damping: claw.motorDamping,
           maxTorque: claw.maxMotorTorque,
@@ -141,86 +150,65 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       joints.push(joint);
     }
 
-    const definition = getPrizeDefinition("prize/cube_small");
-    const prizeHalfHeight = definition.dimensions.y * 0.5;
-    const captureCenterOffset =
-      claw.hubCenterY - claw.pt001BallCenterY;
-    const prizeCenterY =
-      initialHubY - captureCenterOffset + 0.018;
-    const pedestalTopY = prizeCenterY - prizeHalfHeight;
-    const pedestalHalfHeight =
-      (pedestalTopY - M06_CABINET_CONFIG.playDeckY) * 0.5;
+    // Reuse the proven PT-004 hook geometry in the cabinet coordinate frame.
+    const verticalOffset = initialHubY - claw.hubCenterY;
+    const teddyCenterX = startX + claw.pt004BodyOffsetX;
+    const teddyCenterY = claw.pt004BodyCenterY + verticalOffset;
+    const supportTopY =
+      claw.pt004SupportCenterY +
+      claw.pt004SupportHalfY +
+      verticalOffset;
+    const supportHalfY =
+      (supportTopY - M06_CABINET_CONFIG.playDeckY) * 0.5;
 
-    physics.createStaticCylinder(
+    expect(supportHalfY).toBeGreaterThan(0.02);
+
+    physics.createStaticCuboid(
       {
-        x: startX,
+        x: teddyCenterX,
         y:
           M06_CABINET_CONFIG.playDeckY +
-          pedestalHalfHeight,
+          supportHalfY,
         z: startZ,
       },
-      pedestalHalfHeight,
-      0.036,
-      0.76,
+      {
+        x: claw.pt004SupportHalfX,
+        y: supportHalfY,
+        z: claw.pt004SupportHalfZ,
+      },
+      0.90,
     );
 
-    const prize = createPrize(physics, definition, {
-      position: {
-        x: startX,
-        y: prizeCenterY,
-        z: startZ,
+    const halfRotation = claw.pt004InitialRotationX * 0.5;
+    const teddy = createPrize(
+      physics,
+      getPrizeDefinition("prize/teddy_simple"),
+      {
+        position: {
+          x: teddyCenterX,
+          y: teddyCenterY,
+          z: startZ,
+        },
+        rotation: {
+          x: Math.sin(halfRotation),
+          y: 0,
+          z: 0,
+          w: Math.cos(halfRotation),
+        },
+        materialId: "material/plush",
+        massProfileId: "mass/standard",
+        comProfileId: "com/centered",
+        variantSeed: "m06-return-release-teddy",
       },
-      materialId: "material/rubber",
-      massProfileId: "mass/light",
-      comProfileId: "com/centered",
-      variantSeed: "m06-return-release-cube",
-    });
+    );
     const sensor = new ChuteSensor();
 
-    let fingerCommand = claw.openAngle;
-
-    const setFingerMotor = (
-      target: number,
-      maxTorque: number,
-    ): void => {
-      fingerCommand = advanceMotorCommand(
-        fingerCommand,
-        target,
-        claw.motorSpeedRadiansPerSecond,
-        dt,
-      );
-      for (const joint of joints) {
-        joint.configureMotorPosition(
-          fingerCommand,
-          claw.motorStiffness,
-          claw.motorDamping,
-        );
-        joint.setMotorMaxForce(maxTorque);
-      }
-      for (const finger of fingers) {
-        finger.wakeUp();
-      }
-      hub.wakeUp();
-      prize.body.wakeUp();
-    };
-
-    for (let tick = 0; tick < Math.round(PHYSICS_HZ * 1.1); tick += 1) {
-      setFingerMotor(claw.closedAngle, claw.maxMotorTorque);
-      physics.step();
-    }
-
-    expect(fingerCommand).toBeCloseTo(claw.closedAngle, 5);
-
-    const startPrize = prize.body.translation();
-    const startPrizePosition = {
-      x: startPrize.x,
-      y: startPrize.y,
-      z: startPrize.z,
-    };
-
-    let motion: GantryMotionState = {
-      x: { position: startX, velocity: 0 },
-      z: { position: startZ, velocity: 0 },
+    const reelConfig: ReelConfig = {
+      minPayout: gantry.reelMinPayout,
+      maxPayout: gantry.reelMaxPayout,
+      maxSpeed: gantry.reelMaxSpeed,
+      acceleration: gantry.reelAcceleration,
+      braking: gantry.reelBraking,
     };
     const motionConfig: GantryMotionConfig = {
       x: {
@@ -238,10 +226,6 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         braking: gantry.braking,
       },
     };
-    const tolerance = {
-      position: gantry.homePositionTolerance,
-      velocity: gantry.homeVelocityTolerance,
-    };
     const playConfig = {
       autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
       closedAngleRadians: claw.closedAngle,
@@ -256,32 +240,116 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       holdBoostDurationSeconds:
         M04_PLAY_CONFIG.holdBoostDurationSeconds,
     };
+
+    let motion: GantryMotionState = {
+      x: { position: startX, velocity: 0 },
+      z: { position: startZ, velocity: 0 },
+    };
+    let reel: ReelState = {
+      payout: initialPayout,
+      velocity: 0,
+    };
+    let fingerCommand = 0;
+
+    const driveFinger = (
+      target: number,
+      maxTorque: number,
+      transport = false,
+    ): void => {
+      fingerCommand = advanceMotorCommand(
+        fingerCommand,
+        target,
+        claw.motorSpeedRadiansPerSecond,
+        dt,
+      );
+      for (const joint of joints) {
+        joint.configureMotorPosition(
+          fingerCommand,
+          transport
+            ? M02_FINGER_TRANSPORT_CONFIG.stiffness
+            : claw.motorStiffness,
+          transport
+            ? M02_FINGER_TRANSPORT_CONFIG.damping
+            : claw.motorDamping,
+        );
+        joint.setMotorMaxForce(
+          transport
+            ? M02_FINGER_TRANSPORT_CONFIG.maxTorque
+            : maxTorque,
+        );
+      }
+      for (const finger of fingers) {
+        finger.wakeUp();
+      }
+      hub.wakeUp();
+      teddy.body.wakeUp();
+    };
+
+    // Let the lying Teddy settle while the claw reaches its open pose.
+    for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
+      driveFinger(
+        claw.openAngle,
+        M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+        true,
+      );
+      physics.step();
+    }
+
+    const teddyReferenceY = teddy.body.translation().y;
+
+    // Establish the same geometric limb hook used by PT-004 before lifting.
+    for (
+      let tick = 0;
+      tick < Math.ceil(claw.pt004CloseLeadSeconds * PHYSICS_HZ);
+      tick += 1
+    ) {
+      driveFinger(claw.pt004HookAngle, claw.maxMotorTorque);
+      physics.step();
+    }
+
     let play: M04PlayState = {
-      phase: "RETURNING",
+      phase: "PICKUP",
       phaseElapsedSeconds: 0,
       closeReason: "AUTO",
-      closeStartPayoutMeters: gantry.reelMaxPayout,
-      pickupStartPayoutMeters: gantry.reelMaxPayout,
-      retainingStartPayoutMeters: 0.20,
+      closeStartPayoutMeters: initialPayout,
+      pickupStartPayoutMeters: initialPayout,
+      retainingStartPayoutMeters: null,
       holdBoostUsedSeconds: 0,
     };
 
+    const tolerance = {
+      position: gantry.homePositionTolerance,
+      velocity: gantry.homeVelocityTolerance,
+    };
+
+    let returningTick: number | null = null;
     let releaseTick: number | null = null;
     let sensorTick: number | null = null;
     let readyTick: number | null = null;
-    let prizeTravelAtRelease = 0;
+    let maxLiftMeters = 0;
+    let liftAtReturnMeters = Number.NaN;
+    let returnStartPrizePosition: {
+      x: number;
+      y: number;
+      z: number;
+    } | null = null;
+    let prizeTravelAtRelease = Number.NaN;
     let maxHubLagMeters = 0;
     let maxPrizeStepMeters = 0;
-    let previousPrizePosition = {
-      x: startPrizePosition.x,
-      y: startPrizePosition.y,
-      z: startPrizePosition.z,
-    };
+    let maxBoostUsedSeconds = 0;
     let sensorEvents = 0;
     let finiteAndBounded = true;
+    let previousPrizePosition = {
+      x: teddy.body.translation().x,
+      y: teddy.body.translation().y,
+      z: teddy.body.translation().z,
+    };
 
-    for (let tick = 1; tick <= PHYSICS_HZ * 5; tick += 1) {
-      if (play.phase === "RETURNING") {
+    for (let tick = 1; tick <= PHYSICS_HZ * 8; tick += 1) {
+      const phaseAtTickStart = play.phase;
+      const reelCommand = m04ReelCommand(play);
+
+      if (phaseAtTickStart === "RETURNING") {
         motion = advanceGantryMotionTowardPosition(
           motion,
           targetX,
@@ -291,6 +359,66 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         );
       }
 
+      reel = advanceReel(
+        reel,
+        reelCommand,
+        reelConfig,
+        dt,
+      );
+
+      const reelAtTop =
+        reel.payout <= gantry.reelMinPayout + 1e-5 &&
+        Math.abs(reel.velocity) < 1e-4;
+      const homeReached =
+        isGantryAxisAtTarget(motion.x, targetX, tolerance) &&
+        isGantryAxisAtTarget(motion.z, targetZ, tolerance);
+      const boostRequested =
+        phaseAtTickStart === "RETURNING";
+
+      const beforeImmediate = play.phase;
+      play = advanceM04PlayState(
+        play,
+        {
+          reelPayoutMeters: reel.payout,
+          fingerCommandRadians: fingerCommand,
+          reelAtTop,
+          homeReached,
+          holdBoostRequested: boostRequested,
+        },
+        playConfig,
+        0,
+      );
+
+      if (
+        beforeImmediate !== "RETURNING" &&
+        play.phase === "RETURNING" &&
+        returningTick === null
+      ) {
+        returningTick = tick;
+        const p = teddy.body.translation();
+        returnStartPrizePosition = {
+          x: p.x,
+          y: p.y,
+          z: p.z,
+        };
+        liftAtReturnMeters = p.y - teddyReferenceY;
+      }
+
+      if (
+        beforeImmediate === "RETURNING" &&
+        play.phase === "RELEASING" &&
+        releaseTick === null
+      ) {
+        releaseTick = tick;
+        const p = teddy.body.translation();
+        if (returnStartPrizePosition) {
+          prizeTravelAtRelease = Math.hypot(
+            p.x - returnStartPrizePosition.x,
+            p.z - returnStartPrizePosition.z,
+          );
+        }
+      }
+
       carriage.setNextKinematicTranslation({
         x: motion.x.position,
         y: gantry.carriageY,
@@ -298,7 +426,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       });
       reelAnchor.setNextKinematicTranslation({
         x: motion.x.position,
-        y: anchorY,
+        y: anchorY - reel.payout,
         z: motion.z.position,
       });
 
@@ -327,40 +455,10 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         true,
       );
 
-      const homeReached =
-        isGantryAxisAtTarget(motion.x, targetX, tolerance) &&
-        isGantryAxisAtTarget(motion.z, targetZ, tolerance);
-      const phaseBefore = play.phase;
-      play = advanceM04PlayState(
-        play,
-        {
-          reelPayoutMeters: 0,
-          fingerCommandRadians: fingerCommand,
-          reelAtTop: true,
-          homeReached,
-          holdBoostRequested: true,
-        },
-        playConfig,
-        0,
-      );
-
-      if (
-        phaseBefore === "RETURNING" &&
-        play.phase === "RELEASING" &&
-        releaseTick === null
-      ) {
-        releaseTick = tick;
-        const p = prize.body.translation();
-        prizeTravelAtRelease = Math.hypot(
-          p.x - startPrizePosition.x,
-          p.z - startPrizePosition.z,
-        );
-      }
-
       const closing = m04FingerShouldClose(play);
-      const boostActive = m04HoldBoostActive(
+      const holdBoostActive = m04HoldBoostActive(
         play,
-        true,
+        play.phase === "RETURNING",
         playConfig,
       );
       fingerCommand = advanceMotorCommand(
@@ -369,6 +467,14 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         claw.motorSpeedRadiansPerSecond,
         dt,
       );
+
+      const forcePhase = m04ForcePhase(play);
+      const activeTorque =
+        forcePhase === "RETAINING"
+          ? holdBoostActive
+            ? M04_PLAY_CONFIG.holdBoostTorque
+            : claw.pt002RetainingTorque
+          : claw.maxMotorTorque;
 
       for (const joint of joints) {
         joint.configureMotorPosition(
@@ -382,9 +488,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         );
         joint.setMotorMaxForce(
           closing
-            ? boostActive
-              ? M04_PLAY_CONFIG.holdBoostTorque
-              : claw.pt002RetainingTorque
+            ? activeTorque
             : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
@@ -392,22 +496,25 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       play = advanceM04PlayState(
         play,
         {
-          reelPayoutMeters: 0,
+          reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
-          reelAtTop: true,
+          reelAtTop,
           homeReached,
-          holdBoostRequested: true,
+          holdBoostRequested: play.phase === "RETURNING",
         },
         playConfig,
         dt,
+      );
+      maxBoostUsedSeconds = Math.max(
+        maxBoostUsedSeconds,
+        play.holdBoostUsedSeconds,
       );
 
       for (const finger of fingers) {
         finger.wakeUp();
       }
       hub.wakeUp();
-      prize.body.wakeUp();
-
+      teddy.body.wakeUp();
       physics.step();
 
       const currentHub = hub.translation();
@@ -419,13 +526,17 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         ),
       );
 
-      const p = prize.body.translation();
-      const stepDistance = Math.hypot(
-        p.x - previousPrizePosition.x,
-        p.y - previousPrizePosition.y,
-        p.z - previousPrizePosition.z,
+      const p = teddy.body.translation();
+      const lift = p.y - teddyReferenceY;
+      maxLiftMeters = Math.max(maxLiftMeters, lift);
+      maxPrizeStepMeters = Math.max(
+        maxPrizeStepMeters,
+        Math.hypot(
+          p.x - previousPrizePosition.x,
+          p.y - previousPrizePosition.y,
+          p.z - previousPrizePosition.z,
+        ),
       );
-      maxPrizeStepMeters = Math.max(maxPrizeStepMeters, stepDistance);
       previousPrizePosition = { x: p.x, y: p.y, z: p.z };
 
       finiteAndBounded =
@@ -434,9 +545,12 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         Math.abs(p.x) < 0.50 &&
         Math.abs(p.z) < 0.40 &&
         p.y > -0.34 &&
-        p.y < 1.0;
+        p.y < 1.20;
 
-      const event = sensor.pollPrize("m06-carried-cube", prize.body);
+      const event = sensor.pollPrize(
+        "m06-carried-teddy",
+        teddy.body,
+      );
       if (event) {
         sensorEvents += 1;
         sensorTick ??= tick;
@@ -455,31 +569,31 @@ describe("M06 carried-prize cabinet lifecycle", () => {
       }
     }
 
-    const finalPrize = prize.body.translation();
-    const targetDistanceFromStart = Math.hypot(
+    const finalPrize = teddy.body.translation();
+    const returnDistance = Math.hypot(
       targetX - startX,
       targetZ - startZ,
     );
 
     console.log(
-      "M06 carried-prize lifecycle metrics",
+      "M06 Teddy hook lifecycle metrics",
       JSON.stringify({
+        initialPayout,
         startX,
         startZ,
         targetX,
         targetZ,
-        targetDistanceFromStart,
-        prizeTravelAtRelease,
+        returnDistance,
+        maxLiftMeters,
+        liftAtReturnMeters,
+        returningTick,
         releaseTick,
-        releaseSeconds:
-          releaseTick === null ? null : releaseTick / PHYSICS_HZ,
         sensorTick,
-        sensorSeconds:
-          sensorTick === null ? null : sensorTick / PHYSICS_HZ,
         readyTick,
+        prizeTravelAtRelease,
         maxHubLagMeters,
         maxPrizeStepMeters,
-        holdBoostUsedSeconds: play.holdBoostUsedSeconds,
+        maxBoostUsedSeconds,
         sensorEvents,
         sensorWins: sensor.winCount,
         finalPrize: {
@@ -492,14 +606,21 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     );
 
     expect(finiteAndBounded).toBe(true);
-    expect(releaseTick).not.toBeNull();
-    expect(prizeTravelAtRelease).toBeGreaterThan(0.06);
-    expect(prizeTravelAtRelease).toBeGreaterThan(
-      targetDistanceFromStart * 0.55,
+    expect(maxLiftMeters).toBeGreaterThanOrEqual(
+      claw.pt004MinPeakLift,
     );
+    expect(returningTick).not.toBeNull();
+    expect(liftAtReturnMeters).toBeGreaterThan(0.02);
+    expect(releaseTick).not.toBeNull();
+    expect(releaseTick!).toBeGreaterThan(returningTick!);
+    expect(prizeTravelAtRelease).toBeGreaterThan(0.05);
     expect(maxHubLagMeters).toBeGreaterThan(0.001);
     expect(maxHubLagMeters).toBeLessThan(0.05);
-    expect(maxPrizeStepMeters).toBeLessThan(0.02);
+    expect(maxPrizeStepMeters).toBeLessThan(0.025);
+    expect(maxBoostUsedSeconds).toBeGreaterThan(0);
+    expect(maxBoostUsedSeconds).toBeLessThanOrEqual(
+      M04_PLAY_CONFIG.holdBoostDurationSeconds + 1e-8,
+    );
     expect(sensorTick).not.toBeNull();
     expect(sensorTick!).toBeGreaterThan(releaseTick!);
     expect(sensorEvents).toBe(1);
@@ -512,7 +633,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
       physics.step();
       expect(
-        sensor.pollPrize("m06-carried-cube", prize.body),
+        sensor.pollPrize("m06-carried-teddy", teddy.body),
       ).toBeNull();
     }
     expect(sensor.winCount).toBe(1);
