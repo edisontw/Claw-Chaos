@@ -8,6 +8,7 @@ import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
+import { createGantryLabScene } from "./gantryLab";
 import type { SimulationScene } from "./types";
 
 function createPartMaterial(
@@ -36,9 +37,17 @@ function createPartMaterial(
 
   if (part.role === "floor") {
     return new THREE.MeshStandardMaterial({
-      color: 0x777f8a,
-      roughness: 0.90,
+      color: 0x555d68,
+      roughness: 0.94,
       metalness: 0.02,
+    });
+  }
+
+  if (part.role === "play_deck") {
+    return new THREE.MeshStandardMaterial({
+      color: 0x8a929d,
+      roughness: 0.86,
+      metalness: 0.03,
     });
   }
 
@@ -137,15 +146,36 @@ export function createCabinetLabScene(
   addControlPanel(scene);
   addSensorDebugVolume(scene);
 
-  const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.5, 2.0, 1.7);
-  cabinetLight.position.set(0, 0.54, 0.02);
+  const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.5, 2.2, 1.7);
+  cabinetLight.position.set(0, 1.05, 0.02);
   scene.add(cabinetLight);
 
+  const gantryScene = createGantryLabScene(
+    scene,
+    physics,
+    {
+      addLabFloor: false,
+      playReturnTarget: {
+        x: M06_CABINET_CONFIG.chuteCenterX,
+        z: M06_CABINET_CONFIG.chuteCenterZ,
+      },
+      milestone: "M06 / Cabinet play lifecycle",
+      camera: {
+        position: [1.08, 1.00, 1.30],
+        target: [0, 0.66, 0.02],
+      },
+    },
+  );
+
   const sensor = new ChuteSensor();
-  const bindings: SimulationScene["bindings"] = [];
+  const bindings: SimulationScene["bindings"] = [
+    ...gantryScene.bindings,
+  ];
   const massPropertiesDebugTargets: NonNullable<
     SimulationScene["massPropertiesDebugTargets"]
-  > = [];
+  > = [
+    ...(gantryScene.massPropertiesDebugTargets ?? []),
+  ];
   const tracked: Array<{
     id: string;
     body: ReturnType<typeof createPrize>["body"];
@@ -154,46 +184,50 @@ export function createCabinetLabScene(
   const placements = [
     {
       id: "prize/cube_small",
-      position: { x: -0.24, y: 0.10, z: -0.16 },
+      x: -0.24,
+      z: -0.15,
       rotationYRadians: 0.18,
     },
     {
       id: "prize/sphere_ball",
-      position: { x: -0.05, y: 0.11, z: -0.10 },
+      x: 0,
+      z: 0,
       rotationYRadians: 0,
     },
     {
       id: "prize/teddy_simple",
-      position: { x: 0.14, y: 0.16, z: -0.12 },
+      x: 0.18,
+      z: -0.13,
       rotationYRadians: -0.22,
     },
     {
       id: "prize/pillow_small",
-      position: { x: -0.18, y: 0.08, z: 0.12 },
+      x: -0.18,
+      z: 0.13,
       rotationYRadians: 0.28,
     },
     {
       id: "prize/animal_simple",
-      position: { x: 0.06, y: 0.12, z: 0.08 },
+      x: 0.06,
+      z: 0.14,
       rotationYRadians: -0.12,
-    },
-    {
-      id: "prize/box_flat",
-      position: {
-        x: M06_CABINET_CONFIG.chuteCenterX,
-        y: 0.07,
-        z: M06_CABINET_CONFIG.chuteCenterZ,
-      },
-      rotationYRadians: 0,
     },
   ];
 
   for (const [index, placement] of placements.entries()) {
+    const definition = getPrizeDefinition(placement.id);
     const prize = createPrize(
       physics,
-      getPrizeDefinition(placement.id),
+      definition,
       {
-        position: placement.position,
+        position: {
+          x: placement.x,
+          y:
+            M06_CABINET_CONFIG.playDeckY +
+            definition.dimensions.y * 0.5 +
+            0.002,
+          z: placement.z,
+        },
         rotationYRadians: placement.rotationYRadians,
         variantSeed: `m06-cabinet-${index}`,
       },
@@ -219,12 +253,11 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M06 / Cabinet + chute slice 1",
-    camera: {
-      position: [1.22, 0.83, 1.35],
-      target: [0, 0.20, 0.02],
-    },
-    beforePhysicsStep(): void {
+    milestone: "M06 / Cabinet play lifecycle",
+    camera: gantryScene.camera,
+    beforePhysicsStep(stepSeconds: number): void {
+      gantryScene.beforePhysicsStep?.(stepSeconds);
+
       for (const prize of tracked) {
         const event = sensor.pollPrize(prize.id, prize.body);
         if (event) {
@@ -234,14 +267,17 @@ export function createCabinetLabScene(
     },
     debugLines(): string[] {
       return [
-        "Cabinet           physical floor / walls / glass / ceiling",
-        "Chute             physical lip + enclosed drop channel",
+        ...(gantryScene.debugLines?.() ?? []),
+        "Cabinet           physical deck / walls / glass / ceiling",
+        "Chute target      " +
+          M06_CABINET_CONFIG.chuteCenterX.toFixed(3) +
+          " / " +
+          M06_CABINET_CONFIG.chuteCenterZ.toFixed(3) +
+          " m",
         `Sensor wins       ${sensor.winCount}`,
         `Last sensor prize ${lastWinPrizeId}`,
         "Green wire box    chute sensor volume",
-        "Flat box          starts bridging chute lip; touch is not a win",
-        "M                 COM/origin debug",
-        "D                 collider debug",
+        "Center ball       aligned for first physical pickup attempt",
       ];
     },
   };
