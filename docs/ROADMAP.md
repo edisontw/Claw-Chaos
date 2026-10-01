@@ -759,7 +759,7 @@ Current status:
 
 # M05 — Prize Physics Library v1
 
-**Status: IN PROGRESS — slice 1 verified 2026-10-01**
+**Status: CLOSED — 2026-10-01**
 
 ## Goal
 
@@ -767,64 +767,78 @@ Create reusable prize content.
 
 ## Deliverables
 
-At least:
+Implemented:
 - cube — PASS
 - box — PASS
 - tall box — PASS
 - flat box — PASS
 - sphere — PASS
-- ellipsoid — PASS with stable compound-sphere collision approximation
-- cylinder/capsule — PASS
-- pillow — pending
-- simple teddy — pending
-- simple animal — pending
-
-Plus:
-- material profiles — PASS, 4 starter profiles
-- mass profiles — PASS, light/standard/heavy
+- ellipsoid — PASS with stable three-sphere collision approximation
+- cylinder — PASS
+- capsule — PASS
+- pillow — PASS with rounded compound profile
+- simple Teddy — PASS with compound sphere/capsule profile
+- simple animal — PASS with compound sphere/capsule profile
+- material profiles — PASS, 5 starter profiles
+- mass profiles — PASS, light / standard / heavy
 - COM profiles — PASS, 5 starter profiles
-- PrizeFactory — PASS for current starter families
-- 6–12 colors — PASS, 8 colors
-- basic pattern/material variants — PARTIAL, matte/gloss finish variants implemented; patterns pending
+- PrizeFactory — PASS
+- 8 colors — PASS
+- matte / gloss finish variants — PASS
+- deterministic variant enumeration — PASS
 
-## Slice 1 — data model / PrizeFactory / starter rigid shapes
+## Final closure record
 
-Implemented:
-- `src/prizes/` data model and catalog
-- PrizeFactory resolves definition + material + mass + COM + deterministic visual variant
-- explicit Rapier mass-properties primitive body path keeps collision geometry massless and authors total mass/local COM/principal inertia directly
-- same definition can be spawned with different mass and COM profiles without prize-specific grab code
-- `?scene=prize-lab` displays all eight starter definitions; default remains `gantry-lab`
-- existing `M` COM/origin and `D` collider debug work with all starter prizes
+PrizeFactory:
+- 11 data-driven prize definitions
+- no prize-specific grab/success code
+- explicit Rapier total mass / local COM / principal inertia
+- zero-density collision primitives prevent collider topology from silently changing authored mass
+- primitive and compound colliders share the same spawn path
+- isolated `?scene=prize-lab` remains available for visual/collider/COM inspection
 
-Measured regression:
-- 8/8 starter shapes remain finite and above the floor after 4 simulated seconds
-- all eight calibrated bodies report final linear speed = 0
-- full suite = **57 automated tests PASS**
-- lint/build/base-path/browser smoke PASS
+Content target:
+- 11 definitions × 8 colors × 2 finishes = **176 unique valid visible variants**
+- explicit enumeration/uniqueness regression PASS
 
-Approximation notes:
-- Rapier exposes a single friction coefficient per collider in the current runtime path, so the material profile stores static/dynamic values but slice 1 applies the dynamic value as the contact coefficient
-- ellipsoid collision uses three overlapping spheres; the visual remains a true scaled ellipsoid
-- capsule visual is a cylinder plus sphere caps aligned to the endpoint-based physical capsule
+Behavioral differentiation:
+- PT-021 material friction:
+  - plastic box travel ≈ 124.20 mm
+  - rubber box travel ≈ 92.23 mm
+  - measurable separation ≈ 31.97 mm
+- mass profile:
+  - light 0.090 kg + same impulse → ≈ 0.3333 m/s
+  - heavy 0.162 kg + same impulse → ≈ 0.1852 m/s
+- PT-022 COM:
+  - centered COM under center impulse → 0 rad rotation
+  - left-offset COM X ≈ -18.90 mm
+  - same impulse → ≈ 0.40385 rad rotation
+  - peak angular speed ≈ 1.6154 rad/s
 
-## Target
-
-50–100+ generated visible variants.
-
-Current combinatorial capacity from 8 definitions × 8 colors × 2 finishes = 128 visible combinations, but formal enumeration/uniqueness acceptance remains pending.
+PT-015 pile stability:
+- 12 PrizeFactory bodies
+- reaches all-sleep state in ≈ 2.3167 s
+- remains simulated for another 60 s
+- maximum post-settle drift = 0
+- maximum post-settle speed = 0
+- final sleeping = 12/12
+- finite/bounded PASS
 
 ## Exit criteria
 
-Current status:
-- prize creation is data-driven — **PASS for slice-1 families**
-- same shape can use different material/mass/COM profiles — **PASS at configuration/mass-property level**
-- behavioral material differentiation — pending PT-021
-- behavioral COM differentiation — pending PT-022
+- prize creation is data-driven — **PASS**
+- same shape can behave differently by material — **PASS**
+- same shape can behave differently by mass — **PASS**
+- same shape can behave differently by COM — **PASS**
 - no prize-specific grab code — **PASS**
-- 10–15 object pile can settle and remain stable — pending PT-015
+- 10–15 object pile can settle and remain stable — **PASS**
+- 50–100+ generated visible variants — **PASS, 176**
 
-**Next slice:** add pillow / simple teddy / simple animal templates, then behavioral material/COM regressions and the 10–15 prize pile stability gate.
+Final verification:
+- **62 automated tests PASS**
+- lint/build/base-path/browser smoke PASS
+
+**M05 CLOSED. Next phase:** M06 — Cabinet & Chute.
 
 ---
 

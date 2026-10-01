@@ -308,11 +308,11 @@ metadata
 
 PrizeFactory must be the only normal path for spawning prize gameplay entities.
 
-### M05 slice-1 implementation note — 2026-10-01
+### M05 implementation / closure note — 2026-10-01
 
-The first runtime implementation now lives under `src/prizes/`.
+The runtime implementation lives under `src/prizes/` and M05 closes with PrizeFactory as the single normal prize spawn path.
 
-Current resolved spawn path:
+Resolved spawn path:
 
 ```text
 PrizeDefinition
@@ -324,26 +324,50 @@ PrizeDefinition
 resolvePrizeSpec
         ↓
 explicit mass / local COM / principal inertia
-+ primitive/compound collider template
++ primitive/compound collider profile
 + render object
         ↓
 PrizeFactory
 ```
 
 Important implementation details:
-- collision geometry is created with zero density for the new PrizeFactory path,
+- collision geometry is created with zero density on the PrizeFactory path,
 - total mass, local center of mass and principal angular inertia are authored explicitly on the Rapier rigid body,
-- this prevents collider topology from accidentally changing intended prize mass/COM,
-- reusable mass/COM profile overrides therefore change real physics mass properties,
+- collider topology therefore cannot silently change intended prize mass/COM,
+- material, mass and COM overrides all produce measured physical behavior changes,
 - material profiles remain separate from visual finish/color selection,
-- the current Rapier runtime path exposes one contact-friction coefficient, so slice 1 applies `dynamicFriction` while retaining `staticFriction` in data for later calibration/engine policy,
-- ellipsoid collision currently uses a documented three-sphere approximation,
-- visual variants are deterministic from a seed.
+- current Rapier contact path applies the profile's `dynamicFriction` as its collider friction coefficient while retaining authored `staticFriction` for future policy/calibration,
+- deterministic runtime variant seeds remain supported,
+- explicit variant enumeration verifies 176 unique definition/color/finish combinations.
 
-Slice-1 implemented shape families:
-`cube`, `box`, `tall_box`, `flat_box`, `sphere`, `ellipsoid`, `cylinder`, and `capsule`.
+Implemented shape families:
+- `cube`
+- `box`
+- `tall_box`
+- `flat_box`
+- `sphere`
+- `ellipsoid`
+- `cylinder`
+- `capsule`
+- `pillow`
+- `plush_humanoid`
+- `plush_animal`
 
-Pillow and articulated/compound teddy/animal templates remain later M05 slices.
+Compound profiles:
+- pillow = central rounded body approximation using cuboid + corner spheres,
+- simple Teddy = head/paws/ears spheres plus torso/arms/legs capsules,
+- simple animal = horizontal torso capsule, head, four legs, tail and ears,
+- compound prize geometry is reusable profile data; it does not introduce prize-specific grab/success logic.
+
+Approximation policy:
+- ellipsoid collision uses three overlapping spheres while rendering remains visually ellipsoidal,
+- simple plush bodies remain rigid compound approximations in M05 rather than unstable soft-body/articulated simulations,
+- basic color + matte/gloss finish variation satisfies the M05 visible-variant target; later texture/pattern art can expand cosmetically without changing physics or grab logic.
+
+Verified M05 content behavior:
+- material, mass and COM differences are measurable under controlled regressions,
+- a 12-prize contact pile reaches sleep and remains unchanged through a 60-second post-settle simulation,
+- the PrizeFactory architecture therefore meets the M05 data-driven and stability exit gates.
 
 ## 11. LayoutDefinition
 

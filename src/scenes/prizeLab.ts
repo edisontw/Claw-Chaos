@@ -36,8 +36,8 @@ export function createPrizeLabScene(
     const prize = createPrize(physics, definition, {
       position: {
         x: -0.45 + column * 0.30,
-        y: 0.30 + row * 0.34,
-        z: row === 0 ? -0.19 : 0.19,
+        y: 0.34,
+        z: -0.30 + row * 0.30,
       },
       rotationYRadians: rng.range(-0.35, 0.35),
       variantSeed: `${seed}:${definition.id}`,
@@ -65,9 +65,9 @@ export function createPrizeLabScene(
     debugLines(): string[] {
       return [
         "PrizeFactory      data-driven starter catalog",
-        "Shapes            cube box tall flat sphere ellipsoid cylinder capsule",
-        "Profiles          4 material | 3 mass | 5 COM",
-        "Variants          8 colors x 2 finishes",
+        "Shapes            11 defs incl pillow teddy animal",
+        "Profiles          5 material | 3 mass | 5 COM",
+        "Variants          11 x 8 colors x 2 finishes = 176",
         "M                COM/origin debug",
         "D                collider debug",
       ];
