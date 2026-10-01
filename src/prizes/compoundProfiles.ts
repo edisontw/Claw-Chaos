@@ -27,6 +27,30 @@ export interface CompoundPrizeProfile {
   visualParts: PrizeVisualPart[];
 }
 
+function toPrimitiveCollider(part: PrizeVisualPart): PrimitiveColliderSpec {
+  switch (part.shape) {
+    case "cuboid":
+      return {
+        shape: "cuboid",
+        center: part.center,
+        halfExtents: part.halfExtents,
+      };
+    case "sphere":
+      return {
+        shape: "sphere",
+        center: part.center,
+        radius: part.radius,
+      };
+    case "capsule":
+      return {
+        shape: "capsule",
+        start: part.start,
+        end: part.end,
+        radius: part.radius,
+      };
+  }
+}
+
 function pillowProfile(dimensions: Vec3): CompoundPrizeProfile {
   const radius = Math.min(dimensions.x, dimensions.z) * 0.19;
   const cornerX = dimensions.x * 0.30;
@@ -57,20 +81,7 @@ function pillowProfile(dimensions: Vec3): CompoundPrizeProfile {
   ];
 
   return {
-    colliders: parts.map((part): PrimitiveColliderSpec => {
-      if (part.shape === "cuboid") {
-        return {
-          shape: "cuboid",
-          center: part.center,
-          halfExtents: part.halfExtents,
-        };
-      }
-      return {
-        shape: "sphere",
-        center: part.center,
-        radius: part.radius,
-      };
-    }),
+    colliders: parts.map(toPrimitiveCollider),
     visualParts: parts,
   };
 }
@@ -140,20 +151,7 @@ function teddyProfile(dimensions: Vec3): CompoundPrizeProfile {
   ];
 
   return {
-    colliders: parts.map((part): PrimitiveColliderSpec =>
-      part.shape === "sphere"
-        ? {
-            shape: "sphere",
-            center: part.center,
-            radius: part.radius,
-          }
-        : {
-            shape: "capsule",
-            start: part.start,
-            end: part.end,
-            radius: part.radius,
-          },
-    ),
+    colliders: parts.map(toPrimitiveCollider),
     visualParts: parts,
   };
 }
@@ -219,20 +217,7 @@ function animalProfile(dimensions: Vec3): CompoundPrizeProfile {
   ];
 
   return {
-    colliders: parts.map((part): PrimitiveColliderSpec =>
-      part.shape === "sphere"
-        ? {
-            shape: "sphere",
-            center: part.center,
-            radius: part.radius,
-          }
-        : {
-            shape: "capsule",
-            start: part.start,
-            end: part.end,
-            radius: part.radius,
-          },
-    ),
+    colliders: parts.map(toPrimitiveCollider),
     visualParts: parts,
   };
 }
