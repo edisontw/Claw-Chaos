@@ -431,9 +431,7 @@ export function createPrize(
     centerOfMass: resolved.centerOfMass,
     principalAngularInertia: resolved.principalAngularInertia,
   };
-  const rotation =
-    options.rotation ??
-    rotationYQuaternion(options.rotationYRadians ?? 0);
+  const rotationYRadians = options.rotationYRadians ?? 0;
   const body = physics.createDynamicBodyWithMassProperties(
     options.position,
     buildColliders(definition),
@@ -442,7 +440,7 @@ export function createPrize(
       friction: resolved.material.dynamicFriction,
       restitution: resolved.material.restitution,
     },
-    rotation,
+    rotationYQuaternion(rotationYRadians),
   );
 
   return {
