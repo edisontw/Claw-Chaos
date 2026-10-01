@@ -919,6 +919,62 @@ Approximation note:
 
 Proceed to **M06 — Cabinet & Chute**. Add physical cabinet/play-area boundaries, readable glass, chute geometry and a sensor/result gate. Preserve the key rule that a prize touching or resting on the chute lip is not a win; a prize must physically satisfy the configured chute sensor condition.
 
+## M06 implementation status — slice 1 verified 2026-10-01
+
+**Status: IN PROGRESS**
+
+Implemented foundation:
+- new shared `src/cabinet/` module
+- cabinet/play-area collision shell:
+  - X interior half-width = 0.46 m
+  - Z interior half-depth = 0.36 m
+  - physical floor, glass/front/side boundaries, back wall and ceiling
+- existing M02 carriage envelope remains fully inside the cabinet legal bounds
+- floor is split around a real chute opening rather than using a visual-only hole
+- enclosed physical chute walls and bottom catch surface
+- chute sensor is a non-contact observation volume and therefore cannot push or support prizes
+- chute sensor records a prize only when its real Rapier world COM enters the configured sensor volume
+- each prize ID can generate at most one win event
+- `?scene=cabinet-lab` renders the same cabinet geometry with transparent glass, a basic control panel, cabinet light, green sensor-volume debug and PrizeFactory prizes
+- `gantry-lab` remains the default scene; no M01–M05 claw/force calibration changed
+
+Acceptance:
+- cabinet containment regression:
+  - peak |X| ≈ 0.407590 m
+  - peak |Z| ≈ 0.307604 m
+  - all bodies remain finite/bounded inside the physical shell
+- PT-017 chute edge:
+  - flat box physically settles across the chute opening
+  - final Y ≈ 0.022487 m
+  - minimum COM Y ≈ 0.022045 m
+  - sensor events = 0
+  - sensor wins = 0
+- PT-018 chute win:
+  - small cube falls physically through the opening
+  - first sensor entry = fixed tick 33 ≈ 0.275 s
+  - event count = 1
+  - sensor win count = 1
+  - final cube Y ≈ -0.252569 m on the lower chute catch
+  - continued polling cannot create a duplicate win
+
+Verification:
+- **66 automated tests PASS**
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- browser `gantry-lab` smoke PASS
+
+Scope still pending:
+- the M02–M04 gantry/claw is not yet mounted inside the cabinet scene
+- physical RETURN target is not yet moved to the real chute position
+- a physically carried prize has not yet been returned and released into the chute
+- end-to-end result/inventory state is not yet connected to the M04 play lifecycle
+- glass readability is represented by a conservative transparent material but still needs manual/play-view acceptance after first-person camera integration
+
+## Current next step
+
+Continue **M06 slice 2** by integrating the existing gantry/claw/play-cycle into the physical cabinet. Set the physical return/release target over the chute, then add a carried-prize regression proving the prize can swing/slip during RETURN, leaves the fingers through motor-driven release/contact loss, and triggers the chute sensor only after physical entry. Do not teleport the claw or prize and do not let sensor state pull the prize into the chute.
+
 ## Design-review additions
 
 The 2026-09-28 second-pass review identified and formalized several previously under-specified areas:
