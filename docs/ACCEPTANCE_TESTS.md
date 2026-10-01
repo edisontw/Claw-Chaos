@@ -547,11 +547,11 @@ Setup:
 Expected:
 - no win until valid chute sensor condition is satisfied.
 
-M06 slice 1 — 2026-10-01:
+M06 integrated deck calibration — 2026-10-01:
 - **Automated PASS**
-- `prize/box_flat` is dropped physically over the chute opening and settles bridging the lip
-- final body Y ≈ 0.022487 m
-- minimum world-COM Y ≈ 0.022045 m
+- `prize/box_flat` is placed partially over the physical chute lip with its COM still supported by the raised play deck
+- final body Y ≈ 0.287457 m
+- minimum world-COM Y ≈ 0.287045 m
 - chute sensor event count = 0
 - chute sensor win count = 0
 - no scripted support, freeze or sensor override is used.
@@ -566,16 +566,17 @@ Expected:
 - win fires once,
 - inventory/state update occurs once.
 
-M06 slice 1 — 2026-10-01:
+M06 physical chute integration — 2026-10-01:
 - **Automated PASS for physical sensor entry + exactly-once record**
-- `prize/cube_small` falls under gravity through the real floor opening
+- `prize/cube_small` falls under gravity through the real raised-deck opening
 - first sensor entry occurs at fixed tick 33 ≈ 0.275 s
 - event identifies `pt018-cube`
 - event count = 1
 - sensor win count = 1
 - final cube Y ≈ -0.252569 m on the lower chute catch
 - continued polling for another simulated second produces no duplicate event
-- broader machine inventory/result UI state remains M06 slice 2+ integration scope.
+- the full carried-prize lifecycle independently reaches the same one-shot sensor only after motor RELEASE
+- explicit result/inventory consumption remains the final M06 closure item.
 
 ## 21. PT-019 Bridge box progression
 
@@ -758,7 +759,16 @@ M04 lifecycle integration — 2026-10-01:
 - reel-top completion moves RETAINING → RETURNING automatically
 - M04 RETURN uses the same braking-aware gantry target controller, not a transform jump
 - lifecycle regression reaches the home/release target at fixed tick 149 with ≈ 1.834 mm position error
-- full PT-031 remains pending a physically carried prize plus modeled chute target/cabinet collision geometry
+
+M06 full cabinet integration — 2026-10-01:
+- **PT-031 Automated PASS**
+- a physically held high-stack light rubber sphere reaches RETAINING at tick 46 and RETURNING at tick 56
+- normal cabinet RETURN target is the real chute center X/Z = 0.28 / 0.20 m
+- the ball moves ≈ 83.35 mm horizontally with the claw before RELEASE
+- dynamic hub/carriage lag peaks ≈ 16.21 mm during the return
+- maximum prize movement in one 120 Hz tick ≈ 18.33 mm
+- no prize setTranslation, parent, weld, prize joint, magnet or velocity reset
+- failed long-carry calibration trials legitimately slipped before release and were rejected rather than hidden by force changes.
 
 ## PT-032 Release timing
 
@@ -774,7 +784,14 @@ M04 mechanical prerequisite — 2026-10-01:
 - opening takes 58 fixed ticks ≈ 0.4833 s at the unchanged 1.6 rad/s command rate
 - READY is not entered until the open-angle tolerance is reached
 - no finger snap and no prize transform/release script
-- full prize contact loss over a modeled chute remains pending cabinet/chute integration
+
+M06 modeled-chute release — 2026-10-01:
+- **PT-032 Automated PASS**
+- cabinet fixture enters RELEASING at tick 117 only after the physical return target is reached
+- chute sensor does not fire until tick 149, after release has begun
+- sensor records exactly one event
+- ball finishes at Y ≈ -0.248008 m on the physical lower catch
+- HOLD BOOST use is ≈ 0.591667 s / 0.800 s budget and does not attach the prize.
 
 ## PT-033 Home cycle
 
@@ -794,7 +811,12 @@ M04 state lifecycle — 2026-10-01:
 - RELEASING → READY only after physical opening completes at tick 206
 - next DROP action is therefore unavailable during RETURNING/RELEASING
 - final reel payout = 0.000 m
-- actual chute sensor/check/result handling remains M06 scope
+
+M06 cabinet lifecycle — 2026-10-01:
+- carried-prize fixture: RETURNING tick 56 → RELEASING tick 117 → chute sensor tick 149 → READY tick 174
+- **physical/home-state ordering PASS**
+- next play remains unavailable until READY
+- explicit result/inventory handoff consuming the one-shot sensor event is still pending the final M06 closure slice.
 
 ## PT-034 Aim timer
 
@@ -838,11 +860,12 @@ Verify:
 - player boundary cannot physically shove prizes through glass,
 - decorative objects do not affect active prize physics unless explicitly configured.
 
-M06 slice 1 foundation — 2026-10-01:
+M06 integration status — 2026-10-01:
 - chute-sensor no-push requirement — **PASS by construction**
-- current sensor is a pure observation volume over Rapier `worldCom()`; it creates no collider, impulse, joint or force
+- sensor is a pure observation volume over Rapier `worldCom()`; it creates no collider, impulse, joint or force
 - one-shot state records entry only after the prize is already physically inside the configured volume
-- claw-trigger and player-boundary sub-gates remain pending later cabinet/player integration.
+- `cabinet-lab` polls only registered prize rigid bodies, so claw/cabinet parts cannot trigger prize-out
+- player-boundary shove-through-glass remains M07 player/camera-boundary scope.
 
 ## PT-039 Physics watchdog
 
