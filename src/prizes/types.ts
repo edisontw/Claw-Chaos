@@ -1,5 +1,6 @@
 import type * as THREE from "three";
 import type {
+  Quaternion,
   RigidBodyHandle,
   Vec3,
 } from "../physics/PhysicsRuntime";
@@ -88,6 +89,7 @@ export interface ResolvedPrizeSpec {
 export interface PrizeSpawnOptions {
   position: Vec3;
   rotationYRadians?: number;
+  rotation?: Quaternion;
   variantSeed?: string | number;
   materialId?: string;
   massProfileId?: string;
