@@ -175,6 +175,48 @@ function chooseVariant(
   return { colorId, colorHex, finishId };
 }
 
+export interface PrizeVariantDescriptor {
+  definitionId: string;
+  colorId: string;
+  colorHex: number;
+  finishId: "matte" | "gloss";
+}
+
+export function enumeratePrizeVisualVariants(
+  definitions: readonly PrizeDefinition[],
+): PrizeVariantDescriptor[] {
+  const variants: PrizeVariantDescriptor[] = [];
+
+  for (const definition of definitions) {
+    const family = requireProfile(
+      PRIZE_VARIANT_FAMILIES,
+      definition.variantFamilyId,
+      "variant family",
+    );
+
+    for (const colorId of family.colorIds) {
+      const colorHex =
+        PRIZE_COLOR_PALETTE[
+          colorId as keyof typeof PRIZE_COLOR_PALETTE
+        ];
+      if (colorHex === undefined) {
+        throw new Error(`Unknown prize color: ${colorId}`);
+      }
+
+      for (const finishId of family.finishIds) {
+        variants.push({
+          definitionId: definition.id,
+          colorId,
+          colorHex,
+          finishId,
+        });
+      }
+    }
+  }
+
+  return variants;
+}
+
 export function resolvePrizeSpec(
   definition: PrizeDefinition,
   options: Omit<PrizeSpawnOptions, "position" | "rotationYRadians"> = {},
