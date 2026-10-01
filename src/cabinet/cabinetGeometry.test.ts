@@ -33,6 +33,9 @@ describe("M06 cabinet boundaries", () => {
     expect(parts.some((part) => part.role === "ceiling")).toBe(true);
     expect(parts.filter((part) => part.role === "floor")).toHaveLength(4);
     expect(
+      parts.filter((part) => part.role === "play_deck"),
+    ).toHaveLength(4);
+    expect(
       parts.filter((part) => part.role === "chute_wall"),
     ).toHaveLength(4);
   });
@@ -44,19 +47,19 @@ describe("M06 cabinet boundaries", () => {
     const definition = getPrizeDefinition("prize/sphere_ball");
     const cases = [
       {
-        position: { x: -0.10, y: 0.13, z: -0.16 },
+        position: { x: -0.10, y: M06_CABINET_CONFIG.playDeckY + 0.13, z: -0.16 },
         velocity: { x: 1.6, y: 0, z: 0 },
       },
       {
-        position: { x: 0.10, y: 0.13, z: -0.08 },
+        position: { x: 0.10, y: M06_CABINET_CONFIG.playDeckY + 0.13, z: -0.08 },
         velocity: { x: -1.6, y: 0, z: 0 },
       },
       {
-        position: { x: -0.20, y: 0.13, z: -0.10 },
+        position: { x: -0.20, y: M06_CABINET_CONFIG.playDeckY + 0.13, z: -0.10 },
         velocity: { x: 0, y: 0, z: 1.6 },
       },
       {
-        position: { x: 0.00, y: 0.13, z: 0.00 },
+        position: { x: 0.00, y: M06_CABINET_CONFIG.playDeckY + 0.13, z: 0.00 },
         velocity: { x: 0, y: 0, z: -1.6 },
       },
     ];
@@ -88,7 +91,8 @@ describe("M06 cabinet boundaries", () => {
           Math.abs(position.x) < 0.50 &&
           Math.abs(position.z) < 0.40 &&
           position.y > -0.34 &&
-          position.y < 0.66;
+          position.y <
+            M06_CABINET_CONFIG.playAreaHeight + 0.04;
       }
     }
 
@@ -118,8 +122,11 @@ describe("M06 chute sensor", () => {
       getPrizeDefinition("prize/box_flat"),
       {
         position: {
-          x: M06_CABINET_CONFIG.chuteCenterX,
-          y: 0.09,
+          x:
+            M06_CABINET_CONFIG.chuteCenterX -
+            M06_CABINET_CONFIG.chuteOpeningHalfX -
+            0.04,
+          y: M06_CABINET_CONFIG.playDeckY + 0.09,
           z: M06_CABINET_CONFIG.chuteCenterZ,
         },
         rotationYRadians: 0,
@@ -164,7 +171,9 @@ describe("M06 chute sensor", () => {
       M06_CABINET_CONFIG.chuteSensorCenterY +
         M06_CABINET_CONFIG.chuteSensorHalfY,
     );
-    expect(finalPosition.y).toBeGreaterThan(0.015);
+    expect(finalPosition.y).toBeGreaterThan(
+      M06_CABINET_CONFIG.playDeckY + 0.015,
+    );
   });
 
   it("PT-018 awards exactly once after a prize physically falls through the chute sensor", async () => {
@@ -178,7 +187,7 @@ describe("M06 chute sensor", () => {
       {
         position: {
           x: M06_CABINET_CONFIG.chuteCenterX,
-          y: 0.30,
+          y: M06_CABINET_CONFIG.playDeckY + 0.30,
           z: M06_CABINET_CONFIG.chuteCenterZ,
         },
         rotationYRadians: 0,

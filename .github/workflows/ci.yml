@@ -110,3 +110,42 @@ jobs:
           fi
 
           echo "Preview/browser gantry-lab smoke passed: $ASSET_PATH"
+
+          CABINET_READY=0
+          for attempt in 1 2 3; do
+            DOM_FILE="/tmp/claw-chaos-cabinet-dom-$attempt.html"
+            LOG_FILE="/tmp/claw-chaos-cabinet-browser-$attempt.log"
+
+            timeout 30s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=8000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=cabinet-lab&seed=ci-smoke" \
+              > "$DOM_FILE" 2> "$LOG_FILE" || true
+
+            if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
+               grep -q 'cabinet-lab' "$DOM_FILE"; then
+              CABINET_READY=1
+              break
+            fi
+
+            echo "Headless browser smoke attempt $attempt did not reach cabinet-lab readiness."
+            sleep 1
+          done
+
+          if [ "$CABINET_READY" -ne 1 ]; then
+            echo "Headless browser failed to initialize cabinet-lab after 3 attempts."
+            for file in /tmp/claw-chaos-cabinet-browser-*.log; do
+              echo "===== $file ====="
+              cat "$file"
+            done
+            exit 1
+          fi
+
+          echo "Preview/browser cabinet-lab smoke passed: $ASSET_PATH"

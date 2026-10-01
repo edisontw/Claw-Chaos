@@ -5,6 +5,7 @@ import type {
 
 export type CabinetPartRole =
   | "floor"
+  | "play_deck"
   | "frame"
   | "glass"
   | "ceiling"
@@ -22,20 +23,22 @@ export interface CabinetPartDefinition {
 export const M06_CABINET_CONFIG = {
   floorY: 0,
   floorHalfThickness: 0.02,
+  playDeckY: 0.265,
+  playDeckHalfThickness: 0.012,
   interiorHalfX: 0.46,
   interiorHalfZ: 0.36,
   wallHalfThickness: 0.012,
-  playAreaHeight: 0.62,
+  playAreaHeight: 1.30,
   chuteCenterX: 0.28,
   chuteCenterZ: 0.20,
-  chuteOpeningHalfX: 0.070,
-  chuteOpeningHalfZ: 0.055,
+  chuteOpeningHalfX: 0.090,
+  chuteOpeningHalfZ: 0.075,
   chuteWallHalfThickness: 0.010,
   chuteBottomY: -0.30,
-  chuteSensorCenterY: -0.12,
-  chuteSensorHalfX: 0.055,
-  chuteSensorHalfY: 0.045,
-  chuteSensorHalfZ: 0.045,
+  chuteSensorCenterY: 0.12,
+  chuteSensorHalfX: 0.070,
+  chuteSensorHalfY: 0.050,
+  chuteSensorHalfZ: 0.055,
   floorFriction: 0.80,
   wallFriction: 0.68,
   chuteFriction: 0.62,
@@ -80,6 +83,48 @@ function floorParts(): CabinetPartDefinition[] {
     make("floor-right", openingMaxX, maxX, minZ, maxZ),
     make("floor-back", openingMinX, openingMaxX, minZ, openingMinZ),
     make("floor-front", openingMinX, openingMaxX, openingMaxZ, maxZ),
+  ];
+}
+
+function playDeckParts(): CabinetPartDefinition[] {
+  const c = M06_CABINET_CONFIG;
+  const minX = -c.interiorHalfX;
+  const maxX = c.interiorHalfX;
+  const minZ = -c.interiorHalfZ;
+  const maxZ = c.interiorHalfZ;
+  const openingMinX = c.chuteCenterX - c.chuteOpeningHalfX;
+  const openingMaxX = c.chuteCenterX + c.chuteOpeningHalfX;
+  const openingMinZ = c.chuteCenterZ - c.chuteOpeningHalfZ;
+  const openingMaxZ = c.chuteCenterZ + c.chuteOpeningHalfZ;
+  const y = c.playDeckY - c.playDeckHalfThickness;
+
+  const make = (
+    id: string,
+    left: number,
+    right: number,
+    back: number,
+    front: number,
+  ): CabinetPartDefinition => ({
+    id,
+    role: "play_deck",
+    center: {
+      x: (left + right) * 0.5,
+      y,
+      z: (back + front) * 0.5,
+    },
+    halfExtents: {
+      x: (right - left) * 0.5,
+      y: c.playDeckHalfThickness,
+      z: (front - back) * 0.5,
+    },
+    friction: c.floorFriction,
+  });
+
+  return [
+    make("deck-left", minX, openingMinX, minZ, maxZ),
+    make("deck-right", openingMaxX, maxX, minZ, maxZ),
+    make("deck-back", openingMinX, openingMaxX, minZ, openingMinZ),
+    make("deck-front", openingMinX, openingMaxX, openingMaxZ, maxZ),
   ];
 }
 
@@ -139,7 +184,7 @@ function boundaryParts(): CabinetPartDefinition[] {
 function chuteParts(): CabinetPartDefinition[] {
   const c = M06_CABINET_CONFIG;
   const t = c.chuteWallHalfThickness;
-  const channelTopY = c.floorY;
+  const channelTopY = c.playDeckY;
   const channelBottomY = c.chuteBottomY;
   const centerY = (channelTopY + channelBottomY) * 0.5;
   const halfY = (channelTopY - channelBottomY) * 0.5;
@@ -226,6 +271,7 @@ function chuteParts(): CabinetPartDefinition[] {
 export function createCabinetPartDefinitions(): CabinetPartDefinition[] {
   return [
     ...floorParts(),
+    ...playDeckParts(),
     ...boundaryParts(),
     ...chuteParts(),
   ];

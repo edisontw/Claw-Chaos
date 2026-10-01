@@ -44,7 +44,7 @@ M04 is now closed. The play-cycle state machine covers physical DROP, EARLY/AUTO
 
 M05 is now closed. PrizeFactory is the single normal spawn path for 11 starter definitions, including rigid primitives plus pillow, simple Teddy and simple animal compound prizes. Reusable material/mass/COM profiles now produce measured behavioral differences, deterministic visual variants enumerate 176 valid combinations, and a 12-prize contact pile settles and remains stable for a 60-second post-settle regression. The default `gantry-lab` and closed M01–M04 physics remain unchanged.
 
-M06 has started. Slice 1 adds a shared physical cabinet/play-area shell, transparent-but-collidable glass, ceiling/floor boundaries, a real chute opening/channel, a non-pushing one-shot chute sensor, a gray-box control panel/light pass, and an isolated `?scene=cabinet-lab`. PT-017 proves a flat prize can physically rest across the chute lip without scoring; PT-018 proves a prize must actually enter the sensor volume and scores only once.
+M06 is in progress. Slice 1 established the cabinet shell, transparent-but-collidable glass, a real chute/channel and one-shot non-pushing sensor. Slice 2 now mounts the closed M02–M04 gantry/play-cycle inside `?scene=cabinet-lab`, gives normal play a physical return target over the chute while preserving the legacy M02 home target, adds a raised play deck aligned to the existing reel geometry, and proves a physically carried high-stack prize can complete PICKUP → RETAINING/BOOST → RETURN → motor-driven RELEASE → chute sensor without prize teleport.
 
 ### First milestone
 
@@ -121,7 +121,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M06 — Cabinet & Chute** with slice 2: integrate the closed M02–M04 gantry/claw lifecycle into the cabinet, move the configured return/release target over the physical chute, and prove a physically carried prize can swing/slip during RETURN then release through contact loss into the sensor without teleport.
+Continue **M06 — Cabinet & Chute** with the final closure slice: add the explicit cabinet result/inventory handoff after the one-shot chute event, verify the integrated `cabinet-lab` browser path and manual glass/play-area readability, then run the M06 exit audit before advancing to M07 first-person view.
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
@@ -237,22 +237,28 @@ M05 final closure baseline:
 
 M05 is **CLOSED**.
 
-M06 slice 1 baseline:
-- shared cabinet geometry drives both collision and gray-box rendering
-- play-area half extents: X ±0.46 m / Z ±0.36 m
-- physical side/front glass, back wall, ceiling and four-piece floor around a real chute opening
-- existing M02 carriage rail envelope plus carriage half-size fits fully inside the new cabinet bounds
-- physical chute channel and bottom catch volume
-- chute sensor is a non-contact observation volume; it cannot push or hold a prize
-- sensor uses prize world COM entry and records each prize ID at most once
-- PT-017 flat box rests across chute lip at final Y ≈ 22.49 mm; sensor events = 0
-- PT-018 cube physically enters the sensor at tick 33 ≈ 0.275 s; exactly one win event is recorded
-- cabinet containment regression peak center excursions: |X| ≈ 0.40759 m / |Z| ≈ 0.30760 m, inside physical walls
-- `?scene=cabinet-lab` shows glass, frame, chute, sensor wire volume, control panel, lighting and PrizeFactory content
-- **66 automated tests PASS**
+M06 slice 1 + slice 2 baseline:
+- cabinet interior X ±0.46 m / Z ±0.36 m with physical front/side glass, back wall and ceiling
+- raised physical play deck Y = 0.265 m aligns the existing M02/M04 reel geometry with prize contact while a lower catch floor remains below
+- physical chute opening = 0.18 × 0.15 m, centered at X/Z = 0.28 / 0.20 m
+- chute sensor is a collider-free observation volume centered below the deck; it cannot push, attract or support a prize
+- normal M04 RETURN in `cabinet-lab` targets the chute center; the legacy M02 `H` home test still targets X/Z = 0 / 0
+- PT-017 partial-lip flat box: final Y ≈ 0.28746 m, sensor events = 0
+- PT-018 free-fall cube: sensor entry tick 33 ≈ 0.275 s, exactly one event
+- full carried-prize fixture uses a physically supported high-stack light rubber sphere with initial payout 0.070 m
+- PICKUP → RETAINING at tick 46; reel top → RETURNING at tick 56
+- RETURN → RELEASING at tick 117; chute sensor entry at tick 149; READY at tick 174
+- ball lift at RETAINING ≈ 21.82 mm; lift at RETURN start ≈ 31.79 mm
+- carried ball moves ≈ 83.35 mm horizontally during RETURN before RELEASE
+- dynamic hub lag/swing during the successful return peaks ≈ 16.21 mm
+- maximum prize displacement in any fixed tick ≈ 18.33 mm; no prize transform jump is used
+- HOLD BOOST actual use ≈ 0.592 s, below the locked 0.80 s budget
+- sensor event count = 1; final ball Y ≈ −0.24801 m on the chute catch
+- calibration also demonstrated legitimate failures: longer sphere/cube/Teddy carries can slip before release under the same fixed force model
+- `?scene=cabinet-lab` runs the real gantry/play-cycle plus cabinet/prize/sensor composition
+- **67 automated tests PASS**
 
-M06 remains **IN PROGRESS**. Full gantry/claw integration, carried-prize RETURN over the chute, real release/contact loss, and end-to-end sensor/result lifecycle remain slice 2+.
-
+M06 remains **IN PROGRESS** only for result/inventory handoff plus final cabinet/glass/manual exit audit; the core physical RETURN → RELEASE → chute-sensor lifecycle is automated PASS.
 ## Status
 
 This repository is the source of truth for the Claw Chaos project.

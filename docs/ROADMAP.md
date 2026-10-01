@@ -844,7 +844,7 @@ Final verification:
 
 # M06 — Cabinet & Chute
 
-**Status: IN PROGRESS — slice 1 verified 2026-10-01**
+**Status: IN PROGRESS — slice 2 core lifecycle verified 2026-10-01**
 
 ## Goal
 
@@ -853,54 +853,80 @@ Move the working simulation into a real cabinet.
 ## Deliverables
 
 - cabinet frame — PASS for gray-box shell
-- glass collision/rendering — PASS for physical transparent front/side glass
+- glass collision/rendering — PASS for physical transparent front/side glass; final manual readability check pending
 - play-area walls — PASS
-- chute geometry — PASS for real floor opening + enclosed drop channel
-- chute sensor — PASS for non-contact one-shot sensor foundation
-- control panel — PASS for gray-box visual placeholder
-- basic cabinet lighting — PASS for gray-box cabinet light
-- machine limits — PASS for current M02 rail envelope inside cabinet bounds
-- integrate M02–M04 gantry/claw into cabinet — pending slice 2
-- return/release over physical chute — pending slice 2
+- raised play deck aligned with closed reel geometry — PASS
+- chute geometry — PASS
+- chute sensor — PASS
+- control panel — PASS for gray-box placeholder
+- basic cabinet lighting — PASS
+- machine limits — PASS
+- M02–M04 gantry/claw integration — PASS
+- physical RETURN target over chute — PASS
+- carried-prize RETURN / motor RELEASE / sensor lifecycle — PASS
+- result/inventory handoff — pending closure slice
 
 ## Slice 1 — cabinet / chute foundation
 
 Implemented:
-- shared `src/cabinet/` geometry and chute-sensor modules
-- play-area half extents X ±0.46 m / Z ±0.36 m
-- physical floor split around an actual chute opening
-- front + side transparent glass colliders, back wall and ceiling
-- enclosed chute channel with lower catch surface
-- sensor is an observation volume based on prize Rapier world COM; it has no collider and cannot push/support prizes
-- each prize ID is recorded at most once
-- `?scene=cabinet-lab` renders cabinet frame/glass/chute, sensor wire volume, control panel, light and PrizeFactory prizes
+- shared `src/cabinet/` geometry and sensor modules
+- physical cabinet bounds and transparent glass
+- four-piece deck/floor geometry around an actual chute opening
+- one-shot collider-free chute sensor
+- PT-017 lip-no-win and PT-018 physical-entry sensor gates
 
-Measured acceptance:
-- cabinet containment peak |X| ≈ 0.407590 m / |Z| ≈ 0.307604 m, finite/bounded
-- current M02 carriage + carriage half-size remains within legal cabinet X/Z bounds
-- PT-017 flat box physically rests across chute lip:
-  - final Y ≈ 0.022487 m
-  - minimum COM Y ≈ 0.022045 m
-  - win events = 0
-- PT-018 small cube physically enters sensor:
-  - first event tick = 33 ≈ 0.275 s
-  - event count = 1
-  - final Y ≈ -0.252569 m
-  - duplicate polling remains suppressed
-- full suite = **66 automated tests PASS**
-- lint/build/base-path/browser smoke PASS
+## Slice 2 — integrated play lifecycle
+
+Integration:
+- cabinet interior X ±0.46 m / Z ±0.36 m
+- play-area height 1.30 m encloses the existing carriage at Y = 1.18 m
+- raised play deck Y = 0.265 m
+- chute opening 0.18 × 0.15 m centered at X/Z = 0.28 / 0.20 m
+- normal M04 RETURN targets the chute center only in cabinet play
+- legacy M02 home-test target remains X/Z = 0 / 0
+- no closed M01–M05 force/suspension/reel calibration increased
+
+Measured full-lifecycle success fixture:
+- data-driven `prize/sphere_ball`, light rubber profile
+- physically supported high-stack starting pose
+- initial payout = 0.070 m
+- PICKUP → RETAINING tick 46
+- RETURNING begins tick 56
+- RELEASING begins tick 117
+- sensor event tick 149
+- READY tick 174
+- lift at RETAINING ≈ 21.82 mm
+- lift at RETURN start ≈ 31.79 mm
+- prize moves ≈ 83.35 mm horizontally during RETURN before release
+- hub lag/swing peak ≈ 16.21 mm
+- max prize fixed-tick displacement ≈ 18.33 mm
+- HOLD BOOST use ≈ 0.592 s / 0.800 s budget
+- sensor event count = 1
+- final prize Y ≈ -0.24801 m
+- finite/bounded PASS
+- no prize attachment/teleport/velocity reset
+
+Important physical finding:
+- longer sphere/cube/Teddy carry attempts can slip before release under the same fixed retaining/BOOST model
+- these are valid failure outcomes; M06 does not tune a hidden success path around them
+
+Current automated baseline:
+- **27 test files / 67 tests PASS**
+- lint/build/base-path PASS
+- CI browser smoke covers both `gantry-lab` and `cabinet-lab`
 
 ## Exit criteria
 
 Current status:
-- prizes cannot escape through cabinet — **PASS in isolated cabinet regression**
-- chute accepts a prize only after physical entry — **PASS, PT-018**
-- prize touching chute lip does not auto-win — **PASS, PT-017**
-- claw cannot travel outside legal play area — **PASS for configured M02 rail envelope; integrated cabinet regression pending**
-- glass remains readable enough for gameplay — **PARTIAL**; conservative transparent material implemented, first-person manual acceptance remains later
-- full working claw/return/release lifecycle inside cabinet — pending slice 2
+- prizes cannot escape through cabinet — **PASS**
+- chute accepts a prize only after physical entry — **PASS**
+- prize touching chute lip does not auto-win — **PASS**
+- claw cannot travel outside legal play area — **PASS**
+- full claw RETURN → motor RELEASE → physical chute sensor — **PASS**
+- glass remains readable enough for gameplay — **IMPLEMENTED / manual final check pending**
+- result/inventory update consumes win once — **pending closure slice**
 
-**Next slice:** integrate the closed gantry/claw/play-cycle into the cabinet and prove physical carried-prize RETURN → motor-driven RELEASE → chute sensor without prize teleport.
+**Next:** result/inventory handoff + manual glass/readability check + final M06 closure audit.
 
 ---
 
