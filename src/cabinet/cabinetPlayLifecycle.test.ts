@@ -297,13 +297,23 @@ describe("M06 carried-prize cabinet lifecycle", () => {
 
     const teddyReferenceY = teddy.body.translation().y;
 
-    // Establish the same geometric limb hook used by PT-004 before lifting.
+    // Follow the production M04 contact timing before pickup:
+    // fully close under the strong contact profile, then settle for 0.90 s.
+    while (
+      fingerCommand >
+      claw.closedAngle +
+        M04_PLAY_CONFIG.closeCompletionToleranceRadians
+    ) {
+      driveFinger(claw.closedAngle, claw.maxMotorTorque);
+      physics.step();
+    }
+
     for (
       let tick = 0;
-      tick < Math.ceil(claw.pt004CloseLeadSeconds * PHYSICS_HZ);
+      tick < Math.ceil(M04_PLAY_CONFIG.closeSettleSeconds * PHYSICS_HZ);
       tick += 1
     ) {
-      driveFinger(claw.pt004HookAngle, claw.maxMotorTorque);
+      driveFinger(claw.closedAngle, claw.maxMotorTorque);
       physics.step();
     }
 
