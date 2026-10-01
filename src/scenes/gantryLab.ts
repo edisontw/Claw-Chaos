@@ -171,9 +171,20 @@ function computeSwingAngle(
   return Math.atan2(horizontal, vertical);
 }
 
+export interface GantryLabOptions {
+  addLabFloor?: boolean;
+  playReturnTarget?: { x: number; z: number };
+  milestone?: string;
+  camera?: {
+    position: [number, number, number];
+    target: [number, number, number];
+  };
+}
+
 export function createGantryLabScene(
   scene: THREE.Scene,
   physics: PhysicsRuntime,
+  options: GantryLabOptions = {},
 ): SimulationScene {
   const claw = CLAW_LAB_CONFIG;
   const gantry = M02_GANTRY_CONFIG;
@@ -181,21 +192,23 @@ export function createGantryLabScene(
   const fingerBodies: RigidBodyHandle[] = [];
   const fingerJoints: RevoluteJointHandle[] = [];
 
-  const floor = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.04, 1.2),
-    new THREE.MeshStandardMaterial({
-      color: 0x626c78,
-      roughness: 0.92,
-      metalness: 0.02,
-    }),
-  );
-  floor.position.y = -0.02;
-  floor.receiveShadow = true;
-  scene.add(floor);
-  physics.createStaticCuboid(
-    { x: 0, y: -0.02, z: 0 },
-    { x: 0.7, y: 0.02, z: 0.6 },
-  );
+  if (options.addLabFloor !== false) {
+    const floor = new THREE.Mesh(
+      new THREE.BoxGeometry(1.4, 0.04, 1.2),
+      new THREE.MeshStandardMaterial({
+        color: 0x626c78,
+        roughness: 0.92,
+        metalness: 0.02,
+      }),
+    );
+    floor.position.y = -0.02;
+    floor.receiveShadow = true;
+    scene.add(floor);
+    physics.createStaticCuboid(
+      { x: 0, y: -0.02, z: 0 },
+      { x: 0.7, y: 0.02, z: 0.6 },
+    );
+  }
 
   const railMaterial = new THREE.MeshStandardMaterial({
     color: 0x465363,
@@ -392,6 +405,8 @@ export function createGantryLabScene(
     acceleration: gantry.reelAcceleration,
     braking: gantry.reelBraking,
   };
+  const playReturnTarget =
+    options.playReturnTarget ?? { x: gantry.homeX, z: gantry.homeZ };
   const playConfig = {
     autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
     closedAngleRadians: claw.closedAngle,
@@ -575,8 +590,8 @@ export function createGantryLabScene(
   return {
     bindings,
     massPropertiesDebugTargets: [{ body: hubBody, label: "suspended-claw-hub" }],
-    milestone: "M04 / BOOST + RETURN + RELEASE",
-    camera: {
+    milestone: options.milestone ?? "M04 / BOOST + RETURN + RELEASE",
+    camera: options.camera ?? {
       position: [0.78, 0.82, 1.08],
       target: [0, 0.72, 0],
     },
@@ -707,14 +722,19 @@ export function createGantryLabScene(
         }
       }
 
-      if (
-        homeReturnPhase === "RETURNING_HOME" ||
-        playCycle.phase === "RETURNING"
-      ) {
+      if (homeReturnPhase === "RETURNING_HOME") {
         motion = advanceGantryMotionTowardPosition(
           motion,
           gantry.homeX,
           gantry.homeZ,
+          motionConfig,
+          stepSeconds,
+        );
+      } else if (playCycle.phase === "RETURNING") {
+        motion = advanceGantryMotionTowardPosition(
+          motion,
+          playReturnTarget.x,
+          playReturnTarget.z,
           motionConfig,
           stepSeconds,
         );
@@ -738,12 +758,12 @@ export function createGantryLabScene(
       const m04HomeReached =
         isGantryAxisAtTarget(
           motion.x,
-          gantry.homeX,
+          playReturnTarget.x,
           m04HomeTolerance,
         ) &&
         isGantryAxisAtTarget(
           motion.z,
-          gantry.homeZ,
+          playReturnTarget.z,
           m04HomeTolerance,
         );
       const holdBoostRequested =
@@ -959,6 +979,11 @@ export function createGantryLabScene(
             motion.x.position - gantry.homeX,
             motion.z.position - gantry.homeZ,
           ).toFixed(3) +
+          " m",
+        "Play return tgt  " +
+          playReturnTarget.x.toFixed(3) +
+          " / " +
+          playReturnTarget.z.toFixed(3) +
           " m",
         "Spring k / c     " +
           gantry.suspensionSpringStiffness.toFixed(1) +
