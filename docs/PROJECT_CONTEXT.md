@@ -841,44 +841,83 @@ M04 closure scope:
 - the pre-cabinet mechanical play cycle is complete
 - full carried-prize return to a modeled chute, chute-edge collision, chute sensor, and prize-out validation remain later M05/M06 acceptance work and are not claimed complete here
 
-## M05 implementation status — slice 1 verified 2026-10-01
+## M05 implementation status — final closure verified 2026-10-01
 
-**Status: IN PROGRESS**
+**Status: CLOSED**
 
-Implemented:
-- new `src/prizes/` module with stable prize/profile IDs
-- data-driven PrizeFactory is the normal spawn path for M05 starter prizes
-- eight starter shape families are live: cube, box, tall_box, flat_box, sphere, ellipsoid, cylinder, capsule
-- four reusable physical material profiles
-- three reusable mass profiles: light / standard / heavy
-- five reusable COM profiles: centered / bottom-heavy / top-heavy / left-offset / right-offset
-- eight colors and matte/gloss finish selection through deterministic variant seeds
-- explicit Rapier mass-properties body constructor supports authored mass, local COM and principal angular inertia while collision geometry contributes zero extra mass
-- COM therefore affects the actual rigid-body mass properties and is visible through existing `M` debug tooling
-- ellipsoid collision is currently a stable three-sphere approximation; capsule uses the existing endpoint-based capsule primitive
-- new `?scene=prize-lab` shows all eight definitions while leaving `gantry-lab` as the default public scene
+Prize content architecture:
+- `src/prizes/` remains the data-driven prize runtime
+- PrizeFactory is the single normal spawn path for M05 prize gameplay entities
+- 11 starter definitions are implemented:
+  - cube
+  - box
+  - tall box
+  - flat box
+  - sphere
+  - ellipsoid
+  - cylinder
+  - capsule
+  - pillow
+  - simple Teddy
+  - simple animal
+- pillow / Teddy / animal are stable compound primitive profiles, not separate gameplay classes
+- five reusable material profiles
+- three mass profiles: light / standard / heavy
+- five COM profiles: centered / bottom-heavy / top-heavy / left-offset / right-offset
+- explicit Rapier total mass, local COM and principal inertia remain separate from collider topology
+- colliders contribute zero extra mass on the PrizeFactory path
+- 8 colors × 2 finishes × 11 definitions enumerate **176 unique valid visible variants**
+- deterministic variant seeds remain supported
+- `?scene=prize-lab` displays all 11 definitions while `gantry-lab` remains the default scene
 
-Regression:
-- deterministic variant resolution PASS
-- authored light-profile mass is immediately readable from Rapier after spawn
-- left-offset COM resolves into Rapier `localCom()` rather than metadata only
-- all eight starter shapes settle for four simulated seconds without falling through the floor or becoming non-finite
-- calibrated run ends with all eight linear speeds = 0
-- full suite: **57 automated tests PASS**
-- lint/build/GitHub Pages base-path/browser `gantry-lab` smoke PASS
+Behavioral differentiation:
+- PT-021 material regression, same box and initial condition:
+  - plastic travel ≈ 0.124198 m
+  - rubber travel ≈ 0.092227 m
+  - difference ≈ 0.031971 m
+  - both physically stop
+- mass-profile regression under the same 0.03 N·s impulse:
+  - light mass ≈ 0.090 kg → x speed ≈ 0.333333 m/s
+  - heavy mass ≈ 0.162 kg → x speed ≈ 0.185185 m/s
+- PT-022 COM regression under the same impulse through the visual/geometric center:
+  - centered COM: rotation = 0, peak angular speed = 0
+  - left-offset COM: local COM X ≈ -0.01890 m
+  - resulting rotation ≈ 0.403848 rad
+  - peak angular speed ≈ 1.615396 rad/s
 
-Not yet complete in M05:
-- pillow
-- simple teddy
-- simple animal
-- explicit behavioral comparison for material profile differences
-- explicit behavioral comparison for centered vs offset COM
-- 10–15 object pile 60-second stability gate
-- formal 100+ variant enumeration gate
+PT-015 dense pile:
+- 12 dynamic PrizeFactory prizes
+- contact-bounded pile reaches all-sleep state in ≈ 2.3167 s
+- then runs another 60 simulated seconds
+- maximum post-settle drift = 0
+- maximum post-settle speed = 0
+- final sleeping bodies = 12 / 12
+- finite/bounded PASS
+
+M05 exit audit:
+- prize creation is data-driven — PASS
+- same shape can behave differently by material — PASS
+- same shape can behave differently by mass — PASS
+- same shape can behave differently by COM — PASS
+- no prize-specific grab code — PASS
+- 10–15 object pile can settle and remain stable — PASS
+- formal 100+ visual variant enumeration — PASS, 176
+- closed M01–M04 force/suspension/play-cycle calibration remains unchanged
+
+Final verification:
+- **62 automated tests PASS**
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- browser `gantry-lab` smoke PASS
+
+Approximation note:
+- M05 provides physics-ready primitive/compound prize archetypes and basic color/finish variation, not final art production
+- future texture/pattern art is cosmetic content expansion and does not require new grab/success logic
 
 ## Current next step
 
-Continue **M05 slice 2** with pillow / simple teddy / simple animal compound templates, then add PT-021 material differentiation, PT-022 COM differentiation, and start the 10–15 prize pile-stability gate. Preserve the closed M01–M04 physics and use PrizeFactory rather than one-off prize spawn code.
+Proceed to **M06 — Cabinet & Chute**. Add physical cabinet/play-area boundaries, readable glass, chute geometry and a sensor/result gate. Preserve the key rule that a prize touching or resting on the chute lip is not a win; a prize must physically satisfy the configured chute sensor condition.
 
 ## Design-review additions
 
