@@ -22,5 +22,6 @@ export interface SimulationScene {
   milestone: string;
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
+  primaryAction?(): boolean;
   debugLines?(): string[];
 }
