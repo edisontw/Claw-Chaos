@@ -923,116 +923,94 @@ Move the working simulation into a real cabinet.
 
 # M07 — First-Person Player View
 
-**Status: IN PROGRESS — slice 2 automated closure candidate verified 2026-10-02**
+**Status: IN PROGRESS — front-only closure candidate verified 2026-10-03**
 
 ## Goal
 
-Make play feel like standing at the cabinet.
+Make play feel like standing directly in front of a real cabinet, without free walking around the machine.
 
 ## Deliverables
 
-- head look ≥ ±90° yaw — PASS, ±105°
-- preferred ±100–110° tuning — PASS, ±105°
-- limited vertical look — PASS, −70° / +30°
-- small forward/back movement — PASS
-- small left/right movement — PASS
-- lean — PASS, ±55 mm nominal with cabinet-aware inward clamp
-- player/camera cabinet anti-clipping — PASS for front + side movement envelope
+- head look ≥ ±90° yaw — PASS, exactly ±90°
+- limited vertical look — PASS, −70° / +25°
+- small forward/back adjustment — PASS
+- small left/right adjustment — PASS
+- small lean — PASS, ±30 mm
+- no side walk / no walking around cabinet corners — PASS
+- no free-fly or vertical movement — PASS
+- fixed realistic FOV — PASS, 50°
 - control-panel interaction — PASS
-- front/side inspection geometry/runtime path — PASS
-- final subjective visual/readability confirmation — pending deployed-build manual check
+- chute look-down framing — PASS
+- final subjective deployed-build play/readability confirmation — pending
 
-## Slice 1 — constrained player rig
+## Current front-player envelope
 
-Established:
+- fixed eye height = 0.98 m
+- X = −0.28…+0.28 m
+- Z ≈ 0.534…0.78 m
+- front glass outer face ≈ Z 0.384 m
+- player remains entirely in front of the cabinet
+- no connected side standing zones
+- yaw = ±90°
+- pitch = −70° / +25°
+- lean = ±30 mm, max roll 2.5°
+- FOV = 50°
 - pointer-lock mouse look
-- fixed eye height 0.98 m
-- yaw ±105°
-- bounded WASD motion and Q/E lean
-- no vertical/free-fly movement
-- front-glass clearance
-- player-view browser runtime smoke
+- WASD only makes small standing-position adjustments
+- Q/E lean remains small and optional
 
-## Slice 2 — side inspection + interaction
+## Interaction
 
-Movement/camera:
-- player movement now supports a front standing zone plus left/right side zones
-- world bounds: X ±0.72 m / Z −0.18 to 0.82 m
-- cabinet exclusion boundary:
-  - side-glass outer face X ≈ ±0.484 m
-  - front-glass outer face Z ≈ 0.384 m
-  - camera-center clearance = 0.10 m
-- direct forward motion from center stops at the front clearance
-- player can first move outside the side clearance, then walk forward around either front corner
-- inward lean beside the cabinet is reduced as needed so camera center remains outside side-glass clearance
-- FOV remains exactly 50°
-- pitch lower limit expanded from −40° to −70° to make the low control panel and chute naturally visible without camera teleport/FOV widening
-
-Side-glass inspection acceptance:
-- deterministic right-side stance and left-side stance are defined outside the side clearance
-- both target sight lines are within the ±105° yaw / −70°…+30° pitch envelope
-- each sight line is analytically verified to cross the corresponding physical side-glass X plane within the glass Z span and cabinet height
-- therefore side inspection is achieved by player position/head turn, not a special camera mode
-
-Control panel/chute interaction:
 - center reticle + gaze focus
-- control-panel button and chute are explicit view targets
-- both targets are reachable from the front standing zone inside camera limits
-- control-panel target displays an `[F]` prompt
+- control-panel button remains an explicit target
 - `F` invokes the same existing M04 primary action used by Space
-- chute focus is inspection-only and cannot start/drop a play
-- no alternate claw/play state machine was introduced
+- chute is inspection-only
+- both control panel and chute remain reachable from the front-only legal zone
 
-Automated acceptance:
-- PT-025 yaw/pitch/movement/lean — PASS
-- PT-025 left/right side-glass sight lines — PASS
-- PT-025 control-panel + chute look-down reachability — PASS
-- PT-026 direct front-entry blocking — PASS
-- PT-026 front-corner side traversal — PASS
-- PT-026 side-glass inward-lean clearance — PASS
-- no free-fly or vertical movement path — PASS by controller design
-- fixed 50° FOV / no fisheye workaround — PASS
-- closed M01–M06 physics/result state untouched
+## Cabinet grip correction tied to deployed play feedback
+
+The earlier grip calibration used a small pedestal under the ball and did not represent a prize resting on the broad cabinet deck.
+
+Current physical regression instead uses:
+- actual `prize/sphere_ball` mass = 0.075 kg
+- actual rubber dynamic friction = 0.82
+- actual radius = 0.0525 m
+- full physical flat play-deck collider
+- existing 3-finger Rapier contact model
+
+Cabinet-only play tuning:
+- finger friction = 0.72
+- CLOSE/PICKUP torque = 2.9 N·m
+- RETAINING torque = 0.0055 N·m
+- strong PICKUP lift distance = **0.12 m** before RETAINING
+- standalone locked M04 lab keeps the original 0.06 m pickup distance
+
+Measured flat-deck result:
+- 75 g real rubber-ball profile: peak lift ≈ 0.2263 m; final lift ≈ 0.2262 m
+- 150 g same-size/same-friction control: peak lift ≈ 0.0071 m; final ≈ 0 m
+- no magnet, prize parenting, weld, scripted carry, kinematic prize conversion or velocity reset
+
+## Automated acceptance
+
+- PT-025 ±90° yaw / bounded pitch — PASS
+- PT-025 front-only translation and small lean — PASS
+- PT-025 control-panel/chute look-down reachability — PASS
+- PT-026 cannot cross front glass — PASS
+- PT-026 cannot reach either side standing zone — PASS
+- no free-fly/overhead teleport path — PASS by controller design
+- real flat-deck easy-prize pickup — PASS
+- flat-deck 2× mass rejection — PASS
+- closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **29 test files / 74 tests PASS**
+- **30 test files / 80 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
-- `gantry-lab` browser smoke PASS
-- `cabinet-lab` browser smoke PASS
-- cabinet smoke requires `data-player-view="active"` and interaction prompt DOM
+- `gantry-lab`, explicit `cabinet-lab`, and root-default cabinet browser smokes PASS
 
-## Cabinet realism correction
-
-Following deployed-build feedback:
-- root URL now defaults to `cabinet-lab`
-- common-machine layout uses an enlarged **left-side** prize chute
-- cabinet idle claw is raised 60 mm while extending drop travel by the same amount
-- service/control wiring is visible alongside the suspension cable
-- EARLY CLOSE now brakes and holds reel payout at the exact action height
-- close fingers continue their timed physical motion while vertical payout remains locked
-- AUTO CLOSE remains available near maximum payout
-- locked standalone `gantry-lab` vertical calibration remains unchanged
-- regressions distinguish carried/RETURN continuity from faster post-release free-fall through the larger chute
-
-### Cabinet feedback refinement
-
-- chute opening now uses a raised solid rim; normal-play sensor debug wireframe is hidden
-- cabinet idle claw raised from +60 mm to **+85 mm**, with bottom reach preserved by matching payout extension
-- cabinet-specific grip was calibrated instead of changing locked laboratory physics:
-  - friction 0.72
-  - CLOSE/PICKUP 2.9 N·m
-  - RETAINING 0.0055 N·m
-- easy 80 g high-friction ball can be carried to the top
-- 160 g equivalent ball fails to lift meaningfully, proving weight still matters
-- HOLD BOOST remains stronger than base retaining torque
-- no magnet, prize parenting, weld, scripted carry or outcome forcing
-
-Still pending before M07 closure:
-- final manual deployed-build check that left/right side inspection is visually useful and not awkward
-- confirm panel/chute look-down framing feels natural with 50° FOV
-- confirm no visible camera penetration at front corners during real keyboard/mouse use
+Remaining M07 closure gate:
+- deployed-build manual confirmation that the front-only camera feels appropriately constrained and the center/easy prize can now visibly be carried.
 
 ---
 

@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
+import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
+import { getPrizeDefinition } from "../prizes/catalog";
+import { resolvePrizeSpec } from "../prizes/PrizeFactory";
 import type {
   RevoluteJointHandle,
   RigidBodyHandle,
@@ -39,6 +42,9 @@ interface PickupRetentionProfile {
   retainingTorque?: number;
   ballMassKg?: number;
   ballFriction?: number;
+  ballRadiusMeters?: number;
+  pickupLiftDistanceMeters?: number;
+  supportMode?: "pedestal" | "flat-deck";
 }
 
 interface PickupRetentionMetrics {
@@ -75,6 +81,12 @@ async function simulateM04PickupRetention(
   const ballMassKg = profile.ballMassKg ?? claw.pt001BallMassKg;
   const ballFriction =
     profile.ballFriction ?? claw.pt001BallFriction;
+  const ballRadiusMeters =
+    profile.ballRadiusMeters ?? claw.pt001BallRadius;
+  const pickupLiftDistanceMeters =
+    profile.pickupLiftDistanceMeters ??
+    M04_PLAY_CONFIG.pickupLiftDistanceMeters;
+  const supportMode = profile.supportMode ?? "pedestal";
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -91,19 +103,42 @@ async function simulateM04PickupRetention(
   const m01HubToBallCenter =
     claw.hubCenterY - claw.pt001BallCenterY;
   const ballCenterY =
-    bottomHubY -
-    m01HubToBallCenter +
-    M04_TEST_BALL_HEIGHT_OFFSET_METERS;
-  const pedestalTopY =
-    ballCenterY - claw.pt001BallRadius;
-  const pedestalHalfHeight = pedestalTopY * 0.5;
+    supportMode === "flat-deck"
+      ? M06_CABINET_CONFIG.playDeckY +
+        ballRadiusMeters +
+        0.002
+      : bottomHubY -
+        m01HubToBallCenter +
+        M04_TEST_BALL_HEIGHT_OFFSET_METERS;
 
-  physics.createStaticCylinder(
-    { x: 0, y: pedestalHalfHeight, z: 0 },
-    pedestalHalfHeight,
-    claw.pt001PedestalRadius,
-    0.75,
-  );
+  if (supportMode === "flat-deck") {
+    physics.createStaticCuboid(
+      {
+        x: 0,
+        y:
+          M06_CABINET_CONFIG.playDeckY -
+          M06_CABINET_CONFIG.playDeckHalfThickness,
+        z: 0,
+      },
+      {
+        x: M06_CABINET_CONFIG.interiorHalfX,
+        y: M06_CABINET_CONFIG.playDeckHalfThickness,
+        z: M06_CABINET_CONFIG.interiorHalfZ,
+      },
+      M06_CABINET_CONFIG.floorFriction,
+    );
+  } else {
+    const pedestalTopY =
+      ballCenterY - ballRadiusMeters;
+    const pedestalHalfHeight = pedestalTopY * 0.5;
+
+    physics.createStaticCylinder(
+      { x: 0, y: pedestalHalfHeight, z: 0 },
+      pedestalHalfHeight,
+      claw.pt001PedestalRadius,
+      0.75,
+    );
+  }
 
   const reelAnchor = physics.createKinematicBody({
     x: 0,
@@ -192,7 +227,7 @@ async function simulateM04PickupRetention(
 
   const ball = physics.createDynamicSphere(
     { x: 0, y: ballCenterY, z: 0 },
-    claw.pt001BallRadius,
+    ballRadiusMeters,
     ballMassKg,
     {
       friction: ballFriction,
@@ -214,8 +249,7 @@ async function simulateM04PickupRetention(
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
-    pickupLiftDistanceMeters:
-      M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    pickupLiftDistanceMeters,
     holdBoostDurationSeconds:
       M04_PLAY_CONFIG.holdBoostDurationSeconds,
     releaseCompletionToleranceRadians:
@@ -597,6 +631,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     });
 
     console.log(
@@ -606,6 +642,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
           fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
           closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
           retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         },
         baseline: {
           peakLiftMeters: baseline.peakLiftMeters,
@@ -651,11 +689,15 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     });
     const heavy = await simulateM04PickupRetention({
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       ballMassKg: CLAW_LAB_CONFIG.pt001BallMassKg * 2,
     });
 
@@ -685,5 +727,55 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(heavy.peakLiftMeters).toBeLessThan(0.02);
     expect(heavy.finalLiftMeters).toBeLessThan(0.02);
   });
+
+  it("cabinet grip actually acquires the real center rubber ball from the flat play deck", async () => {
+    const definition = getPrizeDefinition("prize/sphere_ball");
+    const resolved = resolvePrizeSpec(definition);
+    const actual = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      ballMassKg: resolved.massKg,
+      ballFriction: resolved.material.dynamicFriction,
+      ballRadiusMeters: definition.dimensions.x * 0.5,
+      supportMode: "flat-deck",
+    });
+    const heavy = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      ballMassKg: resolved.massKg * 2,
+      ballFriction: resolved.material.dynamicFriction,
+      ballRadiusMeters: definition.dimensions.x * 0.5,
+      supportMode: "flat-deck",
+    });
+
+    console.log(
+      "Cabinet flat-deck real-ball grip metrics",
+      JSON.stringify({
+        massKg: resolved.massKg,
+        heavyMassKg: resolved.massKg * 2,
+        friction: resolved.material.dynamicFriction,
+        radiusMeters: definition.dimensions.x * 0.5,
+        actual,
+        heavy,
+      }),
+    );
+
+    expect(actual.finiteAndBounded).toBe(true);
+    expect(actual.retainingReached).toBe(true);
+    expect(actual.peakLiftMeters).toBeGreaterThan(0.025);
+    expect(actual.liftAtRetainingStartMeters).toBeGreaterThan(0.010);
+    expect(actual.liftAfterRetaining0p4sMeters).toBeGreaterThan(0.010);
+    expect(actual.liftAfterRetaining0p8sMeters).toBeGreaterThan(0.10);
+    expect(actual.finalLiftMeters).toBeGreaterThan(0.10);
+    expect(heavy.peakLiftMeters).toBeLessThan(0.03);
+    expect(heavy.finalLiftMeters).toBeLessThan(0.03);
+  });
+
 });
 

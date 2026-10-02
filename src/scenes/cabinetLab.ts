@@ -212,6 +212,8 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.closePickupTorque,
         retainingTorque:
           CABINET_PLAY_TUNING.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       },
       playReturnTarget: {
         x: M06_CABINET_CONFIG.chuteCenterX,
@@ -347,7 +349,10 @@ export function createCabinetLabScene(
           " / " +
           CABINET_PLAY_TUNING.closePickupTorque.toFixed(3) +
           " / " +
-          CABINET_PLAY_TUNING.retainingTorque.toFixed(3),
+          CABINET_PLAY_TUNING.retainingTorque.toFixed(3) +
+          " / " +
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters.toFixed(3) +
+          " m pickup",
         "Chute trim        raised solid rim / sensor debug hidden",
         "Service wires     dual visual control leads",
         "Center ball       aligned for first physical pickup attempt",

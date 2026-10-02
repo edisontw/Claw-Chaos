@@ -174,6 +174,7 @@ export interface GantryGripProfile {
   fingerFriction?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
+  pickupLiftDistanceMeters?: number;
 }
 
 export interface GantryLabOptions {
@@ -202,6 +203,9 @@ export function createGantryLabScene(
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
     options.gripProfile?.retainingTorque ?? claw.pt002RetainingTorque;
+  const pickupLiftDistanceMeters =
+    options.gripProfile?.pickupLiftDistanceMeters ??
+    M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const gantry =
     verticalHomeOffset === 0
       ? M02_GANTRY_CONFIG
@@ -471,7 +475,7 @@ export function createGantryLabScene(
     releaseCompletionToleranceRadians:
       M04_PLAY_CONFIG.releaseCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
-    pickupLiftDistanceMeters: M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    pickupLiftDistanceMeters,
     holdBoostDurationSeconds:
       M04_PLAY_CONFIG.holdBoostDurationSeconds,
   };
@@ -1086,6 +1090,9 @@ export function createGantryLabScene(
           " / " +
           retainingTorque.toFixed(3) +
           " fric/C/P-ret",
+        "Pickup strong lift " +
+          pickupLiftDistanceMeters.toFixed(3) +
+          " m",
         "Finger motor k/c/T " +
           (m04FingerShouldClose(playCycle)
             ? claw.motorStiffness
