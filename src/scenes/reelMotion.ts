@@ -43,6 +43,14 @@ function limitAwareTargetVelocity(
   return movingDown ? speed : -speed;
 }
 
+
+export function haltReel(state: ReelState): ReelState {
+  return {
+    payout: state.payout,
+    velocity: 0,
+  };
+}
+
 export function advanceReel(
   state: ReelState,
   command: number,
