@@ -18,7 +18,7 @@ import {
   type GantryMotionConfig,
   type GantryMotionState,
 } from "./gantryMotion";
-import { advanceReel, type ReelConfig, type ReelState } from "./reelMotion";
+import { advanceReel, haltReel, type ReelConfig, type ReelState } from "./reelMotion";
 import {
   M04_PLAY_CONFIG,
   advanceM04PlayState,
@@ -160,12 +160,11 @@ function addCylinder(
 }
 
 function computeSwingAngle(
+  anchorY: number,
   carriageX: number,
   carriageZ: number,
   hub: { x: number; y: number; z: number },
 ): number {
-  const anchorY =
-    M02_GANTRY_CONFIG.carriageY - M02_GANTRY_CONFIG.carriageHalfY;
   const horizontal = Math.hypot(hub.x - carriageX, hub.z - carriageZ);
   const vertical = Math.max(1e-6, anchorY - hub.y);
   return Math.atan2(horizontal, vertical);
@@ -174,6 +173,8 @@ function computeSwingAngle(
 export interface GantryLabOptions {
   addLabFloor?: boolean;
   playReturnTarget?: { x: number; z: number };
+  verticalHomeOffset?: number;
+  addServiceWires?: boolean;
   milestone?: string;
   camera?: {
     position: [number, number, number];
@@ -187,7 +188,16 @@ export function createGantryLabScene(
   options: GantryLabOptions = {},
 ): SimulationScene {
   const claw = CLAW_LAB_CONFIG;
-  const gantry = M02_GANTRY_CONFIG;
+  const verticalHomeOffset = options.verticalHomeOffset ?? 0;
+  const gantry =
+    verticalHomeOffset === 0
+      ? M02_GANTRY_CONFIG
+      : {
+          ...M02_GANTRY_CONFIG,
+          carriageY: M02_GANTRY_CONFIG.carriageY + verticalHomeOffset,
+          reelMaxPayout:
+            M02_GANTRY_CONFIG.reelMaxPayout + verticalHomeOffset,
+        };
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const fingerJoints: RevoluteJointHandle[] = [];
@@ -301,6 +311,37 @@ export function createGantryLabScene(
   cable.castShadow = true;
   scene.add(cable);
 
+  const serviceWireAttributes: Array<{
+    offsetX: number;
+    offsetZ: number;
+    attribute: THREE.BufferAttribute;
+  }> = [];
+  if (options.addServiceWires) {
+    const wireMaterial = new THREE.LineBasicMaterial({
+      color: 0x1d2026,
+      transparent: true,
+      opacity: 0.92,
+    });
+    for (const [offsetX, offsetZ] of [
+      [-0.012, 0.008],
+      [0.012, -0.008],
+    ] as const) {
+      const geometry = new THREE.BufferGeometry();
+      const attribute = new THREE.BufferAttribute(
+        new Float32Array(9),
+        3,
+      );
+      geometry.setAttribute("position", attribute);
+      const wire = new THREE.Line(geometry, wireMaterial);
+      scene.add(wire);
+      serviceWireAttributes.push({
+        offsetX,
+        offsetZ,
+        attribute,
+      });
+    }
+  }
+
   const anchorY = gantry.carriageY - gantry.carriageHalfY;
   const initialHubY = anchorY - gantry.suspensionLength;
   const reelAnchorBody = physics.createKinematicBody({
@@ -408,7 +449,8 @@ export function createGantryLabScene(
   const playReturnTarget =
     options.playReturnTarget ?? { x: gantry.homeX, z: gantry.homeZ };
   const playConfig = {
-    autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
+    autoClosePayoutMeters:
+      M04_PLAY_CONFIG.autoClosePayoutMeters + verticalHomeOffset,
     closedAngleRadians: claw.closedAngle,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
@@ -480,6 +522,23 @@ export function createGantryLabScene(
       cableUp,
       cableDirection.normalize(),
     );
+
+    for (const serviceWire of serviceWireAttributes) {
+      const topX = motion.x.position + serviceWire.offsetX;
+      const topY = anchorY + 0.012;
+      const topZ = motion.z.position + serviceWire.offsetZ;
+      const bottomX = hub.x + serviceWire.offsetX * 0.35;
+      const bottomY = hub.y + claw.hubColliderHalfHeight + 0.035;
+      const bottomZ = hub.z + serviceWire.offsetZ * 0.35;
+      const midX = (topX + bottomX) * 0.5 + serviceWire.offsetX * 0.4;
+      const midY = (topY + bottomY) * 0.5 - 0.012;
+      const midZ = (topZ + bottomZ) * 0.5 + serviceWire.offsetZ * 0.4;
+
+      serviceWire.attribute.setXYZ(0, topX, topY, topZ);
+      serviceWire.attribute.setXYZ(1, midX, midY, midZ);
+      serviceWire.attribute.setXYZ(2, bottomX, bottomY, bottomZ);
+      serviceWire.attribute.needsUpdate = true;
+    }
   };
 
   const startHomeReturn = (): void => {
@@ -558,6 +617,12 @@ export function createGantryLabScene(
     homeReturnPhase = "READY";
     const previous = playCycle;
     playCycle = applyM04Action(playCycle, reel.payout);
+    if (
+      previous.phase === "DESCENDING" &&
+      playCycle.phase === "CLOSING"
+    ) {
+      reel = haltReel(reel);
+    }
     return playCycle !== previous;
   };
 
@@ -609,6 +674,7 @@ export function createGantryLabScene(
       const hubPosition = hubBody.translation();
       const relativeX = hubPosition.x - motion.x.position;
       const swingAngle = computeSwingAngle(
+        anchorY,
         motion.x.position,
         motion.z.position,
         hubPosition,
@@ -915,6 +981,7 @@ export function createGantryLabScene(
       const relativeX = hub.x - motion.x.position;
       const relativeZ = hub.z - motion.z.position;
       const swingAngle = computeSwingAngle(
+        anchorY,
         motion.x.position,
         motion.z.position,
         hub,
