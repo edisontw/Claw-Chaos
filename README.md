@@ -121,7 +121,22 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-M07 slice 2 is now a **closure candidate**. The player can physically walk around the front corners to either side-glass inspection position, look down at the control panel/chute, and use the red control-panel button through the same M04 primary action. Automated PT-025/PT-026 gates pass; the remaining M07 gate is the final manual visual/readability check on the deployed build before declaring M07 CLOSED.
+M07 remains a **closure candidate** after the cabinet-realism corrections. The root URL now opens `cabinet-lab` directly. The current cabinet uses a larger left-side prize chute, a higher idle claw with visual service wiring, and EARLY CLOSE now brakes the reel immediately at the action height. Automated regression gates pass; the remaining M07 gate is the final manual visual/readability/play-feel check on the deployed build before declaring M07 CLOSED.
+
+Root/default scene:
+- `https://edisontw.github.io/Claw-Chaos/` → `cabinet-lab`
+- explicit lab URL remains `?scene=gantry-lab`
+
+Current cabinet realism baseline:
+- chute center X/Z = -0.28 / 0.20 m
+- chute opening = 0.24 × 0.18 m
+- chute sensor enlarged with the opening
+- cabinet claw idle/home height = +60 mm relative to the locked `gantry-lab` baseline
+- cabinet reel maximum payout is extended by the same 60 mm, preserving bottom reach
+- two visual service/control wires accompany the main suspension cable
+- EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
+- AUTO CLOSE remains the normal near-bottom fallback
+- root/browser default-scene smoke is regression-gated
 
 Current `cabinet-lab` player-view controls:
 - click canvas: capture mouse for first-person look; `Esc` releases pointer lock
@@ -147,14 +162,14 @@ M07 slice 2 baseline:
 - deterministic left/right sight-line tests prove both side inspection rays enter through the physical side-glass span
 - gaze targets for control panel and chute are both reachable inside yaw/pitch limits
 - red control-panel button + `F` reuses the existing M04 primary action; no duplicate play logic
-- **29 test files / 74 tests PASS**
-- lint/build/base-path and both browser smokes PASS; cabinet smoke requires active player-view + interaction UI
+- **29 test files / 76 tests PASS**
+- lint/build/base-path and browser smokes PASS; cabinet smoke requires active player-view + interaction UI
 
 Current `gantry-lab` controls:
-- default scene: `?scene=gantry-lab`
+- direct lab scene: `?scene=gantry-lab`
 - Arrow keys: manual X/Z aiming while READY
 - first `Space`: physical DROP
-- second `Space` during descent: EARLY CLOSE
+- second `Space` during descent: EARLY CLOSE + immediate reel-height lock
 - no second action: AUTO CLOSE near maximum payout
 - after close: settle → physical LIFT → PICKUP → RETAINING → RETURN → RELEASE runs automatically
 - hold `Shift` during RETAINING/RETURNING: limited HOLD BOOST
