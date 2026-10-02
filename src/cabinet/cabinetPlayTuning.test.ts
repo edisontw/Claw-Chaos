@@ -49,5 +49,13 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_PLAY_TUNING.retainingTorque).toBeLessThan(
       M04_PLAY_CONFIG.holdBoostTorque,
     );
+    expect(
+      CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+    ).toBeGreaterThan(
+      M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    );
+    expect(
+      CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+    ).toBe(0.12);
   });
 });
