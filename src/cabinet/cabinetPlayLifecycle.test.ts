@@ -53,7 +53,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     const gantry = M02_GANTRY_CONFIG;
     createCabinetPhysics(physics);
 
-    const startX = 0.155;
+    const startX = -0.155;
     const startZ = 0.20;
     const targetX = M06_CABINET_CONFIG.chuteCenterX;
     const targetZ = M06_CABINET_CONFIG.chuteCenterZ;
