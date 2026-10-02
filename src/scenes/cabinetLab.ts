@@ -174,7 +174,7 @@ export function createCabinetLabScene(
         x: M06_CABINET_CONFIG.chuteCenterX,
         z: M06_CABINET_CONFIG.chuteCenterZ,
       },
-      milestone: "M06 / Cabinet play lifecycle",
+      milestone: "M07 / First-person player view",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -267,7 +267,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M06 / Cabinet play lifecycle",
+    milestone: "M07 / First-person player view",
     camera: gantryScene.camera,
     beforePhysicsStep(stepSeconds: number): void {
       gantryScene.beforePhysicsStep?.(stepSeconds);

@@ -9,6 +9,7 @@ import { DebugOverlay } from "../debug/DebugOverlay";
 import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
 import { RigidBodyMassPropertiesDebugRenderer } from "../debug/RigidBodyMassPropertiesDebug";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
+import { FirstPersonPlayerViewController } from "../player/firstPersonPlayerView";
 import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
 import { createPt004Scene } from "../scenes/pt004Scene";
@@ -67,6 +68,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
   camera.position.set(...testScene.camera.position);
   camera.lookAt(...testScene.camera.target);
 
+  const playerViewController =
+    selection.id === "cabinet-lab"
+      ? new FirstPersonPlayerViewController(camera, renderer.domElement)
+      : null;
+
   const debugOverlay = new DebugOverlay(root);
   const physicsDebugRenderer = new PhysicsDebugRenderer(scene, false);
   const massPropertiesDebugRenderer =
@@ -93,7 +99,11 @@ export async function startApp(root: HTMLElement): Promise<void> {
       return;
     }
 
-    if (event.code === "KeyD") {
+    if (
+      event.code === "F3" ||
+      (event.code === "KeyD" && selection.id !== "cabinet-lab")
+    ) {
+      event.preventDefault();
       physicsDebugRenderer.toggle();
     } else if (event.code === "KeyM") {
       massPropertiesDebugRenderer.toggle();
@@ -140,6 +150,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
     droppedCatchUpSeconds += result.droppedSeconds;
 
     syncRenderTransforms();
+    playerViewController?.update(frameDeltaSeconds);
     physicsDebugRenderer.update(physics.debugRender());
     massPropertiesDebugRenderer.update();
     renderer.render(scene, camera);
@@ -160,7 +171,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
       droppedCatchUpSeconds,
       physicsDebugVisible: physicsDebugRenderer.visible,
       massPropertiesDebugVisible: massPropertiesDebugRenderer.visible,
-      extraLines: testScene.debugLines?.(),
+      extraLines: [
+        ...(testScene.debugLines?.() ?? []),
+        ...(playerViewController?.debugLines() ?? []),
+      ],
     });
 
     requestAnimationFrame(frame);

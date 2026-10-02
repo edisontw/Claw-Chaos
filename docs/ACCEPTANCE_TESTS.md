@@ -665,12 +665,32 @@ Manual check:
 
 Player must be able to inspect both side angles without clipping through glass.
 
+M07 slice 1 — 2026-10-02:
+- **Automated constraint PASS**
+- yaw limit = ±105°
+- pitch = −40° / +30°
+- fixed eye height = 0.98 m
+- X movement = −0.62 to +0.62 m
+- Z movement = 0.484 to 0.82 m
+- lean = ±55 mm with bounded roll
+- repeated movement saturates at configured bounds rather than continuing into free space
+- manual side-angle/depth-judgment quality remains required for final PT-025 closure.
+
 ## 28. PT-026 Camera integrity
 
 Normal play must reject:
 - free fly,
 - clipping through glass,
 - arbitrary overhead teleport.
+
+M07 slice 1 — 2026-10-02:
+- **Automated movement-integrity PASS**
+- controller exposes no vertical/free-fly input
+- front glass outer face is Z = 0.384 m
+- minimum camera-center Z is 0.484 m, preserving 0.10 m front-glass clearance
+- sustained forward/lateral input remains clamped to the standing envelope
+- head look changes orientation only and cannot translate through cabinet geometry
+- final manual anti-clipping/side-inspection check remains pending before M07 closure.
 
 ## 29. PT-027 100+ prize variants
 
