@@ -923,30 +923,68 @@ Move the working simulation into a real cabinet.
 
 # M07 — First-Person Player View
 
+**Status: IN PROGRESS — slice 1 verified 2026-10-02**
+
 ## Goal
 
 Make play feel like standing at the cabinet.
 
 ## Deliverables
 
-- head look ≥ ±90° yaw
-- preferred ±100–110° tuning
-- limited vertical look
-- small forward/back movement
-- small left/right movement
-- lean
-- control-panel interaction
-- front/side visual inspection
+- head look ≥ ±90° yaw — PASS, ±105°
+- preferred ±100–110° tuning — PASS, ±105°
+- limited vertical look — PASS, −40° / +30°
+- small forward/back movement — PASS
+- small left/right movement — PASS
+- lean — PASS, ±55 mm with ≤4° roll
+- player/camera front-glass anti-clipping — PASS for slice-1 constrained movement envelope
+- control-panel interaction — pending
+- front/side visual inspection — runtime path available; manual/readability acceptance pending
 
-## Exit criteria
+## Slice 1 — constrained player rig
 
-Player can:
-- aim from front,
-- move sideways,
-- judge depth through side glass,
-- look down at controls,
-- look at chute,
-without free-fly or clipping through cabinet.
+Implemented:
+- first-person controller is active only in `cabinet-lab`
+- click canvas enters pointer-lock mouse look; Escape releases browser pointer lock
+- WASD moves the player inside a bounded standing area rather than moving the camera freely through world space
+- Q/E provides bounded lean
+- player body orientation stays cabinet-facing while head yaw is independent
+- fixed eye height = 0.98 m; no vertical movement/free-fly input
+- yaw clamp = ±105°
+- pitch clamp = −40° / +30°
+- movement envelope:
+  - X = −0.62 to +0.62 m
+  - Z = 0.484 to 0.82 m
+- front glass outer face = Z 0.384 m; nearest camera center remains 0.10 m outside it
+- max lean = 0.055 m
+- max lean roll = 4°
+- F3 toggles collider debug in `cabinet-lab`; legacy D debug remains unchanged in non-player scenes
+- machine input remains Arrow/Space/Shift/H/P/T and is independent from player-view input
+- debug overlay reports player X/Z, yaw/pitch, lean and pointer-lock state
+
+Automated acceptance:
+- PT-025 yaw range ≥ ±90° — PASS
+- PT-025 bounded pitch — PASS
+- PT-025 forward/back, lateral movement and lean — PASS
+- PT-026 no free-fly/vertical movement path — PASS by controller design
+- PT-026 cannot cross the front-glass clearance through repeated forward movement — PASS
+- PT-026 bounded player area under sustained movement — PASS
+- closed M01–M06 physics/result state untouched
+
+Verification:
+- **29 test files / 72 tests PASS**
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- `gantry-lab` browser smoke PASS
+- `cabinet-lab` browser smoke PASS
+- CI smoke additionally requires M07 `Player view` runtime text in the cabinet DOM
+
+Still pending before M07 closure:
+- visual/manual confirmation that ±105° head turn plus side-step gives useful side-glass depth judgment without fisheye
+- look-down framing for control panel and chute
+- minimal control-panel interaction path
+- final PT-025/PT-026 manual camera-integrity audit
 
 ---
 
