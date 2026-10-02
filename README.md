@@ -131,9 +131,13 @@ Current cabinet realism baseline:
 - chute center X/Z = -0.28 / 0.20 m
 - chute opening = 0.24 × 0.18 m
 - chute sensor enlarged with the opening
-- cabinet claw idle/home height = +60 mm relative to the locked `gantry-lab` baseline
-- cabinet reel maximum payout is extended by the same 60 mm, preserving bottom reach
+- cabinet claw idle/home height = **+85 mm** relative to the locked `gantry-lab` baseline
+- cabinet reel maximum payout is extended by the same 85 mm, preserving bottom reach; carriage top keeps ≈10 mm ceiling clearance
 - two visual service/control wires accompany the main suspension cable
+- chute sensor debug wireframe is hidden during normal play; a raised solid trim sits above the deck around the opening to avoid moving-camera seam/z-fighting artifacts
+- cabinet-only grip profile = finger friction **0.72**, CLOSE/PICKUP **2.9 N·m**, RETAINING **0.0055 N·m**
+- locked `gantry-lab` M04 profile remains 0.60 / 2.5 / 0.003
+- 80 g high-friction calibration ball is physically retained to the top, while an otherwise identical 160 g ball lifts only ≈7.6 mm and falls back; no magnet/parent/weld is used
 - EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
 - AUTO CLOSE remains the normal near-bottom fallback
 - root/browser default-scene smoke is regression-gated
@@ -162,7 +166,7 @@ M07 slice 2 baseline:
 - deterministic left/right sight-line tests prove both side inspection rays enter through the physical side-glass span
 - gaze targets for control panel and chute are both reachable inside yaw/pitch limits
 - red control-panel button + `F` reuses the existing M04 primary action; no duplicate play logic
-- **29 test files / 76 tests PASS**
+- **30 test files / 80 tests PASS**
 - lint/build/base-path and browser smokes PASS; cabinet smoke requires active player-view + interaction UI
 
 Current `gantry-lab` controls:
