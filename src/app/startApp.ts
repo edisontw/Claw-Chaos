@@ -9,7 +9,11 @@ import { DebugOverlay } from "../debug/DebugOverlay";
 import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
 import { RigidBodyMassPropertiesDebugRenderer } from "../debug/RigidBodyMassPropertiesDebug";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
-import { FirstPersonPlayerViewController } from "../player/firstPersonPlayerView";
+import {
+  FirstPersonPlayerViewController,
+  M07_CAMERA_FOV_DEGREES,
+  M07_CABINET_VIEW_TARGETS,
+} from "../player/firstPersonPlayerView";
 import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
 import { createPt004Scene } from "../scenes/pt004Scene";
@@ -29,7 +33,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111722);
 
-  const camera = new THREE.PerspectiveCamera(50, 1, 0.01, 100);
+  const camera = new THREE.PerspectiveCamera(
+    M07_CAMERA_FOV_DEGREES,
+    1,
+    0.01,
+    100,
+  );
 
   const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -70,7 +79,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   const playerViewController =
     selection.id === "cabinet-lab"
-      ? new FirstPersonPlayerViewController(camera, renderer.domElement)
+      ? new FirstPersonPlayerViewController(
+          camera,
+          renderer.domElement,
+          M07_CABINET_VIEW_TARGETS,
+          () => testScene.primaryAction?.() ?? false,
+        )
       : null;
 
   const debugOverlay = new DebugOverlay(root);
