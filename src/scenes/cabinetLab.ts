@@ -5,6 +5,7 @@ import {
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
+import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { getPrizeDefinition } from "../prizes/catalog";
@@ -126,27 +127,59 @@ function addControlPanel(scene: THREE.Scene): void {
   scene.add(button);
 }
 
-function addSensorDebugVolume(scene: THREE.Scene): void {
+function addChuteTrim(scene: THREE.Scene): void {
   const c = M06_CABINET_CONFIG;
-  const geometry = new THREE.BoxGeometry(
-    c.chuteSensorHalfX * 2,
-    c.chuteSensorHalfY * 2,
-    c.chuteSensorHalfZ * 2,
-  );
-  const wire = new THREE.LineSegments(
-    new THREE.EdgesGeometry(geometry),
-    new THREE.LineBasicMaterial({
-      color: 0x4cff9a,
-      transparent: true,
-      opacity: 0.85,
-    }),
-  );
-  wire.position.set(
-    c.chuteCenterX,
-    c.chuteSensorCenterY,
-    c.chuteCenterZ,
-  );
-  scene.add(wire);
+  const t = CABINET_PLAY_TUNING.chuteTrimHalfWidth;
+  const halfHeight = CABINET_PLAY_TUNING.chuteTrimHalfHeight;
+  const y = c.playDeckY + halfHeight + 0.001;
+  const material = new THREE.MeshStandardMaterial({
+    color: 0x202630,
+    roughness: 0.58,
+    metalness: 0.22,
+  });
+
+  const pieces = [
+    {
+      x: c.chuteCenterX - c.chuteOpeningHalfX - t,
+      z: c.chuteCenterZ,
+      hx: t,
+      hz: c.chuteOpeningHalfZ + t * 2,
+    },
+    {
+      x: c.chuteCenterX + c.chuteOpeningHalfX + t,
+      z: c.chuteCenterZ,
+      hx: t,
+      hz: c.chuteOpeningHalfZ + t * 2,
+    },
+    {
+      x: c.chuteCenterX,
+      z: c.chuteCenterZ - c.chuteOpeningHalfZ - t,
+      hx: c.chuteOpeningHalfX,
+      hz: t,
+    },
+    {
+      x: c.chuteCenterX,
+      z: c.chuteCenterZ + c.chuteOpeningHalfZ + t,
+      hx: c.chuteOpeningHalfX,
+      hz: t,
+    },
+  ] as const;
+
+  for (const piece of pieces) {
+    const mesh = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        piece.hx * 2,
+        halfHeight * 2,
+        piece.hz * 2,
+      ),
+      material,
+    );
+    mesh.position.set(piece.x, y, piece.z);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mesh.renderOrder = 2;
+    scene.add(mesh);
+  }
 }
 
 export function createCabinetLabScene(
@@ -159,7 +192,7 @@ export function createCabinetLabScene(
   }
 
   addControlPanel(scene);
-  addSensorDebugVolume(scene);
+  addChuteTrim(scene);
 
   const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.5, 2.2, 1.7);
   cabinetLight.position.set(0, 1.05, 0.02);
@@ -170,8 +203,16 @@ export function createCabinetLabScene(
     physics,
     {
       addLabFloor: false,
-      verticalHomeOffset: 0.06,
+      verticalHomeOffset:
+        CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
+      gripProfile: {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque:
+          CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque:
+          CABINET_PLAY_TUNING.retainingTorque,
+      },
       playReturnTarget: {
         x: M06_CABINET_CONFIG.chuteCenterX,
         z: M06_CABINET_CONFIG.chuteCenterZ,
@@ -296,8 +337,18 @@ export function createCabinetLabScene(
         `Inventory prizes  ${resultInventory.inventoryCount}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             low-opacity pane + visible boundary outline",
-        "Green wire box    chute sensor volume",
-        "Cabinet claw      +60 mm idle height / extended drop travel",
+        "Cabinet claw      +" +
+          Math.round(
+            CABINET_PLAY_TUNING.verticalHomeOffsetMeters * 1000,
+          ) +
+          " mm idle height / extended drop travel",
+        "Cabinet grip      " +
+          CABINET_PLAY_TUNING.fingerFriction.toFixed(2) +
+          " / " +
+          CABINET_PLAY_TUNING.closePickupTorque.toFixed(3) +
+          " / " +
+          CABINET_PLAY_TUNING.retainingTorque.toFixed(3),
+        "Chute trim        raised solid rim / sensor debug hidden",
         "Service wires     dual visual control leads",
         "Center ball       aligned for first physical pickup attempt",
       ];
