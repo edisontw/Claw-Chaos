@@ -1016,6 +1016,19 @@ Following deployed-build feedback:
 - locked standalone `gantry-lab` vertical calibration remains unchanged
 - regressions distinguish carried/RETURN continuity from faster post-release free-fall through the larger chute
 
+### Cabinet feedback refinement
+
+- chute opening now uses a raised solid rim; normal-play sensor debug wireframe is hidden
+- cabinet idle claw raised from +60 mm to **+85 mm**, with bottom reach preserved by matching payout extension
+- cabinet-specific grip was calibrated instead of changing locked laboratory physics:
+  - friction 0.72
+  - CLOSE/PICKUP 2.9 N·m
+  - RETAINING 0.0055 N·m
+- easy 80 g high-friction ball can be carried to the top
+- 160 g equivalent ball fails to lift meaningfully, proving weight still matters
+- HOLD BOOST remains stronger than base retaining torque
+- no magnet, prize parenting, weld, scripted carry or outcome forcing
+
 Still pending before M07 closure:
 - final manual deployed-build check that left/right side inspection is visually useful and not awkward
 - confirm panel/chute look-down framing feels natural with 50° FOV

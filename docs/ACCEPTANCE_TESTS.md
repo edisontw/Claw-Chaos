@@ -455,6 +455,17 @@ Implementation status — 2026-10-01:
 - no state-transition velocity clearing is used
 - full M04 closure suite: **54 automated tests PASS**
 
+Cabinet gameplay calibration — 2026-10-02:
+- locked M04 lab values above remain unchanged
+- cabinet-only finger friction = **0.72**
+- cabinet-only CLOSE/PICKUP torque = **2.9 N·m**
+- cabinet-only RETAINING torque = **0.0055 N·m**
+- HOLD BOOST remains 0.010 N·m
+- 80 g high-friction sphere: peak lift ≈ 0.2410 m, lift after 0.8 s retaining ≈ 0.2355 m, final lift ≈ 0.2410 m
+- 160 g identical-geometry sphere: peak lift ≈ 0.0076 m and final lift ≈ −0.0010 m
+- therefore the cabinet can genuinely pick up an easy prize while still rejecting a substantially heavier prize under the same claw settings
+- no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, or velocity reset is used.
+
 ## 14. PT-012 Hold boost
 
 Setup:
@@ -754,6 +765,8 @@ For each playable build, manually inspect:
 - release happens from real finger opening/contact loss,
 - prize impact audio matches material,
 - cabinet/chute proportions remain plausible.
+- chute trim remains visually stable while the first-person camera moves; no green sensor-debug box or coplanar rim flicker is visible
+- idle claw sits close to the upper mechanism without visually/physically intersecting the cabinet ceiling.
 
 ### M06 gray-box cabinet readability closure — 2026-10-02
 
