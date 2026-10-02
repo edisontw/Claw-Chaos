@@ -37,6 +37,8 @@ interface PickupRetentionProfile {
   fingerFriction?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
+  ballMassKg?: number;
+  ballFriction?: number;
 }
 
 interface PickupRetentionMetrics {
@@ -70,6 +72,9 @@ async function simulateM04PickupRetention(
     profile.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
     profile.retainingTorque ?? claw.pt002RetainingTorque;
+  const ballMassKg = profile.ballMassKg ?? claw.pt001BallMassKg;
+  const ballFriction =
+    profile.ballFriction ?? claw.pt001BallFriction;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -188,9 +193,9 @@ async function simulateM04PickupRetention(
   const ball = physics.createDynamicSphere(
     { x: 0, y: ballCenterY, z: 0 },
     claw.pt001BallRadius,
-    claw.pt001BallMassKg,
+    ballMassKg,
     {
-      friction: claw.pt001BallFriction,
+      friction: ballFriction,
       restitution: claw.pt001BallRestitution,
     },
   );
@@ -632,8 +637,50 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(cabinet.liftAfterRetaining0p4sMeters).toBeGreaterThan(
       baseline.liftAfterRetaining0p4sMeters + 0.01,
     );
+    expect(cabinet.liftAfterRetaining0p8sMeters).toBeGreaterThan(
+      0.10,
+    );
+    expect(cabinet.finalLiftMeters).toBeGreaterThan(0.10);
     expect(CABINET_PLAY_TUNING.retainingTorque).toBeLessThan(
       M04_PLAY_CONFIG.holdBoostTorque,
+    );
+  });
+
+  it("cabinet grip still responds to prize mass instead of acting like a magnet", async () => {
+    const easy = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+    });
+    const heavy = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      ballMassKg: CLAW_LAB_CONFIG.pt001BallMassKg * 2,
+    });
+
+    console.log(
+      "Cabinet grip mass response metrics",
+      JSON.stringify({
+        lightMassKg: CLAW_LAB_CONFIG.pt001BallMassKg,
+        heavyMassKg: CLAW_LAB_CONFIG.pt001BallMassKg * 2,
+        easy: {
+          peakLiftMeters: easy.peakLiftMeters,
+          liftAt0p8s: easy.liftAfterRetaining0p8sMeters,
+          finalLiftMeters: easy.finalLiftMeters,
+        },
+        heavy: {
+          peakLiftMeters: heavy.peakLiftMeters,
+          liftAt0p8s: heavy.liftAfterRetaining0p8sMeters,
+          finalLiftMeters: heavy.finalLiftMeters,
+        },
+      }),
+    );
+
+    expect(easy.finiteAndBounded).toBe(true);
+    expect(heavy.finiteAndBounded).toBe(true);
+    expect(easy.finalLiftMeters).toBeGreaterThan(
+      heavy.finalLiftMeters + 0.05,
     );
   });
 });
