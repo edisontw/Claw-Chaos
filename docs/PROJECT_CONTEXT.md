@@ -497,97 +497,47 @@ Final verification baseline:
 - headless Rapier/WebGL smoke PASS
 - GitHub Pages deployment PASS after merge
 
-## M07 implementation status — slice 2 verified 2026-10-02
+## M07 implementation status — front-only correction verified 2026-10-03
 
-**Status: IN PROGRESS — automated closure candidate**
+**Status: IN PROGRESS — closure candidate**
 
 Player/camera:
-- `cabinet-lab` first-person controller remains isolated from closed machine physics
-- fixed FOV = 50°
-- yaw ±105°
-- pitch −70° / +30°
-- eye height 0.98 m
-- no vertical/free-fly input
-- movement world bounds X ±0.72 m / Z −0.18…0.82 m
-- front/side physical cabinet exclusion preserves 0.10 m camera-center clearance
-- direct forward entry is blocked
-- side inspection requires physically walking around a front corner
-- inward side lean is automatically clamped before crossing the glass clearance
-- max nominal lean 55 mm / max roll 4°
+- root/default `cabinet-lab` remains first-person
+- FOV = 50°
+- yaw = ±90°
+- pitch = −70° / +25°
+- eye height = 0.98 m
+- player X = ±0.28 m
+- player Z ≈ 0.534–0.78 m
+- lean = ±30 mm / max roll 2.5°
+- no vertical/free-fly movement
+- player remains in front of the cabinet and cannot walk around either side
+- control-panel and chute gaze remain reachable from the legal front zone
 
-Side inspection:
-- left and right side stances are inside legal player bounds and outside cabinet clearance
-- deterministic sight-line tests show each view ray crosses the corresponding physical side-glass plane inside its Z/Y extent
-- required yaw/pitch remain inside the configured head-look limits
-- no widened FOV or side-camera teleport is used
-
-Interaction:
-- center reticle and gaze focus
-- control-panel button + chute targets
-- both can be looked at naturally from the front zone
-- `F` on the control-panel button invokes the existing M04 primary action
-- keyboard Space still invokes the same action path
-- chute target is inspection-only
-- debug overlay reports current gaze focus and last interaction result
+Grip/play correction:
+- deployed feedback showed prizes could not be usefully carried even though pedestal calibration passed
+- root cause: pedestal calibration allowed favorable under-grip geometry while real prizes rest on a broad flat play deck
+- regression now reproduces the full flat play deck
+- actual `prize/sphere_ball`: 75 g, rubber friction 0.82, radius 52.5 mm
+- cabinet CLOSE/PICKUP remains 2.9 N·m and finger friction remains 0.72
+- cabinet RETAINING remains 0.0055 N·m
+- cabinet-only strong PICKUP distance increases from 0.06 m to **0.12 m**
+- real flat-deck ball reaches ≈226 mm peak/final lift
+- same geometry/friction at 150 g reaches only ≈7 mm peak lift
+- mass sensitivity remains physical; no attachment/magnet/kinematic shortcut
 
 Acceptance:
-- PT-025 camera range/movement/lean — PASS
-- PT-025 side-glass geometric sight lines — PASS
-- PT-025 panel/chute look-down reachability — PASS
-- PT-026 front/side clearance and inward-lean safety — PASS
-- fixed FOV no-fisheye gate — PASS
-- browser smoke requires active player-view and interaction UI
-- M01–M06 physics/result/inventory behavior unchanged
-- **29 test files / 74 tests PASS**
-- lint/build/base-path and both browser smokes PASS
-
-### Cabinet realism correction — 2026-10-02
-
-Applied from direct visual/play feedback:
-- root/default scene changed from `gantry-lab` to `cabinet-lab`
-- root browser smoke now requires the cabinet player view to initialize
-- prize chute moved from X = +0.28 m to **X = -0.28 m**
-- chute opening enlarged from 0.18 × 0.15 m to **0.24 × 0.18 m**
-- chute sensor footprint enlarged accordingly
-- cabinet-only claw idle/home position raised **60 mm**
-- cabinet-only max reel payout and AUTO CLOSE threshold extend by the same 60 mm, so the physical bottom reach is preserved
-- locked `gantry-lab` M02/M03 vertical calibration values are unchanged
-- two visual service/control leads were added beside the main suspension cable
-- EARLY CLOSE now changes CLOSING reel command to HOLD and applies an immediate reel brake on the Space/F transition
-- regression action at payout ≈ 0.1022708 m remains at exactly the same payout through 58 closing ticks
-- AUTO CLOSE still reaches the normal physical bottom limit
-- larger chute required separating transport-continuity from post-release free-fall: current transport max step ≈ 4.84 mm/tick; post-release chute fall max ≈ 26.49 mm/tick
-- mirrored left-chute lifecycle fixture remains one-shot WIN and finite/bounded
-- **29 test files / 76 tests PASS** before final root-default smoke/doc commits
-
-### Cabinet visual/grip refinement — 2026-10-02
-
-Direct deployed-build feedback identified three issues: moving-camera chute-border artifacts, excessive claw-to-ceiling gap, and a cabinet grip profile that felt too weak.
-
-Current correction:
-- normal-play chute sensor wireframe removed from the rendered cabinet
-- raised opaque chute trim added **above** the play deck rather than coplanar with it, avoiding the prior seam/z-fighting appearance while camera moves
-- cabinet-only vertical home offset increased from +60 mm to **+85 mm**
-- max payout extends by the same +85 mm, preserving the exact locked bottom anchor reach
-- carriage top remains ≈10 mm below the physical play-area ceiling
-- `gantry-lab` M02/M03 vertical calibration remains unchanged
-- cabinet grip profile is isolated from the locked M04 laboratory profile:
-  - finger friction = **0.72** (lab 0.60)
-  - CLOSE/PICKUP torque = **2.9 N·m** (lab 2.5)
-  - RETAINING torque = **0.0055 N·m** (lab 0.003)
-  - HOLD BOOST remains **0.010 N·m**
-- physical calibration with the same three-finger Rapier claw:
-  - 80 g high-friction ball: peak lift ≈ 241.0 mm; 0.8 s retaining lift ≈ 235.5 mm; final lift ≈ 241.0 mm
-  - 160 g otherwise-identical ball: peak lift ≈ 7.6 mm; final lift ≈ −1.0 mm
-- this verifies the stronger setting is still mass/contact dependent rather than a magnetic or scripted hold
-- **30 test files / 80 tests PASS** on the calibrated branch before final documentation CI
-
-Remaining M07 closure gate:
-- deployed-build manual visual check for side-depth usefulness, natural look-down framing and visible corner anti-clipping.
+- front-only movement bounds — PASS
+- no side traversal — PASS
+- ±90° yaw and look-down interaction framing — PASS
+- actual flat-deck easy-prize pickup — PASS
+- 2× mass flat-deck rejection — PASS
+- **30 test files / 80 tests PASS**
+- lint/build/base-path/browser smokes PASS
 
 ## Current next step
 
-Perform the final **M07 manual visual/readability acceptance** on the deployed `cabinet-lab`. If the two side views, control-panel/chute look-down view and front-corner clearance look natural, close M07 and advance to M08 Visual & Audio Realism Pass 1. No further M07 physics changes are planned unless the visual check exposes a camera-envelope issue.
+Deploy and manually verify the front-only view and real flat-deck pickup behavior. If the player can no longer walk to the side and the centered rubber ball can visibly be picked up/carried, close M07 and proceed to M08.
 
 ## Design-review additions
 
