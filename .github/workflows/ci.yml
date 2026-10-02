@@ -131,7 +131,9 @@ jobs:
 
             if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
                grep -q 'cabinet-lab' "$DOM_FILE" &&
-               grep -q 'Player view' "$DOM_FILE"; then
+               grep -q 'Player view' "$DOM_FILE" &&
+               grep -q 'data-player-view="active"' "$DOM_FILE" &&
+               grep -q 'player-interaction-prompt' "$DOM_FILE"; then
               CABINET_READY=1
               break
             fi
