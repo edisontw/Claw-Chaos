@@ -70,20 +70,20 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   initialX: 0,
   initialZ: 0.68,
   eyeY: 0.98,
-  minX: -0.72,
-  maxX: 0.72,
-  minZ: -0.18,
-  maxZ: 0.82,
+  minX: -0.28,
+  maxX: 0.28,
+  minZ: frontGlassOuterZ + 0.15,
+  maxZ: 0.78,
   cabinetSideClearX: cabinetOuterX + cabinetClearanceMeters,
   cabinetFrontClearZ: frontGlassOuterZ + cabinetClearanceMeters,
-  yawLimitRadians: THREE.MathUtils.degToRad(105),
-  pitchMinRadians: THREE.MathUtils.degToRad(-70),
-  pitchMaxRadians: THREE.MathUtils.degToRad(30),
+  yawLimitRadians: THREE.MathUtils.degToRad(90),
+  pitchMinRadians: THREE.MathUtils.degToRad(-60),
+  pitchMaxRadians: THREE.MathUtils.degToRad(25),
   moveSpeedMetersPerSecond: 0.55,
   mouseSensitivityRadiansPerPixel: 0.0022,
-  maxLeanMeters: 0.055,
-  leanSpeedMetersPerSecond: 0.28,
-  maxLeanRollRadians: THREE.MathUtils.degToRad(4),
+  maxLeanMeters: 0.030,
+  leanSpeedMetersPerSecond: 0.20,
+  maxLeanRollRadians: THREE.MathUtils.degToRad(2.5),
 };
 
 export const M07_CABINET_VIEW_TARGETS: readonly PlayerViewTarget[] = [
@@ -109,33 +109,6 @@ export const M07_CABINET_VIEW_TARGETS: readonly PlayerViewTarget[] = [
     },
     maxDistanceMeters: 1.40,
     focusHalfAngleRadians: THREE.MathUtils.degToRad(10),
-  },
-] as const;
-
-export const M07_SIDE_INSPECTION_CASES = [
-  {
-    side: "right",
-    position: {
-      x: M07_FIRST_PERSON_VIEW_CONFIG.cabinetSideClearX + 0.04,
-      z: 0.02,
-    },
-    target: {
-      x: 0.10,
-      y: M06_CABINET_CONFIG.playDeckY + 0.25,
-      z: -0.12,
-    },
-  },
-  {
-    side: "left",
-    position: {
-      x: -M07_FIRST_PERSON_VIEW_CONFIG.cabinetSideClearX - 0.04,
-      z: 0.02,
-    },
-    target: {
-      x: -0.10,
-      y: M06_CABINET_CONFIG.playDeckY + 0.25,
-      z: -0.12,
-    },
   },
 ] as const;
 
