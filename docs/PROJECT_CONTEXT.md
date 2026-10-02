@@ -560,6 +560,28 @@ Applied from direct visual/play feedback:
 - mirrored left-chute lifecycle fixture remains one-shot WIN and finite/bounded
 - **29 test files / 76 tests PASS** before final root-default smoke/doc commits
 
+### Cabinet visual/grip refinement — 2026-10-02
+
+Direct deployed-build feedback identified three issues: moving-camera chute-border artifacts, excessive claw-to-ceiling gap, and a cabinet grip profile that felt too weak.
+
+Current correction:
+- normal-play chute sensor wireframe removed from the rendered cabinet
+- raised opaque chute trim added **above** the play deck rather than coplanar with it, avoiding the prior seam/z-fighting appearance while camera moves
+- cabinet-only vertical home offset increased from +60 mm to **+85 mm**
+- max payout extends by the same +85 mm, preserving the exact locked bottom anchor reach
+- carriage top remains ≈10 mm below the physical play-area ceiling
+- `gantry-lab` M02/M03 vertical calibration remains unchanged
+- cabinet grip profile is isolated from the locked M04 laboratory profile:
+  - finger friction = **0.72** (lab 0.60)
+  - CLOSE/PICKUP torque = **2.9 N·m** (lab 2.5)
+  - RETAINING torque = **0.0055 N·m** (lab 0.003)
+  - HOLD BOOST remains **0.010 N·m**
+- physical calibration with the same three-finger Rapier claw:
+  - 80 g high-friction ball: peak lift ≈ 241.0 mm; 0.8 s retaining lift ≈ 235.5 mm; final lift ≈ 241.0 mm
+  - 160 g otherwise-identical ball: peak lift ≈ 7.6 mm; final lift ≈ −1.0 mm
+- this verifies the stronger setting is still mass/contact dependent rather than a magnetic or scripted hold
+- **30 test files / 80 tests PASS** on the calibrated branch before final documentation CI
+
 Remaining M07 closure gate:
 - deployed-build manual visual check for side-depth usefulness, natural look-down framing and visible corner anti-clipping.
 
