@@ -566,17 +566,17 @@ Expected:
 - win fires once,
 - inventory/state update occurs once.
 
-M06 physical chute integration — 2026-10-01:
-- **Automated PASS for physical sensor entry + exactly-once record**
+M06 final closure — 2026-10-02:
+- **Automated PASS for physical sensor entry + exactly-once result/inventory update**
 - `prize/cube_small` falls under gravity through the real raised-deck opening
-- first sensor entry occurs at fixed tick 33 ≈ 0.275 s
-- event identifies `pt018-cube`
-- event count = 1
-- sensor win count = 1
-- final cube Y ≈ -0.252569 m on the lower chute catch
-- continued polling for another simulated second produces no duplicate event
+- first sensor entry remains fixed tick 33 ≈ 0.275 s in the PT-018 physics regression
+- sensor emits exactly one event for the physical prize instance
+- `CabinetResultInventoryState` accepts the event exactly once
+- replaying the identical event returns no second result
+- presenting the same physical prize under a different sensor sequence also returns no second result
+- result count = 1 and inventory count = 1
 - the full carried-prize lifecycle independently reaches the same one-shot sensor only after motor RELEASE
-- explicit result/inventory consumption remains the final M06 closure item.
+- no result/inventory code modifies physics, prize transform, velocity, collision or sensor geometry.
 
 ## 21. PT-019 Bridge box progression
 
@@ -727,6 +727,15 @@ For each playable build, manually inspect:
 - prize impact audio matches material,
 - cabinet/chute proportions remain plausible.
 
+### M06 gray-box cabinet readability closure — 2026-10-02
+
+- front/side glass remains physically collidable
+- glass render opacity is 0.10 to reduce obstruction through the play area
+- visible edge outlines preserve panel/boundary readability despite the low-opacity pane
+- no FOV widening, camera teleport or collision bypass is used to solve visibility
+- both `gantry-lab` and `cabinet-lab` browser startup smoke PASS
+- first-person ±90°+ yaw, side-glass depth inspection and anti-clipping remain PT-025/PT-026 work for M07.
+
 ## 34. Regression policy
 
 Every resolved physics bug should ideally produce one of:
@@ -812,11 +821,12 @@ M04 state lifecycle — 2026-10-01:
 - next DROP action is therefore unavailable during RETURNING/RELEASING
 - final reel payout = 0.000 m
 
-M06 cabinet lifecycle — 2026-10-01:
+M06 final cabinet lifecycle — 2026-10-02:
 - carried-prize fixture: RETURNING tick 56 → RELEASING tick 117 → chute sensor tick 149 → READY tick 174
 - **physical/home-state ordering PASS**
 - next play remains unavailable until READY
-- explicit result/inventory handoff consuming the one-shot sensor event is still pending the final M06 closure slice.
+- chute event now feeds the idempotent result/inventory state exactly once
+- result/inventory handling does not delay or advance the mechanical READY transition.
 
 ## PT-034 Aim timer
 
