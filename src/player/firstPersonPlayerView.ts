@@ -77,7 +77,7 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   cabinetSideClearX: cabinetOuterX + cabinetClearanceMeters,
   cabinetFrontClearZ: frontGlassOuterZ + cabinetClearanceMeters,
   yawLimitRadians: THREE.MathUtils.degToRad(90),
-  pitchMinRadians: THREE.MathUtils.degToRad(-60),
+  pitchMinRadians: THREE.MathUtils.degToRad(-70),
   pitchMaxRadians: THREE.MathUtils.degToRad(25),
   moveSpeedMetersPerSecond: 0.55,
   mouseSensitivityRadiansPerPixel: 0.0022,
