@@ -43,6 +43,7 @@ interface PickupRetentionProfile {
   ballMassKg?: number;
   ballFriction?: number;
   ballRadiusMeters?: number;
+  pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
 
@@ -82,6 +83,9 @@ async function simulateM04PickupRetention(
     profile.ballFriction ?? claw.pt001BallFriction;
   const ballRadiusMeters =
     profile.ballRadiusMeters ?? claw.pt001BallRadius;
+  const pickupLiftDistanceMeters =
+    profile.pickupLiftDistanceMeters ??
+    M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const supportMode = profile.supportMode ?? "pedestal";
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -245,8 +249,7 @@ async function simulateM04PickupRetention(
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
     closeSettleSeconds: M04_PLAY_CONFIG.closeSettleSeconds,
-    pickupLiftDistanceMeters:
-      M04_PLAY_CONFIG.pickupLiftDistanceMeters,
+    pickupLiftDistanceMeters,
     holdBoostDurationSeconds:
       M04_PLAY_CONFIG.holdBoostDurationSeconds,
     releaseCompletionToleranceRadians:
@@ -628,6 +631,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     });
 
     console.log(
@@ -637,6 +642,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
           fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
           closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
           retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         },
         baseline: {
           peakLiftMeters: baseline.peakLiftMeters,
@@ -682,11 +689,15 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     });
     const heavy = await simulateM04PickupRetention({
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       ballMassKg: CLAW_LAB_CONFIG.pt001BallMassKg * 2,
     });
 
@@ -724,6 +735,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       ballMassKg: resolved.massKg,
       ballFriction: resolved.material.dynamicFriction,
       ballRadiusMeters: definition.dimensions.x * 0.5,
