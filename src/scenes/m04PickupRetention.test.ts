@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
 import type {
   RevoluteJointHandle,
@@ -31,6 +32,13 @@ import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 
 const M04_TEST_BALL_HEIGHT_OFFSET_METERS = 0.015;
 
+interface PickupRetentionProfile {
+  holdBoostTorque?: number;
+  fingerFriction?: number;
+  closePickupTorque?: number;
+  retainingTorque?: number;
+}
+
 interface PickupRetentionMetrics {
   peakLiftMeters: number;
   liftAtRetainingStartMeters: number;
@@ -52,9 +60,16 @@ interface PickupRetentionMetrics {
 }
 
 async function simulateM04PickupRetention(
-  holdBoostTorque = 0,
+  profile: PickupRetentionProfile = {},
 ): Promise<PickupRetentionMetrics> {
   const claw = CLAW_LAB_CONFIG;
+  const holdBoostTorque = profile.holdBoostTorque ?? 0;
+  const fingerFriction =
+    profile.fingerFriction ?? claw.fingerFriction;
+  const closePickupTorque =
+    profile.closePickupTorque ?? claw.maxMotorTorque;
+  const retainingTorque =
+    profile.retainingTorque ?? claw.pt002RetainingTorque;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -140,7 +155,7 @@ async function simulateM04PickupRetention(
       pivotWorld,
       createFingerSegments(createFingerPoints(theta)),
       {
-        friction: claw.fingerFriction,
+        friction: fingerFriction,
         restitution: claw.fingerRestitution,
         density: claw.fingerDensity,
       },
@@ -161,7 +176,7 @@ async function simulateM04PickupRetention(
         initialTarget: claw.openAngle,
         stiffness: claw.motorStiffness,
         damping: claw.motorDamping,
-        maxTorque: claw.maxMotorTorque,
+        maxTorque: closePickupTorque,
         contactsEnabled: false,
       },
     );
@@ -304,8 +319,8 @@ async function simulateM04PickupRetention(
       forcePhase === "RETAINING"
         ? boostActive
           ? holdBoostTorque
-          : claw.pt002RetainingTorque
-        : claw.maxMotorTorque;
+          : retainingTorque
+        : closePickupTorque;
 
     for (const joint of joints) {
       joint.configureMotorPosition(
@@ -522,9 +537,9 @@ describe("M04 physical pickup-to-retaining force transition", () => {
 
   it("temporarily delays slip with the calibrated HOLD BOOST, then returns to weak retaining force", async () => {
     const baseline = await simulateM04PickupRetention();
-    const boosted = await simulateM04PickupRetention(
-      M04_PLAY_CONFIG.holdBoostTorque,
-    );
+    const boosted = await simulateM04PickupRetention({
+      holdBoostTorque: M04_PLAY_CONFIG.holdBoostTorque,
+    });
 
     console.log(
       "M04 calibrated hold-boost metrics",
@@ -569,6 +584,57 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         boosted.liftAfterRetaining0p8sMeters,
     ).toBeGreaterThan(0.015);
     expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
+  });
+
+  it("cabinet grip profile can lift and retain a normal ball without magnetic hold", async () => {
+    const baseline = await simulateM04PickupRetention();
+    const cabinet = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+    });
+
+    console.log(
+      "Cabinet grip calibration metrics",
+      JSON.stringify({
+        profile: {
+          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+          closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+          retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        },
+        baseline: {
+          peakLiftMeters: baseline.peakLiftMeters,
+          liftAt0p4s: baseline.liftAfterRetaining0p4sMeters,
+          liftAt0p8s: baseline.liftAfterRetaining0p8sMeters,
+          finalLiftMeters: baseline.finalLiftMeters,
+        },
+        cabinet: {
+          peakLiftMeters: cabinet.peakLiftMeters,
+          liftAtRetainingStartMeters:
+            cabinet.liftAtRetainingStartMeters,
+          liftAt0p4s:
+            cabinet.liftAfterRetaining0p4sMeters,
+          liftAt0p8s:
+            cabinet.liftAfterRetaining0p8sMeters,
+          liftAt1p2s:
+            cabinet.liftAfterRetaining1p2sMeters,
+          finalLiftMeters: cabinet.finalLiftMeters,
+          topReached: cabinet.topReached,
+        },
+      }),
+    );
+
+    expect(cabinet.finiteAndBounded).toBe(true);
+    expect(cabinet.retainingReached).toBe(true);
+    expect(cabinet.topReached).toBe(true);
+    expect(cabinet.peakLiftMeters).toBeGreaterThan(0.03);
+    expect(cabinet.liftAtRetainingStartMeters).toBeGreaterThan(0.015);
+    expect(cabinet.liftAfterRetaining0p4sMeters).toBeGreaterThan(
+      baseline.liftAfterRetaining0p4sMeters + 0.01,
+    );
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBeLessThan(
+      M04_PLAY_CONFIG.holdBoostTorque,
+    );
   });
 });
 
