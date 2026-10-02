@@ -121,7 +121,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-M07 remains a **closure candidate** after the cabinet-realism corrections. The root URL now opens `cabinet-lab` directly. The current cabinet uses a larger left-side prize chute, a higher idle claw with visual service wiring, and EARLY CLOSE now brakes the reel immediately at the action height. Automated regression gates pass; the remaining M07 gate is the final manual visual/readability/play-feel check on the deployed build before declaring M07 CLOSED.
+M07 remains a **closure candidate** after the latest play-feel correction. Player movement is now intentionally restricted to a small standing zone in front of the cabinet; walking around either side is no longer allowed. Cabinet grip is now regression-tested against the actual center rubber-ball mass/material/size on a full flat play deck, not only a pedestal fixture. Automated gates pass; the remaining M07 gate is deployed-build manual play/readability confirmation.
 
 Root/default scene:
 - `https://edisontw.github.io/Claw-Chaos/` → `cabinet-lab`
@@ -136,38 +136,39 @@ Current cabinet realism baseline:
 - two visual service/control wires accompany the main suspension cable
 - chute sensor debug wireframe is hidden during normal play; a raised solid trim sits above the deck around the opening to avoid moving-camera seam/z-fighting artifacts
 - cabinet-only grip profile = finger friction **0.72**, CLOSE/PICKUP **2.9 N·m**, RETAINING **0.0055 N·m**
-- locked `gantry-lab` M04 profile remains 0.60 / 2.5 / 0.003
-- 80 g high-friction calibration ball is physically retained to the top, while an otherwise identical 160 g ball lifts only ≈7.6 mm and falls back; no magnet/parent/weld is used
+- cabinet strong PICKUP phase = **0.12 m lift** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
+- actual `prize/sphere_ball` on the full flat deck: 75 g / friction 0.82 / radius 52.5 mm → peak/final lift ≈ **226 mm**
+- same flat-deck geometry at 150 g → peak lift only ≈ **7.1 mm**, so grip remains mass-sensitive rather than magnetic
+- locked `gantry-lab` M04 force profile remains 0.60 / 2.5 / 0.003
 - EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
 - AUTO CLOSE remains the normal near-bottom fallback
 - root/browser default-scene smoke is regression-gated
 
 Current `cabinet-lab` player-view controls:
 - click canvas: capture mouse for first-person look; `Esc` releases pointer lock
-- mouse: head look, clamped to ±105° yaw and −70°/+30° pitch
-- `W/S`: forward/back movement around the constrained front/side standing area
-- `A/D`: left/right movement; player can walk around either front corner to inspect through side glass
-- `Q/E`: bounded lean; inward side lean is reduced automatically before it can violate glass clearance
+- mouse: head look, clamped to **±90° yaw** and **−70°/+25° pitch**
+- `W/S`: small front/back standing-position adjustment only
+- `A/D`: small left/right adjustment only; player remains in front of the cabinet
+- player X range = **±0.28 m**
+- player Z range ≈ **0.534–0.78 m**, always outside the front glass
+- `Q/E`: small bounded lean, max **30 mm**
+- walking around either cabinet side is intentionally disabled
 - center reticle: gaze target
 - `F`: interact when the reticle is on the red control-panel button
 - chute gaze is inspection-only
-- `F3`: collider debug in `cabinet-lab` (`D` remains collider debug in non-player scenes)
+- `F3`: collider debug in `cabinet-lab`
 - `M`: COM/origin debug
 - machine keyboard controls remain Arrow keys / Space / Shift / H / P / T
 
-M07 slice 2 baseline:
+Current M07 front-view baseline:
 - eye height = 0.98 m; no vertical/free-fly input
-- yaw = ±105°; pitch = −70° / +30°
-- camera FOV remains exactly 50°; no fisheye widening
-- world player range X ±0.72 m / Z −0.18 to 0.82 m
-- physical cabinet exclusion keeps camera center ≥0.10 m outside front/side glass
-- side-zone movement is allowed only after walking around a front corner
-- inward lean is dynamically clamped so the camera center cannot cross the side clearance
-- deterministic left/right sight-line tests prove both side inspection rays enter through the physical side-glass span
-- gaze targets for control panel and chute are both reachable inside yaw/pitch limits
-- red control-panel button + `F` reuses the existing M04 primary action; no duplicate play logic
+- yaw = ±90°; pitch = −70° / +25°
+- camera FOV remains exactly 50°
+- no side standing zones and no front-corner traversal
+- front-only movement plus head turn is used for aiming/readability
+- control-panel and chute gaze targets remain reachable from the legal front zone
 - **30 test files / 80 tests PASS**
-- lint/build/base-path and browser smokes PASS; cabinet smoke requires active player-view + interaction UI
+- lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:
 - direct lab scene: `?scene=gantry-lab`
