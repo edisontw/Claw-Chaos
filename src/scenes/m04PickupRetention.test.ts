@@ -682,6 +682,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(easy.finalLiftMeters).toBeGreaterThan(
       heavy.finalLiftMeters + 0.05,
     );
+    expect(heavy.peakLiftMeters).toBeLessThan(0.02);
+    expect(heavy.finalLiftMeters).toBeLessThan(0.02);
   });
 });
 
