@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceReel } from "./reelMotion";
+import { advanceReel, haltReel } from "./reelMotion";
 
 const config = {
   minPayout: 0,
@@ -45,6 +45,18 @@ describe("M02 reel motion", () => {
 
     expect(state.payout).toBeCloseTo(config.minPayout, 5);
     expect(state.velocity).toBeCloseTo(0, 5);
+  });
+
+  it("locks payout immediately when the grab brake is applied", () => {
+    const state = { payout: 0.137, velocity: 0.24 };
+    const halted = haltReel(state);
+
+    expect(halted.payout).toBe(state.payout);
+    expect(halted.velocity).toBe(0);
+
+    const next = advanceReel(halted, 0, config, 1 / 120);
+    expect(next.payout).toBeCloseTo(state.payout, 12);
+    expect(next.velocity).toBe(0);
   });
 
   it("brakes smoothly when the command is released mid-travel", () => {
