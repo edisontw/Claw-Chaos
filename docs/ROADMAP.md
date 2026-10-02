@@ -1003,6 +1003,19 @@ Verification:
 - `cabinet-lab` browser smoke PASS
 - cabinet smoke requires `data-player-view="active"` and interaction prompt DOM
 
+## Cabinet realism correction
+
+Following deployed-build feedback:
+- root URL now defaults to `cabinet-lab`
+- common-machine layout uses an enlarged **left-side** prize chute
+- cabinet idle claw is raised 60 mm while extending drop travel by the same amount
+- service/control wiring is visible alongside the suspension cable
+- EARLY CLOSE now brakes and holds reel payout at the exact action height
+- close fingers continue their timed physical motion while vertical payout remains locked
+- AUTO CLOSE remains available near maximum payout
+- locked standalone `gantry-lab` vertical calibration remains unchanged
+- regressions distinguish carried/RETURN continuity from faster post-release free-fall through the larger chute
+
 Still pending before M07 closure:
 - final manual deployed-build check that left/right side inspection is visually useful and not awkward
 - confirm panel/chute look-down framing feels natural with 50° FOV

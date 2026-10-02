@@ -13,7 +13,7 @@ import {
   m04ReelCommand,
   type M04PlayState,
 } from "./m04PlayCycle";
-import { advanceReel, type ReelState } from "./reelMotion";
+import { advanceReel, haltReel, type ReelState } from "./reelMotion";
 
 const dt = 1 / PHYSICS_HZ;
 const reelConfig = {
@@ -103,7 +103,7 @@ function stepCycle(
 }
 
 describe("M04 DROP / close / lift state machine", () => {
-  it("turns the second action during descent into a timed EARLY CLOSE without stopping descent", () => {
+  it("turns the second action during descent into an EARLY CLOSE at the current height", () => {
     let state = applyM04Action(createM04PlayState(), 0);
     let reel: ReelState = { payout: 0, velocity: 0 };
     let fingerCommand = settleOpenCommand();
@@ -121,6 +121,7 @@ describe("M04 DROP / close / lift state machine", () => {
 
     const payoutAtAction = reel.payout;
     state = applyM04Action(state, reel.payout);
+    reel = haltReel(reel);
 
     expect(state.phase).toBe("CLOSING");
     expect(state.closeReason).toBe("EARLY");
@@ -141,7 +142,7 @@ describe("M04 DROP / close / lift state machine", () => {
       CLAW_LAB_CONFIG.motorSpeedRadiansPerSecond * dt,
       8,
     );
-    expect(reel.payout).toBeGreaterThan(payoutAtAction);
+    expect(reel.payout).toBeCloseTo(payoutAtAction, 12);
 
     let closeTicks = 1;
     while (state.phase === "CLOSING" && closeTicks < PHYSICS_HZ * 2) {
@@ -164,7 +165,7 @@ describe("M04 DROP / close / lift state machine", () => {
     expect(state.phase).toBe("CLOSED_AT_DEPTH");
     expect(closeTicks).toBeGreaterThan(40);
     expect(closeTicks).toBeLessThan(80);
-    expect(reel.payout).toBeGreaterThan(payoutAtAction + 0.05);
+    expect(reel.payout).toBeCloseTo(payoutAtAction, 12);
     expect(fingerCommand).toBeLessThanOrEqual(
       CLAW_LAB_CONFIG.closedAngle +
         M04_PLAY_CONFIG.closeCompletionToleranceRadians,

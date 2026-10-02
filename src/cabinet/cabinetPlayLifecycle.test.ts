@@ -53,7 +53,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     const gantry = M02_GANTRY_CONFIG;
     createCabinetPhysics(physics);
 
-    const startX = 0.155;
+    const startX = -0.155;
     const startZ = 0.20;
     const targetX = M06_CABINET_CONFIG.chuteCenterX;
     const targetZ = M06_CABINET_CONFIG.chuteCenterZ;
@@ -338,6 +338,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     let ballTravelAtRelease = Number.NaN;
     let maxHubLagMeters = 0;
     let maxBallStepMeters = 0;
+    let maxTransportBallStepMeters = 0;
     let maxBoostUsedSeconds = 0;
     let sensorEvents = 0;
     let finiteAndBounded = true;
@@ -546,14 +547,25 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         maxLiftMeters,
         p.y - baselineBallY,
       );
+      const ballStepMeters = Math.hypot(
+        p.x - previousBallPosition.x,
+        p.y - previousBallPosition.y,
+        p.z - previousBallPosition.z,
+      );
       maxBallStepMeters = Math.max(
         maxBallStepMeters,
-        Math.hypot(
-          p.x - previousBallPosition.x,
-          p.y - previousBallPosition.y,
-          p.z - previousBallPosition.z,
-        ),
+        ballStepMeters,
       );
+      if (
+        phaseAtTickStart === "PICKUP" ||
+        phaseAtTickStart === "RETAINING" ||
+        phaseAtTickStart === "RETURNING"
+      ) {
+        maxTransportBallStepMeters = Math.max(
+          maxTransportBallStepMeters,
+          ballStepMeters,
+        );
+      }
       previousBallPosition = { x: p.x, y: p.y, z: p.z };
 
       finiteAndBounded =
@@ -612,6 +624,7 @@ describe("M06 carried-prize cabinet lifecycle", () => {
         ballTravelAtRelease,
         maxHubLagMeters,
         maxBallStepMeters,
+        maxTransportBallStepMeters,
         maxBoostUsedSeconds,
         sensorEvents,
         sensorWins: sensor.winCount,
@@ -635,7 +648,8 @@ describe("M06 carried-prize cabinet lifecycle", () => {
     expect(ballTravelAtRelease).toBeGreaterThan(0.05);
     expect(maxHubLagMeters).toBeGreaterThan(0.001);
     expect(maxHubLagMeters).toBeLessThan(0.05);
-    expect(maxBallStepMeters).toBeLessThan(0.020);
+    expect(maxTransportBallStepMeters).toBeLessThan(0.020);
+    expect(maxBallStepMeters).toBeLessThan(0.035);
     expect(maxBoostUsedSeconds).toBeGreaterThan(0);
     expect(maxBoostUsedSeconds).toBeLessThanOrEqual(
       M04_PLAY_CONFIG.holdBoostDurationSeconds + 1e-8,

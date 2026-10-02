@@ -213,7 +213,7 @@ export function advanceM04PlayState(
 }
 
 export function m04ReelCommand(state: M04PlayState): number {
-  if (state.phase === "DESCENDING" || state.phase === "CLOSING") {
+  if (state.phase === "DESCENDING") {
     return 1;
   }
   if (state.phase === "PICKUP" || state.phase === "RETAINING") {

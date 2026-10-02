@@ -152,3 +152,28 @@ jobs:
           fi
 
           echo "Preview/browser cabinet-lab smoke passed: $ASSET_PATH"
+
+          ROOT_DOM_FILE="/tmp/claw-chaos-root-dom.html"
+          ROOT_LOG_FILE="/tmp/claw-chaos-root-browser.log"
+          timeout 30s "$BROWSER" \
+            --headless=new \
+            --no-sandbox \
+            --disable-dev-shm-usage \
+            --use-gl=angle \
+            --use-angle=swiftshader \
+            --enable-webgl \
+            --enable-unsafe-swiftshader \
+            --virtual-time-budget=8000 \
+            --dump-dom \
+            "http://127.0.0.1:4173/Claw-Chaos/" \
+            > "$ROOT_DOM_FILE" 2> "$ROOT_LOG_FILE" || true
+
+          if ! grep -q 'data-simulation-ready="true"' "$ROOT_DOM_FILE" ||
+             ! grep -q 'cabinet-lab' "$ROOT_DOM_FILE" ||
+             ! grep -q 'data-player-view="active"' "$ROOT_DOM_FILE"; then
+            echo "Root URL did not initialize the default cabinet-lab player view."
+            cat "$ROOT_LOG_FILE"
+            exit 1
+          fi
+
+          echo "Preview/browser root default cabinet-lab smoke passed: $ASSET_PATH"

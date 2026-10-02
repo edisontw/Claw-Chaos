@@ -69,7 +69,7 @@ describe("M00 deterministic utilities", () => {
 
   it("falls back safely to the current default scene", () => {
     const selection = parseSceneSelection("?scene=not-a-scene");
-    expect(selection.id).toBe("gantry-lab");
+    expect(selection.id).toBe("cabinet-lab");
     expect(selection.usedFallback).toBe(true);
   });
 

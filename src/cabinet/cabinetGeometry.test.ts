@@ -111,6 +111,22 @@ describe("M06 cabinet boundaries", () => {
   });
 });
 
+describe("Cabinet realism geometry", () => {
+  it("uses the common left-side enlarged prize chute layout", () => {
+    const c = M06_CABINET_CONFIG;
+
+    expect(c.chuteCenterX).toBeLessThan(0);
+    expect(c.chuteOpeningHalfX * 2).toBeGreaterThanOrEqual(0.24);
+    expect(c.chuteOpeningHalfZ * 2).toBeGreaterThanOrEqual(0.18);
+    expect(
+      c.chuteCenterX - c.chuteOpeningHalfX,
+    ).toBeGreaterThan(-c.interiorHalfX);
+    expect(
+      c.chuteCenterX + c.chuteOpeningHalfX,
+    ).toBeLessThan(c.interiorHalfX);
+  });
+});
+
 describe("M06 chute sensor", () => {
   it("PT-017 does not award a prize resting across the chute lip", async () => {
     const physics = await PhysicsRuntime.create();
@@ -123,8 +139,8 @@ describe("M06 chute sensor", () => {
       {
         position: {
           x:
-            M06_CABINET_CONFIG.chuteCenterX -
-            M06_CABINET_CONFIG.chuteOpeningHalfX -
+            M06_CABINET_CONFIG.chuteCenterX +
+            M06_CABINET_CONFIG.chuteOpeningHalfX +
             0.04,
           y: M06_CABINET_CONFIG.playDeckY + 0.09,
           z: M06_CABINET_CONFIG.chuteCenterZ,
