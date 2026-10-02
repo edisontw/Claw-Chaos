@@ -4,7 +4,6 @@ import {
   M07_CAMERA_FOV_DEGREES,
   M07_CABINET_VIEW_TARGETS,
   M07_FIRST_PERSON_VIEW_CONFIG,
-  M07_SIDE_INSPECTION_CASES,
   advanceFirstPersonPlayerView,
   applyFirstPersonLookDelta,
   computeLookAnglesToPoint,
@@ -14,13 +13,11 @@ import {
 } from "./firstPersonPlayerView";
 
 describe("M07 first-person player view constraints", () => {
-  it("PT-025 provides at least ±90 degrees of yaw with bounded look-down pitch", () => {
+  it("PT-025 keeps a realistic front-player look envelope", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     let state = createFirstPersonPlayerViewState(config);
 
-    expect(config.yawLimitRadians).toBeGreaterThanOrEqual(
-      Math.PI * 0.5,
-    );
+    expect(config.yawLimitRadians).toBeCloseTo(Math.PI * 0.5, 10);
     expect(M07_CAMERA_FOV_DEGREES).toBe(50);
 
     state = applyFirstPersonLookDelta(
@@ -52,138 +49,67 @@ describe("M07 first-person player view constraints", () => {
       config.pitchMinRadians,
       10,
     );
-    expect(config.pitchMinRadians).toBeLessThanOrEqual(
-      -Math.PI / 3,
-    );
   });
 
-  it("PT-026 blocks direct front entry but allows walking around the front corner to side glass", () => {
-    const config = M07_FIRST_PERSON_VIEW_CONFIG;
-
-    let blocked = createFirstPersonPlayerViewState(config);
-    for (let index = 0; index < 600; index += 1) {
-      blocked = advanceFirstPersonPlayerView(
-        blocked,
-        { strafe: 0, forward: 1, lean: 0 },
-        1 / 60,
-        config,
-      );
-    }
-    expect(blocked.x).toBeCloseTo(0, 10);
-    expect(blocked.z).toBeCloseTo(
-      config.cabinetFrontClearZ,
-      10,
-    );
-
-    let side = createFirstPersonPlayerViewState(config);
-    for (let index = 0; index < 240; index += 1) {
-      side = advanceFirstPersonPlayerView(
-        side,
-        { strafe: 1, forward: 0, lean: 0 },
-        1 / 60,
-        config,
-      );
-    }
-    expect(side.x).toBeGreaterThanOrEqual(
-      config.cabinetSideClearX,
-    );
-
-    for (let index = 0; index < 240; index += 1) {
-      side = advanceFirstPersonPlayerView(
-        side,
-        { strafe: 0, forward: 1, lean: 0 },
-        1 / 60,
-        config,
-      );
-    }
-    expect(side.z).toBeLessThan(config.cabinetFrontClearZ);
-    expect(side.x).toBeGreaterThanOrEqual(
-      config.cabinetSideClearX,
-    );
-    expect(config.eyeY).toBe(0.98);
-  });
-
-  it("PT-026 keeps inward lean outside the side-glass clearance", () => {
-    const config = M07_FIRST_PERSON_VIEW_CONFIG;
-    let state = {
-      ...createFirstPersonPlayerViewState(config),
-      x: config.cabinetSideClearX + 0.02,
-      z: 0.02,
-    };
-
-    for (let index = 0; index < 120; index += 1) {
-      state = advanceFirstPersonPlayerView(
-        state,
-        { strafe: 0, forward: 0, lean: -1 },
-        1 / 60,
-        config,
-      );
-    }
-
-    const cameraPosition = playerCameraPosition(state, config);
-    expect(cameraPosition.x).toBeGreaterThanOrEqual(
-      config.cabinetSideClearX - 1e-10,
-    );
-    expect(state.leanMeters).toBeCloseTo(-0.02, 6);
-  });
-
-  it("PT-025 reaches both side-glass depth-inspection sight lines without widening FOV", () => {
+  it("PT-026 stays in the front standing zone and cannot walk around either cabinet side", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     const sideGlassOuterX =
       M06_CABINET_CONFIG.interiorHalfX +
       M06_CABINET_CONFIG.wallHalfThickness * 2;
-    const sideGlassHalfZ =
-      M06_CABINET_CONFIG.interiorHalfZ +
-      M06_CABINET_CONFIG.wallHalfThickness * 2;
 
-    expect(M07_CAMERA_FOV_DEGREES).toBe(50);
-
-    for (const entry of M07_SIDE_INSPECTION_CASES) {
-      const cameraPosition = {
-        x: entry.position.x,
-        y: config.eyeY,
-        z: entry.position.z,
-      };
-      const look = computeLookAnglesToPoint(
-        cameraPosition,
-        entry.target,
-      );
-
-      expect(Math.abs(look.yawRadians)).toBeLessThanOrEqual(
-        config.yawLimitRadians,
-      );
-      expect(look.pitchRadians).toBeGreaterThanOrEqual(
-        config.pitchMinRadians,
-      );
-      expect(look.pitchRadians).toBeLessThanOrEqual(
-        config.pitchMaxRadians,
-      );
-
-      const planeX =
-        entry.side === "right"
-          ? sideGlassOuterX
-          : -sideGlassOuterX;
-      const t =
-        (planeX - cameraPosition.x) /
-        (entry.target.x - cameraPosition.x);
-      const crossingZ =
-        cameraPosition.z +
-        (entry.target.z - cameraPosition.z) * t;
-      const crossingY =
-        cameraPosition.y +
-        (entry.target.y - cameraPosition.y) * t;
-
-      expect(t).toBeGreaterThan(0);
-      expect(t).toBeLessThan(1);
-      expect(Math.abs(crossingZ)).toBeLessThan(sideGlassHalfZ);
-      expect(crossingY).toBeGreaterThan(0);
-      expect(crossingY).toBeLessThan(
-        M06_CABINET_CONFIG.playAreaHeight,
+    let right = createFirstPersonPlayerViewState(config);
+    for (let index = 0; index < 900; index += 1) {
+      right = advanceFirstPersonPlayerView(
+        right,
+        { strafe: 1, forward: 1, lean: 0 },
+        1 / 60,
+        config,
       );
     }
+
+    expect(right.x).toBeCloseTo(config.maxX, 10);
+    expect(right.z).toBeCloseTo(config.minZ, 10);
+    expect(Math.abs(right.x)).toBeLessThan(sideGlassOuterX);
+    expect(right.z).toBeGreaterThan(config.cabinetFrontClearZ);
+
+    let left = createFirstPersonPlayerViewState(config);
+    for (let index = 0; index < 900; index += 1) {
+      left = advanceFirstPersonPlayerView(
+        left,
+        { strafe: -1, forward: 1, lean: 0 },
+        1 / 60,
+        config,
+      );
+    }
+
+    expect(left.x).toBeCloseTo(config.minX, 10);
+    expect(left.z).toBeCloseTo(config.minZ, 10);
+    expect(Math.abs(left.x)).toBeLessThan(sideGlassOuterX);
   });
 
-  it("PT-025 can look down at both the control panel and chute and acquire gaze focus", () => {
+  it("PT-025 allows only small front-position adjustment and lean", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    let state = createFirstPersonPlayerViewState(config);
+
+    for (let index = 0; index < 240; index += 1) {
+      state = advanceFirstPersonPlayerView(
+        state,
+        { strafe: 1, forward: -1, lean: 1 },
+        1 / 60,
+        config,
+      );
+    }
+
+    expect(state.x).toBe(config.maxX);
+    expect(state.z).toBe(config.maxZ);
+    expect(state.leanMeters).toBeCloseTo(
+      config.maxLeanMeters,
+      10,
+    );
+    expect(config.maxLeanMeters).toBeLessThanOrEqual(0.03);
+  });
+
+  it("PT-025 can still look down at the control panel and chute from the front zone", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     const base = {
       ...createFirstPersonPlayerViewState(config),
