@@ -665,16 +665,19 @@ Manual check:
 
 Player must be able to inspect both side angles without clipping through glass.
 
-M07 slice 1 — 2026-10-02:
-- **Automated constraint PASS**
+M07 slice 2 — 2026-10-02:
+- **Automated geometry/controller PASS; final subjective visual check pending**
 - yaw limit = ±105°
-- pitch = −40° / +30°
+- pitch = −70° / +30°
 - fixed eye height = 0.98 m
-- X movement = −0.62 to +0.62 m
-- Z movement = 0.484 to 0.82 m
-- lean = ±55 mm with bounded roll
-- repeated movement saturates at configured bounds rather than continuing into free space
-- manual side-angle/depth-judgment quality remains required for final PT-025 closure.
+- camera FOV = 50° and is explicitly regression-locked; no fisheye widening
+- player world bounds X ±0.72 m / Z −0.18…0.82 m
+- front and side standing zones are connected only by walking around the cabinet front corners
+- deterministic left/right side inspection cases both fit inside yaw/pitch limits
+- each side inspection ray crosses the corresponding physical side-glass plane within the actual panel Z span and cabinet height
+- control-panel button and chute targets can both be acquired by gaze from a legal front position
+- reticle/prompt provide interaction framing without camera snapping
+- final deployed-build judgment of side-depth readability remains the closure-only manual item.
 
 ## 28. PT-026 Camera integrity
 
@@ -683,14 +686,18 @@ Normal play must reject:
 - clipping through glass,
 - arbitrary overhead teleport.
 
-M07 slice 1 — 2026-10-02:
+M07 slice 2 — 2026-10-02:
 - **Automated movement-integrity PASS**
 - controller exposes no vertical/free-fly input
-- front glass outer face is Z = 0.384 m
-- minimum camera-center Z is 0.484 m, preserving 0.10 m front-glass clearance
-- sustained forward/lateral input remains clamped to the standing envelope
-- head look changes orientation only and cannot translate through cabinet geometry
-- final manual anti-clipping/side-inspection check remains pending before M07 closure.
+- front glass outer face Z ≈ 0.384 m; front camera-center exclusion Z = 0.484 m
+- side glass outer face X ≈ ±0.484 m; side camera-center exclusion |X| = 0.584 m
+- direct forward input from the center stops at the front exclusion
+- legal side access requires first moving beyond the side exclusion, then walking around the front corner
+- inward lean is dynamically limited so camera center cannot penetrate the side clearance
+- head look changes orientation only and cannot translate the camera
+- `F` control-panel interaction delegates to the existing M04 primary action and does not bypass mechanical state gates
+- chute gaze has no play action
+- final deployed-build visual corner-penetration check remains pending before M07 closure.
 
 ## 29. PT-027 100+ prize variants
 
