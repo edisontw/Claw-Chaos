@@ -44,7 +44,7 @@ M04 is now closed. The play-cycle state machine covers physical DROP, EARLY/AUTO
 
 M05 is now closed. PrizeFactory is the single normal spawn path for 11 starter definitions, including rigid primitives plus pillow, simple Teddy and simple animal compound prizes. Reusable material/mass/COM profiles now produce measured behavioral differences, deterministic visual variants enumerate 176 valid combinations, and a 12-prize contact pile settles and remains stable for a 60-second post-settle regression. The default `gantry-lab` and closed M01–M04 physics remain unchanged.
 
-M06 is in progress. Slice 1 established the cabinet shell, transparent-but-collidable glass, a real chute/channel and one-shot non-pushing sensor. Slice 2 now mounts the closed M02–M04 gantry/play-cycle inside `?scene=cabinet-lab`, gives normal play a physical return target over the chute while preserving the legacy M02 home target, adds a raised play deck aligned to the existing reel geometry, and proves a physically carried high-stack prize can complete PICKUP → RETAINING/BOOST → RETURN → motor-driven RELEASE → chute sensor without prize teleport.
+M06 is now closed. The physical cabinet, raised play deck, real chute, collider-free one-shot sensor, M02–M04 integrated play lifecycle, carried-prize RETURN → motor RELEASE, and explicit result/inventory handoff are all regression-tested. The cabinet result consumer is idempotent against duplicate event delivery, transparent glass uses a low-obstruction pane plus visible boundary outline, and the closed M01–M05 physics — including the M04 torque/BOOST calibration — remain unchanged.
 
 ### First milestone
 
@@ -121,7 +121,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M06 — Cabinet & Chute** with the final closure slice: add the explicit cabinet result/inventory handoff after the one-shot chute event, verify the integrated `cabinet-lab` browser path and manual glass/play-area readability, then run the M06 exit audit before advancing to M07 first-person view.
+Proceed to **M07 — First-Person Player View** from the closed M06 cabinet baseline. Add player-constrained head/body movement, at least ±90° yaw, limited pitch and small positional movement/lean without free-fly or clipping through cabinet/glass. Preserve all closed M01–M06 physics and chute/result behavior.
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
@@ -237,28 +237,25 @@ M05 final closure baseline:
 
 M05 is **CLOSED**.
 
-M06 slice 1 + slice 2 baseline:
+M06 final closure baseline:
 - cabinet interior X ±0.46 m / Z ±0.36 m with physical front/side glass, back wall and ceiling
 - raised physical play deck Y = 0.265 m aligns the existing M02/M04 reel geometry with prize contact while a lower catch floor remains below
 - physical chute opening = 0.18 × 0.15 m, centered at X/Z = 0.28 / 0.20 m
-- chute sensor is a collider-free observation volume centered below the deck; it cannot push, attract or support a prize
-- normal M04 RETURN in `cabinet-lab` targets the chute center; the legacy M02 `H` home test still targets X/Z = 0 / 0
-- PT-017 partial-lip flat box: final Y ≈ 0.28746 m, sensor events = 0
-- PT-018 free-fall cube: sensor entry tick 33 ≈ 0.275 s, exactly one event
-- full carried-prize fixture uses a physically supported high-stack light rubber sphere with initial payout 0.070 m
-- PICKUP → RETAINING at tick 46; reel top → RETURNING at tick 56
-- RETURN → RELEASING at tick 117; chute sensor entry at tick 149; READY at tick 174
-- ball lift at RETAINING ≈ 21.82 mm; lift at RETURN start ≈ 31.79 mm
-- carried ball moves ≈ 83.35 mm horizontally during RETURN before RELEASE
-- dynamic hub lag/swing during the successful return peaks ≈ 16.21 mm
-- maximum prize displacement in any fixed tick ≈ 18.33 mm; no prize transform jump is used
-- HOLD BOOST actual use ≈ 0.592 s, below the locked 0.80 s budget
-- sensor event count = 1; final ball Y ≈ −0.24801 m on the chute catch
-- calibration also demonstrated legitimate failures: longer sphere/cube/Teddy carries can slip before release under the same fixed force model
-- `?scene=cabinet-lab` runs the real gantry/play-cycle plus cabinet/prize/sensor composition
-- **67 automated tests PASS**
+- chute sensor remains collider-free and records each physical prize instance once
+- normal M04 RETURN in `cabinet-lab` targets the chute center; legacy M02 `H` home remains X/Z = 0 / 0
+- PT-017 lip/no-win and PT-018 physical chute entry remain PASS
+- carried high-stack sphere lifecycle remains PICKUP → RETAINING tick 46 → RETURNING tick 56 → RELEASING tick 117 → sensor tick 149 → READY tick 174
+- carried ball travels ≈ 83.35 mm during RETURN; dynamic hub lag peaks ≈ 16.21 mm; max fixed-tick prize displacement ≈ 18.33 mm
+- HOLD BOOST use ≈ 0.592 s, below the locked 0.80 s budget; no M04 torque or BOOST value changed
+- chute event now feeds `CabinetResultInventoryState`; duplicate delivery and duplicate-prize delivery cannot double-award inventory
+- `cabinet-lab` reports sensor wins, accepted results, inventory count and last result prize
+- glass render opacity is reduced to 0.10 and glass panels receive visible edge outlines; collision geometry is unchanged
+- **28 test files / 69 automated tests PASS**
+- lint PASS; TypeScript/Vite build PASS; GitHub Pages base-path PASS
+- headless browser smoke PASS for both `gantry-lab` and `cabinet-lab`
 
-M06 remains **IN PROGRESS** only for result/inventory handoff plus final cabinet/glass/manual exit audit; the core physical RETURN → RELEASE → chute-sensor lifecycle is automated PASS.
+M06 is **CLOSED**. First-person yaw/pitch, side inspection and camera/glass clipping constraints are M07 scope.
+
 ## Status
 
 This repository is the source of truth for the Claw Chaos project.
