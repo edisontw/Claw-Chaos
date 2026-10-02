@@ -121,28 +121,34 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Continue **M07 — First-Person Player View** after slice 1. The constrained player rig is now active in `cabinet-lab`; next verify front/side aiming readability from the new viewpoint and add control-panel/chute interaction framing without allowing free-fly or cabinet/glass clipping. Preserve all closed M01–M06 physics and chute/result behavior.
+M07 slice 2 is now a **closure candidate**. The player can physically walk around the front corners to either side-glass inspection position, look down at the control panel/chute, and use the red control-panel button through the same M04 primary action. Automated PT-025/PT-026 gates pass; the remaining M07 gate is the final manual visual/readability check on the deployed build before declaring M07 CLOSED.
 
 Current `cabinet-lab` player-view controls:
 - click canvas: capture mouse for first-person look; `Esc` releases pointer lock
-- mouse: head look, clamped to ±105° yaw and −40°/+30° pitch
-- `W/S`: small forward/back movement
-- `A/D`: small left/right movement
-- `Q/E`: bounded lean
+- mouse: head look, clamped to ±105° yaw and −70°/+30° pitch
+- `W/S`: forward/back movement around the constrained front/side standing area
+- `A/D`: left/right movement; player can walk around either front corner to inspect through side glass
+- `Q/E`: bounded lean; inward side lean is reduced automatically before it can violate glass clearance
+- center reticle: gaze target
+- `F`: interact when the reticle is on the red control-panel button
+- chute gaze is inspection-only
 - `F3`: collider debug in `cabinet-lab` (`D` remains collider debug in non-player scenes)
 - `M`: COM/origin debug
-- machine controls remain Arrow keys / Space / Shift / H / P / T
+- machine keyboard controls remain Arrow keys / Space / Shift / H / P / T
 
-M07 slice 1 baseline:
-- eye height = 0.98 m
-- player X range = ±0.62 m
-- player Z range = 0.484–0.82 m
-- nearest camera center stays 0.10 m outside the physical front-glass outer face
-- max lean = 55 mm with max 4° camera roll
-- no vertical/free-fly input exists
-- PT-025 range/movement/lean automated gate — PASS
-- PT-026 front-glass clearance/no-free-fly automated gate — PASS
-- **29 test files / 72 tests PASS** in first slice verification
+M07 slice 2 baseline:
+- eye height = 0.98 m; no vertical/free-fly input
+- yaw = ±105°; pitch = −70° / +30°
+- camera FOV remains exactly 50°; no fisheye widening
+- world player range X ±0.72 m / Z −0.18 to 0.82 m
+- physical cabinet exclusion keeps camera center ≥0.10 m outside front/side glass
+- side-zone movement is allowed only after walking around a front corner
+- inward lean is dynamically clamped so the camera center cannot cross the side clearance
+- deterministic left/right sight-line tests prove both side inspection rays enter through the physical side-glass span
+- gaze targets for control panel and chute are both reachable inside yaw/pitch limits
+- red control-panel button + `F` reuses the existing M04 primary action; no duplicate play logic
+- **29 test files / 74 tests PASS**
+- lint/build/base-path and both browser smokes PASS; cabinet smoke requires active player-view + interaction UI
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`

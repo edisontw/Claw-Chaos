@@ -923,7 +923,7 @@ Move the working simulation into a real cabinet.
 
 # M07 — First-Person Player View
 
-**Status: IN PROGRESS — slice 1 verified 2026-10-02**
+**Status: IN PROGRESS — slice 2 automated closure candidate verified 2026-10-02**
 
 ## Goal
 
@@ -933,58 +933,80 @@ Make play feel like standing at the cabinet.
 
 - head look ≥ ±90° yaw — PASS, ±105°
 - preferred ±100–110° tuning — PASS, ±105°
-- limited vertical look — PASS, −40° / +30°
+- limited vertical look — PASS, −70° / +30°
 - small forward/back movement — PASS
 - small left/right movement — PASS
-- lean — PASS, ±55 mm with ≤4° roll
-- player/camera front-glass anti-clipping — PASS for slice-1 constrained movement envelope
-- control-panel interaction — pending
-- front/side visual inspection — runtime path available; manual/readability acceptance pending
+- lean — PASS, ±55 mm nominal with cabinet-aware inward clamp
+- player/camera cabinet anti-clipping — PASS for front + side movement envelope
+- control-panel interaction — PASS
+- front/side inspection geometry/runtime path — PASS
+- final subjective visual/readability confirmation — pending deployed-build manual check
 
 ## Slice 1 — constrained player rig
 
-Implemented:
-- first-person controller is active only in `cabinet-lab`
-- click canvas enters pointer-lock mouse look; Escape releases browser pointer lock
-- WASD moves the player inside a bounded standing area rather than moving the camera freely through world space
-- Q/E provides bounded lean
-- player body orientation stays cabinet-facing while head yaw is independent
-- fixed eye height = 0.98 m; no vertical movement/free-fly input
-- yaw clamp = ±105°
-- pitch clamp = −40° / +30°
-- movement envelope:
-  - X = −0.62 to +0.62 m
-  - Z = 0.484 to 0.82 m
-- front glass outer face = Z 0.384 m; nearest camera center remains 0.10 m outside it
-- max lean = 0.055 m
-- max lean roll = 4°
-- F3 toggles collider debug in `cabinet-lab`; legacy D debug remains unchanged in non-player scenes
-- machine input remains Arrow/Space/Shift/H/P/T and is independent from player-view input
-- debug overlay reports player X/Z, yaw/pitch, lean and pointer-lock state
+Established:
+- pointer-lock mouse look
+- fixed eye height 0.98 m
+- yaw ±105°
+- bounded WASD motion and Q/E lean
+- no vertical/free-fly movement
+- front-glass clearance
+- player-view browser runtime smoke
+
+## Slice 2 — side inspection + interaction
+
+Movement/camera:
+- player movement now supports a front standing zone plus left/right side zones
+- world bounds: X ±0.72 m / Z −0.18 to 0.82 m
+- cabinet exclusion boundary:
+  - side-glass outer face X ≈ ±0.484 m
+  - front-glass outer face Z ≈ 0.384 m
+  - camera-center clearance = 0.10 m
+- direct forward motion from center stops at the front clearance
+- player can first move outside the side clearance, then walk forward around either front corner
+- inward lean beside the cabinet is reduced as needed so camera center remains outside side-glass clearance
+- FOV remains exactly 50°
+- pitch lower limit expanded from −40° to −70° to make the low control panel and chute naturally visible without camera teleport/FOV widening
+
+Side-glass inspection acceptance:
+- deterministic right-side stance and left-side stance are defined outside the side clearance
+- both target sight lines are within the ±105° yaw / −70°…+30° pitch envelope
+- each sight line is analytically verified to cross the corresponding physical side-glass X plane within the glass Z span and cabinet height
+- therefore side inspection is achieved by player position/head turn, not a special camera mode
+
+Control panel/chute interaction:
+- center reticle + gaze focus
+- control-panel button and chute are explicit view targets
+- both targets are reachable from the front standing zone inside camera limits
+- control-panel target displays an `[F]` prompt
+- `F` invokes the same existing M04 primary action used by Space
+- chute focus is inspection-only and cannot start/drop a play
+- no alternate claw/play state machine was introduced
 
 Automated acceptance:
-- PT-025 yaw range ≥ ±90° — PASS
-- PT-025 bounded pitch — PASS
-- PT-025 forward/back, lateral movement and lean — PASS
-- PT-026 no free-fly/vertical movement path — PASS by controller design
-- PT-026 cannot cross the front-glass clearance through repeated forward movement — PASS
-- PT-026 bounded player area under sustained movement — PASS
+- PT-025 yaw/pitch/movement/lean — PASS
+- PT-025 left/right side-glass sight lines — PASS
+- PT-025 control-panel + chute look-down reachability — PASS
+- PT-026 direct front-entry blocking — PASS
+- PT-026 front-corner side traversal — PASS
+- PT-026 side-glass inward-lean clearance — PASS
+- no free-fly or vertical movement path — PASS by controller design
+- fixed 50° FOV / no fisheye workaround — PASS
 - closed M01–M06 physics/result state untouched
 
 Verification:
-- **29 test files / 72 tests PASS**
+- **29 test files / 74 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
 - `gantry-lab` browser smoke PASS
 - `cabinet-lab` browser smoke PASS
-- CI smoke additionally requires M07 `Player view` runtime text in the cabinet DOM
+- cabinet smoke requires `data-player-view="active"` and interaction prompt DOM
 
 Still pending before M07 closure:
-- visual/manual confirmation that ±105° head turn plus side-step gives useful side-glass depth judgment without fisheye
-- look-down framing for control panel and chute
-- minimal control-panel interaction path
-- final PT-025/PT-026 manual camera-integrity audit
+- final manual deployed-build check that left/right side inspection is visually useful and not awkward
+- confirm panel/chute look-down framing feels natural with 50° FOV
+- confirm no visible camera penetration at front corners during real keyboard/mouse use
 
 ---
 

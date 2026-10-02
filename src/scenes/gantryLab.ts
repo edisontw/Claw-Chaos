@@ -542,6 +542,25 @@ export function createGantryLabScene(
     manualReelCommand = 0;
   };
 
+  const triggerPrimaryAction = (): boolean => {
+    if (
+      pt006Phase === "ACCELERATING" ||
+      pt006Phase === "BRAKING" ||
+      pt008Phase === "ACCELERATING" ||
+      pt008Phase === "BRAKING" ||
+      pt008Phase === "DROPPING" ||
+      homeReturnPhase === "RETURNING_HOME"
+    ) {
+      return false;
+    }
+
+    manualReelCommand = 0;
+    homeReturnPhase = "READY";
+    const previous = playCycle;
+    playCycle = applyM04Action(playCycle, reel.payout);
+    return playCycle !== previous;
+  };
+
   const onKeyDown = (event: KeyboardEvent): void => {
     if (event.repeat) {
       return;
@@ -559,19 +578,9 @@ export function createGantryLabScene(
       startHomeReturn();
       return;
     }
-    if (
-      event.code === "Space" &&
-      pt006Phase !== "ACCELERATING" &&
-      pt006Phase !== "BRAKING" &&
-      pt008Phase !== "ACCELERATING" &&
-      pt008Phase !== "BRAKING" &&
-      pt008Phase !== "DROPPING" &&
-      homeReturnPhase !== "RETURNING_HOME"
-    ) {
+    if (event.code === "Space") {
       event.preventDefault();
-      manualReelCommand = 0;
-      homeReturnPhase = "READY";
-      playCycle = applyM04Action(playCycle, reel.payout);
+      triggerPrimaryAction();
       return;
     }
 
@@ -595,6 +604,7 @@ export function createGantryLabScene(
       position: [0.78, 0.82, 1.08],
       target: [0, 0.72, 0],
     },
+    primaryAction: triggerPrimaryAction,
     beforePhysicsStep(stepSeconds: number): void {
       const hubPosition = hubBody.translation();
       const relativeX = hubPosition.x - motion.x.position;
