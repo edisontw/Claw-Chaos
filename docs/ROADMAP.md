@@ -844,89 +844,80 @@ Final verification:
 
 # M06 — Cabinet & Chute
 
-**Status: IN PROGRESS — slice 2 core lifecycle verified 2026-10-01**
+**Status: CLOSED — final closure verified 2026-10-02**
 
 ## Goal
 
 Move the working simulation into a real cabinet.
 
-## Deliverables
+## Delivered
 
-- cabinet frame — PASS for gray-box shell
-- glass collision/rendering — PASS for physical transparent front/side glass; final manual readability check pending
-- play-area walls — PASS
-- raised play deck aligned with closed reel geometry — PASS
-- chute geometry — PASS
-- chute sensor — PASS
-- control panel — PASS for gray-box placeholder
-- basic cabinet lighting — PASS
-- machine limits — PASS
-- M02–M04 gantry/claw integration — PASS
-- physical RETURN target over chute — PASS
-- carried-prize RETURN / motor RELEASE / sensor lifecycle — PASS
-- result/inventory handoff — pending closure slice
+- physical gray-box cabinet frame, raised play deck, walls, ceiling and transparent front/side glass — PASS
+- real chute opening/channel/catch geometry — PASS
+- collider-free one-shot chute sensor — PASS
+- gray-box control panel and cabinet lighting — PASS
+- closed M02–M04 gantry/claw/play-cycle integrated into `cabinet-lab` — PASS
+- normal play RETURN target over physical chute while legacy M02 home remains unchanged — PASS
+- physically carried prize RETURN → motor RELEASE → chute sensor — PASS
+- explicit result/inventory handoff with duplicate-delivery idempotence — PASS
+- cabinet/glass gray-box readability gate — PASS
+- closed M01–M05 force/suspension/reel/torque/BOOST calibration preserved — PASS
 
-## Slice 1 — cabinet / chute foundation
+## Final physical baseline
 
-Implemented:
-- shared `src/cabinet/` geometry and sensor modules
-- physical cabinet bounds and transparent glass
-- four-piece deck/floor geometry around an actual chute opening
-- one-shot collider-free chute sensor
-- PT-017 lip-no-win and PT-018 physical-entry sensor gates
-
-## Slice 2 — integrated play lifecycle
-
-Integration:
 - cabinet interior X ±0.46 m / Z ±0.36 m
-- play-area height 1.30 m encloses the existing carriage at Y = 1.18 m
+- play-area height = 1.30 m
 - raised play deck Y = 0.265 m
-- chute opening 0.18 × 0.15 m centered at X/Z = 0.28 / 0.20 m
-- normal M04 RETURN targets the chute center only in cabinet play
-- legacy M02 home-test target remains X/Z = 0 / 0
-- no closed M01–M05 force/suspension/reel calibration increased
+- chute opening = 0.18 × 0.15 m at X/Z = 0.28 / 0.20 m
+- sensor remains a pure observation volume over prize world COM; no collider, impulse, attraction or support
+- PT-017 partial-lip prize remains a no-win
+- PT-018 physical chute entry remains exactly one sensor event
+- successful carried-prize fixture:
+  - PICKUP → RETAINING tick 46
+  - RETURNING tick 56
+  - RELEASING tick 117
+  - chute sensor tick 149
+  - READY tick 174
+  - horizontal prize travel during RETURN ≈ 83.35 mm
+  - hub/carriage lag peak ≈ 16.21 mm
+  - maximum prize fixed-tick displacement ≈ 18.33 mm
+  - HOLD BOOST use ≈ 0.592 s / 0.800 s budget
+  - final prize Y ≈ -0.24801 m
+- legitimate longer-carry slip failures remain possible under the same fixed physical model
 
-Measured full-lifecycle success fixture:
-- data-driven `prize/sphere_ball`, light rubber profile
-- physically supported high-stack starting pose
-- initial payout = 0.070 m
-- PICKUP → RETAINING tick 46
-- RETURNING begins tick 56
-- RELEASING begins tick 117
-- sensor event tick 149
-- READY tick 174
-- lift at RETAINING ≈ 21.82 mm
-- lift at RETURN start ≈ 31.79 mm
-- prize moves ≈ 83.35 mm horizontally during RETURN before release
-- hub lag/swing peak ≈ 16.21 mm
-- max prize fixed-tick displacement ≈ 18.33 mm
-- HOLD BOOST use ≈ 0.592 s / 0.800 s budget
-- sensor event count = 1
-- final prize Y ≈ -0.24801 m
-- finite/bounded PASS
-- no prize attachment/teleport/velocity reset
+## Result/inventory closure
 
-Important physical finding:
-- longer sphere/cube/Teddy carry attempts can slip before release under the same fixed retaining/BOOST model
-- these are valid failure outcomes; M06 does not tune a hidden success path around them
+- `CabinetResultInventoryState` consumes `ChuteWinEvent`
+- the same event delivered twice is accepted once
+- the same physical prize re-delivered under a different sequence is still not awarded twice
+- production `cabinet-lab` exposes sensor count, result count, inventory count and last result prize
+- result state does not modify prize transforms, velocities, forces or sensor geometry
 
-Current automated baseline:
-- **27 test files / 67 tests PASS**
-- lint/build/base-path PASS
-- CI browser smoke covers both `gantry-lab` and `cabinet-lab`
+## Glass/readability audit
 
-## Exit criteria
+- glass collision remains the same physical cabinet boundary
+- render pane opacity = 0.10 to reduce aiming obstruction
+- visible glass edge outlines keep panel boundaries readable
+- no camera/FOV workaround was introduced
+- first-person side inspection, yaw/pitch limits and anti-clipping are deliberately M07 scope
 
-Current status:
-- prizes cannot escape through cabinet — **PASS**
-- chute accepts a prize only after physical entry — **PASS**
-- prize touching chute lip does not auto-win — **PASS**
-- claw cannot travel outside legal play area — **PASS**
-- full claw RETURN → motor RELEASE → physical chute sensor — **PASS**
-- glass remains readable enough for gameplay — **IMPLEMENTED / manual final check pending**
-- result/inventory update consumes win once — **pending closure slice**
+## Exit audit
 
-**Next:** result/inventory handoff + manual glass/readability check + final M06 closure audit.
+- cabinet geometry and machine limits — PASS
+- play deck and chute geometry — PASS
+- chute edge no-win — PASS
+- physical chute win exactly once — PASS
+- result/inventory update exactly once — PASS
+- carried-prize physical return/release — PASS
+- READY/home-state ordering — PASS
+- glass does not require opaque visual blocking — PASS by gray-box render policy
+- no prize parenting, magnet, teleport, velocity reset or hidden success logic — PASS
+- M01–M05 locked physics unchanged — PASS
+- **28 test files / 69 tests PASS**
+- lint/build/GitHub Pages base-path PASS
+- browser smoke PASS for both `gantry-lab` and `cabinet-lab`
+
+**M06 CLOSED. Next phase:** M07 — First-Person Player View.
 
 ---
 

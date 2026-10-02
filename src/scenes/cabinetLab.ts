@@ -4,6 +4,7 @@ import {
   createCabinetPhysics,
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
+import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { getPrizeDefinition } from "../prizes/catalog";
@@ -18,7 +19,7 @@ function createPartMaterial(
     return new THREE.MeshPhysicalMaterial({
       color: 0xa7d8ff,
       transparent: true,
-      opacity: 0.14,
+      opacity: 0.10,
       roughness: 0.08,
       metalness: 0,
       transmission: 0.05,
@@ -62,18 +63,32 @@ function addCabinetVisual(
   scene: THREE.Scene,
   part: CabinetPartDefinition,
 ): void {
+  const geometry = new THREE.BoxGeometry(
+    part.halfExtents.x * 2,
+    part.halfExtents.y * 2,
+    part.halfExtents.z * 2,
+  );
   const mesh = new THREE.Mesh(
-    new THREE.BoxGeometry(
-      part.halfExtents.x * 2,
-      part.halfExtents.y * 2,
-      part.halfExtents.z * 2,
-    ),
+    geometry,
     createPartMaterial(part),
   );
   mesh.position.set(part.center.x, part.center.y, part.center.z);
   mesh.castShadow = part.role !== "glass";
   mesh.receiveShadow = part.role !== "glass";
   scene.add(mesh);
+
+  if (part.role === "glass") {
+    const outline = new THREE.LineSegments(
+      new THREE.EdgesGeometry(geometry),
+      new THREE.LineBasicMaterial({
+        color: 0x74bce8,
+        transparent: true,
+        opacity: 0.58,
+      }),
+    );
+    outline.position.copy(mesh.position);
+    scene.add(outline);
+  }
 }
 
 function addControlPanel(scene: THREE.Scene): void {
@@ -168,6 +183,7 @@ export function createCabinetLabScene(
   );
 
   const sensor = new ChuteSensor();
+  const resultInventory = new CabinetResultInventoryState();
   const bindings: SimulationScene["bindings"] = [
     ...gantryScene.bindings,
   ];
@@ -248,8 +264,6 @@ export function createCabinetLabScene(
     });
   }
 
-  let lastWinPrizeId = "none";
-
   return {
     bindings,
     massPropertiesDebugTargets,
@@ -261,7 +275,7 @@ export function createCabinetLabScene(
       for (const prize of tracked) {
         const event = sensor.pollPrize(prize.id, prize.body);
         if (event) {
-          lastWinPrizeId = event.prizeId;
+          resultInventory.consume(event);
         }
       }
     },
@@ -275,7 +289,10 @@ export function createCabinetLabScene(
           M06_CABINET_CONFIG.chuteCenterZ.toFixed(3) +
           " m",
         `Sensor wins       ${sensor.winCount}`,
-        `Last sensor prize ${lastWinPrizeId}`,
+        `Results accepted  ${resultInventory.resultCount}`,
+        `Inventory prizes  ${resultInventory.inventoryCount}`,
+        `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
+        "Glass             low-opacity pane + visible boundary outline",
         "Green wire box    chute sensor volume",
         "Center ball       aligned for first physical pickup attempt",
       ];

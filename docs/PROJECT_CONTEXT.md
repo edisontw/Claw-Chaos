@@ -915,84 +915,61 @@ Approximation note:
 - M05 provides physics-ready primitive/compound prize archetypes and basic color/finish variation, not final art production
 - future texture/pattern art is cosmetic content expansion and does not require new grab/success logic
 
-## M06 implementation status — slice 2 verified 2026-10-01
+## M06 implementation status — final closure verified 2026-10-02
 
-**Status: IN PROGRESS — core physical lifecycle PASS**
+**Status: CLOSED**
 
-Cabinet foundation:
-- shared `src/cabinet/` geometry + chute-sensor modules
-- cabinet interior half extents X = 0.46 m / Z = 0.36 m
-- play-area height increased to 1.30 m so the already-closed M02 gantry at Y = 1.18 m is physically inside the cabinet
-- raised physical play deck Y = 0.265 m with four collision pieces around the chute opening
-- lower cabinet/catch floor remains at Y = 0
-- physical front/side glass, back wall and ceiling
-- chute opening = 0.18 × 0.15 m at X/Z = 0.28 / 0.20 m
-- enclosed chute walls continue below the play deck to the lower catch
-- collider-free chute sensor observes Rapier `worldCom()`; it cannot push/support/attract prizes and records each prize ID once
-- gray-box control panel + cabinet lighting remain present
+Final cabinet baseline:
+- physical cabinet interior X ±0.46 m / Z ±0.36 m, play-area height 1.30 m
+- raised play deck Y = 0.265 m
+- physical chute opening 0.18 × 0.15 m at X/Z = 0.28 / 0.20 m
+- collider-free one-shot chute sensor over world COM
+- normal cabinet RETURN targets chute center; legacy M02 home remains X/Z = 0 / 0
+- gray-box glass collision remains physical while rendering uses 0.10 opacity plus visible edge outlines
+- `cabinet-lab` composes the existing M02–M04 gantry/claw/play-cycle without changing closed mechanics
 
-Integrated machine:
-- `cabinet-lab` now directly composes the existing M02–M04 gantry/claw/play-cycle rather than displaying only static cabinet content
-- normal M04 play RETURN is parameterized to the chute center X/Z = 0.28 / 0.20 m
-- legacy M02 `H` home-return regression remains locked to X/Z = 0 / 0
-- no M01–M05 claw force, suspension, reel, close, retaining or BOOST calibration was increased
-- `gantry-lab` remains the default scene
+Physical lifecycle regression:
+- high-stack light rubber sphere success case remains physically held/released
+- PICKUP → RETAINING tick 46
+- RETURNING tick 56
+- RELEASING tick 117
+- chute sensor tick 149
+- READY tick 174
+- horizontal prize travel during RETURN ≈ 0.083355 m
+- max hub/carriage lag ≈ 0.016206 m
+- max fixed-tick prize displacement ≈ 0.018329 m
+- HOLD BOOST use ≈ 0.591667 s / 0.800 s budget
+- final prize Y ≈ -0.248008 m
+- no prize parenting, weld, magnet, setTranslation or velocity reset
 
-PT-017 / PT-018 after the raised-deck integration:
-- PT-017 partial-lip flat box:
-  - final Y ≈ 0.287457 m
-  - minimum COM Y ≈ 0.287045 m
-  - sensor events = 0
-  - sensor wins = 0
-- PT-018 free-fall cube:
-  - first sensor entry tick = 33 ≈ 0.275 s
-  - event count = 1
-  - sensor wins = 1
-  - final Y ≈ -0.252569 m
-  - repeated polling remains suppressed
+Result/inventory closure:
+- new `CabinetResultInventoryState` consumes one-shot `ChuteWinEvent`
+- duplicate event delivery is idempotent
+- duplicate delivery of the same physical prize under another sequence is also rejected
+- production debug displays sensor wins, accepted result count, inventory count and last result prize
+- PT-018 physical chute → result/inventory integration is automated PASS
 
-Full carried-prize RETURN → RELEASE → sensor regression:
-- fixture is a physically supported high-stack `prize/sphere_ball`
-- light mass profile + rubber material; no custom attachment or prize-only force
-- initial reel payout = 0.070 m so the strong 2.5 N·m PICKUP phase performs the first 0.060 m of reel recovery
-- PICKUP → RETAINING: tick 46
-- reel-top → RETURNING: tick 56
-- RETURNING → RELEASING: tick 117
-- physical chute sensor entry: tick 149
-- RELEASING → READY: tick 174
-- lift at RETAINING transition ≈ 0.021824 m
-- lift when RETURN starts ≈ 0.031787 m
-- peak lift ≈ 0.032253 m
-- ball horizontal travel during RETURN before release ≈ 0.083355 m
-- maximum dynamic hub/carriage lag ≈ 0.016206 m
-- maximum ball displacement in any 120 Hz fixed tick ≈ 0.018329 m
-- HOLD BOOST actual use ≈ 0.591667 s, below the locked 0.80 s budget
-- sensor event count = 1
-- final ball Y ≈ -0.248008 m on the lower chute catch
-- finite/bounded PASS
-- sensor tick is **after** release-state entry, proving this success is not an early-slip win
-- no prize parenting, weld, prize joint, magnet, setTranslation, velocity reset or chute attraction
-
-Calibration finding:
-- earlier long-carry sphere, cube and Teddy trials were deliberately rejected because the prize slipped before the configured release point
-- those failures are retained as evidence that the fixed physical model does not guarantee every pickup
-- the successful high-stack sphere is a bounded valid success case, not a hidden strength override
-
-Current verification:
-- **27 test files / 67 automated tests PASS**
+M06 exit audit:
+- cabinet/play-deck/chute physical geometry — PASS
+- PT-017 chute-lip no-win — PASS
+- PT-018 chute win exactly once — PASS
+- explicit inventory/state update exactly once — PASS
+- PT-031 physical RETURN — PASS
+- PT-032 motor RELEASE before sensor — PASS
+- PT-033 READY/home ordering — PASS
+- gray-box glass readability policy — PASS
+- M01–M05 locked physics, including M04 0.003 N·m retaining torque, 0.010 N·m BOOST and 0.80 s BOOST budget — unchanged
+- **28 test files / 69 automated tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
-- CI now includes browser startup smoke for both `gantry-lab` and integrated `cabinet-lab`
+- browser smoke PASS for both `gantry-lab` and `cabinet-lab`
 
-Still pending before M06 closure:
-- explicit result/inventory handoff consuming the one-shot chute event exactly once
-- final manual/play-view check that transparent glass and cabinet proportions remain readable
-- final M06 exit audit
+M06 is **CLOSED**. First-person camera yaw/pitch, side inspection, player movement/lean and anti-clipping against cabinet/glass are M07 scope.
 
 ## Current next step
 
-Finish **M06 closure slice**: connect the one-shot chute event to a minimal result/inventory state without changing physics, verify integrated `cabinet-lab` browser/manual readability, then close M06 and advance to M07 first-person player view.
+Proceed to **M07 — First-Person Player View**. Start with a constrained first-person camera/player rig around the closed M06 cabinet: ≥ ±90° yaw, limited pitch, small forward/back and lateral movement, optional lean, no free-fly, and no clipping through cabinet/glass. Preserve M01–M06 physics and result/inventory behavior.
 
 ## Design-review additions
 
