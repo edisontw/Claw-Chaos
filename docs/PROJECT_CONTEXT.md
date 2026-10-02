@@ -497,39 +497,56 @@ Final verification baseline:
 - headless Rapier/WebGL smoke PASS
 - GitHub Pages deployment PASS after merge
 
-## M07 implementation status — slice 1 verified 2026-10-02
+## M07 implementation status — slice 2 verified 2026-10-02
 
-**Status: IN PROGRESS**
+**Status: IN PROGRESS — automated closure candidate**
 
-First-person player rig:
-- active only in `cabinet-lab`
-- pointer-lock mouse look
+Player/camera:
+- `cabinet-lab` first-person controller remains isolated from closed machine physics
+- fixed FOV = 50°
 - yaw ±105°
-- pitch −40° / +30°
-- fixed eye height 0.98 m
-- player movement envelope X ±0.62 m / Z 0.484–0.82 m
-- front glass outer face Z = 0.384 m; minimum camera-center clearance = 0.10 m
-- WASD movement, Q/E lean
-- max lean 55 mm / max roll 4°
-- no free-fly or vertical movement
-- F3 collider debug in cabinet player view; non-player scenes retain legacy D debug
-- machine controls remain independent
+- pitch −70° / +30°
+- eye height 0.98 m
+- no vertical/free-fly input
+- movement world bounds X ±0.72 m / Z −0.18…0.82 m
+- front/side physical cabinet exclusion preserves 0.10 m camera-center clearance
+- direct forward entry is blocked
+- side inspection requires physically walking around a front corner
+- inward side lean is automatically clamped before crossing the glass clearance
+- max nominal lean 55 mm / max roll 4°
+
+Side inspection:
+- left and right side stances are inside legal player bounds and outside cabinet clearance
+- deterministic sight-line tests show each view ray crosses the corresponding physical side-glass plane inside its Z/Y extent
+- required yaw/pitch remain inside the configured head-look limits
+- no widened FOV or side-camera teleport is used
+
+Interaction:
+- center reticle and gaze focus
+- control-panel button + chute targets
+- both can be looked at naturally from the front zone
+- `F` on the control-panel button invokes the existing M04 primary action
+- keyboard Space still invokes the same action path
+- chute target is inspection-only
+- debug overlay reports current gaze focus and last interaction result
 
 Acceptance:
-- PT-025 yaw/pitch/movement/lean automated constraints — PASS
-- PT-026 front-glass clearance and bounded/no-free-fly motion — PASS
-- browser cabinet smoke initializes the M07 player controller and requires `Player view` debug output
-- M01–M06 physics and result/inventory behavior unchanged
-- **29 test files / 72 tests PASS** on first-slice verification
+- PT-025 camera range/movement/lean — PASS
+- PT-025 side-glass geometric sight lines — PASS
+- PT-025 panel/chute look-down reachability — PASS
+- PT-026 front/side clearance and inward-lean safety — PASS
+- fixed FOV no-fisheye gate — PASS
+- browser smoke requires active player-view and interaction UI
+- M01–M06 physics/result/inventory behavior unchanged
+- **29 test files / 74 tests PASS**
+- lint/build/base-path and both browser smokes PASS
 
-Pending:
-- manual front/side visual-depth check
-- control-panel/chute look-down framing and interaction
-- final camera-integrity audit before M07 closure
+Remaining M07 closure gate:
+- deployed-build manual visual check for side-depth usefulness, natural look-down framing and visible corner anti-clipping.
 
 ## Current next step
 
-Continue **M07 slice 2** with player-view usability rather than physics changes: verify useful side-glass depth inspection at the current ±105°/bounded movement envelope, add look-down control-panel/chute interaction framing, and keep all camera motion outside the physical cabinet.
+Perform the final **M07 manual visual/readability acceptance** on the deployed `cabinet-lab`. If the two side views, control-panel/chute look-down view and front-corner clearance look natural, close M07 and advance to M08 Visual & Audio Realism Pass 1. No further M07 physics changes are planned unless the visual check exposes a camera-envelope issue.
 
 ## Design-review additions
 
