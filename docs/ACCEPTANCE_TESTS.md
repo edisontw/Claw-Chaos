@@ -391,16 +391,17 @@ Expected:
 - fingers take time to close,
 - lift occurs after configured close/settle logic.
 
-Implementation status — 2026-10-01:
-- **Slice-1 automated PASS for DROP → DESCENDING → EARLY CLOSE**
+Current implementation status — updated 2026-10-02:
+- **Automated PASS for DROP → DESCENDING → EARLY CLOSE at current height**
 - first action moves READY → DESCENDING
 - second action during descent records close reason EARLY
-- measured early action payout ≈ 0.10227 m
-- finger command moves from +0.35 rad toward -0.42 rad at the unchanged 1.6 rad/s command rate
-- close command requires 58 fixed ticks ≈ 0.4833 s, proving close is not instantaneous
-- reel continues descending during closing; payout reaches ≈ 0.23760 m when the close command completes
-- closing uses the existing M01 contact motor stiffness/damping/max torque
-- physical lift after close/settle remains pending slice 2
+- measured regression action payout ≈ 0.1022708 m
+- the action transition applies the reel brake immediately and CLOSING commands HOLD rather than further payout
+- payout remains ≈ 0.1022708 m for the entire 58-tick / 0.4833 s physical finger-closing interval
+- finger command still moves from +0.35 rad toward -0.42 rad at the unchanged 1.6 rad/s command rate
+- no claw/payout teleport is used; the reel mechanism is mechanically latched at the current simulated payout
+- closing uses the existing contact motor stiffness/damping/max torque
+- after close/settle, PICKUP reverses the reel physically as before
 
 ## 12. PT-010 Automatic close
 
@@ -799,12 +800,22 @@ M04 lifecycle integration — 2026-10-01:
 M06 full cabinet integration — 2026-10-01:
 - **PT-031 Automated PASS**
 - a physically held high-stack light rubber sphere reaches RETAINING at tick 46 and RETURNING at tick 56
-- normal cabinet RETURN target is the real chute center X/Z = 0.28 / 0.20 m
+- M06 closure-time cabinet RETURN target was the then-current chute center X/Z = +0.28 / 0.20 m
 - the ball moves ≈ 83.35 mm horizontally with the claw before RELEASE
 - dynamic hub/carriage lag peaks ≈ 16.21 mm during the return
 - maximum prize movement in one 120 Hz tick ≈ 18.33 mm
 - no prize setTranslation, parent, weld, prize joint, magnet or velocity reset
 - failed long-carry calibration trials legitimately slipped before release and were rejected rather than hidden by force changes.
+
+Current cabinet-layout update — 2026-10-02:
+- real chute center is now **X/Z = -0.28 / 0.20 m**
+- lifecycle fixture is mirrored to start X = -0.155 m, preserving the calibrated 0.125 m return distance
+- RETAINING tick 46, RETURNING tick 56, RELEASING tick 117, sensor tick 154, READY tick 174
+- ball horizontal travel at release ≈ 75.25 mm
+- max dynamic hub lag ≈ 13.37 mm
+- maximum carried/PICKUP/RETAINING/RETURN prize step ≈ **4.84 mm per 120 Hz tick**
+- post-release free-fall through the enlarged chute can reach ≈ 26.49 mm/tick and is bounded separately (<35 mm/tick) rather than being misclassified as transport teleport
+- sensor records exactly one WIN; no prize transform/parent/weld/magnet/velocity reset is introduced.
 
 ## PT-032 Release timing
 
