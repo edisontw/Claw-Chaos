@@ -170,11 +170,18 @@ function computeSwingAngle(
   return Math.atan2(horizontal, vertical);
 }
 
+export interface GantryGripProfile {
+  fingerFriction?: number;
+  closePickupTorque?: number;
+  retainingTorque?: number;
+}
+
 export interface GantryLabOptions {
   addLabFloor?: boolean;
   playReturnTarget?: { x: number; z: number };
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
+  gripProfile?: GantryGripProfile;
   milestone?: string;
   camera?: {
     position: [number, number, number];
@@ -189,6 +196,12 @@ export function createGantryLabScene(
 ): SimulationScene {
   const claw = CLAW_LAB_CONFIG;
   const verticalHomeOffset = options.verticalHomeOffset ?? 0;
+  const activeFingerFriction =
+    options.gripProfile?.fingerFriction ?? claw.fingerFriction;
+  const closePickupTorque =
+    options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
+  const retainingTorque =
+    options.gripProfile?.retainingTorque ?? claw.pt002RetainingTorque;
   const gantry =
     verticalHomeOffset === 0
       ? M02_GANTRY_CONFIG
@@ -400,7 +413,7 @@ export function createGantryLabScene(
       pivotWorld,
       createFingerSegments(points),
       {
-        friction: claw.fingerFriction,
+        friction: activeFingerFriction,
         restitution: claw.fingerRestitution,
         density: claw.fingerDensity,
       },
@@ -414,7 +427,7 @@ export function createGantryLabScene(
       initialTarget: claw.openAngle,
       stiffness: claw.motorStiffness,
       damping: claw.motorDamping,
-      maxTorque: claw.maxMotorTorque,
+      maxTorque: closePickupTorque,
       contactsEnabled: false,
     });
 
@@ -952,8 +965,8 @@ export function createGantryLabScene(
         activeForcePhase === "RETAINING"
           ? holdBoostActive
             ? M04_PLAY_CONFIG.holdBoostTorque
-            : claw.pt002RetainingTorque
-          : claw.maxMotorTorque;
+            : retainingTorque
+          : closePickupTorque;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
@@ -1066,6 +1079,13 @@ export function createGantryLabScene(
           gantry.suspensionSpringStiffness.toFixed(1) +
           " / " +
           gantry.suspensionSpringDamping.toFixed(1),
+        "Cabinet grip      " +
+          activeFingerFriction.toFixed(2) +
+          " / " +
+          closePickupTorque.toFixed(3) +
+          " / " +
+          retainingTorque.toFixed(3) +
+          " fric/C/P-ret",
         "Finger motor k/c/T " +
           (m04FingerShouldClose(playCycle)
             ? claw.motorStiffness
@@ -1081,8 +1101,8 @@ export function createGantryLabScene(
             ? m04ForcePhase(playCycle) === "RETAINING"
               ? holdBoostActive
                 ? M04_PLAY_CONFIG.holdBoostTorque
-                : claw.pt002RetainingTorque
-              : claw.maxMotorTorque
+                : retainingTorque
+              : closePickupTorque
             : M02_FINGER_TRANSPORT_CONFIG.maxTorque
           ).toFixed(3),
         "Controls         Arrows aim | Space DROP/CLOSE | hold Shift BOOST",
