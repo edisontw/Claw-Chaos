@@ -455,15 +455,18 @@ Implementation status — 2026-10-01:
 - no state-transition velocity clearing is used
 - full M04 closure suite: **54 automated tests PASS**
 
-Cabinet gameplay calibration — 2026-10-02:
-- locked M04 lab values above remain unchanged
+Cabinet gameplay calibration — updated 2026-10-03:
+- locked M04 lab values remain unchanged
 - cabinet-only finger friction = **0.72**
 - cabinet-only CLOSE/PICKUP torque = **2.9 N·m**
 - cabinet-only RETAINING torque = **0.0055 N·m**
+- cabinet-only strong PICKUP distance = **0.12 m** before RETAINING; locked M04 lab remains 0.06 m
 - HOLD BOOST remains 0.010 N·m
-- 80 g high-friction sphere: peak lift ≈ 0.2410 m, lift after 0.8 s retaining ≈ 0.2355 m, final lift ≈ 0.2410 m
-- 160 g identical-geometry sphere: peak lift ≈ 0.0076 m and final lift ≈ −0.0010 m
-- therefore the cabinet can genuinely pick up an easy prize while still rejecting a substantially heavier prize under the same claw settings
+- calibration now includes the broad physical play deck instead of relying only on a pedestal
+- actual `prize/sphere_ball`: 0.075 kg, rubber dynamic friction 0.82, radius 0.0525 m
+- real flat-deck result: peak lift ≈ **0.2263 m**, lift at RETAINING start ≈ 0.0672 m, lift after 0.8 s ≈ 0.2262 m, final lift ≈ 0.2262 m
+- 0.150 kg same-size/same-friction flat-deck control: peak lift ≈ **0.0071 m**, final ≈ 0 m
+- therefore an easy real gameplay prize can now be carried while a 2× mass control still fails physically
 - no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, or velocity reset is used.
 
 ## 14. PT-012 Hold boost
@@ -669,47 +672,42 @@ During service:
 ## 27. PT-025 First-person camera range
 
 Manual check:
-- at least ±90° yaw,
-- slight up/down look,
-- forward/back movement,
-- left/right movement,
-- optional lean.
+- ±90° yaw,
+- bounded up/down look,
+- small forward/back adjustment,
+- small left/right adjustment,
+- optional small lean.
 
-Player must be able to inspect both side angles without clipping through glass.
-
-M07 slice 2 — 2026-10-02:
-- **Automated geometry/controller PASS; final subjective visual check pending**
-- yaw limit = ±105°
-- pitch = −70° / +30°
+Current front-only implementation — 2026-10-03:
+- **Automated controller PASS**
+- yaw = ±90°
+- pitch = −70° / +25°
 - fixed eye height = 0.98 m
-- camera FOV = 50° and is explicitly regression-locked; no fisheye widening
-- player world bounds X ±0.72 m / Z −0.18…0.82 m
-- front and side standing zones are connected only by walking around the cabinet front corners
-- deterministic left/right side inspection cases both fit inside yaw/pitch limits
-- each side inspection ray crosses the corresponding physical side-glass plane within the actual panel Z span and cabinet height
-- control-panel button and chute targets can both be acquired by gaze from a legal front position
-- reticle/prompt provide interaction framing without camera snapping
-- final deployed-build judgment of side-depth readability remains the closure-only manual item.
+- FOV = 50°
+- X = −0.28…+0.28 m
+- Z ≈ 0.534…0.78 m
+- lean ≤ 30 mm
+- player remains in front of the cabinet; side standing positions are intentionally removed
+- control-panel button and chute remain gaze-reachable from the legal front zone.
 
 ## 28. PT-026 Camera integrity
 
 Normal play must reject:
 - free fly,
 - clipping through glass,
-- arbitrary overhead teleport.
+- arbitrary overhead teleport,
+- walking around the cabinet sides.
 
-M07 slice 2 — 2026-10-02:
+Current front-only implementation — 2026-10-03:
 - **Automated movement-integrity PASS**
-- controller exposes no vertical/free-fly input
-- front glass outer face Z ≈ 0.384 m; front camera-center exclusion Z = 0.484 m
-- side glass outer face X ≈ ±0.484 m; side camera-center exclusion |X| = 0.584 m
-- direct forward input from the center stops at the front exclusion
-- legal side access requires first moving beyond the side exclusion, then walking around the front corner
-- inward lean is dynamically limited so camera center cannot penetrate the side clearance
-- head look changes orientation only and cannot translate the camera
-- `F` control-panel interaction delegates to the existing M04 primary action and does not bypass mechanical state gates
-- chute gaze has no play action
-- final deployed-build visual corner-penetration check remains pending before M07 closure.
+- no vertical/free-fly input exists
+- minimum Z stays outside the front-glass clearance
+- maximum |X| = 0.28 m, well inside the physical side-glass X extent
+- sustained diagonal movement saturates at the front standing rectangle
+- player cannot traverse around either front corner
+- head look changes orientation only
+- `F` control-panel interaction still delegates to the existing M04 primary action
+- chute gaze has no play action.
 
 ## 29. PT-027 100+ prize variants
 
