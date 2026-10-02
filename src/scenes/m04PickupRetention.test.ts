@@ -742,14 +742,27 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       ballRadiusMeters: definition.dimensions.x * 0.5,
       supportMode: "flat-deck",
     });
+    const heavy = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      ballMassKg: resolved.massKg * 2,
+      ballFriction: resolved.material.dynamicFriction,
+      ballRadiusMeters: definition.dimensions.x * 0.5,
+      supportMode: "flat-deck",
+    });
 
     console.log(
       "Cabinet flat-deck real-ball grip metrics",
       JSON.stringify({
         massKg: resolved.massKg,
+        heavyMassKg: resolved.massKg * 2,
         friction: resolved.material.dynamicFriction,
         radiusMeters: definition.dimensions.x * 0.5,
-        ...actual,
+        actual,
+        heavy,
       }),
     );
 
@@ -758,6 +771,10 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(actual.peakLiftMeters).toBeGreaterThan(0.025);
     expect(actual.liftAtRetainingStartMeters).toBeGreaterThan(0.010);
     expect(actual.liftAfterRetaining0p4sMeters).toBeGreaterThan(0.010);
+    expect(actual.liftAfterRetaining0p8sMeters).toBeGreaterThan(0.10);
+    expect(actual.finalLiftMeters).toBeGreaterThan(0.10);
+    expect(heavy.peakLiftMeters).toBeLessThan(0.03);
+    expect(heavy.finalLiftMeters).toBeLessThan(0.03);
   });
 
 });
