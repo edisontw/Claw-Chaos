@@ -130,7 +130,8 @@ jobs:
               > "$DOM_FILE" 2> "$LOG_FILE" || true
 
             if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
-               grep -q 'cabinet-lab' "$DOM_FILE"; then
+               grep -q 'cabinet-lab' "$DOM_FILE" &&
+               grep -q 'Player view' "$DOM_FILE"; then
               CABINET_READY=1
               break
             fi
