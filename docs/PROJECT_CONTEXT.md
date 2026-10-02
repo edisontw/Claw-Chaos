@@ -541,6 +541,25 @@ Acceptance:
 - **29 test files / 74 tests PASS**
 - lint/build/base-path and both browser smokes PASS
 
+### Cabinet realism correction — 2026-10-02
+
+Applied from direct visual/play feedback:
+- root/default scene changed from `gantry-lab` to `cabinet-lab`
+- root browser smoke now requires the cabinet player view to initialize
+- prize chute moved from X = +0.28 m to **X = -0.28 m**
+- chute opening enlarged from 0.18 × 0.15 m to **0.24 × 0.18 m**
+- chute sensor footprint enlarged accordingly
+- cabinet-only claw idle/home position raised **60 mm**
+- cabinet-only max reel payout and AUTO CLOSE threshold extend by the same 60 mm, so the physical bottom reach is preserved
+- locked `gantry-lab` M02/M03 vertical calibration values are unchanged
+- two visual service/control leads were added beside the main suspension cable
+- EARLY CLOSE now changes CLOSING reel command to HOLD and applies an immediate reel brake on the Space/F transition
+- regression action at payout ≈ 0.1022708 m remains at exactly the same payout through 58 closing ticks
+- AUTO CLOSE still reaches the normal physical bottom limit
+- larger chute required separating transport-continuity from post-release free-fall: current transport max step ≈ 4.84 mm/tick; post-release chute fall max ≈ 26.49 mm/tick
+- mirrored left-chute lifecycle fixture remains one-shot WIN and finite/bounded
+- **29 test files / 76 tests PASS** before final root-default smoke/doc commits
+
 Remaining M07 closure gate:
 - deployed-build manual visual check for side-depth usefulness, natural look-down framing and visible corner anti-clipping.
 
