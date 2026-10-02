@@ -121,7 +121,28 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-Proceed to **M07 — First-Person Player View** from the closed M06 cabinet baseline. Add player-constrained head/body movement, at least ±90° yaw, limited pitch and small positional movement/lean without free-fly or clipping through cabinet/glass. Preserve all closed M01–M06 physics and chute/result behavior.
+Continue **M07 — First-Person Player View** after slice 1. The constrained player rig is now active in `cabinet-lab`; next verify front/side aiming readability from the new viewpoint and add control-panel/chute interaction framing without allowing free-fly or cabinet/glass clipping. Preserve all closed M01–M06 physics and chute/result behavior.
+
+Current `cabinet-lab` player-view controls:
+- click canvas: capture mouse for first-person look; `Esc` releases pointer lock
+- mouse: head look, clamped to ±105° yaw and −40°/+30° pitch
+- `W/S`: small forward/back movement
+- `A/D`: small left/right movement
+- `Q/E`: bounded lean
+- `F3`: collider debug in `cabinet-lab` (`D` remains collider debug in non-player scenes)
+- `M`: COM/origin debug
+- machine controls remain Arrow keys / Space / Shift / H / P / T
+
+M07 slice 1 baseline:
+- eye height = 0.98 m
+- player X range = ±0.62 m
+- player Z range = 0.484–0.82 m
+- nearest camera center stays 0.10 m outside the physical front-glass outer face
+- max lean = 55 mm with max 4° camera roll
+- no vertical/free-fly input exists
+- PT-025 range/movement/lean automated gate — PASS
+- PT-026 front-glass clearance/no-free-fly automated gate — PASS
+- **29 test files / 72 tests PASS** in first slice verification
 
 Current `gantry-lab` controls:
 - default scene: `?scene=gantry-lab`
