@@ -170,6 +170,8 @@ export function createCabinetLabScene(
     physics,
     {
       addLabFloor: false,
+      verticalHomeOffset: 0.06,
+      addServiceWires: true,
       playReturnTarget: {
         x: M06_CABINET_CONFIG.chuteCenterX,
         z: M06_CABINET_CONFIG.chuteCenterZ,
@@ -295,6 +297,8 @@ export function createCabinetLabScene(
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             low-opacity pane + visible boundary outline",
         "Green wire box    chute sensor volume",
+        "Cabinet claw      +60 mm idle height / extended drop travel",
+        "Service wires     dual visual control leads",
         "Center ball       aligned for first physical pickup attempt",
       ];
     },
