@@ -136,6 +136,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
       root,
       (x, z) => testScene.setManualGantryInput?.(x, z),
       () => testScene.primaryAction?.() ?? false,
+      (direction) =>
+        playerViewController?.adjustEyeHeight(
+          direction *
+            M07_MOBILE_FIRST_PERSON_VIEW_CONFIG
+              .eyeHeightStepMeters,
+        ),
     );
   }
 
