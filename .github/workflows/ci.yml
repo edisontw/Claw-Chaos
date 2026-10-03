@@ -130,8 +130,7 @@ jobs:
               > "$DOM_FILE" 2> "$LOG_FILE" || true
 
             if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
-               grep -q 'cabinet-lab' "$DOM_FILE" &&
-               grep -q 'Player view' "$DOM_FILE" &&
+               grep -q 'data-scene-id="cabinet-lab"' "$DOM_FILE" &&
                grep -q 'data-player-view="active"' "$DOM_FILE" &&
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$DOM_FILE" &&
@@ -172,7 +171,7 @@ jobs:
             > "$ROOT_DOM_FILE" 2> "$ROOT_LOG_FILE" || true
 
           if ! grep -q 'data-simulation-ready="true"' "$ROOT_DOM_FILE" ||
-             ! grep -q 'cabinet-lab' "$ROOT_DOM_FILE" ||
+             ! grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" ||
              ! grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" ||
              ! grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" ||
              ! grep -q 'mobile-view-height' "$ROOT_DOM_FILE" ||
