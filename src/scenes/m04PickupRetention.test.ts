@@ -976,8 +976,51 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("isolates lower-finger pad radius at the current production grip", async () => {
-    const candidates = [0.0045, 0.008, 0.010, 0.012, 0.014] as const;
+  it("sweeps more hooked lower-finger geometry at the current production grip", async () => {
+    const candidates = [
+      {
+        label: "current",
+        nodes: CLAW_LAB_CONFIG.fingerNodes,
+      },
+      {
+        label: "hook-40",
+        nodes: [
+          { radial: 0, down: 0 },
+          { radial: 0.03, down: 0.07 },
+          { radial: 0.075, down: 0.165 },
+          { radial: 0.040, down: 0.225 },
+        ] as const,
+      },
+      {
+        label: "hook-30",
+        nodes: [
+          { radial: 0, down: 0 },
+          { radial: 0.03, down: 0.07 },
+          { radial: 0.078, down: 0.165 },
+          { radial: 0.030, down: 0.230 },
+        ] as const,
+      },
+      {
+        label: "hook-20",
+        nodes: [
+          { radial: 0, down: 0 },
+          { radial: 0.03, down: 0.07 },
+          { radial: 0.080, down: 0.165 },
+          { radial: 0.020, down: 0.235 },
+        ] as const,
+      },
+      {
+        label: "hook-5node",
+        nodes: [
+          { radial: 0, down: 0 },
+          { radial: 0.03, down: 0.07 },
+          { radial: 0.082, down: 0.160 },
+          { radial: 0.052, down: 0.215 },
+          { radial: 0.022, down: 0.242 },
+        ] as const,
+      },
+    ] as const;
+
     const plushPrizes = [
       { id: "prize/teddy_simple", rotationYRadians: -0.22 },
       { id: "prize/pillow_small", rotationYRadians: 0.28 },
@@ -987,7 +1030,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     const sphereResolved = resolvePrizeSpec(sphere);
     const rows = [];
 
-    for (const fingerLowerPadRadiusMeters of candidates) {
+    for (const candidate of candidates) {
       const common = {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
@@ -995,7 +1038,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-        fingerLowerPadRadiusMeters,
+        fingerNodes: candidate.nodes,
         topHoldSeconds: 1.3,
         supportMode: "flat-deck" as const,
       };
@@ -1012,9 +1055,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
           metrics.topReached &&
           metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
           metrics.finalLiftMeters >= 0.08;
-        if (success) {
-          plushSuccessCount += 1;
-        }
+        if (success) plushSuccessCount += 1;
         results.push({
           id: prize.id,
           success,
@@ -1036,7 +1077,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         heavyBall.finalLiftMeters >= 0.08;
 
       rows.push({
-        fingerLowerPadRadiusMeters,
+        label: candidate.label,
         plushSuccessCount,
         heavyBallSuccess,
         heavyBall: {
@@ -1049,7 +1090,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet isolated finger-pad sweep",
+      "Cabinet hooked-finger sweep",
       JSON.stringify(rows),
     );
 
