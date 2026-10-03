@@ -192,76 +192,7 @@ function buildRoundedBoxColliders(
   return colliders;
 }
 
-function scalePrimitiveCollider(
-  collider: PrimitiveColliderSpec,
-  scale: number,
-): PrimitiveColliderSpec {
-  const s = Math.max(0.5, Math.min(1, scale));
-
-  switch (collider.shape) {
-    case "sphere":
-      return {
-        ...collider,
-        center: collider.center
-          ? {
-              x: collider.center.x * s,
-              y: collider.center.y * s,
-              z: collider.center.z * s,
-            }
-          : undefined,
-        radius: collider.radius * s,
-      };
-    case "cuboid":
-      return {
-        ...collider,
-        center: collider.center
-          ? {
-              x: collider.center.x * s,
-              y: collider.center.y * s,
-              z: collider.center.z * s,
-            }
-          : undefined,
-        halfExtents: {
-          x: collider.halfExtents.x * s,
-          y: collider.halfExtents.y * s,
-          z: collider.halfExtents.z * s,
-        },
-      };
-    case "capsule":
-      return {
-        ...collider,
-        start: {
-          x: collider.start.x * s,
-          y: collider.start.y * s,
-          z: collider.start.z * s,
-        },
-        end: {
-          x: collider.end.x * s,
-          y: collider.end.y * s,
-          z: collider.end.z * s,
-        },
-        radius: collider.radius * s,
-      };
-    case "cylinder":
-      return {
-        ...collider,
-        center: collider.center
-          ? {
-              x: collider.center.x * s,
-              y: collider.center.y * s,
-              z: collider.center.z * s,
-            }
-          : undefined,
-        halfHeight: collider.halfHeight * s,
-        radius: collider.radius * s,
-      };
-  }
-}
-
-function buildColliders(
-  definition: PrizeDefinition,
-  compoundColliderScale = 1,
-): PrimitiveColliderSpec[] {
+function buildColliders(definition: PrizeDefinition): PrimitiveColliderSpec[] {
   const { x, y, z } = definition.dimensions;
   const half = { x: x * 0.5, y: y * 0.5, z: z * 0.5 };
 
@@ -314,13 +245,7 @@ function buildColliders(
     case "pillow":
     case "plush_humanoid":
     case "plush_animal":
-      return createCompoundPrizeProfile(definition).colliders.map(
-        (collider) =>
-          scalePrimitiveCollider(
-            collider,
-            compoundColliderScale,
-          ),
-      );
+      return createCompoundPrizeProfile(definition).colliders;
 
     default:
       throw new Error(
@@ -621,10 +546,7 @@ export function createPrize(
   const rotationYRadians = options.rotationYRadians ?? 0;
   const body = physics.createDynamicBodyWithMassProperties(
     options.position,
-    buildColliders(
-      definition,
-      options.compoundColliderScale ?? 1,
-    ),
+    buildColliders(definition),
     massProperties,
     {
       friction: resolved.material.dynamicFriction,
