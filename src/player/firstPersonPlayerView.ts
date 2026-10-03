@@ -322,7 +322,6 @@ export function computeLookAnglesToPoint(
 export function findFocusedPlayerViewTarget(
   state: FirstPersonPlayerViewState,
   targets: readonly PlayerViewTarget[],
-  config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): PlayerViewFocus | null {
   const cameraPosition = playerCameraPosition(state);
   const cosPitch = Math.cos(state.pitchRadians);
@@ -369,7 +368,6 @@ export function findFocusedPlayerViewTarget(
 export function applyFirstPersonPlayerCamera(
   camera: THREE.PerspectiveCamera,
   state: FirstPersonPlayerViewState,
-  config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): void {
   const position = playerCameraPosition(state);
   camera.position.set(position.x, position.y, position.z);
@@ -402,7 +400,7 @@ export class FirstPersonPlayerViewController {
       M07_FIRST_PERSON_VIEW_CONFIG,
   ) {
     this.state = createFirstPersonPlayerViewState(config);
-    applyFirstPersonPlayerCamera(camera, this.state, config);
+    applyFirstPersonPlayerCamera(camera, this.state);
     this.element.dataset.playerView = "active";
 
     this.prompt = document.createElement("div");
@@ -434,7 +432,6 @@ export class FirstPersonPlayerViewController {
     applyFirstPersonPlayerCamera(
       this.camera,
       this.state,
-      this.config,
     );
   }
 
@@ -452,11 +449,10 @@ export class FirstPersonPlayerViewController {
       Math.min(Math.max(deltaSeconds, 0), 0.05),
       this.config,
     );
-    applyFirstPersonPlayerCamera(this.camera, this.state, this.config);
+    applyFirstPersonPlayerCamera(this.camera, this.state);
     this.focus = findFocusedPlayerViewTarget(
       this.state,
       this.targets,
-      this.config,
     );
     this.element.dataset.playerFocus =
       this.focus?.target.id ?? "none";
