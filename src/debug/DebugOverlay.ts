@@ -14,15 +14,34 @@ export interface DebugSnapshot {
 
 export class DebugOverlay {
   private readonly element: HTMLPreElement;
+  private visibleValue: boolean;
 
-  constructor(parent: HTMLElement) {
+  constructor(parent: HTMLElement, initiallyVisible = true) {
+    this.visibleValue = initiallyVisible;
     this.element = document.createElement("pre");
     this.element.className = "debug-overlay";
     this.element.setAttribute("aria-live", "off");
+    this.element.hidden = !initiallyVisible;
     parent.append(this.element);
   }
 
+  get visible(): boolean {
+    return this.visibleValue;
+  }
+
+  toggle(): void {
+    this.setVisible(!this.visibleValue);
+  }
+
+  setVisible(visible: boolean): void {
+    this.visibleValue = visible;
+    this.element.hidden = !visible;
+  }
+
   update(snapshot: DebugSnapshot): void {
+    if (!this.visibleValue) {
+      return;
+    }
     this.element.textContent = [
       "CLAW CHAOS — " + snapshot.milestone,
       "FPS              " + snapshot.fps.toFixed(1),
