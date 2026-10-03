@@ -355,6 +355,9 @@ export function createCabinetLabScene(
     milestone: "M07 / First-person player view",
     camera: gantryScene.camera,
     primaryAction: () => gantryScene.primaryAction?.() ?? false,
+    setManualGantryInput(x: number, z: number): void {
+      gantryScene.setManualGantryInput?.(x, z);
+    },
     beforePhysicsStep(stepSeconds: number): void {
       gantryScene.beforePhysicsStep?.(stepSeconds);
 
