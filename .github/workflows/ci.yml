@@ -155,29 +155,43 @@ jobs:
 
           echo "Preview/browser cabinet-lab smoke passed: $ASSET_PATH"
 
-          ROOT_DOM_FILE="/tmp/claw-chaos-root-dom.html"
-          ROOT_LOG_FILE="/tmp/claw-chaos-root-browser.log"
-          timeout 30s "$BROWSER" \
-            --headless=new \
-            --no-sandbox \
-            --disable-dev-shm-usage \
-            --use-gl=angle \
-            --use-angle=swiftshader \
-            --enable-webgl \
-            --enable-unsafe-swiftshader \
-            --virtual-time-budget=8000 \
-            --dump-dom \
-            "http://127.0.0.1:4173/Claw-Chaos/" \
-            > "$ROOT_DOM_FILE" 2> "$ROOT_LOG_FILE" || true
+          ROOT_READY=0
+          for attempt in 1 2 3; do
+            ROOT_DOM_FILE="/tmp/claw-chaos-root-dom-$attempt.html"
+            ROOT_LOG_FILE="/tmp/claw-chaos-root-browser-$attempt.log"
+            timeout 30s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=8000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/Claw-Chaos/" \
+              > "$ROOT_DOM_FILE" 2> "$ROOT_LOG_FILE" || true
 
-          if ! grep -q 'data-simulation-ready="true"' "$ROOT_DOM_FILE" ||
-             ! grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" ||
-             ! grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" ||
-             ! grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" ||
-             ! grep -q 'mobile-view-height' "$ROOT_DOM_FILE" ||
-             ! grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE"; then
+            if grep -q 'data-simulation-ready="true"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
+               grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE"; then
+              ROOT_READY=1
+              break
+            fi
+
+            echo "Headless browser root smoke attempt $attempt did not reach readiness."
+            sleep 1
+          done
+
+          if [ "$ROOT_READY" -ne 1 ]; then
             echo "Root URL did not initialize the default cabinet-lab player view."
-            cat "$ROOT_LOG_FILE"
+            for file in /tmp/claw-chaos-root-browser-*.log; do
+              echo "===== $file ====="
+              cat "$file"
+            done
             exit 1
           fi
 

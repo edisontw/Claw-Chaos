@@ -5,6 +5,12 @@ import {
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
+import {
+  M08_CABINET_VISUAL_STYLE,
+  createCabinetFrameTrimSpecs,
+  createCabinetLedStripSpecs,
+  type VisualBoxSpec,
+} from "../cabinet/cabinetVisualStyle";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
@@ -52,23 +58,29 @@ function createPartMaterial(
   part: CabinetPartDefinition,
 ): THREE.Material {
   if (part.role === "glass") {
+    const glass = M08_CABINET_VISUAL_STYLE.glass;
     return new THREE.MeshPhysicalMaterial({
-      color: 0xa7d8ff,
+      color: glass.color,
       transparent: true,
-      opacity: 0.10,
-      roughness: 0.08,
+      opacity: glass.opacity,
+      roughness: glass.roughness,
       metalness: 0,
-      transmission: 0.05,
+      transmission: glass.transmission,
+      ior: glass.ior,
+      thickness: glass.thicknessMeters,
+      clearcoat: glass.clearcoat,
+      clearcoatRoughness: glass.clearcoatRoughness,
       depthWrite: false,
       side: THREE.DoubleSide,
     });
   }
 
   if (part.role === "chute_wall" || part.role === "chute_bottom") {
+    const chute = M08_CABINET_VISUAL_STYLE.chute;
     return new THREE.MeshStandardMaterial({
-      color: 0x2e3540,
-      roughness: 0.82,
-      metalness: 0.12,
+      color: chute.color,
+      roughness: chute.roughness,
+      metalness: chute.metalness,
     });
   }
 
@@ -89,10 +101,13 @@ function createPartMaterial(
     });
   }
 
-  return new THREE.MeshStandardMaterial({
-    color: 0x303846,
-    roughness: 0.66,
-    metalness: 0.28,
+  const frame = M08_CABINET_VISUAL_STYLE.frame;
+  return new THREE.MeshPhysicalMaterial({
+    color: frame.color,
+    roughness: frame.roughness,
+    metalness: frame.metalness,
+    clearcoat: frame.clearcoat,
+    clearcoatRoughness: frame.clearcoatRoughness,
   });
 }
 
@@ -118,9 +133,9 @@ function addCabinetVisual(
     const outline = new THREE.LineSegments(
       new THREE.EdgesGeometry(geometry),
       new THREE.LineBasicMaterial({
-        color: 0x74bce8,
+        color: M08_CABINET_VISUAL_STYLE.glass.color,
         transparent: true,
-        opacity: 0.58,
+        opacity: M08_CABINET_VISUAL_STYLE.glass.edgeOpacity,
       }),
     );
     outline.position.copy(mesh.position);
@@ -128,13 +143,62 @@ function addCabinetVisual(
   }
 }
 
+
+function addVisualBox(
+  scene: THREE.Scene,
+  spec: VisualBoxSpec,
+  material: THREE.Material,
+): void {
+  const mesh = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      spec.halfExtents.x * 2,
+      spec.halfExtents.y * 2,
+      spec.halfExtents.z * 2,
+    ),
+    material,
+  );
+  mesh.name = spec.id;
+  mesh.position.set(spec.center.x, spec.center.y, spec.center.z);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  scene.add(mesh);
+}
+
+function addM08CabinetDetails(scene: THREE.Scene): void {
+  const frameStyle = M08_CABINET_VISUAL_STYLE.frame;
+  const trimMaterial = new THREE.MeshPhysicalMaterial({
+    color: frameStyle.color,
+    roughness: frameStyle.roughness,
+    metalness: frameStyle.metalness,
+    clearcoat: frameStyle.clearcoat,
+    clearcoatRoughness: frameStyle.clearcoatRoughness,
+  });
+  for (const spec of createCabinetFrameTrimSpecs()) {
+    addVisualBox(scene, spec, trimMaterial);
+  }
+
+  const ledStyle = M08_CABINET_VISUAL_STYLE.led;
+  const ledMaterial = new THREE.MeshStandardMaterial({
+    color: ledStyle.color,
+    emissive: ledStyle.emissive,
+    emissiveIntensity: ledStyle.emissiveIntensity,
+    roughness: 0.24,
+    metalness: 0.05,
+  });
+  for (const spec of createCabinetLedStripSpecs()) {
+    addVisualBox(scene, spec, ledMaterial);
+  }
+}
+
 function addControlPanel(scene: THREE.Scene): void {
   const panel = new THREE.Mesh(
     new THREE.BoxGeometry(0.46, 0.11, 0.16),
-    new THREE.MeshStandardMaterial({
-      color: 0x343b46,
-      roughness: 0.48,
-      metalness: 0.30,
+    new THREE.MeshPhysicalMaterial({
+      color: M08_CABINET_VISUAL_STYLE.controlPanel.color,
+      roughness: M08_CABINET_VISUAL_STYLE.controlPanel.roughness,
+      metalness: M08_CABINET_VISUAL_STYLE.controlPanel.metalness,
+      clearcoat: M08_CABINET_VISUAL_STYLE.controlPanel.clearcoat,
+      clearcoatRoughness: 0.18,
     }),
   );
   panel.position.set(
@@ -148,10 +212,14 @@ function addControlPanel(scene: THREE.Scene): void {
 
   const button = new THREE.Mesh(
     new THREE.CylinderGeometry(0.025, 0.025, 0.018, 24),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshPhysicalMaterial({
       color: 0xd94141,
-      emissive: 0x5a0808,
-      roughness: 0.38,
+      emissive: 0x6b0b0b,
+      emissiveIntensity: 1.1,
+      roughness: 0.24,
+      metalness: 0.12,
+      clearcoat: 0.75,
+      clearcoatRoughness: 0.16,
     }),
   );
   button.rotation.x = Math.PI * 0.5;
@@ -173,8 +241,9 @@ export function createCabinetLabScene(
   }
 
   addControlPanel(scene);
+  addM08CabinetDetails(scene);
 
-  const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.0, 2.2, 1.7);
+  const cabinetLight = new THREE.PointLight(0xf4f7ff, 4.2, 2.2, 1.7);
   cabinetLight.position.set(-0.08, 1.08, 0.10);
   cabinetLight.castShadow = true;
   cabinetLight.shadow.mapSize.set(1024, 1024);
@@ -209,7 +278,7 @@ export function createCabinetLabScene(
         x: M06_CABINET_CONFIG.chuteCenterX,
         z: M06_CABINET_CONFIG.chuteCenterZ,
       },
-      milestone: "M07 / First-person player view",
+      milestone: "M08 / Visual realism pass 1",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -302,7 +371,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M07 / First-person player view",
+    milestone: "M08 / Visual realism pass 1",
     camera: gantryScene.camera,
     primaryAction: () => gantryScene.primaryAction?.() ?? false,
     setManualGantryInput(x: number, z: number): void {
@@ -331,7 +400,8 @@ export function createCabinetLabScene(
         `Results accepted  ${resultInventory.resultCount}`,
         `Inventory prizes  ${resultInventory.inventoryCount}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
-        "Glass             low-opacity pane + visible boundary outline",
+        "Glass             subtle PBR pane + restrained edge reflection",
+        "M08 visuals       powder-coated frame / LED strips / gantry detail",
         "Cabinet claw      +" +
           Math.round(
             CABINET_PLAY_TUNING.verticalHomeOffsetMeters * 1000,
