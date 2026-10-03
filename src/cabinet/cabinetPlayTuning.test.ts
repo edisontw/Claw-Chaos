@@ -52,10 +52,14 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_PLAY_TUNING.holdBoostTorque).toBeGreaterThan(
       M04_PLAY_CONFIG.holdBoostTorque,
     );
-    expect(CABINET_PLAY_TUNING.fingerFriction).toBe(1.25);
-    expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(6.0);
+    expect(CABINET_PLAY_TUNING.fingerFriction).toBe(1.94);
+    expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(10.0);
     expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
     expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.018);
+    expect(CABINET_PLAY_TUNING.closedAngleRadians).toBe(-0.63);
+    expect(
+      CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+    ).toBe(0.010);
     expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBeGreaterThan(
