@@ -58,6 +58,7 @@ interface PickupRetentionProfile {
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
   pickupLiftDistanceMeters?: number;
+  topHoldSeconds?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
 
@@ -127,6 +128,7 @@ async function simulateM04PickupRetention(
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
+  const topHoldSeconds = profile.topHoldSeconds ?? 0.6;
   const supportMode = profile.supportMode ?? "pedestal";
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -575,7 +577,10 @@ async function simulateM04PickupRetention(
     ) {
       topReached = true;
       retainingHoldTicks += 1;
-      if (retainingHoldTicks >= Math.ceil(0.6 * PHYSICS_HZ)) {
+      if (
+        retainingHoldTicks >=
+        Math.ceil(topHoldSeconds * PHYSICS_HZ)
+      ) {
         break;
       }
     }
@@ -1113,6 +1118,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
             candidate.pickupLiftDistanceMeters,
           prizeDefinitionId: prize.id,
           prizeRotationYRadians: prize.rotationYRadians,
+          topHoldSeconds: 1.3,
           supportMode: "flat-deck",
         });
 
@@ -1144,6 +1150,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         ballMassKg: sphereResolved.massKg * 2,
         ballFriction: sphereResolved.material.dynamicFriction,
         ballRadiusMeters: sphere.dimensions.x * 0.5,
+        topHoldSeconds: 1.3,
         supportMode: "flat-deck",
       });
       const heavyBallSuccess =
