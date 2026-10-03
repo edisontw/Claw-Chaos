@@ -923,7 +923,7 @@ Move the working simulation into a real cabinet.
 
 # M07 — First-Person Player View
 
-**Status: IN PROGRESS — mobile-first closure candidate verified 2026-10-03**
+**Status: IN PROGRESS — mobile calibration closure candidate verified 2026-10-03**
 
 ## Goal
 
@@ -978,6 +978,23 @@ Phone/coarse-pointer play is treated as a primary control path:
 - debug overlay hides on touch layouts to preserve play space
 - browser smoke asserts that mobile controls initialize on both explicit `cabinet-lab` and the root/default scene
 
+## Mobile calibration pass
+
+Calibrated phone/coarse-pointer defaults:
+- virtual joystick dead zone = **14%** radius
+- input outside the dead zone is remapped to the full analog range, preserving full gantry speed at the outer ring
+- touch-look sensitivity = **0.0030 rad/pixel**
+- desktop mouse sensitivity remains **0.0022 rad/pixel**
+- accepted `DROP / CLOSE` taps use a **140 ms** debounce to suppress accidental double taps
+- action visual feedback auto-clears after 180 ms
+- portrait and landscape use separate control sizes/positions
+- overscroll is suppressed; safe-area insets remain active
+
+Mobile render budget:
+- mobile/coarse pointer: device-pixel-ratio cap = **1.5**, shadow map cap = **512**
+- desktop: device-pixel-ratio cap = **2.0**, shadow map = **1024**
+- fixed physics timestep, gantry motion, claw torque, grip and prize physics are unchanged
+
 ## Cabinet grip correction tied to deployed play feedback
 
 The earlier grip calibration used a small pedestal under the ball and did not represent a prize resting on the broad cabinet deck.
@@ -1029,14 +1046,15 @@ Starter cube behavior:
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **31 test files / 83 tests PASS**
+- **32 test files / 87 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
 - `gantry-lab`, explicit `cabinet-lab`, and root-default cabinet browser smokes PASS
 
 Remaining M07 closure gate:
-- real-phone manual confirmation that touch look, analog claw movement and DROP/CLOSE are comfortable in portrait and landscape
+- real-phone manual confirmation on Android Chrome and iPhone Safari that the 14% dead zone, touch-look sensitivity, action debounce and portrait/landscape placement feel comfortable
+- verify mobile render quality/performance is acceptable without visible physics degradation
 - deployed-build confirmation that the front-only camera feels appropriately constrained and the center/easy prize can visibly be carried.
 
 ---

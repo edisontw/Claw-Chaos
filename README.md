@@ -164,9 +164,13 @@ Desktop:
 
 Mobile / coarse pointer:
 - drag directly on the play view: look around; no pointer lock required
+- touch-look sensitivity = **0.0030 rad/pixel**; desktop mouse remains **0.0022 rad/pixel**
 - left virtual analog joystick: move the claw in the cabinet plane
+- joystick dead zone = **14%** of radius, then remaining travel is remapped to full analog range
 - large right `DROP / CLOSE` button: same physical primary action as desktop Space/F
-- safe-area insets are respected; debug overlay is hidden on touch layouts
+- accepted action taps have a **140 ms debounce** to reject accidental double taps without blocking a deliberate later EARLY CLOSE
+- portrait and landscape have separate control sizing/placement; safe-area insets are respected
+- debug overlay is hidden on touch layouts
 - the mobile joystick feeds the same gantry physics input path as the keyboard, not synthetic key events
 
 Coordinate note:
@@ -183,7 +187,9 @@ Current M07 front-view baseline:
 - front-only movement plus head turn is used for aiming/readability
 - control-panel and chute gaze targets remain reachable from the legal front zone
 - touch-drag look + analog claw joystick + direct DROP/CLOSE touch button are initialized in `cabinet-lab`
-- **31 test files / 83 tests PASS**
+- mobile render budget: DPR cap **1.5**, shadow maps **512**; desktop remains DPR 2 / 1024
+- fixed physics timestep, forces and claw calibration are unchanged
+- **32 test files / 87 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:

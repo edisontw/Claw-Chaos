@@ -13,6 +13,30 @@ import {
 } from "./firstPersonPlayerView";
 
 describe("M07 first-person player view constraints", () => {
+  it("uses a faster calibrated touch-look sensitivity than mouse look", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    const initial = createFirstPersonPlayerViewState(config);
+    const mouse = applyFirstPersonLookDelta(
+      initial,
+      -100,
+      0,
+      config,
+    );
+    const touch = applyFirstPersonLookDelta(
+      initial,
+      -100,
+      0,
+      config,
+      config.touchSensitivityRadiansPerPixel,
+    );
+
+    expect(config.touchSensitivityRadiansPerPixel).toBeGreaterThan(
+      config.mouseSensitivityRadiansPerPixel,
+    );
+    expect(touch.yawRadians).toBeGreaterThan(mouse.yawRadians);
+    expect(touch.yawRadians).toBeCloseTo(0.3, 10);
+  });
+
   it("PT-025 keeps a realistic front-player look envelope", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     let state = createFirstPersonPlayerViewState(config);

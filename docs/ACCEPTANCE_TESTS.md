@@ -1001,10 +1001,13 @@ Expected:
 - portrait and landscape remain playable without horizontal page scrolling.
 
 Automated status — 2026-10-03:
-- joystick normalization is unit-tested, including diagonal clamping and zero/tiny radius safety
+- joystick normalization is unit-tested with **14% dead zone**, remapped travel, diagonal clamping and zero/tiny radius safety
+- action debounce regression verifies taps inside **140 ms** are rejected while a later deliberate action is accepted
+- touch-look regression verifies **0.0030 rad/pixel** is distinct from desktop mouse **0.0022 rad/pixel**
+- render-profile regression locks mobile DPR cap **1.5** / shadow **512** versus desktop DPR 2 / shadow 1024
 - browser smoke requires `data-mobile-controls="ready"` for explicit cabinet and root/default scenes
-- full suite = **31 test files / 83 tests PASS**
-- real-device comfort/readability remains a manual M07 closure gate.
+- full suite = **32 test files / 87 tests PASS**
+- real-device Android Chrome / iPhone Safari comfort, portrait/landscape layout and sustained FPS remain manual M07 closure gates.
 
 ## PT-044 Calibration record completeness
 
