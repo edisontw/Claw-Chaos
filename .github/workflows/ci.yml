@@ -165,6 +165,7 @@ jobs:
 
             if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
                grep -q 'data-bootstrap="parallel"' "$DOM_FILE" &&
+               grep -q 'data-physics-backend="native-wasm"' "$DOM_FILE" &&
                grep -q 'data-startup-ms=' "$DOM_FILE" &&
                grep -q 'data-scene-id="cabinet-lab"' "$DOM_FILE" &&
                grep -q 'data-player-view="active"' "$DOM_FILE" &&
