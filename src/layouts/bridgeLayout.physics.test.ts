@@ -82,17 +82,24 @@ describe("M09 bridge layout physics", () => {
       ),
     ).toBe(true);
 
-    beam!.prize.body.applyImpulseAtPoint(
-      { x: 0.018, y: 0, z: 0 },
-      {
-        x: settledBeamPosition.x,
-        y: settledBeamPosition.y,
-        z: settledBeamPosition.z + 0.045,
-      },
-      true,
-    );
+    for (let nudge = 0; nudge < 3; nudge += 1) {
+      const current = beam!.prize.body.translation();
+      beam!.prize.body.applyImpulseAtPoint(
+        { x: 0.018, y: 0, z: 0 },
+        {
+          x: current.x,
+          y: current.y,
+          z: current.z + 0.045,
+        },
+        true,
+      );
 
-    for (let tick = 0; tick < 180; tick += 1) {
+      for (let tick = 0; tick < 60; tick += 1) {
+        physics.step();
+      }
+    }
+
+    for (let tick = 0; tick < 120; tick += 1) {
       physics.step();
     }
 
@@ -105,6 +112,15 @@ describe("M09 bridge layout physics", () => {
     const rotationTravel = quaternionAngularDistance(
       settledBeamRotation,
       movedRotation,
+    );
+
+    console.log(
+      "M09 bridge manipulation",
+      JSON.stringify({
+        settledHeightMeters: settledBeamPosition.y,
+        horizontalTravelMeters: horizontalTravel,
+        rotationTravelRadians: rotationTravel,
+      }),
     );
 
     expect(horizontalTravel).toBeGreaterThan(0.012);
