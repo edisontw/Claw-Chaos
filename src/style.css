@@ -5,7 +5,13 @@
   font-synthesis: none;
 }
 * { box-sizing: border-box; }
-html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+html, body, #app {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
 canvas {
   display: block;
   width: 100%;
@@ -190,4 +196,57 @@ canvas {
     height: 92px;
     font-size: 12px;
   }
+}
+
+
+@media (hover: none) and (pointer: coarse) and (orientation: portrait) {
+  .mobile-joystick-wrap {
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .mobile-claw-action {
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(22px, env(safe-area-inset-bottom));
+  }
+
+  .player-reticle {
+    top: 46%;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  .mobile-joystick-wrap {
+    left: max(18px, env(safe-area-inset-left));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    width: 108px;
+    height: 108px;
+  }
+
+  .mobile-joystick {
+    width: 100px;
+    height: 100px;
+  }
+
+  .mobile-joystick-thumb {
+    width: 44px;
+    height: 44px;
+  }
+
+  .mobile-claw-action {
+    right: max(20px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    width: 90px;
+    height: 90px;
+    font-size: 12px;
+  }
+
+  .player-interaction-prompt {
+    top: max(10px, env(safe-area-inset-top));
+  }
+}
+
+.mobile-claw-action[data-result="blocked"],
+.mobile-claw-action[data-result="debounced"] {
+  filter: saturate(0.72) brightness(0.88);
 }
