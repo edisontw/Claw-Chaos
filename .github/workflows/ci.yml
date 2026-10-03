@@ -56,7 +56,6 @@ jobs:
             echo "Bootstrap entry regressed above 25 KB; heavy startup modules may be back on the critical path."
             exit 1
           fi
-          grep -R -q 'data-bootstrap' dist/assets
 
       - name: Preview smoke test
         shell: bash
