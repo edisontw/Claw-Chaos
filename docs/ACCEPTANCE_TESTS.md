@@ -692,7 +692,7 @@ Manual check:
 - bounded up/down look,
 - small forward/back adjustment,
 - small left/right adjustment,
-- optional small lean.
+- no required lean control.
 
 Current front-only implementation — 2026-10-03:
 - **Automated controller PASS**
@@ -702,7 +702,7 @@ Current front-only implementation — 2026-10-03:
 - FOV = 50°
 - X = −0.28…+0.28 m
 - Z ≈ 0.534…0.78 m
-- lean ≤ 30 mm
+- Q/E lean/roll has been removed
 - player remains in front of the cabinet; side standing positions are intentionally removed
 - control-panel button and chute remain gaze-reachable from the legal front zone.
 
@@ -722,7 +722,7 @@ Current front-only implementation — 2026-10-03:
 - sustained diagonal movement saturates at the front standing rectangle
 - player cannot traverse around either front corner
 - head look changes orientation only
-- `F` control-panel interaction still delegates to the existing M04 primary action
+- `F` directly delegates to the existing M04 primary action and does not require gaze focus
 - chute gaze has no play action.
 
 ## 29. PT-027 100+ prize variants
@@ -984,6 +984,27 @@ After deployment:
 Manual check:
 - side inspection comes from head/body movement,
 - FOV is not widened to an implausible fisheye just to expose side content.
+
+## PT-045 Mobile touch play path
+
+Setup:
+- phone or coarse-pointer device,
+- root/default `cabinet-lab`.
+
+Expected:
+- direct drag on the WebGL view changes bounded yaw/pitch without pointer lock,
+- left virtual analog joystick moves the claw through the same gantry physics controller used by desktop input,
+- releasing the joystick returns input to zero,
+- right `DROP / CLOSE` button invokes the same primary action as Space/F,
+- safe-area insets keep controls clear of notches/home indicators,
+- debug overlay does not occupy phone play space,
+- portrait and landscape remain playable without horizontal page scrolling.
+
+Automated status — 2026-10-03:
+- joystick normalization is unit-tested, including diagonal clamping and zero/tiny radius safety
+- browser smoke requires `data-mobile-controls="ready"` for explicit cabinet and root/default scenes
+- full suite = **31 test files / 83 tests PASS**
+- real-device comfort/readability remains a manual M07 closure gate.
 
 ## PT-044 Calibration record completeness
 

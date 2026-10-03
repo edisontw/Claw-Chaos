@@ -923,7 +923,7 @@ Move the working simulation into a real cabinet.
 
 # M07 — First-Person Player View
 
-**Status: IN PROGRESS — front-only closure candidate verified 2026-10-03**
+**Status: IN PROGRESS — mobile-first closure candidate verified 2026-10-03**
 
 ## Goal
 
@@ -935,7 +935,7 @@ Make play feel like standing directly in front of a real cabinet, without free w
 - limited vertical look — PASS, −70° / +25°
 - small forward/back adjustment — PASS
 - small left/right adjustment — PASS
-- small lean — PASS, ±30 mm
+- side lean control — REMOVED after playtest; no Q/E lean
 - no side walk / no walking around cabinet corners — PASS
 - no free-fly or vertical movement — PASS
 - fixed realistic FOV — PASS, 50°
@@ -953,19 +953,30 @@ Make play feel like standing directly in front of a real cabinet, without free w
 - no connected side standing zones
 - yaw = ±90°
 - pitch = −70° / +25°
-- lean = ±30 mm, max roll 2.5°
+- no lean/roll control
 - FOV = 50°
-- pointer-lock mouse look
+- desktop: pointer-lock mouse look
+- mobile: direct touch-drag look
 - WASD only makes small standing-position adjustments
-- Q/E lean remains small and optional
 
 ## Interaction
 
-- center reticle + gaze focus
-- control-panel button remains an explicit target
-- `F` invokes the same existing M04 primary action used by Space
+- center reticle + gaze focus remain for visual inspection
+- `F` is now a direct primary action and no longer requires the reticle to be over the control-panel button
+- `Space`, `F`, and the mobile `DROP / CLOSE` button all invoke the same existing M04 primary action
 - chute is inspection-only
 - both control panel and chute remain reachable from the front-only legal zone
+
+## Mobile-first control slice
+
+Phone/coarse-pointer play is treated as a primary control path:
+- direct touch-drag on the WebGL canvas controls head look
+- left virtual analog joystick controls gantry X/Z input continuously in [-1, 1]
+- right large `DROP / CLOSE` button invokes the same physical primary action as desktop Space/F
+- touch input is routed through `SimulationScene.setManualGantryInput()` into the same gantry motion controller; no synthetic keyboard events
+- safe-area insets support notched phones
+- debug overlay hides on touch layouts to preserve play space
+- browser smoke asserts that mobile controls initialize on both explicit `cabinet-lab` and the root/default scene
 
 ## Cabinet grip correction tied to deployed play feedback
 
@@ -1008,7 +1019,7 @@ Starter cube behavior:
 ## Automated acceptance
 
 - PT-025 ±90° yaw / bounded pitch — PASS
-- PT-025 front-only translation and small lean — PASS
+- PT-025 front-only translation with no lean control — PASS
 - PT-025 control-panel/chute look-down reachability — PASS
 - PT-026 cannot cross front glass — PASS
 - PT-026 cannot reach either side standing zone — PASS
@@ -1018,14 +1029,15 @@ Starter cube behavior:
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **30 test files / 81 tests PASS**
+- **31 test files / 83 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
 - `gantry-lab`, explicit `cabinet-lab`, and root-default cabinet browser smokes PASS
 
 Remaining M07 closure gate:
-- deployed-build manual confirmation that the front-only camera feels appropriately constrained and the center/easy prize can now visibly be carried.
+- real-phone manual confirmation that touch look, analog claw movement and DROP/CLOSE are comfortable in portrait and landscape
+- deployed-build confirmation that the front-only camera feels appropriately constrained and the center/easy prize can visibly be carried.
 
 ---
 

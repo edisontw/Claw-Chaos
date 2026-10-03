@@ -6,7 +6,14 @@
 }
 * { box-sizing: border-box; }
 html, body, #app { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-canvas { display: block; width: 100%; height: 100%; }
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
 .debug-overlay {
   position: fixed; top: 12px; left: 12px; z-index: 10; min-width: 220px; margin: 0;
   padding: 10px 12px; border: 1px solid rgb(255 255 255 / 14%); border-radius: 8px;
@@ -40,4 +47,147 @@ canvas { display: block; width: 100%; height: 100%; }
   font: 600 13px/1.3 ui-sans-serif, system-ui, sans-serif;
   text-shadow: 0 1px 3px rgb(0 0 0 / 90%);
   pointer-events: none;
+}
+
+
+.mobile-cabinet-controls {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  pointer-events: none;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mobile-joystick-wrap {
+  position: absolute;
+  left: max(18px, env(safe-area-inset-left));
+  bottom: max(18px, env(safe-area-inset-bottom));
+  width: 132px;
+  height: 132px;
+  display: grid;
+  place-items: center;
+  pointer-events: auto;
+}
+
+.mobile-joystick {
+  position: relative;
+  width: 124px;
+  height: 124px;
+  border-radius: 50%;
+  border: 2px solid rgb(255 255 255 / 34%);
+  background: rgb(10 15 22 / 44%);
+  box-shadow:
+    inset 0 0 0 1px rgb(0 0 0 / 38%),
+    0 4px 18px rgb(0 0 0 / 35%);
+  backdrop-filter: blur(4px);
+  touch-action: none;
+}
+
+.mobile-joystick::before,
+.mobile-joystick::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background: rgb(255 255 255 / 18%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.mobile-joystick::before {
+  width: 2px;
+  height: 82%;
+}
+
+.mobile-joystick::after {
+  width: 82%;
+  height: 2px;
+}
+
+.mobile-joystick-thumb {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: rgb(238 244 255 / 82%);
+  border: 2px solid rgb(255 255 255 / 76%);
+  box-shadow: 0 3px 12px rgb(0 0 0 / 45%);
+  pointer-events: none;
+}
+
+.mobile-claw-action {
+  position: absolute;
+  right: max(22px, env(safe-area-inset-right));
+  bottom: max(26px, env(safe-area-inset-bottom));
+  width: 108px;
+  height: 108px;
+  border: 2px solid rgb(255 255 255 / 62%);
+  border-radius: 50%;
+  background: rgb(185 41 41 / 88%);
+  color: white;
+  font: 800 14px/1.15 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  box-shadow:
+    inset 0 -7px 0 rgb(83 12 12 / 45%),
+    0 5px 18px rgb(0 0 0 / 42%);
+  pointer-events: auto;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-claw-action:active,
+.mobile-claw-action[data-result="accepted"] {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 -3px 0 rgb(83 12 12 / 42%),
+    0 2px 9px rgb(0 0 0 / 38%);
+}
+
+@media (hover: none), (pointer: coarse) {
+  .mobile-cabinet-controls {
+    display: block;
+  }
+
+  .debug-overlay {
+    display: none;
+  }
+
+  .player-interaction-prompt {
+    top: 18px;
+    max-width: min(72vw, 360px);
+    text-align: center;
+  }
+}
+
+@media (max-width: 520px) {
+  .mobile-joystick-wrap {
+    left: max(10px, env(safe-area-inset-left));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: 112px;
+    height: 112px;
+  }
+
+  .mobile-joystick {
+    width: 104px;
+    height: 104px;
+  }
+
+  .mobile-joystick-thumb {
+    width: 46px;
+    height: 46px;
+  }
+
+  .mobile-claw-action {
+    right: max(14px, env(safe-area-inset-right));
+    bottom: max(18px, env(safe-area-inset-bottom));
+    width: 92px;
+    height: 92px;
+    font-size: 12px;
+  }
 }

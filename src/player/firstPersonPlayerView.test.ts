@@ -61,7 +61,7 @@ describe("M07 first-person player view constraints", () => {
     for (let index = 0; index < 900; index += 1) {
       right = advanceFirstPersonPlayerView(
         right,
-        { strafe: 1, forward: 1, lean: 0 },
+        { strafe: 1, forward: 1 },
         1 / 60,
         config,
       );
@@ -76,7 +76,7 @@ describe("M07 first-person player view constraints", () => {
     for (let index = 0; index < 900; index += 1) {
       left = advanceFirstPersonPlayerView(
         left,
-        { strafe: -1, forward: 1, lean: 0 },
+        { strafe: -1, forward: 1 },
         1 / 60,
         config,
       );
@@ -87,14 +87,14 @@ describe("M07 first-person player view constraints", () => {
     expect(Math.abs(left.x)).toBeLessThan(sideGlassOuterX);
   });
 
-  it("PT-025 allows only small front-position adjustment and lean", () => {
+  it("PT-025 allows only small front-position adjustment", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     let state = createFirstPersonPlayerViewState(config);
 
     for (let index = 0; index < 240; index += 1) {
       state = advanceFirstPersonPlayerView(
         state,
-        { strafe: 1, forward: -1, lean: 1 },
+        { strafe: 1, forward: -1 },
         1 / 60,
         config,
       );
@@ -102,11 +102,6 @@ describe("M07 first-person player view constraints", () => {
 
     expect(state.x).toBe(config.maxX);
     expect(state.z).toBe(config.maxZ);
-    expect(state.leanMeters).toBeCloseTo(
-      config.maxLeanMeters,
-      10,
-    );
-    expect(config.maxLeanMeters).toBeLessThanOrEqual(0.03);
   });
 
   it("PT-025 can still look down at the control panel and chute from the front zone", () => {
@@ -115,7 +110,6 @@ describe("M07 first-person player view constraints", () => {
       ...createFirstPersonPlayerViewState(config),
       x: 0,
       z: config.maxZ,
-      leanMeters: 0,
     };
     const cameraPosition = playerCameraPosition(base, config);
 

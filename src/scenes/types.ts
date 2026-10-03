@@ -23,5 +23,6 @@ export interface SimulationScene {
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
+  setManualGantryInput?(x: number, z: number): void;
   debugLines?(): string[];
 }

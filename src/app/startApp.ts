@@ -14,6 +14,7 @@ import {
   M07_CAMERA_FOV_DEGREES,
   M07_CABINET_VIEW_TARGETS,
 } from "../player/firstPersonPlayerView";
+import { MobileCabinetControls } from "../player/mobileCabinetControls";
 import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
 import { createPt004Scene } from "../scenes/pt004Scene";
@@ -86,6 +87,14 @@ export async function startApp(root: HTMLElement): Promise<void> {
           () => testScene.primaryAction?.() ?? false,
         )
       : null;
+
+  if (selection.id === "cabinet-lab") {
+    new MobileCabinetControls(
+      root,
+      (x, z) => testScene.setManualGantryInput?.(x, z),
+      () => testScene.primaryAction?.() ?? false,
+    );
+  }
 
   const debugOverlay = new DebugOverlay(root);
   const physicsDebugRenderer = new PhysicsDebugRenderer(scene, false);
