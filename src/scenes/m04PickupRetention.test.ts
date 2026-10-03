@@ -1028,5 +1028,48 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(rows.some((row) => row.success)).toBe(true);
   }, 15000);
 
+
+  it("keeps a physical heavy-mass limit under the plush-B profile", async () => {
+    const sphere = getPrizeDefinition("prize/sphere_ball");
+    const resolved = resolvePrizeSpec(sphere);
+    const profile = {
+      fingerFriction: 2.0,
+      closePickupTorque: 11.0,
+      retainingTorque: 0.040,
+      pickupLiftDistanceMeters: 0.24,
+      closedAngleRadians: -0.64,
+      fingerLowerPadRadiusMeters: 0.010,
+      topHoldSeconds: 1.3,
+      supportMode: "flat-deck" as const,
+    };
+    const rows = [];
+
+    for (const multiplier of [2, 4, 8] as const) {
+      const metrics = await simulateM04PickupRetention({
+        ...profile,
+        ballMassKg: resolved.massKg * multiplier,
+        ballFriction: resolved.material.dynamicFriction,
+        ballRadiusMeters: sphere.dimensions.x * 0.5,
+      });
+      rows.push({
+        multiplier,
+        massKg: resolved.massKg * multiplier,
+        peak: metrics.peakLiftMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        final: metrics.finalLiftMeters,
+        success:
+          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
+          metrics.finalLiftMeters >= 0.08,
+      });
+    }
+
+    console.log(
+      "Cabinet plush-B mass-limit sweep",
+      JSON.stringify(rows),
+    );
+
+    expect(rows.at(-1)?.success).toBe(false);
+  });
+
 });
 
