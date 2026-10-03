@@ -509,18 +509,26 @@ export function createGantryLabScene(
   let pt008FirstTickSpeed = 0;
 
   const pressed = new Set<string>();
+  let manualTouchInput = { x: 0, z: 0 };
   const cableUp = new THREE.Vector3(0, 1, 0);
   const cableTop = new THREE.Vector3();
   const cableBottom = new THREE.Vector3();
   const cableDirection = new THREE.Vector3();
   const cableMidpoint = new THREE.Vector3();
 
-  const manualInput = (): { x: number; z: number } => ({
-    x: (pressed.has("ArrowRight") ? 1 : 0) -
-      (pressed.has("ArrowLeft") ? 1 : 0),
-    z: (pressed.has("ArrowDown") ? 1 : 0) -
-      (pressed.has("ArrowUp") ? 1 : 0),
-  });
+  const manualInput = (): { x: number; z: number } => {
+    const keyboardX =
+      (pressed.has("ArrowRight") ? 1 : 0) -
+      (pressed.has("ArrowLeft") ? 1 : 0);
+    const keyboardZ =
+      (pressed.has("ArrowDown") ? 1 : 0) -
+      (pressed.has("ArrowUp") ? 1 : 0);
+
+    return {
+      x: Math.max(-1, Math.min(1, keyboardX + manualTouchInput.x)),
+      z: Math.max(-1, Math.min(1, keyboardZ + manualTouchInput.z)),
+    };
+  };
 
   const updateCableVisual = (): void => {
     const hub = hubBody.translation();
@@ -687,6 +695,12 @@ export function createGantryLabScene(
       target: [0, 0.72, 0],
     },
     primaryAction: triggerPrimaryAction,
+    setManualGantryInput(x: number, z: number): void {
+      manualTouchInput = {
+        x: Math.max(-1, Math.min(1, x)),
+        z: Math.max(-1, Math.min(1, z)),
+      };
+    },
     beforePhysicsStep(stepSeconds: number): void {
       const hubPosition = hubBody.translation();
       const relativeX = hubPosition.x - motion.x.position;
