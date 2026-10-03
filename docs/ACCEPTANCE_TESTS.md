@@ -1004,9 +1004,11 @@ Automated status — 2026-10-03:
 - joystick normalization is unit-tested with **14% dead zone**, remapped travel, diagonal clamping and zero/tiny radius safety
 - action debounce regression verifies taps inside **140 ms** are rejected while a later deliberate action is accepted
 - touch-look regression verifies **0.0030 rad/pixel** is distinct from desktop mouse **0.0022 rad/pixel**
+- touch-drag regression verifies scene-following drag semantics rather than opposite FPS-style touch motion
+- mobile framing regression locks Z 0.84 / max 0.90 and **58° FOV**, with representative upper-claw + prize-deck vertical span fitting in view
 - render-profile regression locks mobile DPR cap **1.5** / shadow **512** versus desktop DPR 2 / shadow 1024
 - browser smoke requires `data-mobile-controls="ready"` for explicit cabinet and root/default scenes
-- full suite = **32 test files / 87 tests PASS**
+- full suite = **32 test files / 89 tests PASS**
 - real-device Android Chrome / iPhone Safari comfort, portrait/landscape layout and sustained FPS remain manual M07 closure gates.
 
 ## PT-044 Calibration record completeness
