@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 
 export const M07_CAMERA_FOV_DEGREES = 50;
+export const M07_MOBILE_CAMERA_FOV_DEGREES = 58;
 
 export interface FirstPersonPlayerViewConfig {
   initialX: number;
@@ -79,6 +80,13 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   mouseSensitivityRadiansPerPixel: 0.0022,
   touchSensitivityRadiansPerPixel: 0.0030,
 };
+
+export const M07_MOBILE_FIRST_PERSON_VIEW_CONFIG:
+  FirstPersonPlayerViewConfig = {
+    ...M07_FIRST_PERSON_VIEW_CONFIG,
+    initialZ: 0.84,
+    maxZ: 0.90,
+  };
 
 export const M07_CABINET_VIEW_TARGETS: readonly PlayerViewTarget[] = [
   {
@@ -465,8 +473,8 @@ export class FirstPersonPlayerViewController {
     this.touchLookY = event.clientY;
     this.state = applyFirstPersonLookDelta(
       this.state,
-      dx,
-      dy,
+      -dx,
+      -dy,
       this.config,
       this.config.touchSensitivityRadiansPerPixel,
     );
