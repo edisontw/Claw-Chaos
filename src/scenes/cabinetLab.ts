@@ -279,7 +279,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M08 / Closure candidate",
+      milestone: "M08 / CLOSED",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -373,7 +373,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M08 / Closure candidate",
+    milestone: "M08 / CLOSED",
     camera: gantryScene.camera,
     primaryAction: () => gantryScene.primaryAction?.() ?? false,
     getMachineAudioState: gantryScene.getMachineAudioState,
