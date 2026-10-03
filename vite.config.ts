@@ -5,10 +5,12 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias:
       mode === "test"
-        ? {}
-        : {
-            "@dimforge/rapier3d-compat":
-              "@dimforge/rapier3d/rapier.js",
-          },
+        ? []
+        : [
+            {
+              find: "@dimforge/rapier3d-compat",
+              replacement: "@dimforge/rapier3d/rapier.js",
+            },
+          ],
   },
 }));
