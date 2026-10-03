@@ -127,9 +127,9 @@ export const PRIZE_DEFINITIONS: readonly PrizeDefinition[] = [
     materialId: "material/plastic",
     massProfileId: "mass/standard",
     comProfileId: "com/centered",
-    colliderProfileId: "box/basic",
+    colliderProfileId: "box/rounded_v1",
     variantFamilyId: "variant/basic",
-    tags: ["rigid", "starter"],
+    tags: ["rounded", "starter"],
   },
   {
     id: "prize/box_standard",
