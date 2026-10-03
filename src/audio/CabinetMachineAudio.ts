@@ -1,4 +1,5 @@
 import type { ContactAudioImpact } from "../physics/PhysicsRuntime";
+import { M08_ARCADE_AMBIENCE } from "./arcadeAmbience";
 import {
   deriveMachineAudioFrame,
   type MachineAudioState,
@@ -42,11 +43,13 @@ export class CabinetMachineAudio {
 
   public constructor(private readonly root: HTMLElement) {
     this.root.dataset.machineAudio = "armed";
+    this.root.dataset.arcadeAmbience = "armed";
   }
 
   public async unlock(): Promise<boolean> {
     if (typeof AudioContext === "undefined") {
       this.root.dataset.machineAudio = "unavailable";
+      this.root.dataset.arcadeAmbience = "unavailable";
       return false;
     }
 
@@ -64,6 +67,8 @@ export class CabinetMachineAudio {
 
     const active = this.context.state === "running";
     this.root.dataset.machineAudio = active ? "active" : "suspended";
+    this.root.dataset.arcadeAmbience =
+      active ? "active" : "suspended";
     return active;
   }
 
@@ -168,6 +173,8 @@ export class CabinetMachineAudio {
       145,
     );
 
+    this.createArcadeAmbience(context, masterGain);
+
     this.context = context;
     this.masterGain = masterGain;
     this.gantryMotor = gantryMotor;
@@ -175,6 +182,105 @@ export class CabinetMachineAudio {
     this.impactNoiseBuffer = this.createImpactNoiseBuffer(
       context,
     );
+  }
+
+  private createArcadeAmbience(
+    context: AudioContext,
+    destination: AudioNode,
+  ): void {
+    const humFundamental = context.createOscillator();
+    humFundamental.type = "sine";
+    humFundamental.frequency.value =
+      M08_ARCADE_AMBIENCE.cabinetHumFundamentalHz;
+
+    const humFundamentalGain = context.createGain();
+    humFundamentalGain.gain.value =
+      M08_ARCADE_AMBIENCE.cabinetHumFundamentalGain;
+    humFundamental.connect(humFundamentalGain);
+    humFundamentalGain.connect(destination);
+    humFundamental.start();
+
+    const humHarmonic = context.createOscillator();
+    humHarmonic.type = "sine";
+    humHarmonic.frequency.value =
+      M08_ARCADE_AMBIENCE.cabinetHumHarmonicHz;
+
+    const humHarmonicGain = context.createGain();
+    humHarmonicGain.gain.value =
+      M08_ARCADE_AMBIENCE.cabinetHumHarmonicGain;
+    humHarmonic.connect(humHarmonicGain);
+    humHarmonicGain.connect(destination);
+    humHarmonic.start();
+
+    const roomNoise = context.createBufferSource();
+    roomNoise.buffer = this.createAmbientNoiseBuffer(context);
+    roomNoise.loop = true;
+
+    const highpass = context.createBiquadFilter();
+    highpass.type = "highpass";
+    highpass.frequency.value =
+      M08_ARCADE_AMBIENCE.roomHighpassHz;
+    highpass.Q.value = 0.35;
+
+    const lowpass = context.createBiquadFilter();
+    lowpass.type = "lowpass";
+    lowpass.frequency.value =
+      M08_ARCADE_AMBIENCE.roomLowpassHz;
+    lowpass.Q.value = 0.45;
+
+    const roomGain = context.createGain();
+    roomGain.gain.value =
+      M08_ARCADE_AMBIENCE.roomNoiseGain;
+
+    const modulation = context.createOscillator();
+    modulation.type = "sine";
+    modulation.frequency.value =
+      M08_ARCADE_AMBIENCE.roomModulationHz;
+
+    const modulationGain = context.createGain();
+    modulationGain.gain.value =
+      M08_ARCADE_AMBIENCE.roomModulationDepth;
+
+    modulation.connect(modulationGain);
+    modulationGain.connect(roomGain.gain);
+
+    roomNoise.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(roomGain);
+    roomGain.connect(destination);
+
+    roomNoise.start();
+    modulation.start();
+  }
+
+  private createAmbientNoiseBuffer(
+    context: AudioContext,
+  ): AudioBuffer {
+    const durationSeconds = 4;
+    const sampleCount = Math.max(
+      1,
+      Math.round(context.sampleRate * durationSeconds),
+    );
+    const buffer = context.createBuffer(
+      1,
+      sampleCount,
+      context.sampleRate,
+    );
+    const channel = buffer.getChannelData(0);
+
+    let state = 0x243f6a88;
+    let smoothed = 0;
+    for (let index = 0; index < channel.length; index += 1) {
+      state = Math.imul(state ^ (state >>> 15), state | 1);
+      state ^= state + Math.imul(state ^ (state >>> 7), state | 61);
+      const unit =
+        ((state ^ (state >>> 14)) >>> 0) / 4294967296;
+      const white = unit * 2 - 1;
+      smoothed += (white - smoothed) * 0.18;
+      channel[index] = white * 0.34 + smoothed * 0.66;
+    }
+
+    return buffer;
   }
 
   private createImpactNoiseBuffer(
