@@ -323,7 +323,7 @@ export function createCabinetLabScene(
   const placements = layout.placements;
 
   for (const [index, placement] of placements.entries()) {
-    const definition = getPrizeDefinition(placement.id);
+    const definition = getPrizeDefinition(placement.prizeId);
     const prize = createPrize(
       physics,
       definition,
@@ -349,10 +349,10 @@ export function createCabinetLabScene(
     });
     massPropertiesDebugTargets.push({
       body: prize.body,
-      label: placement.id,
+      label: placement.prizeId,
     });
     tracked.push({
-      id: `${placement.id}#${index}`,
+      id: `${placement.prizeId}#${index}`,
       body: prize.body,
     });
   }
