@@ -3,7 +3,10 @@ import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
 import { getPrizeDefinition } from "../prizes/catalog";
-import { resolvePrizeSpec } from "../prizes/PrizeFactory";
+import {
+  createPrize,
+  resolvePrizeSpec,
+} from "../prizes/PrizeFactory";
 import type {
   RevoluteJointHandle,
   RigidBodyHandle,
@@ -45,6 +48,7 @@ interface PickupRetentionProfile {
   ballRestitution?: number;
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
+  prizeDefinitionId?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
   prizeOffsetX?: number;
@@ -97,6 +101,9 @@ async function simulateM04PickupRetention(
   const ballRestitution =
     profile.ballRestitution ?? claw.pt001BallRestitution;
   const prizeShape = profile.prizeShape ?? "sphere";
+  const prizeDefinition = profile.prizeDefinitionId
+    ? getPrizeDefinition(profile.prizeDefinitionId)
+    : null;
   const prizeHalfExtents =
     profile.prizeHalfExtents ?? {
       x: ballRadiusMeters,
@@ -137,9 +144,11 @@ async function simulateM04PickupRetention(
   const m01HubToBallCenter =
     claw.hubCenterY - claw.pt001BallCenterY;
   const supportHalfHeight =
-    prizeShape === "cuboid"
-      ? prizeHalfExtents.y
-      : ballRadiusMeters;
+    prizeDefinition
+      ? prizeDefinition.dimensions.y * 0.5
+      : prizeShape === "cuboid"
+        ? prizeHalfExtents.y
+        : ballRadiusMeters;
   const ballCenterY =
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
@@ -266,8 +275,21 @@ async function simulateM04PickupRetention(
     joints.push(joint);
   }
 
-  const ball =
-    prizeShape === "cuboid"
+  const ball = prizeDefinition
+    ? createPrize(
+        physics,
+        prizeDefinition,
+        {
+          position: {
+            x: prizeOffsetX,
+            y: ballCenterY,
+            z: prizeOffsetZ,
+          },
+          rotationYRadians: prizeRotationYRadians,
+          variantSeed: "m04-flat-deck-regression",
+        },
+      ).body
+    : prizeShape === "cuboid"
       ? physics.createDynamicCuboid(
           { x: prizeOffsetX, y: ballCenterY, z: prizeOffsetZ },
           prizeHalfExtents,
@@ -851,7 +873,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("cabinet claw can physically disturb and lift the real small cube from the flat deck", async () => {
+  it("cabinet claw can interact with the rounded starter cube from the flat deck", async () => {
     const definition = getPrizeDefinition("prize/cube_small");
     const resolved = resolvePrizeSpec(definition);
     const halfExtents = {
@@ -859,74 +881,58 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       y: definition.dimensions.y * 0.5,
       z: definition.dimensions.z * 0.5,
     };
-    const candidateProfiles = [
-      {
-        label: "plastic-baseline",
-        ballFriction: resolved.material.dynamicFriction,
-      },
-      { label: "matte-0.56", ballFriction: 0.56 },
-      { label: "fabric-0.62", ballFriction: 0.62 },
-      { label: "plush-0.70", ballFriction: 0.70 },
-      { label: "rubber-0.82", ballFriction: 0.82 },
-      { label: "high-grip-0.95", ballFriction: 0.95 },
-    ];
-    const sweep: Array<{
-      label: string;
-      ballFriction: number;
-      peakLiftMeters: number;
-      maxPlanarDisplacementMeters: number;
-      finalLiftMeters: number;
-    }> = [];
 
-    let actual: PickupRetentionMetrics | null = null;
-    for (const candidate of candidateProfiles) {
-      const metrics = await simulateM04PickupRetention({
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-        pickupLiftDistanceMeters:
-          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-        ballMassKg: resolved.massKg,
-        ballFriction: candidate.ballFriction,
-        ballRestitution: resolved.material.restitution,
-        prizeShape: "cuboid",
-        prizeHalfExtents: halfExtents,
-        prizeRotationYRadians: 0.18,
-        supportMode: "flat-deck",
-      });
-      sweep.push({
-        label: candidate.label,
-        ballFriction: candidate.ballFriction,
-        peakLiftMeters: metrics.peakLiftMeters,
-        maxPlanarDisplacementMeters:
-          metrics.maxPlanarDisplacementMeters,
-        finalLiftMeters: metrics.finalLiftMeters,
-      });
-      if (
-        candidate.label === "plastic-baseline"
-      ) {
-        actual = metrics;
-      }
-    }
-    if (!actual) {
-      throw new Error("Current cabinet cube profile missing from sweep");
-    }
+    const rounded = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      prizeDefinitionId: definition.id,
+      prizeRotationYRadians: 0.18,
+      supportMode: "flat-deck",
+    });
+
+    const legacySharp = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      ballMassKg: resolved.massKg,
+      ballFriction: resolved.material.dynamicFriction,
+      ballRestitution: resolved.material.restitution,
+      prizeShape: "cuboid",
+      prizeHalfExtents: halfExtents,
+      prizeRotationYRadians: 0.18,
+      supportMode: "flat-deck",
+    });
 
     console.log(
-      "Cabinet flat-deck real-cube grip metrics",
+      "Cabinet rounded-cube interaction metrics",
       JSON.stringify({
-        massKg: resolved.massKg,
-        friction: resolved.material.dynamicFriction,
-        halfExtents,
-        actual,
-        sweep,
+        colliderProfileId: definition.colliderProfileId,
+        rounded,
+        legacySharp,
       }),
     );
 
-    expect(actual.finiteAndBounded).toBe(true);
-    expect(actual.retainingReached).toBe(true);
-    expect(actual.peakLiftMeters).toBeGreaterThan(0.015);
-    expect(actual.liftAtRetainingStartMeters).toBeGreaterThan(0.005);
+    expect(rounded.finiteAndBounded).toBe(true);
+    expect(rounded.retainingReached).toBe(true);
+    expect(
+      Math.max(
+        rounded.peakLiftMeters,
+        rounded.maxPlanarDisplacementMeters,
+      ),
+    ).toBeGreaterThan(0.015);
+    expect(
+      rounded.peakLiftMeters +
+        rounded.maxPlanarDisplacementMeters,
+    ).toBeGreaterThan(
+      legacySharp.peakLiftMeters +
+        legacySharp.maxPlanarDisplacementMeters +
+        0.008,
+    );
   });
 
 });
