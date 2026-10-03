@@ -279,7 +279,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M08 / Mechanical audio pass",
+      milestone: "M08 / Prize contact audio pass",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -351,6 +351,7 @@ export function createCabinetLabScene(
         },
         rotationYRadians: placement.rotationYRadians,
         variantSeed: `m06-cabinet-${index}`,
+        enableContactAudio: true,
       },
     );
 
@@ -372,7 +373,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M08 / Mechanical audio pass",
+    milestone: "M08 / Prize contact audio pass",
     camera: gantryScene.camera,
     primaryAction: () => gantryScene.primaryAction?.() ?? false,
     getMachineAudioState: gantryScene.getMachineAudioState,
@@ -406,6 +407,7 @@ export function createCabinetLabScene(
         "M08 visuals       matte frame / subdued glass / gantry detail",
         "Claw park         starts and returns directly over chute",
         "Machine audio     procedural motors + action transients",
+        "Prize audio       material-specific contact-force impacts",
         "Cabinet claw      +" +
           Math.round(
             CABINET_PLAY_TUNING.verticalHomeOffsetMeters * 1000,

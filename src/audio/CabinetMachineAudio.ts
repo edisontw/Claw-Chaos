@@ -1,8 +1,13 @@
+import type { ContactAudioImpact } from "../physics/PhysicsRuntime";
 import {
   deriveMachineAudioFrame,
   type MachineAudioState,
   type MachineAudioTransient,
 } from "./machineAudioState";
+import {
+  derivePrizeImpactCue,
+  type PrizeImpactFamily,
+} from "./prizeImpactAudio";
 
 interface ContinuousMotor {
   oscillator: OscillatorNode;
@@ -28,7 +33,12 @@ export class CabinetMachineAudio {
   private masterGain: GainNode | null = null;
   private gantryMotor: ContinuousMotor | null = null;
   private reelMotor: ContinuousMotor | null = null;
+  private impactNoiseBuffer: AudioBuffer | null = null;
   private previousState: MachineAudioState | null = null;
+  private readonly lastImpactSeconds = new Map<
+    PrizeImpactFamily,
+    number
+  >();
 
   public constructor(private readonly root: HTMLElement) {
     this.root.dataset.machineAudio = "armed";
@@ -55,6 +65,44 @@ export class CabinetMachineAudio {
     const active = this.context.state === "running";
     this.root.dataset.machineAudio = active ? "active" : "suspended";
     return active;
+  }
+
+  public playPrizeImpacts(
+    impacts: readonly ContactAudioImpact[],
+  ): void {
+    if (
+      !this.context ||
+      this.context.state !== "running" ||
+      !this.masterGain ||
+      !this.impactNoiseBuffer
+    ) {
+      return;
+    }
+
+    for (const impact of impacts) {
+      const cue = derivePrizeImpactCue(impact);
+      if (!cue) {
+        continue;
+      }
+
+      const lastSeconds =
+        this.lastImpactSeconds.get(cue.family) ??
+        Number.NEGATIVE_INFINITY;
+      const cooldownSeconds =
+        cue.family === "plastic" ? 0.045 : 0.065;
+      if (
+        this.context.currentTime - lastSeconds <
+        cooldownSeconds
+      ) {
+        continue;
+      }
+
+      this.lastImpactSeconds.set(
+        cue.family,
+        this.context.currentTime,
+      );
+      this.playPrizeImpactCue(cue);
+    }
   }
 
   public update(state: MachineAudioState): void {
@@ -124,6 +172,103 @@ export class CabinetMachineAudio {
     this.masterGain = masterGain;
     this.gantryMotor = gantryMotor;
     this.reelMotor = reelMotor;
+    this.impactNoiseBuffer = this.createImpactNoiseBuffer(
+      context,
+    );
+  }
+
+  private createImpactNoiseBuffer(
+    context: AudioContext,
+  ): AudioBuffer {
+    const durationSeconds = 0.12;
+    const sampleCount = Math.max(
+      1,
+      Math.round(
+        context.sampleRate * durationSeconds,
+      ),
+    );
+    const buffer = context.createBuffer(
+      1,
+      sampleCount,
+      context.sampleRate,
+    );
+    const channel = buffer.getChannelData(0);
+
+    let state = 0x6d2b79f5;
+    for (let index = 0; index < channel.length; index += 1) {
+      state = Math.imul(state ^ (state >>> 15), state | 1);
+      state ^= state + Math.imul(state ^ (state >>> 7), state | 61);
+      const unit =
+        ((state ^ (state >>> 14)) >>> 0) / 4294967296;
+      channel[index] = unit * 2 - 1;
+    }
+
+    return buffer;
+  }
+
+  private playPrizeImpactCue(
+    cue: NonNullable<
+      ReturnType<typeof derivePrizeImpactCue>
+    >,
+  ): void {
+    if (
+      !this.context ||
+      !this.masterGain ||
+      !this.impactNoiseBuffer
+    ) {
+      return;
+    }
+
+    const now = this.context.currentTime;
+    const end = now + cue.durationSeconds;
+
+    const oscillator = this.context.createOscillator();
+    oscillator.type = cue.oscillatorType;
+    oscillator.frequency.setValueAtTime(
+      cue.startFrequencyHz,
+      now,
+    );
+    oscillator.frequency.exponentialRampToValueAtTime(
+      cue.endFrequencyHz,
+      end,
+    );
+
+    const oscillatorGain = this.context.createGain();
+    oscillatorGain.gain.setValueAtTime(
+      Math.max(0.0001, cue.oscillatorGain),
+      now,
+    );
+    oscillatorGain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      end,
+    );
+    oscillator.connect(oscillatorGain);
+    oscillatorGain.connect(this.masterGain);
+    oscillator.start(now);
+    oscillator.stop(end + 0.01);
+
+    const noise = this.context.createBufferSource();
+    noise.buffer = this.impactNoiseBuffer;
+
+    const noiseFilter = this.context.createBiquadFilter();
+    noiseFilter.type = "lowpass";
+    noiseFilter.frequency.value = cue.noiseLowpassHz;
+
+    const noiseGain = this.context.createGain();
+    noiseGain.gain.setValueAtTime(
+      Math.max(0.0001, cue.noiseGain),
+      now,
+    );
+    noiseGain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      end,
+    );
+
+    noise.connect(noiseFilter);
+    noiseFilter.connect(noiseGain);
+    noiseGain.connect(this.masterGain);
+    noise.start(now);
+    noise.stop(end + 0.01);
   }
 
   private createContinuousMotor(

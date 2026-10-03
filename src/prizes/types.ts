@@ -92,6 +92,7 @@ export interface PrizeSpawnOptions {
   materialId?: string;
   massProfileId?: string;
   comProfileId?: string;
+  enableContactAudio?: boolean;
 }
 
 export interface SpawnedPrize {

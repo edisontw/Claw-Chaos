@@ -25,6 +25,12 @@ export interface CuboidMaterialOptions {
   friction?: number;
   restitution?: number;
   density?: number;
+  contactAudioProfileId?: string;
+}
+
+export interface ContactAudioImpact {
+  audioProfileId: string;
+  forceNewtons: number;
 }
 
 export interface CapsuleSegmentSpec {
@@ -134,10 +140,18 @@ function rotationFromYDirection(direction: Vec3): Quaternion {
   };
 }
 
+const CONTACT_AUDIO_FORCE_THRESHOLD_NEWTONS = 1.5;
+
 export class PhysicsRuntime {
   private dynamicBodyCountValue = 0;
+  private readonly contactAudioProfiles = new Map<number, string>();
+  private previousContactAudioForces = new Map<string, number>();
+  private readonly pendingContactAudioImpacts = new Map<string, number>();
 
-  private constructor(private readonly world: InstanceType<typeof RAPIER.World>) {
+  private constructor(
+    private readonly world: InstanceType<typeof RAPIER.World>,
+    private readonly eventQueue: InstanceType<typeof RAPIER.EventQueue>,
+  ) {
     this.world.integrationParameters.dt = FIXED_TIMESTEP_SECONDS;
   }
 
@@ -152,7 +166,8 @@ export class PhysicsRuntime {
     }
 
     const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
-    return new PhysicsRuntime(world);
+    const eventQueue = new RAPIER.EventQueue(true);
+    return new PhysicsRuntime(world, eventQueue);
   }
 
   get dynamicBodyCount(): number {
@@ -351,7 +366,24 @@ export class PhysicsRuntime {
         .setFriction(material.friction ?? 0.7)
         .setRestitution(material.restitution ?? 0.08);
 
-      this.world.createCollider(descriptor, body);
+      if (material.contactAudioProfileId) {
+        descriptor = descriptor
+          .setActiveEvents(RAPIER.ActiveEvents.CONTACT_FORCE_EVENTS)
+          .setContactForceEventThreshold(
+            CONTACT_AUDIO_FORCE_THRESHOLD_NEWTONS,
+          );
+      }
+
+      const createdCollider = this.world.createCollider(
+        descriptor,
+        body,
+      );
+      if (material.contactAudioProfileId) {
+        this.contactAudioProfiles.set(
+          createdCollider.handle,
+          material.contactAudioProfileId,
+        );
+      }
     }
 
     body.recomputeMassPropertiesFromColliders();
@@ -619,11 +651,84 @@ export class PhysicsRuntime {
     return joint;
   }
 
+  consumeContactAudioImpacts(): ContactAudioImpact[] {
+    const impacts = Array.from(
+      this.pendingContactAudioImpacts,
+      ([audioProfileId, forceNewtons]) => ({
+        audioProfileId,
+        forceNewtons,
+      }),
+    );
+    this.pendingContactAudioImpacts.clear();
+    return impacts;
+  }
+
   debugRender(): PhysicsDebugBuffers {
     return this.world.debugRender();
   }
 
   step(): void {
-    this.world.step();
+    this.world.step(this.eventQueue);
+
+    const currentContactAudioForces = new Map<string, number>();
+
+    this.eventQueue.drainContactForceEvents((event) => {
+      const collider1 = event.collider1();
+      const collider2 = event.collider2();
+      const audioProfile1 =
+        this.contactAudioProfiles.get(collider1);
+      const audioProfile2 =
+        this.contactAudioProfiles.get(collider2);
+
+      if (!audioProfile1 && !audioProfile2) {
+        return;
+      }
+
+      const forceNewtons = event.totalForceMagnitude();
+      const pairKey =
+        collider1 < collider2
+          ? `${collider1}:${collider2}`
+          : `${collider2}:${collider1}`;
+      const previousForce =
+        this.previousContactAudioForces.get(pairKey) ?? 0;
+
+      currentContactAudioForces.set(
+        pairKey,
+        Math.max(
+          currentContactAudioForces.get(pairKey) ?? 0,
+          forceNewtons,
+        ),
+      );
+
+      if (
+        forceNewtons < CONTACT_AUDIO_FORCE_THRESHOLD_NEWTONS ||
+        previousForce >= CONTACT_AUDIO_FORCE_THRESHOLD_NEWTONS
+      ) {
+        return;
+      }
+
+      const profiles: string[] = [];
+      if (audioProfile1) {
+        profiles.push(audioProfile1);
+      }
+      if (
+        audioProfile2 &&
+        audioProfile2 !== audioProfile1
+      ) {
+        profiles.push(audioProfile2);
+      }
+
+      for (const audioProfileId of profiles) {
+        this.pendingContactAudioImpacts.set(
+          audioProfileId,
+          Math.max(
+            this.pendingContactAudioImpacts.get(audioProfileId) ?? 0,
+            forceNewtons,
+          ),
+        );
+      }
+    });
+
+    this.previousContactAudioForces = currentContactAudioForces;
   }
 }

@@ -338,6 +338,13 @@ export async function startApp(
     droppedCatchUpSeconds += result.droppedSeconds;
 
     syncRenderTransforms();
+
+    const contactAudioImpacts =
+      physics.consumeContactAudioImpacts();
+    if (contactAudioImpacts.length > 0) {
+      machineAudio?.playPrizeImpacts(contactAudioImpacts);
+    }
+
     const machineAudioState = testScene.getMachineAudioState?.();
     if (machineAudioState) {
       machineAudio?.update(machineAudioState);
