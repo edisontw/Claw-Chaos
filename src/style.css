@@ -250,3 +250,47 @@ canvas {
 .mobile-claw-action[data-result="debounced"] {
   filter: saturate(0.72) brightness(0.88);
 }
+
+
+.mobile-view-height {
+  position: absolute;
+  right: max(26px, env(safe-area-inset-right));
+  bottom: max(148px, calc(env(safe-area-inset-bottom) + 126px));
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.mobile-view-height-button {
+  min-width: 70px;
+  height: 34px;
+  border: 1px solid rgb(255 255 255 / 46%);
+  border-radius: 10px;
+  background: rgb(20 26 34 / 68%);
+  color: white;
+  font: 700 11px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.03em;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 32%);
+  backdrop-filter: blur(4px);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-view-height-button:active {
+  transform: translateY(1px);
+  background: rgb(44 56 72 / 82%);
+}
+
+@media (hover: none) and (pointer: coarse) and (orientation: landscape) {
+  .mobile-view-height {
+    right: max(22px, env(safe-area-inset-right));
+    bottom: max(116px, calc(env(safe-area-inset-bottom) + 100px));
+  }
+
+  .mobile-view-height-button {
+    min-width: 64px;
+    height: 30px;
+    font-size: 10px;
+  }
+}
