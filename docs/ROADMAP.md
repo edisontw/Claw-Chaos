@@ -1465,8 +1465,12 @@ Implemented candidate:
   - spawns the production bridge layout over a plain physical deck
   - lets all three structural bodies settle under gravity
   - verifies the Flat Box remains elevated on the two supports
-  - applies an off-center physical impulse to the bridge span
+  - applies three separated small off-center physical impulses to the bridge span, representing repeated nudges
   - requires both measurable translation and rotation afterward
+  - calibrated regression result:
+    - settled bridge-center height ≈ 107.2 mm
+    - cumulative horizontal translation ≈ 12.72 mm
+    - cumulative rotation ≈ 0.0957 rad (~5.5°)
 - deployed browser smoke now boots the bridge layout and requires `data-layout-id="bridge"`
 
 This slice establishes the bridge as physically destructible/manipulable substrate. The M09 exit criterion requiring the bridge to be solved through repeated real claw interactions remains a later acceptance gate; this test does not substitute an impulse for the player/claw interaction.
