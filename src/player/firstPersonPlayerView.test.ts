@@ -8,6 +8,7 @@ import {
   M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
   advanceFirstPersonPlayerView,
   applyFirstPersonLookDelta,
+  applyFirstPersonTouchDragDelta,
   computeLookAnglesToPoint,
   createFirstPersonPlayerViewState,
   findFocusedPlayerViewTarget,
@@ -19,24 +20,23 @@ describe("M07 first-person player view constraints", () => {
     const config = M07_MOBILE_FIRST_PERSON_VIEW_CONFIG;
     const initial = createFirstPersonPlayerViewState(config);
 
-    const draggedRight = applyFirstPersonLookDelta(
+    const draggedRight = applyFirstPersonTouchDragDelta(
       initial,
       100,
       0,
       config,
-      config.touchSensitivityRadiansPerPixel,
     );
-    const draggedDown = applyFirstPersonLookDelta(
+    const draggedDown = applyFirstPersonTouchDragDelta(
       initial,
       0,
       100,
       config,
-      config.touchSensitivityRadiansPerPixel,
     );
 
-    // The pointer handler negates touch deltas so the scene follows the finger.
-    expect(draggedRight.yawRadians).toBeLessThan(0);
-    expect(draggedDown.pitchRadians).toBeLessThan(0);
+    // Dragging the scene right/down turns the camera left/up so the
+    // visible scene follows the finger instead of moving opposite it.
+    expect(draggedRight.yawRadians).toBeGreaterThan(0);
+    expect(draggedDown.pitchRadians).toBeGreaterThan(0);
   });
 
   it("uses a wider but still bounded mobile framing", () => {
