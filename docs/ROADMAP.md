@@ -961,8 +961,8 @@ Make play feel like standing directly in front of a real cabinet, without free w
 
 ## Interaction
 
-- center reticle + gaze focus remain for visual inspection
-- `F` is now a direct primary action and no longer requires the reticle to be over the control-panel button
+- the former center reticle was removed after deployed play feedback; gaze focus remains internal for contextual text only
+- `F` is a direct primary action and does not require a center aim marker
 - `Space`, `F`, and the mobile `DROP / CLOSE` button all invoke the same existing M04 primary action
 - chute is inspection-only
 - both control panel and chute remain reachable from the front-only legal zone
@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — showcase layout slice 2 candidate**
+**Status: IN PROGRESS — bridge layout slice 3 candidate**
 
 ## Goal
 
@@ -1445,6 +1445,42 @@ Purpose:
 - preserve physical interaction while minimizing incidental pile interference
 
 No claw, gantry, reel, grip, collider, material, chute, camera or timestep tuning changed.
+
+## Bridge layout slice 3 — fully dynamic supported span
+
+Implemented candidate:
+- new `bridge` layout selectable with `?layout=bridge&seed=...`
+- bridge structure is made entirely from existing dynamic prize bodies:
+  - two Standard Box support bodies at approximately X ±0.09 m
+  - one Flat Box span centered above them
+  - the span starts with a 2 mm vertical clearance and falls onto the supports through normal Rapier gravity/contact
+  - Rubber Ball and Simple Teddy remain as separated filler prizes so the cabinet is still a playable mixed scene
+- layout placements now carry optional semantic roles (`support`, `bridge`, `filler`) for challenge regression/debugging only; roles do not affect physics
+- structural seed variation is deliberately tight:
+  - ±1.5 mm X/Z
+  - ±0.012 rad yaw
+  - no additional vertical jitter
+- no static bridge fixture, joint, weld, parenting, magnet, scripted rotation, or position lock is used
+- a physics integration regression:
+  - spawns the production bridge layout over a plain physical deck
+  - lets all three structural bodies settle under gravity
+  - verifies the Flat Box remains elevated on the two supports
+  - applies an off-center physical impulse to the bridge span
+  - requires both measurable translation and rotation afterward
+- deployed browser smoke now boots the bridge layout and requires `data-layout-id="bridge"`
+
+This slice establishes the bridge as physically destructible/manipulable substrate. The M09 exit criterion requiring the bridge to be solved through repeated real claw interactions remains a later acceptance gate; this test does not substitute an impulse for the player/claw interaction.
+
+### First-person reticle cleanup
+
+Deployed feedback requested removal of the small translucent center dot:
+- the `.player-reticle` DOM element is no longer created
+- all reticle CSS, including the mobile portrait offset, is removed
+- gaze/focus logic remains available for contextual interaction text
+- direct `F` / Space / mobile primary action behavior is unchanged
+- browser smoke explicitly rejects any remaining `player-reticle` element
+
+No camera, FOV, look sensitivity, movement envelope, claw control or physics parameter changed.
 
 ## Deliverables
 
