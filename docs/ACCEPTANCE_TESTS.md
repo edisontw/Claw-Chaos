@@ -987,6 +987,27 @@ Manual check:
 - side inspection comes from head/body movement,
 - FOV is not widened to an implausible fisheye just to expose side content.
 
+## PT-046 Default play framing and desktop drag direction
+
+Setup:
+- root/default `cabinet-lab`,
+- desktop pointer-lock input.
+
+Expected:
+- mouse movement follows the same content-drag direction used on touch,
+- initial yaw = 0°,
+- initial pitch = **−19°**,
+- desktop initial Z = **0.78 m** and max Z = **0.84 m**,
+- desktop FOV remains **50°**,
+- without moving the camera, representative upper-claw and front-prize-top points both lie inside the vertical FOV,
+- mobile retains Z 0.84 / max 0.90 / 58° FOV while inheriting the same starting pitch.
+
+Automated status — 2026-10-03:
+- explicit desktop drag-direction regression PASS
+- explicit zero-input startup-framing regression PASS
+- full suite = **32 test files / 92 tests PASS**
+- lint/build/base-path/browser smokes PASS.
+
 ## PT-045 Mobile touch play path
 
 Setup:
@@ -1010,7 +1031,7 @@ Automated status — 2026-10-03:
 - mobile framing regression locks Z 0.84 / max 0.90 and **58° FOV**, with representative upper-claw + prize-deck vertical span fitting in view
 - render-profile regression locks mobile DPR cap **1.5** / shadow **512** versus desktop DPR 2 / shadow 1024
 - browser smoke requires `data-mobile-controls="ready"` for explicit cabinet and root/default scenes
-- full suite = **32 test files / 90 tests PASS**
+- full suite = **32 test files / 92 tests PASS**
 - real-device Android Chrome / iPhone Safari comfort, portrait/landscape layout and sustained FPS remain manual M07 closure gates.
 
 ## PT-044 Calibration record completeness
