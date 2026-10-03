@@ -976,7 +976,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("sweeps deeper cabinet closure for real plush-prize retention", async () => {
+  it("sweeps realistic lower-finger pads for real plush-prize retention", async () => {
     const candidates = [
       {
         label: "current",
@@ -985,54 +985,50 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         retainingTorque: 0.014,
         pickupLiftDistanceMeters: 0.18,
         closedAngleRadians: -0.42,
+        fingerLowerPadRadiusMeters: 0.0045,
       },
       {
-        label: "plush-1",
+        label: "pad-6p5",
+        fingerFriction: 1.35,
+        closePickupTorque: 6.5,
+        retainingTorque: 0.016,
+        pickupLiftDistanceMeters: 0.20,
+        closedAngleRadians: -0.48,
+        fingerLowerPadRadiusMeters: 0.0065,
+      },
+      {
+        label: "pad-8",
         fingerFriction: 1.40,
         closePickupTorque: 7.0,
         retainingTorque: 0.018,
         pickupLiftDistanceMeters: 0.20,
         closedAngleRadians: -0.50,
+        fingerLowerPadRadiusMeters: 0.008,
       },
       {
-        label: "plush-2",
-        fingerFriction: 1.55,
-        closePickupTorque: 8.0,
-        retainingTorque: 0.022,
+        label: "pad-10",
+        fingerFriction: 1.45,
+        closePickupTorque: 7.5,
+        retainingTorque: 0.019,
         pickupLiftDistanceMeters: 0.20,
-        closedAngleRadians: -0.56,
+        closedAngleRadians: -0.50,
+        fingerLowerPadRadiusMeters: 0.010,
       },
       {
-        label: "plush-3",
-        fingerFriction: 1.70,
-        closePickupTorque: 9.0,
-        retainingTorque: 0.026,
-        pickupLiftDistanceMeters: 0.22,
-        closedAngleRadians: -0.60,
-      },
-      {
-        label: "plush-4",
-        fingerFriction: 1.90,
-        closePickupTorque: 10.0,
-        retainingTorque: 0.030,
-        pickupLiftDistanceMeters: 0.22,
-        closedAngleRadians: -0.64,
+        label: "pad-12",
+        fingerFriction: 1.50,
+        closePickupTorque: 8.0,
+        retainingTorque: 0.020,
+        pickupLiftDistanceMeters: 0.20,
+        closedAngleRadians: -0.52,
+        fingerLowerPadRadiusMeters: 0.012,
       },
     ] as const;
 
     const plushPrizes = [
-      {
-        id: "prize/teddy_simple",
-        rotationYRadians: -0.22,
-      },
-      {
-        id: "prize/pillow_small",
-        rotationYRadians: 0.28,
-      },
-      {
-        id: "prize/animal_simple",
-        rotationYRadians: -0.12,
-      },
+      { id: "prize/teddy_simple", rotationYRadians: -0.22 },
+      { id: "prize/pillow_small", rotationYRadians: 0.28 },
+      { id: "prize/animal_simple", rotationYRadians: -0.12 },
     ] as const;
 
     const sphere = getPrizeDefinition("prize/sphere_ball");
@@ -1094,7 +1090,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet plush-grip sweep",
+      "Cabinet plush-pad sweep",
       JSON.stringify(rows),
     );
 
