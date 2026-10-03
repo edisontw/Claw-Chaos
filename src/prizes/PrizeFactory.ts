@@ -201,7 +201,7 @@ function buildColliders(definition: PrizeDefinition): PrimitiveColliderSpec[] {
       if (definition.colliderProfileId === "box/rounded_v1") {
         return buildRoundedBoxColliders(
           definition.dimensions,
-          Math.min(x, y, z) * 0.105,
+          Math.min(x, y, z) * 0.15,
         );
       }
       return [{ shape: "cuboid", halfExtents: half }];
