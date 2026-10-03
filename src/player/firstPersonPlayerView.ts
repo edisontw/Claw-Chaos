@@ -206,6 +206,22 @@ export function applyFirstPersonLookDelta(
   };
 }
 
+export function applyFirstPersonTouchDragDelta(
+  state: FirstPersonPlayerViewState,
+  dragX: number,
+  dragY: number,
+  config: FirstPersonPlayerViewConfig =
+    M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
+): FirstPersonPlayerViewState {
+  return applyFirstPersonLookDelta(
+    state,
+    -dragX,
+    -dragY,
+    config,
+    config.touchSensitivityRadiansPerPixel,
+  );
+}
+
 export function advanceFirstPersonPlayerView(
   state: FirstPersonPlayerViewState,
   input: FirstPersonPlayerViewInput,
@@ -471,12 +487,11 @@ export class FirstPersonPlayerViewController {
     const dy = event.clientY - this.touchLookY;
     this.touchLookX = event.clientX;
     this.touchLookY = event.clientY;
-    this.state = applyFirstPersonLookDelta(
+    this.state = applyFirstPersonTouchDragDelta(
       this.state,
-      -dx,
-      -dy,
+      dx,
+      dy,
       this.config,
-      this.config.touchSensitivityRadiansPerPixel,
     );
     event.preventDefault();
   };
