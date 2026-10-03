@@ -1512,6 +1512,9 @@ Implemented candidate:
   - requires the two targets to remain beyond direct carriage-center travel after settling
   - applies inward physical impulses
   - requires measurable inward travel, proving wall contact does not lock or script the prizes
+  - calibrated regression result:
+    - right-wall Standard Box: X ≈ 0.3797 → 0.3671 m, inward travel ≈ 12.55 mm
+    - back-wall Prize Can: Z ≈ −0.3060 → −0.2978 m, inward travel ≈ 8.18 mm
 - deployed browser smoke boots `layout=edge` and verifies `data-layout-id="edge"`
 
 Purpose:
