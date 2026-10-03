@@ -348,11 +348,15 @@ function addCylinder(
   parent.add(mesh);
 }
 
-export function createFingerPoints(theta: number): Vec3[] {
+export function createFingerPoints(
+  theta: number,
+  nodes: readonly { radial: number; down: number }[] =
+    CLAW_LAB_CONFIG.fingerNodes,
+): Vec3[] {
   const radialX = Math.cos(theta);
   const radialZ = Math.sin(theta);
 
-  return CLAW_LAB_CONFIG.fingerNodes.map((node) => ({
+  return nodes.map((node) => ({
     x: radialX * node.radial,
     y: -node.down,
     z: radialZ * node.radial,
