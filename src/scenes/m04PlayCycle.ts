@@ -154,8 +154,11 @@ export function advanceM04PlayState(
   if (
     state.phase === "PICKUP" &&
     state.pickupStartPayoutMeters !== null &&
-    state.pickupStartPayoutMeters - observation.reelPayoutMeters >=
-      config.pickupLiftDistanceMeters
+    (
+      state.pickupStartPayoutMeters - observation.reelPayoutMeters >=
+        config.pickupLiftDistanceMeters ||
+      observation.reelAtTop === true
+    )
   ) {
     return {
       ...state,
