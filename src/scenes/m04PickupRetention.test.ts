@@ -49,6 +49,7 @@ interface PickupRetentionProfile {
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
+  prizeMaterialId?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
   prizeOffsetX?: number;
@@ -289,6 +290,7 @@ async function simulateM04PickupRetention(
           },
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
+          materialId: profile.prizeMaterialId,
         },
       ).body
     : prizeShape === "cuboid"
@@ -976,80 +978,74 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("sweeps more hooked lower-finger geometry at the current production grip", async () => {
+  it("sweeps soft-prize effective contact friction at the current production claw", async () => {
     const candidates = [
       {
         label: "current",
-        nodes: CLAW_LAB_CONFIG.fingerNodes,
+        teddyMaterialId: "material/plush",
+        pillowMaterialId: "material/fabric",
+        animalMaterialId: "material/plush",
       },
       {
-        label: "hook-40",
-        nodes: [
-          { radial: 0, down: 0 },
-          { radial: 0.03, down: 0.07 },
-          { radial: 0.075, down: 0.165 },
-          { radial: 0.040, down: 0.225 },
-        ] as const,
+        label: "soft-1",
+        teddyMaterialId: "material/plush_grip_090",
+        pillowMaterialId: "material/fabric_grip_085",
+        animalMaterialId: "material/plush_grip_090",
       },
       {
-        label: "hook-30",
-        nodes: [
-          { radial: 0, down: 0 },
-          { radial: 0.03, down: 0.07 },
-          { radial: 0.078, down: 0.165 },
-          { radial: 0.030, down: 0.230 },
-        ] as const,
+        label: "soft-2",
+        teddyMaterialId: "material/plush_grip_105",
+        pillowMaterialId: "material/fabric_grip_100",
+        animalMaterialId: "material/plush_grip_105",
       },
       {
-        label: "hook-20",
-        nodes: [
-          { radial: 0, down: 0 },
-          { radial: 0.03, down: 0.07 },
-          { radial: 0.080, down: 0.165 },
-          { radial: 0.020, down: 0.235 },
-        ] as const,
-      },
-      {
-        label: "hook-5node",
-        nodes: [
-          { radial: 0, down: 0 },
-          { radial: 0.03, down: 0.07 },
-          { radial: 0.082, down: 0.160 },
-          { radial: 0.052, down: 0.215 },
-          { radial: 0.022, down: 0.242 },
-        ] as const,
+        label: "soft-3",
+        teddyMaterialId: "material/plush_grip_120",
+        pillowMaterialId: "material/fabric_grip_115",
+        animalMaterialId: "material/plush_grip_120",
       },
     ] as const;
 
-    const plushPrizes = [
-      { id: "prize/teddy_simple", rotationYRadians: -0.22 },
-      { id: "prize/pillow_small", rotationYRadians: 0.28 },
-      { id: "prize/animal_simple", rotationYRadians: -0.12 },
+    const prizes = [
+      {
+        id: "prize/teddy_simple",
+        rotationYRadians: -0.22,
+        materialKey: "teddyMaterialId",
+      },
+      {
+        id: "prize/pillow_small",
+        rotationYRadians: 0.28,
+        materialKey: "pillowMaterialId",
+      },
+      {
+        id: "prize/animal_simple",
+        rotationYRadians: -0.12,
+        materialKey: "animalMaterialId",
+      },
     ] as const;
+
     const sphere = getPrizeDefinition("prize/sphere_ball");
     const sphereResolved = resolvePrizeSpec(sphere);
     const rows = [];
 
     for (const candidate of candidates) {
-      const common = {
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-        pickupLiftDistanceMeters:
-          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-        fingerNodes: candidate.nodes,
-        topHoldSeconds: 1.3,
-        supportMode: "flat-deck" as const,
-      };
       const results = [];
       let plushSuccessCount = 0;
 
-      for (const prize of plushPrizes) {
+      for (const prize of prizes) {
+        const prizeMaterialId = candidate[prize.materialKey];
         const metrics = await simulateM04PickupRetention({
-          ...common,
+          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+          closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+          retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+          pickupLiftDistanceMeters:
+            CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+          closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
           prizeDefinitionId: prize.id,
+          prizeMaterialId,
           prizeRotationYRadians: prize.rotationYRadians,
+          topHoldSeconds: 1.3,
+          supportMode: "flat-deck",
         });
         const success =
           metrics.topReached &&
@@ -1058,6 +1054,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         if (success) plushSuccessCount += 1;
         results.push({
           id: prize.id,
+          materialId: prizeMaterialId,
           success,
           peak: metrics.peakLiftMeters,
           retain1p2: metrics.liftAfterRetaining1p2sMeters,
@@ -1067,10 +1064,17 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       }
 
       const heavyBall = await simulateM04PickupRetention({
-        ...common,
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
         ballMassKg: sphereResolved.massKg * 2,
         ballFriction: sphereResolved.material.dynamicFriction,
         ballRadiusMeters: sphere.dimensions.x * 0.5,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
       });
       const heavyBallSuccess =
         heavyBall.liftAfterRetaining1p2sMeters >= 0.08 &&
@@ -1090,14 +1094,14 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet hooked-finger sweep",
+      "Cabinet soft-contact sweep",
       JSON.stringify(rows),
     );
 
     expect(
       rows.some(
         (row) =>
-          row.plushSuccessCount >= 1 &&
+          row.plushSuccessCount >= 2 &&
           !row.heavyBallSuccess,
       ),
     ).toBe(true);
