@@ -497,7 +497,7 @@ Final verification baseline:
 - headless Rapier/WebGL smoke PASS
 - GitHub Pages deployment PASS after merge
 
-## M07 implementation status — front-only correction verified 2026-10-03
+## M07 implementation status — mobile-first closure candidate verified 2026-10-03
 
 **Status: IN PROGRESS — closure candidate**
 
@@ -509,10 +509,19 @@ Player/camera:
 - eye height = 0.98 m
 - player X = ±0.28 m
 - player Z ≈ 0.534–0.78 m
-- lean = ±30 mm / max roll 2.5°
+- Q/E lean/roll control removed
 - no vertical/free-fly movement
 - player remains in front of the cabinet and cannot walk around either side
 - control-panel and chute gaze remain reachable from the legal front zone
+
+Mobile-first input:
+- touch-drag on the canvas controls first-person look without pointer lock
+- left virtual analog joystick controls the same gantry X/Z physics path as desktop Arrow keys
+- right `DROP / CLOSE` button calls the same primary action as desktop Space/F
+- desktop F is direct now; it no longer depends on gaze focus over the control panel
+- touch safe areas are respected and the debug overlay hides on coarse pointers
+- diagnostic X/Z values are coordinates, not keyboard keys
+- mobile-controls initialization is browser-smoke gated
 
 Grip/play correction:
 - deployed feedback showed prizes could not be usefully carried even though pedestal calibration passed
@@ -536,12 +545,12 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **30 test files / 81 tests PASS**
+- **31 test files / 83 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step
 
-Deploy and manually verify three things: front-only movement remains constrained; woven-deck/shadow cues make drop depth easier to judge without a laser; and the Foam Cube now visibly shifts/lifts while the centered rubber ball remains a clearly carryable easy prize. If these pass, close M07 and proceed to M08.
+Deploy and manually verify on a real phone first: touch-drag look, analog claw movement, DROP/CLOSE action, safe-area layout, and portrait/landscape usability. Also recheck front-only movement, depth cues, Foam Cube interaction, and the centered rubber-ball pickup. If these pass, close M07 and proceed to M08.
 
 ## Design-review additions
 
