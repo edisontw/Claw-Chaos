@@ -148,6 +148,25 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   const testScene = sceneFactory(scene, physics);
 
+  const machineAudio =
+    selection.id === "cabinet-lab" &&
+    testScene.getMachineAudioState
+      ? new (
+          await import("../audio/CabinetMachineAudio")
+        ).CabinetMachineAudio(root)
+      : null;
+
+  const unlockMachineAudio = (): void => {
+    if (machineAudio) {
+      void machineAudio.unlock();
+    }
+  };
+  window.addEventListener(
+    "pointerdown",
+    unlockMachineAudio,
+    { capture: true, passive: true },
+  );
+
   scene.traverse((object) => {
     if (
       object instanceof THREE.DirectionalLight ||
@@ -223,6 +242,8 @@ export async function startApp(root: HTMLElement): Promise<void> {
   let firstFrameRendered = false;
 
   const onKeyDown = (event: KeyboardEvent): void => {
+    unlockMachineAudio();
+
     if (event.repeat) {
       return;
     }
@@ -281,6 +302,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
     droppedCatchUpSeconds += result.droppedSeconds;
 
     syncRenderTransforms();
+    const machineAudioState = testScene.getMachineAudioState?.();
+    if (machineAudioState) {
+      machineAudio?.update(machineAudioState);
+    }
     playerViewController?.update(frameDeltaSeconds);
     if (physicsDebugRenderer.visible) {
       physicsDebugRenderer.update(physics.debugRender());

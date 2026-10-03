@@ -848,6 +848,16 @@ export function createGantryLabScene(
       target: [0, 0.72, 0],
     },
     primaryAction: triggerPrimaryAction,
+    getMachineAudioState() {
+      return {
+        gantrySpeedMetersPerSecond: Math.hypot(
+          motion.x.velocity,
+          motion.z.velocity,
+        ),
+        reelSpeedMetersPerSecond: reel.velocity,
+        playPhase: playCycle.phase,
+      };
+    },
     setManualGantryInput(x: number, z: number): void {
       manualTouchInput = {
         x: Math.max(-1, Math.min(1, x)),

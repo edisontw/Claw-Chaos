@@ -279,7 +279,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M08 / Visual realism pass 1",
+      milestone: "M08 / Mechanical audio pass",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -372,9 +372,10 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M08 / Visual realism pass 1",
+    milestone: "M08 / Mechanical audio pass",
     camera: gantryScene.camera,
     primaryAction: () => gantryScene.primaryAction?.() ?? false,
+    getMachineAudioState: gantryScene.getMachineAudioState,
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
     },
@@ -404,6 +405,7 @@ export function createCabinetLabScene(
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",
         "Claw park         starts and returns directly over chute",
+        "Machine audio     procedural motors + action transients",
         "Cabinet claw      +" +
           Math.round(
             CABINET_PLAY_TUNING.verticalHomeOffsetMeters * 1000,

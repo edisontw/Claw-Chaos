@@ -135,7 +135,8 @@ jobs:
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$DOM_FILE" &&
                grep -q 'mobile-view-height' "$DOM_FILE" &&
-               grep -q 'data-render-profile="desktop"' "$DOM_FILE"; then
+               grep -q 'data-render-profile="desktop"' "$DOM_FILE" &&
+               grep -q 'data-machine-audio="armed"' "$DOM_FILE"; then
               CABINET_READY=1
               break
             fi
@@ -177,7 +178,8 @@ jobs:
                grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
                grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
-               grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE"; then
+               grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-machine-audio="armed"' "$ROOT_DOM_FILE"; then
               ROOT_READY=1
               break
             fi

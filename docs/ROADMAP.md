@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — visual slice 1 deployed-feedback correction**
+**Status: IN PROGRESS — mechanical audio slice 2 candidate**
 
 ## Goal
 
@@ -1154,6 +1154,34 @@ Automated visual-configuration regression checks:
 - LED emissive intensity reduced from 2.4 to 0.9
 - cabinet-only ACES filmic tone mapping removed
 - no collider, force, friction, claw torque, reel, movement, timestep or chute geometry change
+
+## Mechanical audio slice 2 — machine motion / claw actions
+
+Scope is audio-only; sound is derived from simulation telemetry and does not drive physics.
+
+Implemented candidate:
+- procedural Web Audio graph; no external audio assets or network fetches
+- audio graph is created/resumed only after the first keyboard or pointer interaction to satisfy browser autoplay policies
+- gantry motor tone follows the real X/Z carriage speed magnitude
+- reel motor tone follows the real signed reel velocity; lifting uses a slightly higher pitch than lowering
+- one-shot mechanical cues on phase entry:
+  - DROP / descent start
+  - claw CLOSE start
+  - claw RELEASE start
+  - gantry stop after meaningful motion
+- cabinet/root browser smoke requires the machine-audio layer to be armed
+- the audio controller is cabinet-only; laboratory scenes remain unchanged
+
+Automated regression:
+- motor loudness inputs normalize/clamp from the established 0.45 m/s gantry and 0.28 m/s reel limits
+- lift and descent reel pitches remain distinguishable
+- DROP/CLOSE/RELEASE sounds trigger only on phase transitions, not every frame
+- stop cue requires a real moving-to-stopped transition
+
+Still pending in later M08 slices:
+- material-specific prize contact audio
+- simple arcade ambience
+- optional controller haptics
 
 ## Exit criteria
 
