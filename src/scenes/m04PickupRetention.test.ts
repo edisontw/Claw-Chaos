@@ -1047,5 +1047,135 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(heavyBall.finalLiftMeters).toBeLessThan(0.02);
   });
 
+
+  it("sweeps cabinet grip until real starter prizes are actually retained at the top", async () => {
+    const sphere = getPrizeDefinition("prize/sphere_ball");
+    const sphereResolved = resolvePrizeSpec(sphere);
+    const candidates = [
+      {
+        label: "current",
+        fingerFriction: 0.82,
+        closePickupTorque: 3.6,
+        retainingTorque: 0.0075,
+        pickupLiftDistanceMeters: 0.12,
+      },
+      {
+        label: "strong-1",
+        fingerFriction: 0.95,
+        closePickupTorque: 4.5,
+        retainingTorque: 0.0090,
+        pickupLiftDistanceMeters: 0.14,
+      },
+      {
+        label: "strong-2",
+        fingerFriction: 1.05,
+        closePickupTorque: 5.0,
+        retainingTorque: 0.0100,
+        pickupLiftDistanceMeters: 0.16,
+      },
+      {
+        label: "strong-3",
+        fingerFriction: 1.15,
+        closePickupTorque: 5.5,
+        retainingTorque: 0.0120,
+        pickupLiftDistanceMeters: 0.18,
+      },
+      {
+        label: "strong-4",
+        fingerFriction: 1.25,
+        closePickupTorque: 6.0,
+        retainingTorque: 0.0140,
+        pickupLiftDistanceMeters: 0.18,
+      },
+    ] as const;
+
+    const prizes = [
+      { id: "prize/sphere_ball", rotationYRadians: 0 },
+      { id: "prize/cube_small", rotationYRadians: 0.18 },
+      { id: "prize/teddy_simple", rotationYRadians: -0.22 },
+      { id: "prize/pillow_small", rotationYRadians: 0.28 },
+      { id: "prize/animal_simple", rotationYRadians: -0.12 },
+    ] as const;
+
+    const rows = [];
+    let bestSuccessfulPrizeCount = 0;
+
+    for (const candidate of candidates) {
+      const prizeResults = [];
+      let successfulPrizeCount = 0;
+
+      for (const prize of prizes) {
+        const metrics = await simulateM04PickupRetention({
+          fingerFriction: candidate.fingerFriction,
+          closePickupTorque: candidate.closePickupTorque,
+          retainingTorque: candidate.retainingTorque,
+          pickupLiftDistanceMeters:
+            candidate.pickupLiftDistanceMeters,
+          prizeDefinitionId: prize.id,
+          prizeRotationYRadians: prize.rotationYRadians,
+          supportMode: "flat-deck",
+        });
+
+        const success =
+          metrics.topReached &&
+          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
+          metrics.finalLiftMeters >= 0.08;
+
+        if (success) {
+          successfulPrizeCount += 1;
+        }
+
+        prizeResults.push({
+          id: prize.id,
+          success,
+          peak: metrics.peakLiftMeters,
+          retain1p2: metrics.liftAfterRetaining1p2sMeters,
+          final: metrics.finalLiftMeters,
+          topReached: metrics.topReached,
+        });
+      }
+
+      const heavyBall = await simulateM04PickupRetention({
+        fingerFriction: candidate.fingerFriction,
+        closePickupTorque: candidate.closePickupTorque,
+        retainingTorque: candidate.retainingTorque,
+        pickupLiftDistanceMeters:
+          candidate.pickupLiftDistanceMeters,
+        ballMassKg: sphereResolved.massKg * 2,
+        ballFriction: sphereResolved.material.dynamicFriction,
+        ballRadiusMeters: sphere.dimensions.x * 0.5,
+        supportMode: "flat-deck",
+      });
+      const heavyBallSuccess =
+        heavyBall.topReached &&
+        heavyBall.liftAfterRetaining1p2sMeters >= 0.08 &&
+        heavyBall.finalLiftMeters >= 0.08;
+
+      bestSuccessfulPrizeCount = Math.max(
+        bestSuccessfulPrizeCount,
+        successfulPrizeCount,
+      );
+
+      rows.push({
+        ...candidate,
+        successfulPrizeCount,
+        heavyBallSuccess,
+        heavyBall: {
+          peak: heavyBall.peakLiftMeters,
+          retain1p2: heavyBall.liftAfterRetaining1p2sMeters,
+          final: heavyBall.finalLiftMeters,
+        },
+        prizes: prizeResults,
+      });
+    }
+
+    console.log(
+      "Cabinet actual-grab success sweep",
+      JSON.stringify(rows),
+    );
+
+    expect(bestSuccessfulPrizeCount).toBeGreaterThanOrEqual(2);
+  });
+
 });
 
