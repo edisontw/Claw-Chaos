@@ -61,6 +61,7 @@ export class MobileCabinetControls {
     parent: HTMLElement,
     private readonly onMove: (x: number, z: number) => void,
     private readonly onAction: () => boolean,
+    private readonly onViewHeightStep?: (direction: -1 | 1) => void,
   ) {
     this.root = document.createElement("div");
     this.root.className = "mobile-cabinet-controls";
@@ -85,7 +86,32 @@ export class MobileCabinetControls {
     this.actionButton.textContent = "DROP / CLOSE";
     this.actionButton.setAttribute("aria-label", "Drop or close claw");
 
-    this.root.append(joystickWrap, this.actionButton);
+    const viewHeight = document.createElement("div");
+    viewHeight.className = "mobile-view-height";
+
+    const viewUp = document.createElement("button");
+    viewUp.type = "button";
+    viewUp.className = "mobile-view-height-button";
+    viewUp.textContent = "VIEW +";
+    viewUp.setAttribute("aria-label", "Raise viewpoint");
+
+    const viewDown = document.createElement("button");
+    viewDown.type = "button";
+    viewDown.className = "mobile-view-height-button";
+    viewDown.textContent = "VIEW −";
+    viewDown.setAttribute("aria-label", "Lower viewpoint");
+
+    viewUp.addEventListener("pointerdown", (event) => {
+      this.onViewHeightStep?.(1);
+      event.preventDefault();
+    });
+    viewDown.addEventListener("pointerdown", (event) => {
+      this.onViewHeightStep?.(-1);
+      event.preventDefault();
+    });
+    viewHeight.append(viewUp, viewDown);
+
+    this.root.append(joystickWrap, viewHeight, this.actionButton);
     parent.append(this.root);
 
     this.joystick.addEventListener("pointerdown", this.onJoystickPointerDown);
