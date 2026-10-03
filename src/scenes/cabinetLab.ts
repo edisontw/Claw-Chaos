@@ -297,7 +297,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M09 / Bridge layout",
+      milestone: "M09 / Edge layout",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -360,7 +360,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M09 / Bridge layout",
+    milestone: "M09 / Edge layout",
     layoutId: layout.id,
     camera: gantryScene.camera,
     primaryAction: () =>
@@ -461,7 +461,9 @@ export function createCabinetLabScene(
             ? "Dense layout      seeded compact multi-prize arrangement"
             : layout.id === "showcase"
               ? "Showcase layout   separated material/geometry display rows"
-              : "Bridge layout     two supports + movable elevated flat-box span",
+              : layout.id === "bridge"
+                ? "Bridge layout     two supports + movable elevated flat-box span"
+                : "Edge layout       side/back wall targets beyond direct carriage center",
       ];
     },
   };

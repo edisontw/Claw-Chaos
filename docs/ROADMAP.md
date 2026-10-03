@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — bridge layout slice 3 candidate**
+**Status: IN PROGRESS — edge layout slice 4 candidate**
 
 ## Goal
 
@@ -1485,6 +1485,45 @@ Deployed feedback requested removal of the small translucent center dot:
 - browser smoke explicitly rejects any remaining `player-reticle` element
 
 No camera, FOV, look sensitivity, movement envelope, claw control or physics parameter changed.
+
+## Edge layout slice 4 — wall-adjacent claw challenges
+
+Implemented candidate:
+- new `edge` layout selectable with `?layout=edge&seed=...`
+- edge is intentionally defined as **cabinet wall/back-wall play**, not chute-lip play; `chute-adjacent` remains a separate later layout
+- two explicit `edge_target` prizes:
+  - Standard Box near the right glass at approximately X = +0.38 m
+  - Prize Can near the back wall at approximately Z = −0.305 m
+- both target centers sit beyond the closed M02 direct carriage-center envelope:
+  - X carriage maximum = +0.30 m
+  - Z carriage minimum = −0.24 m
+- this forces the suspended claw geometry, swing/lag, side contact or repeated physical pushing to matter instead of allowing a simple centered drop
+- targets remain inside the real cabinet boundary and use the normal wall/glass colliders
+- three central filler prizes preserve a normal playable scene without blocking the wall targets
+- edge-specific seed variation is deliberately restrained:
+  - ±1 mm X/Z
+  - ±0.010 rad yaw
+  - no extra vertical jitter
+- edge uses wider layout-center bounds only for this layout; loose/dense/showcase/bridge retain their existing central bounds
+- semantic role `edge_target` is metadata only and does not affect collision, forces, scoring or grip behavior
+- physics integration regression:
+  - creates the production cabinet geometry
+  - lets the edge layout settle normally
+  - requires the two targets to remain beyond direct carriage-center travel after settling
+  - applies inward physical impulses
+  - requires measurable inward travel, proving wall contact does not lock or script the prizes
+  - calibrated regression result:
+    - right-wall Standard Box: X ≈ 0.3797 → 0.3671 m, inward travel ≈ 12.55 mm
+    - back-wall Prize Can: Z ≈ −0.3060 → −0.2978 m, inward travel ≈ 8.18 mm
+- deployed browser smoke boots `layout=edge` and verifies `data-layout-id="edge"`
+
+Purpose:
+- establish a realistic “邊角貨” substrate where direct carriage alignment is insufficient
+- create a later manual/automated acceptance target for using M03 swing and real finger contact to extract a prize from the wall
+
+This slice does not add any special edge-grab force, hidden aim assist, wall release rule or success shortcut.
+
+No claw, gantry, reel, grip, material, collider, cabinet, chute, camera or timestep tuning changed.
 
 ## Deliverables
 
