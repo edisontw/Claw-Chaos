@@ -7,6 +7,7 @@ import {
   M07_FIRST_PERSON_VIEW_CONFIG,
   M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
   advanceFirstPersonPlayerView,
+  adjustFirstPersonEyeHeight,
   applyFirstPersonDesktopDragDelta,
   applyFirstPersonLookDelta,
   applyFirstPersonTouchDragDelta,
@@ -82,15 +83,39 @@ describe("M07 first-person player view constraints", () => {
 
     expect(config.initialZ).toBe(0.78);
     expect(config.maxZ).toBe(0.84);
+    expect(config.eyeY).toBe(1.04);
+    expect(config.minEyeY).toBe(0.98);
+    expect(config.maxEyeY).toBe(1.10);
     expect(
       config.initialPitchRadians * 180 / Math.PI,
-    ).toBeCloseTo(-19, 10);
+    ).toBeCloseTo(-23, 10);
     expect(
       Math.abs(upper.pitchRadians - state.pitchRadians),
     ).toBeLessThan(halfFovRadians);
     expect(
       Math.abs(lower.pitchRadians - state.pitchRadians),
     ).toBeLessThan(halfFovRadians);
+  });
+
+  it("allows only bounded player-height adjustment", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    let state = createFirstPersonPlayerViewState(config);
+
+    expect(state.eyeY).toBe(config.eyeY);
+    state = adjustFirstPersonEyeHeight(state, 1, config);
+    expect(state.eyeY).toBe(config.maxEyeY);
+    state = adjustFirstPersonEyeHeight(state, -2, config);
+    expect(state.eyeY).toBe(config.minEyeY);
+
+    state = adjustFirstPersonEyeHeight(
+      state,
+      config.eyeHeightStepMeters,
+      config,
+    );
+    expect(state.eyeY).toBeCloseTo(
+      config.minEyeY + config.eyeHeightStepMeters,
+      10,
+    );
   });
 
   it("uses a wider but still bounded mobile framing", () => {
