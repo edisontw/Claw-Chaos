@@ -303,6 +303,57 @@ describe("M04 DROP / close / lift state machine", () => {
     expect(fingerCommand).toBeCloseTo(CLAW_LAB_CONFIG.closedAngle, 6);
   });
 
+  it("recovers a shallow early close when the reel reaches the top before the pickup-distance threshold", () => {
+    const shallowPickupConfig = {
+      ...playConfig,
+      pickupLiftDistanceMeters: 0.18,
+    };
+    const pickupState: M04PlayState = {
+      ...createM04PlayState(),
+      phase: "PICKUP",
+      closeReason: "EARLY",
+      closeStartPayoutMeters: 0.06,
+      pickupStartPayoutMeters: 0.06,
+    };
+
+    const beforeTop = advanceM04PlayState(
+      pickupState,
+      {
+        reelPayoutMeters: 0.01,
+        fingerCommandRadians: CLAW_LAB_CONFIG.closedAngle,
+        reelAtTop: false,
+      },
+      shallowPickupConfig,
+      0,
+    );
+    expect(beforeTop.phase).toBe("PICKUP");
+
+    const atTop = advanceM04PlayState(
+      beforeTop,
+      {
+        reelPayoutMeters: 0,
+        fingerCommandRadians: CLAW_LAB_CONFIG.closedAngle,
+        reelAtTop: true,
+      },
+      shallowPickupConfig,
+      0,
+    );
+    expect(atTop.phase).toBe("RETAINING");
+
+    const returning = advanceM04PlayState(
+      atTop,
+      {
+        reelPayoutMeters: 0,
+        fingerCommandRadians: CLAW_LAB_CONFIG.closedAngle,
+        reelAtTop: true,
+        homeReached: false,
+      },
+      shallowPickupConfig,
+      0,
+    );
+    expect(returning.phase).toBe("RETURNING");
+  });
+
   it("activates HOLD BOOST only while requested in RETAINING/RETURNING and exhausts its fixed budget", () => {
     let state: M04PlayState = {
       ...createM04PlayState(),
