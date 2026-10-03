@@ -821,19 +821,52 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       y: definition.dimensions.y * 0.5,
       z: definition.dimensions.z * 0.5,
     };
-    const actual = await simulateM04PickupRetention({
-      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-      ballMassKg: resolved.massKg,
-      ballFriction: resolved.material.dynamicFriction,
-      ballRestitution: resolved.material.restitution,
-      prizeShape: "cuboid",
-      prizeHalfExtents: halfExtents,
-      supportMode: "flat-deck",
-    });
+    const candidateProfiles = [
+      { fingerFriction: CABINET_PLAY_TUNING.fingerFriction, closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque },
+      { fingerFriction: 0.90, closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque },
+      { fingerFriction: 1.05, closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque },
+      { fingerFriction: CABINET_PLAY_TUNING.fingerFriction, closePickupTorque: 4.0 },
+      { fingerFriction: 0.90, closePickupTorque: 4.0 },
+      { fingerFriction: 1.05, closePickupTorque: 4.0 },
+      { fingerFriction: 1.05, closePickupTorque: 5.0 },
+    ];
+    const sweep: Array<{
+      fingerFriction: number;
+      closePickupTorque: number;
+      peakLiftMeters: number;
+      finalLiftMeters: number;
+    }> = [];
+
+    let actual: PickupRetentionMetrics | null = null;
+    for (const candidate of candidateProfiles) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: candidate.fingerFriction,
+        closePickupTorque: candidate.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        ballMassKg: resolved.massKg,
+        ballFriction: resolved.material.dynamicFriction,
+        ballRestitution: resolved.material.restitution,
+        prizeShape: "cuboid",
+        prizeHalfExtents: halfExtents,
+        supportMode: "flat-deck",
+      });
+      sweep.push({
+        ...candidate,
+        peakLiftMeters: metrics.peakLiftMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+      });
+      if (
+        candidate.fingerFriction === CABINET_PLAY_TUNING.fingerFriction &&
+        candidate.closePickupTorque === CABINET_PLAY_TUNING.closePickupTorque
+      ) {
+        actual = metrics;
+      }
+    }
+    if (!actual) {
+      throw new Error("Current cabinet cube profile missing from sweep");
+    }
 
     console.log(
       "Cabinet flat-deck real-cube grip metrics",
@@ -841,7 +874,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         massKg: resolved.massKg,
         friction: resolved.material.dynamicFriction,
         halfExtents,
-        ...actual,
+        actual,
+        sweep,
       }),
     );
 
