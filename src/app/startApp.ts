@@ -88,15 +88,23 @@ async function loadSelectedSceneFactory(
   }
 }
 
-export async function startApp(root: HTMLElement): Promise<void> {
+export async function startApp(
+  root: HTMLElement,
+  physicsReady?: Promise<PhysicsRuntime>,
+  bootstrapStartedAtMs = performance.now(),
+): Promise<void> {
   const selection = parseSceneSelection(window.location.search);
   root.dataset.sceneId = selection.id;
   root.dataset.loading = "true";
 
-  const [physics, sceneFactory] = await Promise.all([
+  const physicsPromise =
+    physicsReady ??
     import("../physics/PhysicsRuntime").then(
       ({ PhysicsRuntime }) => PhysicsRuntime.create(),
-    ),
+    );
+
+  const [physics, sceneFactory] = await Promise.all([
+    physicsPromise,
     loadSelectedSceneFactory(selection, window.location.search),
   ]);
 
@@ -148,18 +156,45 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
   const testScene = sceneFactory(scene, physics);
 
-  const machineAudio =
+  type MachineAudioController = InstanceType<
+    typeof import("../audio/CabinetMachineAudio").CabinetMachineAudio
+  >;
+
+  const machineAudioEligible =
     selection.id === "cabinet-lab" &&
-    testScene.getMachineAudioState
-      ? new (
-          await import("../audio/CabinetMachineAudio")
-        ).CabinetMachineAudio(root)
-      : null;
+    Boolean(testScene.getMachineAudioState);
+  let machineAudio: MachineAudioController | null = null;
+  let machineAudioPromise: Promise<MachineAudioController> | null = null;
+
+  if (machineAudioEligible) {
+    root.dataset.machineAudio = "armed";
+  }
+
+  const ensureMachineAudio = (): Promise<MachineAudioController | null> => {
+    if (!machineAudioEligible) {
+      return Promise.resolve(null);
+    }
+    if (machineAudio) {
+      return Promise.resolve(machineAudio);
+    }
+    if (!machineAudioPromise) {
+      machineAudioPromise = import("../audio/CabinetMachineAudio")
+        .then(({ CabinetMachineAudio }) => {
+          machineAudio = new CabinetMachineAudio(root);
+          return machineAudio;
+        });
+    }
+    return machineAudioPromise;
+  };
+
+  void ensureMachineAudio();
 
   const unlockMachineAudio = (): void => {
     if (machineAudio) {
       void machineAudio.unlock();
+      return;
     }
+    void ensureMachineAudio().then((audio) => audio?.unlock());
   };
   window.addEventListener(
     "pointerdown",
@@ -318,6 +353,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
     if (!firstFrameRendered) {
       root.dataset.simulationReady = "true";
       root.dataset.loading = "false";
+      root.dataset.startupMs = Math.max(
+        0,
+        Math.round(performance.now() - bootstrapStartedAtMs),
+      ).toString();
       root.querySelector(".loading-shell")?.remove();
       firstFrameRendered = true;
     }
