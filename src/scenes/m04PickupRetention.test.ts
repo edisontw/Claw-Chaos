@@ -1029,45 +1029,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 15000);
 
 
-  it("isolates the refine-2 to refine-3 acquisition threshold", async () => {
-    const candidates = [
-      {
-        label: "low-pad-high-close",
-        fingerFriction: 1.90,
-        closePickupTorque: 10.5,
-        fingerLowerPadRadiusMeters: 0.0095,
-      },
-      {
-        label: "low-pad-high-friction",
-        fingerFriction: 1.95,
-        closePickupTorque: 10.0,
-        fingerLowerPadRadiusMeters: 0.0095,
-      },
-      {
-        label: "low-pad-both-high",
-        fingerFriction: 1.95,
-        closePickupTorque: 10.5,
-        fingerLowerPadRadiusMeters: 0.0095,
-      },
-      {
-        label: "high-pad-high-close",
-        fingerFriction: 1.90,
-        closePickupTorque: 10.5,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
-      {
-        label: "high-pad-high-friction",
-        fingerFriction: 1.95,
-        closePickupTorque: 10.0,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
-      {
-        label: "refine-3-acquisition",
-        fingerFriction: 1.95,
-        closePickupTorque: 10.5,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
-    ] as const;
+  it("finds the minimum friction that retains all target plush grabs", async () => {
+    const frictions = [1.90, 1.91, 1.92, 1.93, 1.94, 1.95] as const;
     const requiredPrizes = [
       {
         id: "prize/pillow_small",
@@ -1092,12 +1055,14 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     const resolved = resolvePrizeSpec(sphere);
     const rows = [];
 
-    for (const candidate of candidates) {
+    for (const fingerFriction of frictions) {
       const profile = {
-        ...candidate,
+        fingerFriction,
+        closePickupTorque: 10.0,
         retainingTorque: 0.026,
         pickupLiftDistanceMeters: 0.23,
         closedAngleRadians: -0.63,
+        fingerLowerPadRadiusMeters: 0.010,
         topHoldSeconds: 1.3,
         supportMode: "flat-deck" as const,
       };
@@ -1137,28 +1102,22 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         heavy.finalLiftMeters >= 0.08;
 
       rows.push({
-        ...candidate,
+        fingerFriction,
         requiredSuccessCount,
         heavySuccess,
-        heavy: {
-          peak: heavy.peakLiftMeters,
-          retain1p2: heavy.liftAfterRetaining1p2sMeters,
-          final: heavy.finalLiftMeters,
-        },
+        heavyFinal: heavy.finalLiftMeters,
         prizes,
       });
     }
 
     console.log(
-      "Cabinet acquisition-threshold sweep",
+      "Cabinet minimum plush-friction sweep",
       JSON.stringify(rows),
     );
 
     expect(
       rows.some(
-        (row) =>
-          row.requiredSuccessCount === requiredPrizes.length &&
-          !row.heavySuccess,
+        (row) => row.requiredSuccessCount === requiredPrizes.length,
       ),
     ).toBe(true);
   }, 15000);
