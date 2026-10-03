@@ -7,6 +7,8 @@ export const M07_MOBILE_CAMERA_FOV_DEGREES = 58;
 export interface FirstPersonPlayerViewConfig {
   initialX: number;
   initialZ: number;
+  initialYawRadians: number;
+  initialPitchRadians: number;
   eyeY: number;
   minX: number;
   maxX: number;
@@ -65,12 +67,14 @@ const cabinetClearanceMeters = 0.10;
 
 export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   initialX: 0,
-  initialZ: 0.68,
+  initialZ: 0.78,
+  initialYawRadians: 0,
+  initialPitchRadians: THREE.MathUtils.degToRad(-18.5),
   eyeY: 0.98,
   minX: -0.28,
   maxX: 0.28,
   minZ: frontGlassOuterZ + 0.15,
-  maxZ: 0.78,
+  maxZ: 0.84,
   cabinetSideClearX: cabinetOuterX + cabinetClearanceMeters,
   cabinetFrontClearZ: frontGlassOuterZ + cabinetClearanceMeters,
   yawLimitRadians: THREE.MathUtils.degToRad(90),
@@ -176,8 +180,8 @@ export function createFirstPersonPlayerViewState(
   return {
     x: config.initialX,
     z: config.initialZ,
-    yawRadians: 0,
-    pitchRadians: 0,
+    yawRadians: config.initialYawRadians,
+    pitchRadians: config.initialPitchRadians,
   };
 }
 
@@ -204,6 +208,22 @@ export function applyFirstPersonLookDelta(
       config.pitchMaxRadians,
     ),
   };
+}
+
+export function applyFirstPersonDesktopDragDelta(
+  state: FirstPersonPlayerViewState,
+  dragX: number,
+  dragY: number,
+  config: FirstPersonPlayerViewConfig =
+    M07_FIRST_PERSON_VIEW_CONFIG,
+): FirstPersonPlayerViewState {
+  return applyFirstPersonLookDelta(
+    state,
+    -dragX,
+    -dragY,
+    config,
+    config.mouseSensitivityRadiansPerPixel,
+  );
 }
 
 export function applyFirstPersonTouchDragDelta(
@@ -456,7 +476,7 @@ export class FirstPersonPlayerViewController {
       return;
     }
 
-    this.state = applyFirstPersonLookDelta(
+    this.state = applyFirstPersonDesktopDragDelta(
       this.state,
       event.movementX,
       event.movementY,
