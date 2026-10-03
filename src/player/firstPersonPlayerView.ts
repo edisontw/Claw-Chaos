@@ -296,7 +296,6 @@ export function advanceFirstPersonPlayerView(
 
 export function playerCameraPosition(
   state: FirstPersonPlayerViewState,
-  config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): { x: number; y: number; z: number } {
   return {
     x: state.x,
@@ -325,7 +324,7 @@ export function findFocusedPlayerViewTarget(
   targets: readonly PlayerViewTarget[],
   config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): PlayerViewFocus | null {
-  const cameraPosition = playerCameraPosition(state, config);
+  const cameraPosition = playerCameraPosition(state);
   const cosPitch = Math.cos(state.pitchRadians);
   const forward = {
     x: -Math.sin(state.yawRadians) * cosPitch,
@@ -372,7 +371,7 @@ export function applyFirstPersonPlayerCamera(
   state: FirstPersonPlayerViewState,
   config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): void {
-  const position = playerCameraPosition(state, config);
+  const position = playerCameraPosition(state);
   camera.position.set(position.x, position.y, position.z);
 
   camera.rotation.order = "YXZ";
