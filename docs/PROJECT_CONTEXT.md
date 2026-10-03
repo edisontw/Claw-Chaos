@@ -526,6 +526,8 @@ Mobile-first input:
 Mobile calibration:
 - virtual joystick dead zone = 14%; post-dead-zone travel is remapped to full analog output
 - touch-look sensitivity = 0.0030 rad/pixel; desktop mouse remains 0.0022
+- touch drag direction now follows content-drag semantics
+- mobile camera starts farther back at Z 0.84 m, may back to Z 0.90 m, and uses 58° FOV; desktop remains 50°
 - accepted DROP/CLOSE taps have 140 ms debounce; visual feedback clears after 180 ms
 - portrait/landscape control layouts are separate and safe-area aware
 - touch layouts suppress browser overscroll
@@ -554,7 +556,7 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **32 test files / 87 tests PASS**
+- **32 test files / 89 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step

@@ -12,7 +12,9 @@ import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import {
   FirstPersonPlayerViewController,
   M07_CAMERA_FOV_DEGREES,
+  M07_MOBILE_CAMERA_FOV_DEGREES,
   M07_CABINET_VIEW_TARGETS,
+  M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
 } from "../player/firstPersonPlayerView";
 import { MobileCabinetControls } from "../player/mobileCabinetControls";
 import {
@@ -38,15 +40,18 @@ export async function startApp(root: HTMLElement): Promise<void> {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111722);
 
+  const touchLike = isTouchLikeEnvironment();
   const camera = new THREE.PerspectiveCamera(
-    M07_CAMERA_FOV_DEGREES,
+    touchLike
+      ? M07_MOBILE_CAMERA_FOV_DEGREES
+      : M07_CAMERA_FOV_DEGREES,
     1,
     0.01,
     100,
   );
 
   const renderQuality = chooseRenderQualityProfile(
-    isTouchLikeEnvironment(),
+    touchLike,
   );
   root.dataset.renderProfile = renderQuality.id;
 
@@ -120,6 +125,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
           renderer.domElement,
           M07_CABINET_VIEW_TARGETS,
           () => testScene.primaryAction?.() ?? false,
+          touchLike
+            ? M07_MOBILE_FIRST_PERSON_VIEW_CONFIG
+            : undefined,
         )
       : null;
 

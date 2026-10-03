@@ -985,6 +985,10 @@ Calibrated phone/coarse-pointer defaults:
 - input outside the dead zone is remapped to the full analog range, preserving full gantry speed at the outer ring
 - touch-look sensitivity = **0.0030 rad/pixel**
 - desktop mouse sensitivity remains **0.0022 rad/pixel**
+- touch direction uses content-drag semantics rather than FPS mouse-look semantics
+- mobile camera initial Z = **0.84 m**, max Z = **0.90 m**
+- mobile FOV = **58°**; desktop remains **50°**
+- framing regression requires representative upper-claw and prize-deck points to fit within the mobile vertical FOV
 - accepted `DROP / CLOSE` taps use a **140 ms** debounce to suppress accidental double taps
 - action visual feedback auto-clears after 180 ms
 - portrait and landscape use separate control sizes/positions
@@ -1046,7 +1050,7 @@ Starter cube behavior:
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **32 test files / 87 tests PASS**
+- **32 test files / 89 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS

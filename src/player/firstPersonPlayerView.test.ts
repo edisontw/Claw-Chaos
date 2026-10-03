@@ -2,10 +2,13 @@ import { describe, expect, it } from "vitest";
 import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import {
   M07_CAMERA_FOV_DEGREES,
+  M07_MOBILE_CAMERA_FOV_DEGREES,
   M07_CABINET_VIEW_TARGETS,
   M07_FIRST_PERSON_VIEW_CONFIG,
+  M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
   advanceFirstPersonPlayerView,
   applyFirstPersonLookDelta,
+  applyFirstPersonTouchDragDelta,
   computeLookAnglesToPoint,
   createFirstPersonPlayerViewState,
   findFocusedPlayerViewTarget,
@@ -13,6 +16,58 @@ import {
 } from "./firstPersonPlayerView";
 
 describe("M07 first-person player view constraints", () => {
+  it("uses drag-direction touch semantics", () => {
+    const config = M07_MOBILE_FIRST_PERSON_VIEW_CONFIG;
+    const initial = createFirstPersonPlayerViewState(config);
+
+    const draggedRight = applyFirstPersonTouchDragDelta(
+      initial,
+      100,
+      0,
+      config,
+    );
+    const draggedDown = applyFirstPersonTouchDragDelta(
+      initial,
+      0,
+      100,
+      config,
+    );
+
+    // Dragging the scene right/down turns the camera left/up so the
+    // visible scene follows the finger instead of moving opposite it.
+    expect(draggedRight.yawRadians).toBeGreaterThan(0);
+    expect(draggedDown.pitchRadians).toBeGreaterThan(0);
+  });
+
+  it("uses a wider but still bounded mobile framing", () => {
+    const desktop = M07_FIRST_PERSON_VIEW_CONFIG;
+    const mobile = M07_MOBILE_FIRST_PERSON_VIEW_CONFIG;
+
+    expect(M07_CAMERA_FOV_DEGREES).toBe(50);
+    expect(M07_MOBILE_CAMERA_FOV_DEGREES).toBe(58);
+    expect(mobile.initialZ).toBeGreaterThan(desktop.initialZ);
+    expect(mobile.initialZ).toBe(0.84);
+    expect(mobile.maxZ).toBe(0.90);
+
+    const eye = playerCameraPosition(
+      createFirstPersonPlayerViewState(mobile),
+      mobile,
+    );
+    const upperClawPoint = { x: 0, y: 1.19, z: 0.02 };
+    const prizeDeckPoint = { x: 0, y: 0.34, z: 0.02 };
+    const upper = computeLookAnglesToPoint(eye, upperClawPoint);
+    const lower = computeLookAnglesToPoint(eye, prizeDeckPoint);
+    const requiredVerticalSpanDegrees =
+      Math.abs(
+        (upper.pitchRadians - lower.pitchRadians) *
+          (180 / Math.PI),
+      );
+
+    expect(requiredVerticalSpanDegrees).toBeLessThan(
+      M07_MOBILE_CAMERA_FOV_DEGREES,
+    );
+  });
+
   it("uses a faster calibrated touch-look sensitivity than mouse look", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     const initial = createFirstPersonPlayerViewState(config);
