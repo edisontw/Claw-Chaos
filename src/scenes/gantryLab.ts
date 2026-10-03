@@ -195,6 +195,21 @@ export interface GantryLabOptions {
   };
 }
 
+export function resolveGantryInitialPosition(
+  requested?: { x: number; z: number },
+): { x: number; z: number } {
+  return {
+    x: Math.max(
+      M02_GANTRY_CONFIG.xMin,
+      Math.min(M02_GANTRY_CONFIG.xMax, requested?.x ?? 0),
+    ),
+    z: Math.max(
+      M02_GANTRY_CONFIG.zMin,
+      Math.min(M02_GANTRY_CONFIG.zMax, requested?.z ?? 0),
+    ),
+  };
+}
+
 export function createGantryLabScene(
   scene: THREE.Scene,
   physics: PhysicsRuntime,
@@ -228,7 +243,9 @@ export function createGantryLabScene(
           reelMaxPayout:
             M02_GANTRY_CONFIG.reelMaxPayout + verticalHomeOffset,
         };
-  const initialPosition = options.initialPosition ?? { x: 0, z: 0 };
+  const initialPosition = resolveGantryInitialPosition(
+    options.initialPosition,
+  );
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const fingerJoints: RevoluteJointHandle[] = [];
