@@ -188,6 +188,7 @@ export interface GantryLabOptions {
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
   gripProfile?: GantryGripProfile;
+  controlsEnabled?: () => boolean;
   milestone?: string;
   camera?: {
     position: [number, number, number];
@@ -668,7 +669,14 @@ export function createGantryLabScene(
   const cableDirection = new THREE.Vector3();
   const cableMidpoint = new THREE.Vector3();
 
+  const controlsEnabled = (): boolean =>
+    options.controlsEnabled?.() ?? true;
+
   const manualInput = (): { x: number; z: number } => {
+    if (!controlsEnabled()) {
+      return { x: 0, z: 0 };
+    }
+
     const keyboardX =
       (pressed.has("ArrowRight") ? 1 : 0) -
       (pressed.has("ArrowLeft") ? 1 : 0);
@@ -720,6 +728,10 @@ export function createGantryLabScene(
   };
 
   const startHomeReturn = (): void => {
+    if (!controlsEnabled()) {
+      return;
+    }
+
     const atTop =
       reel.payout <= gantry.reelMinPayout + 1e-5 &&
       Math.abs(reel.velocity) < 1e-4;
@@ -739,6 +751,10 @@ export function createGantryLabScene(
   };
 
   const startPt006 = (): void => {
+    if (!controlsEnabled()) {
+      return;
+    }
+
     if (
       pt006Phase !== "READY" ||
       pt008Phase !== "READY" ||
@@ -758,6 +774,10 @@ export function createGantryLabScene(
   };
 
   const startPt008 = (): void => {
+    if (!controlsEnabled()) {
+      return;
+    }
+
     if (
       pt008Phase !== "READY" ||
       pt006Phase !== "READY" ||
@@ -780,6 +800,10 @@ export function createGantryLabScene(
   };
 
   const triggerPrimaryAction = (): boolean => {
+    if (!controlsEnabled()) {
+      return false;
+    }
+
     if (
       pt006Phase === "ACCELERATING" ||
       pt006Phase === "BRAKING" ||
@@ -859,6 +883,10 @@ export function createGantryLabScene(
       };
     },
     setManualGantryInput(x: number, z: number): void {
+      if (!controlsEnabled()) {
+        manualTouchInput = { x: 0, z: 0 };
+        return;
+      }
       manualTouchInput = {
         x: Math.max(-1, Math.min(1, x)),
         z: Math.max(-1, Math.min(1, z)),
