@@ -978,6 +978,22 @@ Phone/coarse-pointer play is treated as a primary control path:
 - debug overlay hides on touch layouts to preserve play space
 - browser smoke asserts that mobile controls initialize on both explicit `cabinet-lab` and the root/default scene
 
+## Default play framing / desktop drag correction
+
+Deployed desktop feedback showed two remaining view issues:
+- desktop pointer-lock movement still used FPS-style direction while touch already used content-drag direction
+- the initial horizontal view required manual camera adjustment before the player could comfortably judge the claw against the prize field
+
+Current correction:
+- desktop mouse movement uses the same **content-drag semantics** as touch
+- desktop initial Z = **0.78 m**, max Z = **0.84 m**
+- initial yaw = 0°
+- initial pitch = **−19°**
+- desktop FOV remains **50°**
+- mobile inherits the same −19° initial pitch while retaining Z 0.84 / max 0.90 and 58° FOV
+- automated framing regression verifies representative upper-claw and front-prize-top points are both inside the untouched desktop 50° vertical FOV at startup
+- no camera teleport, laser, aim guide or physics change
+
 ## Mobile calibration pass
 
 Calibrated phone/coarse-pointer defaults:
@@ -1052,7 +1068,7 @@ Starter cube behavior:
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **32 test files / 90 tests PASS**
+- **32 test files / 92 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
