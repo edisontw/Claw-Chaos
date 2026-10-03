@@ -151,6 +151,10 @@ export class MobileCabinetControls {
 
     const accepted = this.onAction();
     this.actionButton.dataset.result = accepted ? "accepted" : "blocked";
+    window.setTimeout(() => {
+      this.actionButton.dataset.result = "";
+    }, 180);
+
     if (accepted) {
       this.lastAcceptedActionMilliseconds = now;
       if (typeof navigator.vibrate === "function") {
