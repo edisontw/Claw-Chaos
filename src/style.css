@@ -50,19 +50,6 @@ canvas {
   font: 500 13px/1.3 ui-sans-serif, system-ui, sans-serif;
 }
 
-.player-reticle {
-  position: fixed;
-  left: 50%;
-  top: 50%;
-  z-index: 9;
-  width: 7px;
-  height: 7px;
-  border: 1px solid rgb(255 255 255 / 78%);
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-  box-shadow: 0 0 0 1px rgb(0 0 0 / 45%);
-}
 .player-interaction-prompt {
   position: fixed;
   left: 50%;
@@ -229,10 +216,6 @@ canvas {
   .mobile-claw-action {
     right: max(16px, env(safe-area-inset-right));
     bottom: max(22px, env(safe-area-inset-bottom));
-  }
-
-  .player-reticle {
-    top: 46%;
   }
 }
 
