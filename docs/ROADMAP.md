@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — mechanical audio slice 2 candidate**
+**Status: IN PROGRESS — startup performance correction after mechanical audio slice 2**
 
 ## Goal
 
@@ -1182,6 +1182,37 @@ Still pending in later M08 slices:
 - material-specific prize contact audio
 - simple arcade ambience
 - optional controller haptics
+
+## Startup performance correction — 2026-10-03
+
+Triggered by deployed-build feedback that the loading screen remained visible too long after the mechanical-audio slice.
+
+Baseline from the deployed `493ac645...` build:
+- production bootstrap/app entry: 566.36 kB raw / 142.98 kB gzip
+- Rapier/PhysicsRuntime chunk: 4,338.89 kB raw / 1,670.84 kB gzip
+- the app/Three entry had to load and execute before the large Rapier dynamic import was requested, creating an avoidable network/parse waterfall
+- the small mechanical-audio module was also awaited before the first rendered frame
+
+Rejected experiment:
+- replacing `@dimforge/rapier3d-compat` 0.21.0 with standard `@dimforge/rapier3d` was tested in PR #46
+- package-root ESM resolution first failed under Vitest; using the explicit `rapier.js` entry then produced WASM glue/runtime failures in 32 physics tests
+- PR #46 was closed without merge; production remains on the verified compat engine/version
+
+Accepted candidate in PR #47:
+- `main.ts` is now a tiny bootstrap that immediately shows the loading shell
+- app/Three and PhysicsRuntime/Rapier dynamic imports start at the same time instead of sequentially
+- the already-started physics promise is passed into `startApp`
+- the mechanical-audio chunk is no longer awaited on the first-frame critical path
+- `data-startup-ms` records elapsed bootstrap-to-first-playable-frame time for deployed diagnostics
+- CI enforces a <=25 kB production bootstrap entry and browser smoke requires `data-bootstrap="parallel"`
+
+Measured candidate build:
+- bootstrap entry: 2.85 kB raw, down from 566.36 kB raw (~99.5% smaller initial JS entry)
+- app/Three remains a separate ~564.63 kB raw / 142.16 kB gzip chunk
+- Rapier/PhysicsRuntime remains ~4,338.90 kB raw / 1,670.84 kB gzip
+- total heavy payload is not claimed to have disappeared; the improvement comes from removing the startup waterfall and allowing the two major chunks to download/parse concurrently
+- all 101 tests, lint, build, Pages base-path, bundle-size gate, and gantry/cabinet/root browser smoke pass
+- no collider, force, friction, claw torque, reel, timestep, camera, control, chute or prize-physics behavior changed
 
 ## Exit criteria
 
