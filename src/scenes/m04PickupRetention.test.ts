@@ -861,38 +861,37 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     };
     const candidateProfiles = [
       {
-        label: "baseline",
-        fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
-        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-        fingerNodes: CLAW_LAB_CONFIG.fingerNodes,
-        autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
+        label: "centered",
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
       },
-      ...[0.180, 0.185, 0.190, 0.195, 0.200, 0.205].map(
-        (tipDown) => {
-          const verticalClosedTipRadial =
-            0.075 +
-            Math.tan(Math.abs(CLAW_LAB_CONFIG.closedAngle)) *
-              (tipDown - 0.165);
-          return {
-            label: `short-vertical-tip-${tipDown.toFixed(3)}`,
-            fingerLowerPadRadiusMeters: 0.006,
-            closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-            fingerNodes: [
-              { radial: 0, down: 0 },
-              { radial: 0.03, down: 0.07 },
-              { radial: 0.075, down: 0.165 },
-              { radial: verticalClosedTipRadial, down: tipDown },
-            ] as const,
-            autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
-          };
-        },
-      ),
+      {
+        label: "offset-x-0.015",
+        prizeOffsetX: 0.015,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "offset-x-0.025",
+        prizeOffsetX: 0.025,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "offset-x-0.035",
+        prizeOffsetX: 0.035,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "offset-diagonal-0.025",
+        prizeOffsetX: 0.025,
+        prizeOffsetZ: 0.025,
+      },
     ];
     const sweep: Array<{
       label: string;
-      autoClosePayoutMeters: number;
+      prizeOffsetX: number;
+      prizeOffsetZ: number;
       peakLiftMeters: number;
-      liftAtRetainingStartMeters: number;
+      maxPlanarDisplacementMeters: number;
       finalLiftMeters: number;
     }> = [];
 
@@ -902,14 +901,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
         retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-        fingerLowerPadRadiusMeters:
-          candidate.fingerLowerPadRadiusMeters,
-        fingerNodes:
-          candidate.fingerNodes,
-        closedAngleRadians:
-          candidate.closedAngleRadians,
-        autoClosePayoutMeters:
-          candidate.autoClosePayoutMeters,
+        prizeOffsetX: candidate.prizeOffsetX,
+        prizeOffsetZ: candidate.prizeOffsetZ,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         ballMassKg: resolved.massKg,
@@ -922,15 +915,15 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       });
       sweep.push({
         label: candidate.label,
-        autoClosePayoutMeters:
-          candidate.autoClosePayoutMeters,
+        prizeOffsetX: candidate.prizeOffsetX,
+        prizeOffsetZ: candidate.prizeOffsetZ,
         peakLiftMeters: metrics.peakLiftMeters,
-        liftAtRetainingStartMeters:
-          metrics.liftAtRetainingStartMeters,
+        maxPlanarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
         finalLiftMeters: metrics.finalLiftMeters,
       });
       if (
-        candidate.label === "baseline"
+        candidate.label === "centered"
       ) {
         actual = metrics;
       }
