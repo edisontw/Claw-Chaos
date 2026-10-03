@@ -990,6 +990,21 @@ Measured flat-deck result:
 - 150 g same-size/same-friction control: peak lift ≈ 0.0071 m; final ≈ 0 m
 - no magnet, prize parenting, weld, scripted carry, kinematic prize conversion or velocity reset
 
+## Depth/readability and starter-prize pass
+
+A laser or projected drop marker is deliberately rejected because it would add information a real cabinet does not provide. The screen build instead restores natural cues that are weakened by the lack of binocular vision:
+- low-contrast woven play-deck texture with perspective scaling
+- fixed cabinet-top point light with real-time prize/claw shadows
+- occlusion and the existing small front-player lateral motion
+- no camera/FOV widening and no projected aim line
+
+Starter cube behavior:
+- the former ideal 95 mm sharp plastic cuboid was physically confirmed to be a poor 3-prong center-grip target; torque, friction, closed-angle, tip-radius and drop-depth sweeps did not make it realistically grabbable
+- `prize/cube_small` is now a 75 g soft **Foam Cube** with `box/rounded_v1` physical corners (~14 mm radius)
+- rounded Foam Cube: ≈22.7 mm planar displacement + 10.4 mm peak lift
+- legacy sharp cuboid comparison: ≈2.5 mm planar displacement + 2.1 mm peak lift
+- hard box prizes remain sharp/high-difficulty rather than being globally softened
+
 ## Automated acceptance
 
 - PT-025 ±90° yaw / bounded pitch — PASS
@@ -1003,7 +1018,7 @@ Measured flat-deck result:
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **30 test files / 80 tests PASS**
+- **30 test files / 81 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS
