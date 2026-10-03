@@ -124,7 +124,7 @@ const DENSE_BASE: readonly PlacementBase[] = [
 const SHOWCASE_BASE: readonly PlacementBase[] = [
   {
     prizeId: "prize/box_standard",
-    x: -0.20,
+    x: -0.22,
     z: -0.13,
     rotationYRadians: 0.03,
   },
@@ -136,13 +136,13 @@ const SHOWCASE_BASE: readonly PlacementBase[] = [
   },
   {
     prizeId: "prize/cylinder_can",
-    x: 0.20,
+    x: 0.22,
     z: -0.13,
     rotationYRadians: -0.03,
   },
   {
     prizeId: "prize/teddy_simple",
-    x: -0.20,
+    x: -0.22,
     z: 0.12,
     rotationYRadians: -0.08,
   },
@@ -154,7 +154,7 @@ const SHOWCASE_BASE: readonly PlacementBase[] = [
   },
   {
     prizeId: "prize/animal_simple",
-    x: 0.20,
+    x: 0.22,
     z: 0.12,
     rotationYRadians: 0.08,
   },
