@@ -42,7 +42,10 @@ interface PickupRetentionProfile {
   retainingTorque?: number;
   ballMassKg?: number;
   ballFriction?: number;
+  ballRestitution?: number;
   ballRadiusMeters?: number;
+  prizeShape?: "sphere" | "cuboid";
+  prizeHalfExtents?: { x: number; y: number; z: number };
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
@@ -83,6 +86,15 @@ async function simulateM04PickupRetention(
     profile.ballFriction ?? claw.pt001BallFriction;
   const ballRadiusMeters =
     profile.ballRadiusMeters ?? claw.pt001BallRadius;
+  const ballRestitution =
+    profile.ballRestitution ?? claw.pt001BallRestitution;
+  const prizeShape = profile.prizeShape ?? "sphere";
+  const prizeHalfExtents =
+    profile.prizeHalfExtents ?? {
+      x: ballRadiusMeters,
+      y: ballRadiusMeters,
+      z: ballRadiusMeters,
+    };
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -102,10 +114,14 @@ async function simulateM04PickupRetention(
     initialHubY - gantry.reelMaxPayout;
   const m01HubToBallCenter =
     claw.hubCenterY - claw.pt001BallCenterY;
+  const supportHalfHeight =
+    prizeShape === "cuboid"
+      ? prizeHalfExtents.y
+      : ballRadiusMeters;
   const ballCenterY =
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
-        ballRadiusMeters +
+        supportHalfHeight +
         0.002
       : bottomHubY -
         m01HubToBallCenter +
@@ -225,15 +241,34 @@ async function simulateM04PickupRetention(
     joints.push(joint);
   }
 
-  const ball = physics.createDynamicSphere(
-    { x: 0, y: ballCenterY, z: 0 },
-    ballRadiusMeters,
-    ballMassKg,
-    {
-      friction: ballFriction,
-      restitution: claw.pt001BallRestitution,
-    },
-  );
+  const ball =
+    prizeShape === "cuboid"
+      ? physics.createDynamicCuboid(
+          { x: 0, y: ballCenterY, z: 0 },
+          prizeHalfExtents,
+          0,
+          {
+            friction: ballFriction,
+            restitution: ballRestitution,
+            density:
+              ballMassKg /
+              (
+                prizeHalfExtents.x *
+                prizeHalfExtents.y *
+                prizeHalfExtents.z *
+                8
+              ),
+          },
+        )
+      : physics.createDynamicSphere(
+          { x: 0, y: ballCenterY, z: 0 },
+          ballRadiusMeters,
+          ballMassKg,
+          {
+            friction: ballFriction,
+            restitution: ballRestitution,
+          },
+        );
 
   const reelConfig = {
     minPayout: gantry.reelMinPayout,
@@ -775,6 +810,45 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(actual.finalLiftMeters).toBeGreaterThan(0.10);
     expect(heavy.peakLiftMeters).toBeLessThan(0.03);
     expect(heavy.finalLiftMeters).toBeLessThan(0.03);
+  });
+
+
+  it("cabinet claw can physically disturb and lift the real small cube from the flat deck", async () => {
+    const definition = getPrizeDefinition("prize/cube_small");
+    const resolved = resolvePrizeSpec(definition);
+    const halfExtents = {
+      x: definition.dimensions.x * 0.5,
+      y: definition.dimensions.y * 0.5,
+      z: definition.dimensions.z * 0.5,
+    };
+    const actual = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      ballMassKg: resolved.massKg,
+      ballFriction: resolved.material.dynamicFriction,
+      ballRestitution: resolved.material.restitution,
+      prizeShape: "cuboid",
+      prizeHalfExtents: halfExtents,
+      supportMode: "flat-deck",
+    });
+
+    console.log(
+      "Cabinet flat-deck real-cube grip metrics",
+      JSON.stringify({
+        massKg: resolved.massKg,
+        friction: resolved.material.dynamicFriction,
+        halfExtents,
+        ...actual,
+      }),
+    );
+
+    expect(actual.finiteAndBounded).toBe(true);
+    expect(actual.retainingReached).toBe(true);
+    expect(actual.peakLiftMeters).toBeGreaterThan(0.015);
+    expect(actual.liftAtRetainingStartMeters).toBeGreaterThan(0.005);
   });
 
 });
