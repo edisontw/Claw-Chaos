@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — prize contact audio slice 3 candidate**
+**Status: IN PROGRESS — arcade ambience slice 4 candidate**
 
 ## Goal
 
@@ -1208,8 +1208,34 @@ Automated regression:
 
 No collider shape, prize mass, friction, restitution, claw force/torque, reel, gantry, timestep, chute geometry or game-rule parameter changed.
 
+## Arcade ambience slice 4 — subtle machine / room bed
+
+Scope is audio-only; no simulation or rendering behavior changes.
+
+Implemented candidate:
+- no external audio assets or network requests
+- ambience starts only after the existing first user interaction unlocks Web Audio
+- cabinet-local electrical/fan bed:
+  - 60 Hz fundamental
+  - quiet 120 Hz harmonic
+- distant arcade-room bed:
+  - deterministic looped noise
+  - high-pass at 180 Hz and low-pass at 1.65 kHz to avoid sub-bass rumble and harsh hiss
+  - very slow 0.075 Hz shallow level modulation so the room bed is not unnaturally static
+- total continuous ambience peak gain is constrained below 0.015 before the existing master gain, keeping it substantially quieter than foreground gantry/reel/action audio
+- no background music, melody, UI beeps or conspicuous arcade effects
+- browser diagnostics expose `data-arcade-ambience` and cabinet/root smoke requires the layer to be armed
+
+Automated regression:
+- ambience stays below the foreground-audio gain budget
+- cabinet hum stays in a low electrical/fan-like frequency range
+- room bed remains band-limited away from sub-bass and harsh highs
+- modulation remains slow and shallow rather than becoming an audible pulse
+- native-WASM production bundle gates and browser smoke remain required
+
+No physics, prize behavior, camera, controls, visual materials or loading-path change.
+
 Still pending in later M08 slices:
-- simple arcade ambience
 - optional controller haptics
 
 ## Startup performance correction — 2026-10-03
