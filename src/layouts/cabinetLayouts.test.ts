@@ -28,6 +28,13 @@ describe("M09 cabinet layout foundation", () => {
     });
 
     expect(
+      parseCabinetLayoutSelection("?layout=edge"),
+    ).toEqual({
+      id: "edge",
+      usedFallback: false,
+    });
+
+    expect(
       parseCabinetLayoutSelection("?layout=unknown"),
     ).toEqual({
       id: "loose",
@@ -41,6 +48,7 @@ describe("M09 cabinet layout foundation", () => {
       "dense",
       "showcase",
       "bridge",
+      "edge",
     ] as const) {
       const first = createCabinetLayout(id, "fixed-seed");
       const second = createCabinetLayout(id, "fixed-seed");
@@ -55,7 +63,7 @@ describe("M09 cabinet layout foundation", () => {
     expect(second.placements).not.toEqual(first.placements);
   });
 
-  it("keeps loose, dense, showcase, and bridge content contracts", () => {
+  it("keeps loose, dense, showcase, bridge, and edge content contracts", () => {
     expect(
       createCabinetLayout("loose", "count").placements,
     ).toHaveLength(5);
@@ -67,6 +75,9 @@ describe("M09 cabinet layout foundation", () => {
     ).toHaveLength(6);
     expect(
       createCabinetLayout("bridge", "count").placements,
+    ).toHaveLength(5);
+    expect(
+      createCabinetLayout("edge", "count").placements,
     ).toHaveLength(5);
   });
 
@@ -120,6 +131,61 @@ describe("M09 cabinet layout foundation", () => {
     ).toBeLessThanOrEqual(0.0015);
   });
 
+  it("creates two edge targets outside direct carriage-center travel", () => {
+    const layout = createCabinetLayout(
+      "edge",
+      "edge-structure",
+    );
+    const targets = layout.placements.filter(
+      (placement) => placement.role === "edge_target",
+    );
+
+    expect(targets).toHaveLength(2);
+
+    const sideTarget = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/box_standard",
+    );
+    const backTarget = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/cylinder_can",
+    );
+
+    expect(sideTarget).toBeDefined();
+    expect(backTarget).toBeDefined();
+    expect(sideTarget!.x).toBeGreaterThan(0.37);
+    expect(backTarget!.z).toBeLessThan(-0.295);
+  });
+
+  it("keeps edge seed jitter tight enough to preserve wall challenge placement", () => {
+    const layout = createCabinetLayout(
+      "edge",
+      "edge-jitter",
+    );
+    const targets = layout.placements.filter(
+      (placement) => placement.role === "edge_target",
+    );
+
+    const sideTarget = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/box_standard",
+    )!;
+    const backTarget = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/cylinder_can",
+    )!;
+
+    expect(Math.abs(sideTarget.x - 0.38)).toBeLessThanOrEqual(
+      0.001,
+    );
+    expect(Math.abs(backTarget.z + 0.305)).toBeLessThanOrEqual(
+      0.001,
+    );
+    expect(
+      Math.abs(sideTarget.rotationYRadians - 0.08),
+    ).toBeLessThanOrEqual(0.010);
+  });
+
   it("showcase exposes representative rigid and soft prize families", () => {
     const prizeIds = createCabinetLayout(
       "showcase",
@@ -159,7 +225,7 @@ describe("M09 cabinet layout foundation", () => {
     }
   });
 
-  it("keeps generated centers inside the current cabinet play envelope", () => {
+  it("keeps standard layouts inside the central play envelope and edge inside cabinet-safe bounds", () => {
     for (const id of [
       "loose",
       "dense",
@@ -174,6 +240,15 @@ describe("M09 cabinet layout foundation", () => {
         expect(Math.abs(placement.z)).toBeLessThanOrEqual(0.195);
         expect(placement.yOffsetMeters).toBeGreaterThanOrEqual(0.002);
       }
+    }
+
+    for (const placement of createCabinetLayout(
+      "edge",
+      "bounds",
+    ).placements) {
+      expect(Math.abs(placement.x)).toBeLessThanOrEqual(0.40);
+      expect(Math.abs(placement.z)).toBeLessThanOrEqual(0.315);
+      expect(placement.yOffsetMeters).toBeGreaterThanOrEqual(0.002);
     }
   });
 });
