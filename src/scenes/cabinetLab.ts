@@ -17,6 +17,11 @@ import {
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
+import {
+  createCabinetLayout,
+  type CabinetLayoutId,
+} from "../layouts/cabinetLayouts";
+import { LayoutSettlePipeline } from "../layouts/layoutSettle";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
 import { createGantryLabScene } from "./gantryLab";
@@ -234,9 +239,15 @@ function addControlPanel(scene: THREE.Scene): void {
   scene.add(button);
 }
 
+export interface CabinetLabOptions {
+  layoutId?: CabinetLayoutId;
+  layoutSeed?: string;
+}
+
 export function createCabinetLabScene(
   scene: THREE.Scene,
   physics: PhysicsRuntime,
+  options: CabinetLabOptions = {},
 ): SimulationScene {
   const parts = createCabinetPhysics(physics);
   for (const part of parts) {
@@ -245,6 +256,12 @@ export function createCabinetLabScene(
 
   addControlPanel(scene);
   addM08CabinetDetails(scene);
+
+  const layout = createCabinetLayout(
+    options.layoutId ?? "loose",
+    options.layoutSeed ?? "m09-default",
+  );
+  const layoutSettle = new LayoutSettlePipeline();
 
   const cabinetLight = new THREE.PointLight(0xf4f7ff, 4.2, 2.2, 1.7);
   cabinetLight.position.set(-0.08, 1.08, 0.10);
@@ -263,6 +280,7 @@ export function createCabinetLabScene(
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
       initialPosition: CABINET_CLAW_PARK_POSITION,
+      controlsEnabled: () => layoutSettle.ready,
       gripProfile: {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque:
@@ -279,7 +297,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M08 / CLOSED",
+      milestone: "M09 / Layout foundation",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -302,41 +320,10 @@ export function createCabinetLabScene(
     body: ReturnType<typeof createPrize>["body"];
   }> = [];
 
-  const placements = [
-    {
-      id: "prize/cube_small",
-      x: -0.24,
-      z: -0.15,
-      rotationYRadians: 0.18,
-    },
-    {
-      id: "prize/sphere_ball",
-      x: 0,
-      z: 0,
-      rotationYRadians: 0,
-    },
-    {
-      id: "prize/teddy_simple",
-      x: 0.18,
-      z: -0.13,
-      rotationYRadians: -0.22,
-    },
-    {
-      id: "prize/pillow_small",
-      x: -0.18,
-      z: 0.13,
-      rotationYRadians: 0.28,
-    },
-    {
-      id: "prize/animal_simple",
-      x: 0.06,
-      z: 0.14,
-      rotationYRadians: -0.12,
-    },
-  ];
+  const placements = layout.placements;
 
   for (const [index, placement] of placements.entries()) {
-    const definition = getPrizeDefinition(placement.id);
+    const definition = getPrizeDefinition(placement.prizeId);
     const prize = createPrize(
       physics,
       definition,
@@ -346,11 +333,11 @@ export function createCabinetLabScene(
           y:
             M06_CABINET_CONFIG.playDeckY +
             definition.dimensions.y * 0.5 +
-            0.002,
+            placement.yOffsetMeters,
           z: placement.z,
         },
         rotationYRadians: placement.rotationYRadians,
-        variantSeed: `m06-cabinet-${index}`,
+        variantSeed: placement.variantSeed,
         enableContactAudio: true,
       },
     );
@@ -362,10 +349,10 @@ export function createCabinetLabScene(
     });
     massPropertiesDebugTargets.push({
       body: prize.body,
-      label: placement.id,
+      label: placement.prizeId,
     });
     tracked.push({
-      id: `${placement.id}#${index}`,
+      id: `${placement.prizeId}#${index}`,
       body: prize.body,
     });
   }
@@ -373,14 +360,39 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M08 / CLOSED",
+    milestone: "M09 / Layout foundation",
     camera: gantryScene.camera,
-    primaryAction: () => gantryScene.primaryAction?.() ?? false,
+    primaryAction: () =>
+      layoutSettle.ready
+        ? gantryScene.primaryAction?.() ?? false
+        : false,
     getMachineAudioState: gantryScene.getMachineAudioState,
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
     },
     beforePhysicsStep(stepSeconds: number): void {
+      if (!layoutSettle.ready) {
+        layoutSettle.update(
+          stepSeconds,
+          tracked.map((prize) => {
+            const linear = prize.body.linvel();
+            const angular = prize.body.angvel();
+            return {
+              linearSpeedMetersPerSecond: Math.hypot(
+                linear.x,
+                linear.y,
+                linear.z,
+              ),
+              angularSpeedRadiansPerSecond: Math.hypot(
+                angular.x,
+                angular.y,
+                angular.z,
+              ),
+            };
+          }),
+        );
+      }
+
       gantryScene.beforePhysicsStep?.(stepSeconds);
 
       for (const prize of tracked) {
@@ -394,6 +406,9 @@ export function createCabinetLabScene(
       return [
         ...(gantryScene.debugLines?.() ?? []),
         "Cabinet           physical deck / walls / glass / ceiling",
+        `Layout            ${layout.id} / seed ${layout.seed}`,
+        `Layout settle     ${layoutSettle.status} / ${layoutSettle.elapsedSeconds.toFixed(2)} s`,
+        `Layout prizes     ${layout.placements.length}`,
         "Chute target      " +
           M06_CABINET_CONFIG.chuteCenterX.toFixed(3) +
           " / " +
@@ -439,7 +454,9 @@ export function createCabinetLabScene(
           Math.round(M06_CABINET_CONFIG.chuteOpeningHalfZ * 2000) +
           " mm / no raised trim",
         "Service wires     dual visual control leads",
-        "Center ball       aligned for first physical pickup attempt",
+        layout.id === "loose"
+          ? "Loose layout      familiar five-prize starter arrangement"
+          : "Dense layout      seeded compact multi-prize arrangement",
       ];
     },
   };

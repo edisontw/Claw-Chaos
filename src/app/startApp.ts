@@ -35,9 +35,20 @@ async function loadSelectedSceneFactory(
 ): Promise<SceneFactory> {
   switch (selection.id) {
     case "cabinet-lab": {
-      const { createCabinetLabScene } = await import("../scenes/cabinetLab");
+      const [
+        { createCabinetLabScene },
+        { parseCabinetLayoutSelection },
+      ] = await Promise.all([
+        import("../scenes/cabinetLab"),
+        import("../layouts/cabinetLayouts"),
+      ]);
+      const layoutSelection =
+        parseCabinetLayoutSelection(search);
       return (scene, physics) =>
-        createCabinetLabScene(scene, physics);
+        createCabinetLabScene(scene, physics, {
+          layoutId: layoutSelection.id,
+          layoutSeed: selection.seed,
+        });
     }
     case "gantry-lab": {
       const { createGantryLabScene } = await import("../scenes/gantryLab");
