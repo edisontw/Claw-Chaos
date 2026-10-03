@@ -1029,47 +1029,146 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 15000);
 
 
-  it("keeps a physical heavy-mass limit under the plush-B profile", async () => {
+  it("refines the minimum plush profile while rejecting an over-strong 600 g control", async () => {
+    const candidates = [
+      {
+        label: "refine-0",
+        fingerFriction: 1.80,
+        closePickupTorque: 9.5,
+        retainingTorque: 0.026,
+        pickupLiftDistanceMeters: 0.22,
+        closedAngleRadians: -0.62,
+        fingerLowerPadRadiusMeters: 0.009,
+      },
+      {
+        label: "refine-1",
+        fingerFriction: 1.85,
+        closePickupTorque: 10.0,
+        retainingTorque: 0.030,
+        pickupLiftDistanceMeters: 0.23,
+        closedAngleRadians: -0.62,
+        fingerLowerPadRadiusMeters: 0.009,
+      },
+      {
+        label: "refine-2",
+        fingerFriction: 1.90,
+        closePickupTorque: 10.0,
+        retainingTorque: 0.032,
+        pickupLiftDistanceMeters: 0.23,
+        closedAngleRadians: -0.63,
+        fingerLowerPadRadiusMeters: 0.0095,
+      },
+      {
+        label: "refine-3",
+        fingerFriction: 1.95,
+        closePickupTorque: 10.5,
+        retainingTorque: 0.035,
+        pickupLiftDistanceMeters: 0.23,
+        closedAngleRadians: -0.63,
+        fingerLowerPadRadiusMeters: 0.010,
+      },
+      {
+        label: "plush-B",
+        fingerFriction: 2.00,
+        closePickupTorque: 11.0,
+        retainingTorque: 0.040,
+        pickupLiftDistanceMeters: 0.24,
+        closedAngleRadians: -0.64,
+        fingerLowerPadRadiusMeters: 0.010,
+      },
+    ] as const;
+
+    const requiredPrizes = [
+      {
+        id: "prize/pillow_small",
+        rotationYRadians: 0.28,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        id: "prize/animal_simple",
+        rotationYRadians: -0.12,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        id: "prize/teddy_simple",
+        rotationYRadians: -0.22,
+        prizeOffsetX: 0.02,
+        prizeOffsetZ: -0.03,
+      },
+    ] as const;
+
     const sphere = getPrizeDefinition("prize/sphere_ball");
     const resolved = resolvePrizeSpec(sphere);
-    const profile = {
-      fingerFriction: 2.0,
-      closePickupTorque: 11.0,
-      retainingTorque: 0.040,
-      pickupLiftDistanceMeters: 0.24,
-      closedAngleRadians: -0.64,
-      fingerLowerPadRadiusMeters: 0.010,
-      topHoldSeconds: 1.3,
-      supportMode: "flat-deck" as const,
-    };
     const rows = [];
 
-    for (const multiplier of [2, 4, 8] as const) {
-      const metrics = await simulateM04PickupRetention({
-        ...profile,
-        ballMassKg: resolved.massKg * multiplier,
+    for (const candidate of candidates) {
+      let requiredSuccessCount = 0;
+      const prizes = [];
+
+      for (const prize of requiredPrizes) {
+        const metrics = await simulateM04PickupRetention({
+          ...candidate,
+          prizeDefinitionId: prize.id,
+          prizeRotationYRadians: prize.rotationYRadians,
+          prizeOffsetX: prize.prizeOffsetX,
+          prizeOffsetZ: prize.prizeOffsetZ,
+          topHoldSeconds: 1.3,
+          supportMode: "flat-deck",
+        });
+        const success =
+          metrics.topReached &&
+          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
+          metrics.finalLiftMeters >= 0.08;
+        if (success) requiredSuccessCount += 1;
+        prizes.push({
+          id: prize.id,
+          success,
+          peak: metrics.peakLiftMeters,
+          retain1p2: metrics.liftAfterRetaining1p2sMeters,
+          final: metrics.finalLiftMeters,
+        });
+      }
+
+      const heavy = await simulateM04PickupRetention({
+        ...candidate,
+        ballMassKg: 0.60,
         ballFriction: resolved.material.dynamicFriction,
         ballRadiusMeters: sphere.dimensions.x * 0.5,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
       });
+      const heavySuccess =
+        heavy.liftAfterRetaining1p2sMeters >= 0.08 &&
+        heavy.finalLiftMeters >= 0.08;
+
       rows.push({
-        multiplier,
-        massKg: resolved.massKg * multiplier,
-        peak: metrics.peakLiftMeters,
-        retain1p2: metrics.liftAfterRetaining1p2sMeters,
-        final: metrics.finalLiftMeters,
-        success:
-          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
-          metrics.finalLiftMeters >= 0.08,
+        ...candidate,
+        requiredSuccessCount,
+        heavySuccess,
+        heavy: {
+          peak: heavy.peakLiftMeters,
+          retain1p2: heavy.liftAfterRetaining1p2sMeters,
+          final: heavy.finalLiftMeters,
+        },
+        prizes,
       });
     }
 
     console.log(
-      "Cabinet plush-B mass-limit sweep",
+      "Cabinet refined plush profile sweep",
       JSON.stringify(rows),
     );
 
-    expect(rows.at(-1)?.success).toBe(false);
-  });
+    expect(
+      rows.some(
+        (row) =>
+          row.requiredSuccessCount === requiredPrizes.length &&
+          !row.heavySuccess,
+      ),
+    ).toBe(true);
+  }, 15000);
 
 });
 
