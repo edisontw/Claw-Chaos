@@ -1,4 +1,4 @@
-import RAPIER from "@dimforge/rapier3d-compat";
+import * as RAPIER from "@dimforge/rapier3d";
 import { FIXED_TIMESTEP_SECONDS } from "../config/simulation";
 
 export interface Vec3 {
@@ -142,7 +142,6 @@ export class PhysicsRuntime {
   }
 
   static async create(): Promise<PhysicsRuntime> {
-    await RAPIER.init();
     const world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
     return new PhysicsRuntime(world);
   }
