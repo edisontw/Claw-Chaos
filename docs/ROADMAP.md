@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — layout foundation slice 1 candidate**
+**Status: IN PROGRESS — showcase layout slice 2 candidate**
 
 ## Goal
 
@@ -1413,6 +1413,36 @@ Automated regression:
 - continuous stable-window requirement
 - motion resets the settle window
 - settle timeout fails open rather than trapping controls
+
+No claw, gantry, reel, grip, collider, material, chute, camera or timestep tuning changed.
+
+## Showcase layout slice 2 — separated material / geometry display
+
+Implemented candidate:
+- new `showcase` layout selectable with `?layout=showcase&seed=...`
+- six representative prizes arranged as two separated rows:
+  - Standard Box — cardboard
+  - Rubber Ball — rubber
+  - Prize Can — plastic
+  - Simple Teddy — plush
+  - Small Pillow — fabric
+  - Simple Animal — plush compound geometry
+- side positions use ±0.22 m spacing so the larger plush bodies begin with clear physical separation
+- showcase seed variation is intentionally restrained:
+  - ±3 mm X/Z jitter
+  - ±0.025 rad yaw jitter
+  - no added vertical drop jitter
+- the same physics settle pipeline from slice 1 remains authoritative; showcase does not bypass or freeze prize physics
+- active layout ID is exposed as `data-layout-id` on the app root for deployed diagnostics
+- browser regression now verifies:
+  - dense URL actually reports `data-layout-id="dense"`
+  - showcase URL actually reports `data-layout-id="showcase"`
+  - default root actually reports `data-layout-id="loose"`
+- fixed-seed determinism is now asserted across loose, dense, and showcase layouts
+
+Purpose:
+- provide a clean baseline for comparing prize geometry/material behavior before introducing bridge, edge, ring, and chute-adjacent challenge layouts
+- preserve physical interaction while minimizing incidental pile interference
 
 No claw, gantry, reel, grip, collider, material, chute, camera or timestep tuning changed.
 

@@ -167,6 +167,9 @@ export async function startApp(
   scene.add(keyLight);
 
   const testScene = sceneFactory(scene, physics);
+  if (testScene.layoutId) {
+    root.dataset.layoutId = testScene.layoutId;
+  }
 
   type MachineAudioController = InstanceType<
     typeof import("../audio/CabinetMachineAudio").CabinetMachineAudio
