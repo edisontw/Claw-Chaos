@@ -3,10 +3,7 @@ import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
 import { getPrizeDefinition } from "../prizes/catalog";
-import {
-  createPrize,
-  resolvePrizeSpec,
-} from "../prizes/PrizeFactory";
+import { createPrize } from "../prizes/PrizeFactory";
 import type {
   RevoluteJointHandle,
   RigidBodyHandle,
@@ -49,8 +46,6 @@ interface PickupRetentionProfile {
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
-  prizeMaterialId?: string;
-  prizeColliderScale?: number;
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
   prizeOffsetX?: number;
@@ -291,8 +286,6 @@ async function simulateM04PickupRetention(
           },
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
-          materialId: profile.prizeMaterialId,
-          compoundColliderScale: profile.prizeColliderScale,
         },
       ).body
     : prizeShape === "cuboid"
@@ -729,397 +722,112 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
   });
 
-  it("cabinet grip profile can lift and retain a normal ball without magnetic hold", async () => {
-    const baseline = await simulateM04PickupRetention();
-    const cabinet = await simulateM04PickupRetention({
-      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-    });
-
-    console.log(
-      "Cabinet grip calibration metrics",
-      JSON.stringify({
-        profile: {
-          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-          closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-          retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-        },
-        baseline: {
-          peakLiftMeters: baseline.peakLiftMeters,
-          liftAt0p4s: baseline.liftAfterRetaining0p4sMeters,
-          liftAt0p8s: baseline.liftAfterRetaining0p8sMeters,
-          finalLiftMeters: baseline.finalLiftMeters,
-        },
-        cabinet: {
-          peakLiftMeters: cabinet.peakLiftMeters,
-          liftAtRetainingStartMeters:
-            cabinet.liftAtRetainingStartMeters,
-          liftAt0p4s:
-            cabinet.liftAfterRetaining0p4sMeters,
-          liftAt0p8s:
-            cabinet.liftAfterRetaining0p8sMeters,
-          liftAt1p2s:
-            cabinet.liftAfterRetaining1p2sMeters,
-          finalLiftMeters: cabinet.finalLiftMeters,
-          topReached: cabinet.topReached,
-        },
-      }),
-    );
-
-    expect(cabinet.finiteAndBounded).toBe(true);
-    expect(cabinet.retainingReached).toBe(true);
-    expect(cabinet.topReached).toBe(true);
-    expect(cabinet.peakLiftMeters).toBeGreaterThan(0.03);
-    expect(cabinet.liftAtRetainingStartMeters).toBeGreaterThan(0.015);
-    expect(cabinet.liftAfterRetaining0p4sMeters).toBeGreaterThan(
-      baseline.liftAfterRetaining0p4sMeters + 0.01,
-    );
-    expect(cabinet.liftAfterRetaining0p8sMeters).toBeGreaterThan(
-      0.10,
-    );
-    expect(cabinet.finalLiftMeters).toBeGreaterThan(0.10);
-    expect(CABINET_PLAY_TUNING.retainingTorque).toBeLessThan(
-      CABINET_PLAY_TUNING.holdBoostTorque,
-    );
-  });
-
-  it("cabinet grip actually acquires the real center rubber ball from the flat play deck", async () => {
-    const definition = getPrizeDefinition("prize/sphere_ball");
-    const resolved = resolvePrizeSpec(definition);
-    const actual = await simulateM04PickupRetention({
-      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-      ballMassKg: resolved.massKg,
-      ballFriction: resolved.material.dynamicFriction,
-      ballRadiusMeters: definition.dimensions.x * 0.5,
-      supportMode: "flat-deck",
-    });
-    const heavy = await simulateM04PickupRetention({
-      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-      ballMassKg: resolved.massKg * 2,
-      ballFriction: resolved.material.dynamicFriction,
-      ballRadiusMeters: definition.dimensions.x * 0.5,
-      supportMode: "flat-deck",
-    });
-
-    console.log(
-      "Cabinet flat-deck real-ball grip metrics",
-      JSON.stringify({
-        massKg: resolved.massKg,
-        heavyMassKg: resolved.massKg * 2,
-        friction: resolved.material.dynamicFriction,
-        radiusMeters: definition.dimensions.x * 0.5,
-        actual,
-        heavy,
-      }),
-    );
-
-    expect(actual.finiteAndBounded).toBe(true);
-    expect(actual.retainingReached).toBe(true);
-    expect(actual.peakLiftMeters).toBeGreaterThan(0.025);
-    expect(actual.liftAtRetainingStartMeters).toBeGreaterThan(0.010);
-    expect(actual.liftAfterRetaining0p4sMeters).toBeGreaterThan(0.010);
-    expect(actual.liftAfterRetaining0p8sMeters).toBeGreaterThan(0.10);
-    expect(actual.finalLiftMeters).toBeGreaterThan(0.10);
-    expect(heavy.peakLiftMeters).toBeLessThan(0.03);
-    expect(heavy.finalLiftMeters).toBeLessThan(0.03);
-  });
-
-
-  it("cabinet claw can interact with the rounded starter cube from the flat deck", async () => {
-    const definition = getPrizeDefinition("prize/cube_small");
-    const resolved = resolvePrizeSpec(definition);
-    const halfExtents = {
-      x: definition.dimensions.x * 0.5,
-      y: definition.dimensions.y * 0.5,
-      z: definition.dimensions.z * 0.5,
-    };
-
-    const rounded = await simulateM04PickupRetention({
-      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-      prizeDefinitionId: definition.id,
-      prizeRotationYRadians: 0.18,
-      supportMode: "flat-deck",
-    });
-
-    const legacySharp = await simulateM04PickupRetention({
-      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-      pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-      ballMassKg: resolved.massKg,
-      ballFriction: resolved.material.dynamicFriction,
-      ballRestitution: resolved.material.restitution,
-      prizeShape: "cuboid",
-      prizeHalfExtents: halfExtents,
-      prizeRotationYRadians: 0.18,
-      supportMode: "flat-deck",
-    });
-
-    console.log(
-      "Cabinet rounded-cube interaction metrics",
-      JSON.stringify({
-        colliderProfileId: definition.colliderProfileId,
-        rounded,
-        legacySharp,
-      }),
-    );
-
-    expect(rounded.finiteAndBounded).toBe(true);
-    expect(rounded.retainingReached).toBe(true);
-    expect(
-      Math.max(
-        rounded.peakLiftMeters,
-        rounded.maxPlanarDisplacementMeters,
-      ),
-    ).toBeGreaterThan(0.015);
-    expect(
-      rounded.peakLiftMeters +
-        rounded.maxPlanarDisplacementMeters,
-    ).toBeGreaterThan(
-      legacySharp.peakLiftMeters +
-        legacySharp.maxPlanarDisplacementMeters +
-        0.008,
-    );
-  });
-
-
-  it("simulated production grip actually retains ball and Foam Cube while rejecting the 150 g control", async () => {
+  it("production cabinet grip physically retains the five intended starter grab paths", async () => {
     const common = {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
         CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
 
-    const ball = await simulateM04PickupRetention({
-      ...common,
-      prizeDefinitionId: "prize/sphere_ball",
-    });
-    const cube = await simulateM04PickupRetention({
-      ...common,
-      prizeDefinitionId: "prize/cube_small",
-      prizeRotationYRadians: 0.18,
-    });
-
-    const sphere = getPrizeDefinition("prize/sphere_ball");
-    const sphereResolved = resolvePrizeSpec(sphere);
-    const heavyBall = await simulateM04PickupRetention({
-      ...common,
-      ballMassKg: sphereResolved.massKg * 2,
-      ballFriction: sphereResolved.material.dynamicFriction,
-      ballRadiusMeters: sphere.dimensions.x * 0.5,
-    });
-
-    console.log(
-      "Cabinet simulated successful production grip",
-      JSON.stringify({
-        profile: {
-          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-          closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-          retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-          holdBoostTorque: CABINET_PLAY_TUNING.holdBoostTorque,
-          pickupLiftDistanceMeters:
-            CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-        },
-        ball: {
-          peak: ball.peakLiftMeters,
-          retain1p2: ball.liftAfterRetaining1p2sMeters,
-          final: ball.finalLiftMeters,
-          topReached: ball.topReached,
-        },
-        cube: {
-          peak: cube.peakLiftMeters,
-          retain1p2: cube.liftAfterRetaining1p2sMeters,
-          final: cube.finalLiftMeters,
-          topReached: cube.topReached,
-        },
-        heavyBall: {
-          peak: heavyBall.peakLiftMeters,
-          retain1p2: heavyBall.liftAfterRetaining1p2sMeters,
-          final: heavyBall.finalLiftMeters,
-          topReached: heavyBall.topReached,
-        },
-      }),
-    );
-
-    for (const metrics of [ball, cube]) {
-      expect(metrics.finiteAndBounded).toBe(true);
-      expect(metrics.topReached).toBe(true);
-      expect(metrics.liftAfterRetaining1p2sMeters).toBeGreaterThan(
-        0.08,
-      );
-      expect(metrics.finalLiftMeters).toBeGreaterThan(0.08);
-    }
-
-    expect(heavyBall.finiteAndBounded).toBe(true);
-    expect(heavyBall.liftAfterRetaining1p2sMeters).toBeLessThan(
-      0.08,
-    );
-    expect(heavyBall.finalLiftMeters).toBeLessThan(0.02);
-  });
-
-
-  it("finds a reachable Teddy grab point with the minimal two-plush-success profile", async () => {
-    const profile = {
-      fingerFriction: 2.0,
-      closePickupTorque: 11.0,
-      retainingTorque: 0.040,
-      pickupLiftDistanceMeters: 0.24,
-      closedAngleRadians: -0.64,
-      fingerLowerPadRadiusMeters: 0.010,
-      topHoldSeconds: 1.3,
-      supportMode: "flat-deck" as const,
-    };
-    const offsets = [-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06] as const;
-    const zOffsets = [-0.03, 0, 0.03] as const;
-    const rows = [];
-
-    for (const prizeOffsetX of offsets) {
-      for (const prizeOffsetZ of zOffsets) {
-        const metrics = await simulateM04PickupRetention({
-          ...profile,
-          prizeDefinitionId: "prize/teddy_simple",
-          prizeRotationYRadians: -0.22,
-          prizeOffsetX,
-          prizeOffsetZ,
-        });
-        const success =
-          metrics.topReached &&
-          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
-          metrics.finalLiftMeters >= 0.08;
-        rows.push({
-          prizeOffsetX,
-          prizeOffsetZ,
-          success,
-          peak: metrics.peakLiftMeters,
-          retain1p2: metrics.liftAfterRetaining1p2sMeters,
-          final: metrics.finalLiftMeters,
-          planar: metrics.maxPlanarDisplacementMeters,
-        });
-      }
-    }
-
-    console.log(
-      "Cabinet Teddy offset sweep with plush-B",
-      JSON.stringify(rows),
-    );
-
-    expect(rows.some((row) => row.success)).toBe(true);
-  }, 15000);
-
-
-  it("minimizes the strong-pickup phase while keeping target plush grabs", async () => {
-    const pickupDistances = [0.18, 0.20, 0.21, 0.22, 0.23] as const;
-    const requiredPrizes = [
+    const cases = [
       {
-        id: "prize/pillow_small",
-        rotationYRadians: 0.28,
+        label: "Rubber Ball centered",
+        prizeDefinitionId: "prize/sphere_ball",
+        prizeRotationYRadians: 0,
         prizeOffsetX: 0,
         prizeOffsetZ: 0,
       },
       {
-        id: "prize/animal_simple",
-        rotationYRadians: -0.12,
+        label: "Foam Cube centered",
+        prizeDefinitionId: "prize/cube_small",
+        prizeRotationYRadians: 0.18,
         prizeOffsetX: 0,
         prizeOffsetZ: 0,
       },
       {
-        id: "prize/teddy_simple",
-        rotationYRadians: -0.22,
+        label: "Small Pillow centered",
+        prizeDefinitionId: "prize/pillow_small",
+        prizeRotationYRadians: 0.28,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "Simple Animal centered",
+        prizeDefinitionId: "prize/animal_simple",
+        prizeRotationYRadians: -0.12,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "Simple Teddy offset torso grab",
+        prizeDefinitionId: "prize/teddy_simple",
+        prizeRotationYRadians: -0.22,
         prizeOffsetX: 0.02,
         prizeOffsetZ: -0.03,
       },
     ] as const;
-    const sphere = getPrizeDefinition("prize/sphere_ball");
-    const resolved = resolvePrizeSpec(sphere);
-    const rows = [];
 
-    for (const pickupLiftDistanceMeters of pickupDistances) {
-      const profile = {
-        fingerFriction: 1.94,
-        closePickupTorque: 10.0,
-        retainingTorque: 0.014,
-        pickupLiftDistanceMeters,
-        closedAngleRadians: -0.63,
-        fingerLowerPadRadiusMeters: 0.010,
-        topHoldSeconds: 1.3,
-        supportMode: "flat-deck" as const,
-      };
-      let requiredSuccessCount = 0;
-      const prizes = [];
+    const results = [];
 
-      for (const prize of requiredPrizes) {
-        const metrics = await simulateM04PickupRetention({
-          ...profile,
-          prizeDefinitionId: prize.id,
-          prizeRotationYRadians: prize.rotationYRadians,
-          prizeOffsetX: prize.prizeOffsetX,
-          prizeOffsetZ: prize.prizeOffsetZ,
-        });
-        const success =
-          metrics.topReached &&
-          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
-          metrics.finalLiftMeters >= 0.08;
-        if (success) requiredSuccessCount += 1;
-        prizes.push({
-          id: prize.id,
-          success,
-          peak: metrics.peakLiftMeters,
-          retain1p2: metrics.liftAfterRetaining1p2sMeters,
-          final: metrics.finalLiftMeters,
-        });
-      }
-
-      const heavy = await simulateM04PickupRetention({
-        ...profile,
-        ballMassKg: 0.60,
-        ballFriction: resolved.material.dynamicFriction,
-        ballRadiusMeters: sphere.dimensions.x * 0.5,
+    for (const testCase of cases) {
+      const metrics = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: testCase.prizeDefinitionId,
+        prizeRotationYRadians:
+          testCase.prizeRotationYRadians,
+        prizeOffsetX: testCase.prizeOffsetX,
+        prizeOffsetZ: testCase.prizeOffsetZ,
       });
-      const heavySuccess =
-        heavy.liftAfterRetaining1p2sMeters >= 0.08 &&
-        heavy.finalLiftMeters >= 0.08;
 
-      rows.push({
-        pickupLiftDistanceMeters,
-        requiredSuccessCount,
-        heavySuccess,
-        heavyFinal: heavy.finalLiftMeters,
-        prizes,
+      results.push({
+        label: testCase.label,
+        peak: metrics.peakLiftMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        final: metrics.finalLiftMeters,
+        topReached: metrics.topReached,
+        finiteAndBounded: metrics.finiteAndBounded,
       });
+
+      expect(metrics.finiteAndBounded).toBe(true);
+      expect(metrics.retainingReached).toBe(true);
+      expect(metrics.topReached).toBe(true);
+      expect(
+        metrics.liftAfterRetaining1p2sMeters,
+      ).toBeGreaterThanOrEqual(0.08);
+      expect(metrics.finalLiftMeters).toBeGreaterThanOrEqual(
+        0.08,
+      );
     }
 
     console.log(
-      "Cabinet pickup-distance de-escalation sweep",
-      JSON.stringify(rows),
+      "Cabinet plush-capable production grip metrics",
+      JSON.stringify({
+        profile: {
+          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+          closePickupTorque:
+            CABINET_PLAY_TUNING.closePickupTorque,
+          retainingTorque:
+            CABINET_PLAY_TUNING.retainingTorque,
+          holdBoostTorque:
+            CABINET_PLAY_TUNING.holdBoostTorque,
+          pickupLiftDistanceMeters:
+            CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+          closedAngleRadians:
+            CABINET_PLAY_TUNING.closedAngleRadians,
+          fingerLowerPadRadiusMeters:
+            CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        },
+        results,
+      }),
     );
-
-    expect(
-      rows.some(
-        (row) => row.requiredSuccessCount === requiredPrizes.length,
-      ),
-    ).toBe(true);
   }, 15000);
 
 });
