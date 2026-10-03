@@ -48,6 +48,7 @@ interface PickupRetentionProfile {
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
@@ -103,6 +104,8 @@ async function simulateM04PickupRetention(
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerNodes =
+    profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
     profile.closedAngleRadians ?? claw.closedAngle;
   const pickupLiftDistanceMeters =
@@ -220,7 +223,7 @@ async function simulateM04PickupRetention(
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
-        createFingerPoints(theta),
+        createFingerPoints(theta, fingerNodes),
         fingerLowerPadRadiusMeters,
       ),
       {
@@ -836,34 +839,35 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     };
     const candidateProfiles = [
       {
+        label: "baseline",
         fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
         closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
+        fingerNodes: CLAW_LAB_CONFIG.fingerNodes,
       },
-      {
-        fingerLowerPadRadiusMeters: 0.010,
+      ...[
+        { tipRadial: 0.090, padRadius: 0.006 },
+        { tipRadial: 0.098, padRadius: 0.006 },
+        { tipRadial: 0.102, padRadius: 0.006 },
+        { tipRadial: 0.106, padRadius: 0.006 },
+        { tipRadial: 0.102, padRadius: 0.008 },
+      ].map(({ tipRadial, padRadius }) => ({
+        label: `vertical-pad-${tipRadial.toFixed(3)}-${padRadius.toFixed(3)}`,
+        fingerLowerPadRadiusMeters: padRadius,
         closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-      },
-      {
-        fingerLowerPadRadiusMeters: 0.010,
-        closedAngleRadians: -0.48,
-      },
-      {
-        fingerLowerPadRadiusMeters: 0.010,
-        closedAngleRadians: -0.54,
-      },
-      {
-        fingerLowerPadRadiusMeters: 0.010,
-        closedAngleRadians: -0.60,
-      },
-      {
-        fingerLowerPadRadiusMeters: 0.008,
-        closedAngleRadians: -0.54,
-      },
+        fingerNodes: [
+          { radial: 0, down: 0 },
+          { radial: 0.03, down: 0.07 },
+          { radial: 0.075, down: 0.165 },
+          { radial: tipRadial, down: 0.225 },
+        ] as const,
+      })),
     ];
     const sweep: Array<{
+      label: string;
       fingerLowerPadRadiusMeters: number;
       closedAngleRadians: number;
       peakLiftMeters: number;
+      liftAtRetainingStartMeters: number;
       finalLiftMeters: number;
     }> = [];
 
@@ -875,6 +879,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
         fingerLowerPadRadiusMeters:
           candidate.fingerLowerPadRadiusMeters,
+        fingerNodes:
+          candidate.fingerNodes,
         closedAngleRadians:
           candidate.closedAngleRadians,
         pickupLiftDistanceMeters:
@@ -888,13 +894,18 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         supportMode: "flat-deck",
       });
       sweep.push({
-        ...candidate,
+        label: candidate.label,
+        fingerLowerPadRadiusMeters:
+          candidate.fingerLowerPadRadiusMeters,
+        closedAngleRadians:
+          candidate.closedAngleRadians,
         peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
         finalLiftMeters: metrics.finalLiftMeters,
       });
       if (
-        candidate.fingerLowerPadRadiusMeters === CLAW_LAB_CONFIG.fingerRodRadius &&
-        candidate.closedAngleRadians === CLAW_LAB_CONFIG.closedAngle
+        candidate.label === "baseline"
       ) {
         actual = metrics;
       }
