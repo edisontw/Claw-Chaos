@@ -18,6 +18,7 @@ export interface FirstPersonPlayerViewConfig {
   pitchMaxRadians: number;
   moveSpeedMetersPerSecond: number;
   mouseSensitivityRadiansPerPixel: number;
+  touchSensitivityRadiansPerPixel: number;
 }
 
 export interface FirstPersonPlayerViewState {
@@ -76,6 +77,7 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   pitchMaxRadians: THREE.MathUtils.degToRad(25),
   moveSpeedMetersPerSecond: 0.55,
   mouseSensitivityRadiansPerPixel: 0.0022,
+  touchSensitivityRadiansPerPixel: 0.0030,
 };
 
 export const M07_CABINET_VIEW_TARGETS: readonly PlayerViewTarget[] = [
@@ -176,18 +178,20 @@ export function applyFirstPersonLookDelta(
   movementX: number,
   movementY: number,
   config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
+  sensitivityRadiansPerPixel =
+    config.mouseSensitivityRadiansPerPixel,
 ): FirstPersonPlayerViewState {
   return {
     ...state,
     yawRadians: clamp(
       state.yawRadians -
-        movementX * config.mouseSensitivityRadiansPerPixel,
+        movementX * sensitivityRadiansPerPixel,
       -config.yawLimitRadians,
       config.yawLimitRadians,
     ),
     pitchRadians: clamp(
       state.pitchRadians -
-        movementY * config.mouseSensitivityRadiansPerPixel,
+        movementY * sensitivityRadiansPerPixel,
       config.pitchMinRadians,
       config.pitchMaxRadians,
     ),
@@ -464,6 +468,7 @@ export class FirstPersonPlayerViewController {
       dx,
       dy,
       this.config,
+      this.config.touchSensitivityRadiansPerPixel,
     );
     event.preventDefault();
   };
