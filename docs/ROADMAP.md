@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — native browser WASM startup optimization after mechanical audio slice 2**
+**Status: IN PROGRESS — prize contact audio slice 3 candidate**
 
 ## Goal
 
@@ -1178,8 +1178,37 @@ Automated regression:
 - DROP/CLOSE/RELEASE sounds trigger only on phase transitions, not every frame
 - stop cue requires a real moving-to-stopped transition
 
+## Prize contact audio slice 3 — material-specific impacts
+
+Scope remains audio/reporting only; solver parameters and gameplay are unchanged.
+
+Implemented candidate:
+- Rapier contact-force events are enabled only for cabinet prizes that opt into contact audio
+- PrizeFactory reuses each existing material profile's `audioProfileId`; there is no duplicate material-to-sound table in the cabinet scene
+- an impact is emitted only when a collider pair crosses from below to above the 1.5 N reporting threshold, preventing resting contacts from repeatedly sounding
+- the strongest impact per audio profile is retained until the render frame consumes it
+- pre-unlock impacts are consumed silently, so initial prize settling is never replayed after the player's first interaction
+- synthesized Web Audio profiles:
+  - cardboard: muted papery thud
+  - plastic: short, brighter click
+  - rubber: lower-frequency thump
+  - fabric/plush: softer filtered impact
+- cue intensity follows the actual reported contact-force magnitude
+- a short same-family cooldown prevents rapid chatter without changing physics
+- contact-audio event capture is cabinet-only; Prize Lab and unrelated physics scenes do not opt in
+
+Automated regression:
+- catalog audio profiles map to distinct audible families
+- sub-threshold resting-scale contacts do not create cues
+- stronger real force produces stronger normalized cues
+- plastic remains brighter/shorter than plush/fabric, while rubber remains lower-frequency
+- a tagged falling body generates a contact-audio impact through Rapier's real event queue
+- an untagged dynamic body remains silent
+- native-WASM production build, bundle gates, base-path and gantry/cabinet/root browser smoke remain PASS
+
+No collider shape, prize mass, friction, restitution, claw force/torque, reel, gantry, timestep, chute geometry or game-rule parameter changed.
+
 Still pending in later M08 slices:
-- material-specific prize contact audio
 - simple arcade ambience
 - optional controller haptics
 
