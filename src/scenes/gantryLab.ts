@@ -183,6 +183,7 @@ export interface GantryGripProfile {
 
 export interface GantryLabOptions {
   addLabFloor?: boolean;
+  initialPosition?: { x: number; z: number };
   playReturnTarget?: { x: number; z: number };
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
@@ -227,6 +228,7 @@ export function createGantryLabScene(
           reelMaxPayout:
             M02_GANTRY_CONFIG.reelMaxPayout + verticalHomeOffset,
         };
+  const initialPosition = options.initialPosition ?? { x: 0, z: 0 };
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const fingerJoints: RevoluteJointHandle[] = [];
@@ -249,12 +251,10 @@ export function createGantryLabScene(
     );
   }
 
-  const railMaterial = new THREE.MeshPhysicalMaterial({
+  const railMaterial = new THREE.MeshStandardMaterial({
     color: 0x5d6876,
-    roughness: 0.26,
-    metalness: 0.86,
-    clearcoat: 0.18,
-    clearcoatRoughness: 0.22,
+    roughness: 0.64,
+    metalness: 0.42,
   });
   for (const z of [gantry.zMin - 0.04, gantry.zMax + 0.04]) {
     const rail = new THREE.Mesh(
@@ -275,14 +275,16 @@ export function createGantryLabScene(
     M08_GANTRY_VISUAL_STYLE.bridgeExtraHalfSpanZ;
   const bridgeVisual = new THREE.Group();
   bridgeVisual.name = "m08-moving-gantry-bridge";
-  bridgeVisual.position.set(0, gantry.carriageY + 0.034, 0);
+  bridgeVisual.position.set(
+    initialPosition.x,
+    gantry.carriageY + 0.034,
+    0,
+  );
 
-  const bridgeMaterial = new THREE.MeshPhysicalMaterial({
+  const bridgeMaterial = new THREE.MeshStandardMaterial({
     color: 0x727e8c,
-    roughness: 0.24,
-    metalness: 0.84,
-    clearcoat: 0.22,
-    clearcoatRoughness: 0.20,
+    roughness: 0.62,
+    metalness: 0.40,
   });
   const bridgeBeam = new THREE.Mesh(
     new THREE.BoxGeometry(
@@ -316,22 +318,18 @@ export function createGantryLabScene(
       gantry.carriageHalfY * 2,
       gantry.carriageHalfZ * 2,
     ),
-    new THREE.MeshPhysicalMaterial({
+    new THREE.MeshStandardMaterial({
       color: 0xaeb8c3,
-      roughness: 0.22,
-      metalness: 0.84,
-      clearcoat: 0.26,
-      clearcoatRoughness: 0.18,
+      roughness: 0.60,
+      metalness: 0.42,
     }),
   );
   carriageVisual.castShadow = true;
 
-  const winchMetal = new THREE.MeshPhysicalMaterial({
+  const winchMetal = new THREE.MeshStandardMaterial({
     color: 0xb7c0c9,
-    roughness: 0.20,
-    metalness: 0.90,
-    clearcoat: 0.18,
-    clearcoatRoughness: 0.16,
+    roughness: 0.60,
+    metalness: 0.46,
   });
   const winchDark = new THREE.MeshStandardMaterial({
     color: 0x20262d,
@@ -389,7 +387,11 @@ export function createGantryLabScene(
   scene.add(carriageVisual);
 
   const carriageBody = physics.createKinematicCuboid(
-    { x: 0, y: gantry.carriageY, z: 0 },
+    {
+      x: initialPosition.x,
+      y: gantry.carriageY,
+      z: initialPosition.z,
+    },
     {
       x: gantry.carriageHalfX,
       y: gantry.carriageHalfY,
@@ -401,18 +403,18 @@ export function createGantryLabScene(
 
   const chrome = new THREE.MeshStandardMaterial({
     color: 0xc9d0d8,
-    roughness: 0.2,
-    metalness: 0.88,
+    roughness: 0.58,
+    metalness: 0.52,
   });
   const brushedMetal = new THREE.MeshStandardMaterial({
     color: 0x8d98a5,
-    roughness: 0.32,
-    metalness: 0.78,
+    roughness: 0.62,
+    metalness: 0.48,
   });
   const darkBand = new THREE.MeshStandardMaterial({
     color: 0x252a31,
-    roughness: 0.38,
-    metalness: 0.48,
+    roughness: 0.70,
+    metalness: 0.26,
   });
   const tipMaterial = new THREE.MeshStandardMaterial({
     color: 0x383d44,
@@ -438,8 +440,8 @@ export function createGantryLabScene(
     new THREE.CylinderGeometry(0.0022, 0.0022, 1, 10),
     new THREE.MeshStandardMaterial({
       color: 0x30353c,
-      roughness: 0.48,
-      metalness: 0.72,
+      roughness: 0.72,
+      metalness: 0.38,
     }),
   );
   cable.castShadow = true;
@@ -479,12 +481,16 @@ export function createGantryLabScene(
   const anchorY = gantry.carriageY - gantry.carriageHalfY;
   const initialHubY = anchorY - gantry.suspensionLength;
   const reelAnchorBody = physics.createKinematicBody({
-    x: 0,
+    x: initialPosition.x,
     y: anchorY,
-    z: 0,
+    z: initialPosition.z,
   });
   const hubBody = physics.createDynamicCylinder(
-    { x: 0, y: initialHubY, z: 0 },
+    {
+      x: initialPosition.x,
+      y: initialHubY,
+      z: initialPosition.z,
+    },
     claw.hubColliderHalfHeight,
     claw.collarRadius,
     gantry.hubMassKg,
@@ -517,9 +523,9 @@ export function createGantryLabScene(
       z: radialZ * claw.fingerPivotRadius,
     };
     const pivotWorld = {
-      x: pivotLocal.x,
+      x: initialPosition.x + pivotLocal.x,
       y: initialHubY + pivotLocal.y,
-      z: pivotLocal.z,
+      z: initialPosition.z + pivotLocal.z,
     };
     const tangent = {
       x: -Math.sin(theta),
@@ -610,8 +616,8 @@ export function createGantryLabScene(
   };
 
   let motion: GantryMotionState = {
-    x: { position: 0, velocity: 0 },
-    z: { position: 0, velocity: 0 },
+    x: { position: initialPosition.x, velocity: 0 },
+    z: { position: initialPosition.z, velocity: 0 },
   };
   let reel: ReelState = { payout: 0, velocity: 0 };
   let manualReelCommand = 0;
