@@ -152,7 +152,7 @@ Current `cabinet-lab` controls:
 
 Desktop:
 - click canvas: capture mouse for first-person look; `Esc` releases pointer lock
-- mouse: head look, clamped to **±90° yaw** and **−70°/+25° pitch**
+- mouse: head look with **content-drag semantics**, clamped to **±90° yaw** and **−70°/+25° pitch**
 - `W/S`: small front/back standing-position adjustment only
 - `A/D`: small left/right adjustment only; player remains in front of the cabinet
 - `Q/E` lean has been **removed**
@@ -177,7 +177,7 @@ Mobile / coarse pointer:
 Coordinate note:
 - X/Z labels in diagnostics are **positions/axes**, not keyboard keys
 - player X range = **±0.28 m**
-- player Z range ≈ **0.534–0.78 m**, always outside the front glass
+- desktop player Z range ≈ **0.534–0.84 m**, always outside the front glass
 - walking around either cabinet side remains disabled
 
 Current M07 front-view baseline:
@@ -188,10 +188,12 @@ Current M07 front-view baseline:
 - front-only movement plus head turn is used for aiming/readability
 - control-panel and chute gaze targets remain reachable from the legal front zone
 - touch-drag look + analog claw joystick + direct DROP/CLOSE touch button are initialized in `cabinet-lab`
-- mobile camera starts farther back at Z **0.84 m** (front zone max 0.90 m) and uses a modest **58° FOV**; desktop remains Z 0.68 m / 50°
+- default play framing: desktop starts at Z **0.78 m** with **−19° pitch** and 50° FOV so the main claw body and front prize tops fit without initial camera adjustment
+- desktop may back to Z **0.84 m**
+- mobile starts at Z **0.84 m** (front zone max 0.90 m), uses the same −19° initial pitch, and keeps a modest **58° FOV**
 - mobile render budget: DPR cap **1.5**, shadow maps **512**; desktop remains DPR 2 / 1024
 - fixed physics timestep, forces and claw calibration are unchanged
-- **32 test files / 90 tests PASS**
+- **32 test files / 92 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:
