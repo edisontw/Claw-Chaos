@@ -46,12 +46,16 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_PLAY_TUNING.retainingTorque).toBeGreaterThan(
       CLAW_LAB_CONFIG.pt002RetainingTorque,
     );
-    expect(CABINET_PLAY_TUNING.retainingTorque).toBeLessThan(
+    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBeGreaterThan(
+      CABINET_PLAY_TUNING.retainingTorque,
+    );
+    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBeGreaterThan(
       M04_PLAY_CONFIG.holdBoostTorque,
     );
-    expect(CABINET_PLAY_TUNING.fingerFriction).toBe(0.82);
-    expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(3.6);
-    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.0075);
+    expect(CABINET_PLAY_TUNING.fingerFriction).toBe(1.25);
+    expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(6.0);
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
+    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.018);
     expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBeGreaterThan(
@@ -59,6 +63,6 @@ describe("Cabinet play tuning", () => {
     );
     expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
-    ).toBe(0.12);
+    ).toBe(0.18);
   });
 });

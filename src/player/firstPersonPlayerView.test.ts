@@ -7,6 +7,8 @@ import {
   M07_FIRST_PERSON_VIEW_CONFIG,
   M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
   advanceFirstPersonPlayerView,
+  adjustFirstPersonEyeHeight,
+  applyFirstPersonDesktopDragDelta,
   applyFirstPersonLookDelta,
   applyFirstPersonTouchDragDelta,
   computeLookAnglesToPoint,
@@ -35,8 +37,85 @@ describe("M07 first-person player view constraints", () => {
 
     // Dragging the scene right/down turns the camera left/up so the
     // visible scene follows the finger instead of moving opposite it.
-    expect(draggedRight.yawRadians).toBeGreaterThan(0);
-    expect(draggedDown.pitchRadians).toBeGreaterThan(0);
+    expect(draggedRight.yawRadians).toBeGreaterThan(
+      initial.yawRadians,
+    );
+    expect(draggedDown.pitchRadians).toBeGreaterThan(
+      initial.pitchRadians,
+    );
+  });
+
+  it("uses the same content-drag direction on desktop", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    const initial = createFirstPersonPlayerViewState(config);
+
+    const draggedRight = applyFirstPersonDesktopDragDelta(
+      initial,
+      100,
+      0,
+      config,
+    );
+    const draggedDown = applyFirstPersonDesktopDragDelta(
+      initial,
+      0,
+      100,
+      config,
+    );
+
+    expect(draggedRight.yawRadians).toBeGreaterThan(
+      initial.yawRadians,
+    );
+    expect(draggedDown.pitchRadians).toBeGreaterThan(
+      initial.pitchRadians,
+    );
+  });
+
+  it("starts with a directly playable desktop framing", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    const state = createFirstPersonPlayerViewState(config);
+    const eye = playerCameraPosition(state);
+    const upperClawPoint = { x: 0, y: 1.05, z: 0 };
+    const frontPrizeTopPoint = { x: 0, y: 0.37, z: 0.14 };
+    const upper = computeLookAnglesToPoint(eye, upperClawPoint);
+    const lower = computeLookAnglesToPoint(eye, frontPrizeTopPoint);
+    const halfFovRadians =
+      (M07_CAMERA_FOV_DEGREES * Math.PI / 180) * 0.5;
+
+    expect(config.initialZ).toBe(0.78);
+    expect(config.maxZ).toBe(0.84);
+    expect(config.eyeY).toBe(1.04);
+    expect(config.minEyeY).toBe(0.98);
+    expect(config.maxEyeY).toBe(1.10);
+    expect(
+      config.initialPitchRadians * 180 / Math.PI,
+    ).toBeCloseTo(-23, 10);
+    expect(
+      Math.abs(upper.pitchRadians - state.pitchRadians),
+    ).toBeLessThan(halfFovRadians);
+    expect(
+      Math.abs(lower.pitchRadians - state.pitchRadians),
+    ).toBeLessThan(halfFovRadians);
+  });
+
+  it("allows only bounded player-height adjustment", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    let state = createFirstPersonPlayerViewState(config);
+
+    expect(state.eyeY).toBe(config.eyeY);
+    state = adjustFirstPersonEyeHeight(state, 1, config);
+    expect(state.eyeY).toBe(config.maxEyeY);
+    state = adjustFirstPersonEyeHeight(state, -2, config);
+    expect(state.eyeY).toBe(config.minEyeY);
+
+    state = adjustFirstPersonEyeHeight(
+      state,
+      config.eyeHeightStepMeters,
+      config,
+    );
+    expect(state.eyeY).toBeCloseTo(
+      config.minEyeY + config.eyeHeightStepMeters,
+      10,
+    );
   });
 
   it("uses a wider but still bounded mobile framing", () => {
@@ -51,7 +130,6 @@ describe("M07 first-person player view constraints", () => {
 
     const eye = playerCameraPosition(
       createFirstPersonPlayerViewState(mobile),
-      mobile,
     );
     const upperClawPoint = { x: 0, y: 1.19, z: 0.02 };
     const prizeDeckPoint = { x: 0, y: 0.34, z: 0.02 };
@@ -190,7 +268,7 @@ describe("M07 first-person player view constraints", () => {
       x: 0,
       z: config.maxZ,
     };
-    const cameraPosition = playerCameraPosition(base, config);
+    const cameraPosition = playerCameraPosition(base);
 
     for (const target of M07_CABINET_VIEW_TARGETS) {
       const look = computeLookAnglesToPoint(
@@ -215,7 +293,6 @@ describe("M07 first-person player view constraints", () => {
           pitchRadians: look.pitchRadians,
         },
         M07_CABINET_VIEW_TARGETS,
-        config,
       );
 
       expect(focused?.target.id).toBe(target.id);

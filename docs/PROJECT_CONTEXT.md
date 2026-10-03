@@ -523,6 +523,16 @@ Mobile-first input:
 - diagnostic X/Z values are coordinates, not keyboard keys
 - mobile-controls initialization is browser-smoke gated
 
+Desktop/default framing correction:
+- desktop pointer-lock movement now follows content-drag semantics, matching touch
+- desktop initial player Z = 0.78 m; max Z = 0.84 m
+- initial yaw = 0°, initial pitch = **−23°**
+- default eye height = **1.04 m**, bounded to **0.98–1.10 m** in 0.02 m steps
+- desktop `PageUp/PageDown` and mobile `VIEW + / VIEW −` adjust only bounded player height; no free-fly path is introduced
+- desktop FOV remains 50°
+- representative upper-claw and front-prize points fit inside the initial desktop vertical FOV without any first-user camera adjustment
+- mobile keeps Z 0.84 / max 0.90 and 58° FOV while inheriting the same −23° starting pitch
+
 Mobile calibration:
 - virtual joystick dead zone = 14%; post-dead-zone travel is remapped to full analog output
 - touch-look sensitivity = 0.0030 rad/pixel; desktop mouse remains 0.0022
@@ -535,18 +545,19 @@ Mobile calibration:
 - physics timestep and all locked machine parameters are unchanged
 
 Grip/play correction:
-- deployed feedback showed prizes could not be usefully carried even though pedestal calibration passed
-- root cause: pedestal calibration allowed favorable under-grip geometry while real prizes rest on a broad flat play deck
-- regression now reproduces the full flat play deck
+- deployed feedback showed prizes could not be usefully carried even though earlier pedestal and mild flat-deck calibration passed
+- production calibration now requires actual **successful retention**, not merely transient lift
 - actual `prize/sphere_ball`: 75 g, rubber friction 0.82, radius 52.5 mm
-- cabinet CLOSE/PICKUP = 3.6 N·m and finger friction = 0.82
-- cabinet RETAINING = 0.0075 N·m
-- cabinet-only strong PICKUP distance increases from 0.06 m to **0.12 m**
-- real flat-deck ball reaches ≈233 mm peak/final lift
-- same geometry/friction at 150 g reaches only ≈9 mm peak lift and still falls back
-- Foam Cube improves to ≈30.3 mm planar displacement / 14.5 mm peak lift
-- Teddy peak lift improves to ≈21.6 mm
-- mass sensitivity remains physical; no attachment/magnet/kinematic shortcut
+- cabinet finger friction = **1.25**
+- cabinet CLOSE/PICKUP = **6.0 N·m**
+- cabinet RETAINING = **0.014 N·m**
+- cabinet HOLD BOOST = **0.018 N·m**
+- cabinet-only strong PICKUP distance = **0.18 m**
+- standalone locked M04 values remain unchanged
+- with an extra 1.3 s top-hold observation, real ball retains ≈**252.5 mm** at +1.2 s/final
+- rounded Foam Cube retains ≈**241.6 mm** at +1.2 s/final
+- same-size 150 g rubber-ball control may briefly peak ≈24.8 mm but returns to ≈0 mm by +1.2 s/final
+- mass sensitivity therefore remains physical; no attachment/magnet/kinematic shortcut
 - drop-position readability is improved without a laser: low-contrast woven deck texture + fixed cabinet-light shadows + existing small lateral parallax
 - `prize/cube_small` is reclassified as a 75 g rounded Foam Cube (`box/rounded_v1`) because the former ideal sharp plastic cuboid was confirmed through multiple physical sweeps to be an unrealistic starter target
 - Foam Cube produces ≈22.7 mm planar displacement and ≈10.4 mm peak lift; the legacy sharp cuboid produces only ≈2.5 mm / 2.1 mm
@@ -558,12 +569,12 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **32 test files / 90 tests PASS**
+- **32 test files / 92 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step
 
-Deploy and manually verify on real phones first: the 14% joystick dead zone, 0.0030 rad/pixel touch look, 140 ms action debounce, portrait/landscape layout, safe areas and mobile performance. Also recheck front-only movement, depth cues, Foam Cube interaction, and centered rubber-ball pickup. If these pass on Android Chrome and iPhone Safari, close M07 and proceed to M08.
+Deploy and manually verify the new startup framing and player-height controls on desktop and phone: the claw should sit near eye level/slightly below while the prize field remains visible. Then verify the strong production grip can actually retain the center rubber ball and Foam Cube in normal play, while heavier prizes remain harder.
 
 ## Design-review additions
 

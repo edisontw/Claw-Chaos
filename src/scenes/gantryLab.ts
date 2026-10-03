@@ -174,6 +174,7 @@ export interface GantryGripProfile {
   fingerFriction?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
+  holdBoostTorque?: number;
   pickupLiftDistanceMeters?: number;
 }
 
@@ -203,6 +204,9 @@ export function createGantryLabScene(
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
     options.gripProfile?.retainingTorque ?? claw.pt002RetainingTorque;
+  const holdBoostTorque =
+    options.gripProfile?.holdBoostTorque ??
+    M04_PLAY_CONFIG.holdBoostTorque;
   const pickupLiftDistanceMeters =
     options.gripProfile?.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -982,7 +986,7 @@ export function createGantryLabScene(
       const activeContactTorque =
         activeForcePhase === "RETAINING"
           ? holdBoostActive
-            ? M04_PLAY_CONFIG.holdBoostTorque
+            ? holdBoostTorque
             : retainingTorque
           : closePickupTorque;
       for (const joint of fingerJoints) {
@@ -1136,7 +1140,7 @@ export function createGantryLabScene(
           M04_PLAY_CONFIG.pickupLiftDistanceMeters.toFixed(2) +
           " m",
         "BOOST T / budget  " +
-          M04_PLAY_CONFIG.holdBoostTorque.toFixed(3) +
+          holdBoostTorque.toFixed(3) +
           " N·m / " +
           M04_PLAY_CONFIG.holdBoostDurationSeconds.toFixed(2) +
           " s",

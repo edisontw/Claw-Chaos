@@ -135,12 +135,12 @@ Current cabinet realism baseline:
 - cabinet reel maximum payout is extended by the same 85 mm, preserving bottom reach; carriage top keeps ≈10 mm ceiling clearance
 - two visual service/control wires accompany the main suspension cable
 - chute sensor debug wireframe is hidden during normal play; a raised solid trim sits above the deck around the opening to avoid moving-camera seam/z-fighting artifacts
-- cabinet-only grip profile = finger friction **0.82**, CLOSE/PICKUP **3.6 N·m**, RETAINING **0.0075 N·m**
-- cabinet strong PICKUP phase = **0.12 m lift** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
-- actual `prize/sphere_ball` on the full flat deck: 75 g / friction 0.82 / radius 52.5 mm → peak/final lift ≈ **226 mm**
-- same flat-deck geometry at 150 g → peak lift only ≈ **7.1 mm**, so grip remains mass-sensitive rather than magnetic
-- `prize/cube_small` is now a **75 g Foam Cube** with a rounded physical collider (~14 mm corner radius) instead of an ideal sharp plastic cuboid
-- stronger cabinet grip regression: Foam Cube ≈ **30.3 mm planar displacement + 14.5 mm peak lift**; prior cabinet profile ≈ 22.7 mm + 10.4 mm
+- cabinet-only grip profile = finger friction **1.25**, CLOSE/PICKUP **6.0 N·m**, RETAINING **0.014 N·m**, HOLD BOOST **0.018 N·m**
+- cabinet strong PICKUP phase = **0.18 m lift** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
+- actual `prize/sphere_ball` on the full flat deck: 75 g / friction 0.82 / radius 52.5 mm → at RETAINING +1.2 s / final ≈ **252.5 mm**
+- same geometry at 150 g may be nudged/lifted briefly (peak ≈ **24.8 mm**) but RETAINING +1.2 s / final returns to ≈ **0 mm**
+- `prize/cube_small` is a **75 g Foam Cube** with a rounded physical collider (~14 mm corner radius) and now reaches RETAINING +1.2 s / final ≈ **241.6 mm**
+- production regression therefore proves two real starter prizes can be fully retained while the 2× mass control still fails
 - rigid cardboard boxes/cans remain harder targets; the starter cube is not scripted to win
 - locked `gantry-lab` M04 force profile remains 0.60 / 2.5 / 0.003
 - EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
@@ -152,13 +152,14 @@ Current `cabinet-lab` controls:
 
 Desktop:
 - click canvas: capture mouse for first-person look; `Esc` releases pointer lock
-- mouse: head look, clamped to **±90° yaw** and **−70°/+25° pitch**
+- mouse: head look with **content-drag semantics**, clamped to **±90° yaw** and **−70°/+25° pitch**
 - `W/S`: small front/back standing-position adjustment only
 - `A/D`: small left/right adjustment only; player remains in front of the cabinet
 - `Q/E` lean has been **removed**
 - `F`: direct primary action, same DROP / EARLY CLOSE action as `Space`; gaze focus is no longer required
 - Arrow keys: move the claw while READY
 - `Space`: DROP, then EARLY CLOSE if pressed again during descent
+- `PageUp/PageDown`: raise/lower bounded player eye height by 20 mm
 - `F3`: collider debug in `cabinet-lab`
 - `M`: COM/origin debug
 
@@ -169,6 +170,7 @@ Mobile / coarse pointer:
 - left virtual analog joystick: move the claw in the cabinet plane
 - joystick dead zone = **14%** of radius, then remaining travel is remapped to full analog range
 - large right `DROP / CLOSE` button: same physical primary action as desktop Space/F
+- `VIEW + / VIEW −`: bounded player-height adjustment in 20 mm steps
 - accepted action taps have a **140 ms debounce** to reject accidental double taps without blocking a deliberate later EARLY CLOSE
 - portrait and landscape have separate control sizing/placement; safe-area insets are respected
 - debug overlay is hidden on touch layouts
@@ -177,21 +179,23 @@ Mobile / coarse pointer:
 Coordinate note:
 - X/Z labels in diagnostics are **positions/axes**, not keyboard keys
 - player X range = **±0.28 m**
-- player Z range ≈ **0.534–0.78 m**, always outside the front glass
+- desktop player Z range ≈ **0.534–0.84 m**, always outside the front glass
 - walking around either cabinet side remains disabled
 
 Current M07 front-view baseline:
-- eye height = 0.98 m; no vertical/free-fly input
+- default eye height = **1.04 m**; bounded player-height range = **0.98–1.10 m** in 0.02 m steps; no free-fly
 - yaw = ±90°; pitch = −70° / +25°
 - camera FOV remains exactly 50°
 - no side standing zones and no front-corner traversal
 - front-only movement plus head turn is used for aiming/readability
 - control-panel and chute gaze targets remain reachable from the legal front zone
 - touch-drag look + analog claw joystick + direct DROP/CLOSE touch button are initialized in `cabinet-lab`
-- mobile camera starts farther back at Z **0.84 m** (front zone max 0.90 m) and uses a modest **58° FOV**; desktop remains Z 0.68 m / 50°
+- default play framing: desktop starts at Z **0.78 m** with **−23° pitch** and 50° FOV so the claw sits near eye level/slightly below while the front prize tops remain visible
+- desktop may back to Z **0.84 m**
+- mobile starts at Z **0.84 m** (front zone max 0.90 m), uses the same −23° initial pitch, and keeps a modest **58° FOV**
 - mobile render budget: DPR cap **1.5**, shadow maps **512**; desktop remains DPR 2 / 1024
-- fixed physics timestep, forces and claw calibration are unchanged
-- **32 test files / 90 tests PASS**
+- fixed physics timestep and closed M01–M04 lab calibration remain unchanged; only the cabinet-specific grip profile is strengthened
+- **32 test files / 92 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:

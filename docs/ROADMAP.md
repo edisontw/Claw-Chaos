@@ -978,6 +978,24 @@ Phone/coarse-pointer play is treated as a primary control path:
 - debug overlay hides on touch layouts to preserve play space
 - browser smoke asserts that mobile controls initialize on both explicit `cabinet-lab` and the root/default scene
 
+## Default play framing / desktop drag correction
+
+Deployed desktop feedback showed two remaining view issues:
+- desktop pointer-lock movement still used FPS-style direction while touch already used content-drag direction
+- the initial horizontal view required manual camera adjustment before the player could comfortably judge the claw against the prize field
+
+Current correction:
+- desktop mouse movement uses the same **content-drag semantics** as touch
+- desktop initial Z = **0.78 m**, max Z = **0.84 m**
+- initial yaw = 0°
+- initial pitch = **−23°**
+- default eye height = **1.04 m**; bounded player-height range = **0.98–1.10 m** in 0.02 m steps
+- desktop `PageUp/PageDown` and mobile `VIEW + / VIEW −` adjust only this bounded eye height
+- desktop FOV remains **50°**
+- mobile inherits the same −23° initial pitch while retaining Z 0.84 / max 0.90 and 58° FOV
+- automated framing regression verifies representative upper-claw and front-prize-top points are both inside the untouched desktop 50° vertical FOV at startup
+- no camera teleport, laser, aim guide or physics change
+
 ## Mobile calibration pass
 
 Calibrated phone/coarse-pointer defaults:
@@ -1011,17 +1029,17 @@ Current physical regression instead uses:
 - existing 3-finger Rapier contact model
 
 Cabinet-only play tuning:
-- finger friction = 0.82
-- CLOSE/PICKUP torque = 3.6 N·m
-- RETAINING torque = 0.0075 N·m
-- strong PICKUP lift distance = **0.12 m** before RETAINING
-- standalone locked M04 lab keeps the original 0.06 m pickup distance
+- finger friction = **1.25**
+- CLOSE/PICKUP torque = **6.0 N·m**
+- RETAINING torque = **0.014 N·m**
+- cabinet HOLD BOOST = **0.018 N·m**
+- strong PICKUP lift distance = **0.18 m** before RETAINING
+- standalone locked M04 lab keeps 0.60 / 2.5 / 0.003 N·m, HOLD BOOST 0.010 N·m and the original 0.06 m pickup distance
 
-Measured stronger-grip result:
-- 75 g real rubber-ball profile: peak/final lift ≈ **0.2330 m**
-- 150 g same-size/same-friction control: peak lift ≈ **0.0092 m**, final ≈ 0 m
-- Foam Cube improves from ≈10.4 mm peak lift / 22.7 mm planar movement to ≈**14.5 mm / 30.3 mm**
-- Teddy peak lift improves from ≈14.6 mm to ≈**21.6 mm**
+Measured successful-grip result with 1.3 s top-hold observation:
+- 75 g real rubber ball: RETAINING +1.2 s ≈ **0.2525 m**, final ≈ **0.2525 m** — SUCCESS
+- 75 g rounded Foam Cube: RETAINING +1.2 s ≈ **0.2416 m**, final ≈ **0.2416 m** — SUCCESS
+- 150 g same-size rubber-ball control: brief peak ≈ **0.0248 m**, RETAINING +1.2 s / final ≈ **0 m** — FAIL as intended
 - no magnet, prize parenting, weld, scripted carry, kinematic prize conversion or velocity reset
 
 ## Depth/readability and starter-prize pass
@@ -1047,12 +1065,13 @@ Starter cube behavior:
 - PT-026 cannot cross front glass — PASS
 - PT-026 cannot reach either side standing zone — PASS
 - no free-fly/overhead teleport path — PASS by controller design
-- real flat-deck easy-prize pickup — PASS
-- flat-deck 2× mass rejection — PASS
+- real flat-deck rubber-ball full retention — PASS
+- real flat-deck Foam Cube full retention — PASS
+- flat-deck 2× mass rejection after 1.2 s retaining hold — PASS
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **32 test files / 90 tests PASS**
+- **32 test files / 92 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS

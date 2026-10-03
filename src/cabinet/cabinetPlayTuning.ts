@@ -1,9 +1,10 @@
 export const CABINET_PLAY_TUNING = {
   verticalHomeOffsetMeters: 0.085,
-  fingerFriction: 0.82,
-  closePickupTorque: 3.6,
-  retainingTorque: 0.0075,
-  pickupLiftDistanceMeters: 0.12,
+  fingerFriction: 1.25,
+  closePickupTorque: 6.0,
+  retainingTorque: 0.014,
+  holdBoostTorque: 0.018,
+  pickupLiftDistanceMeters: 0.18,
   chuteTrimHalfWidth: 0.012,
   chuteTrimHalfHeight: 0.004,
 } as const;
