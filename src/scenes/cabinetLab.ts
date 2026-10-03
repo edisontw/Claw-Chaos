@@ -371,25 +371,27 @@ export function createCabinetLabScene(
       gantryScene.setManualGantryInput?.(x, z);
     },
     beforePhysicsStep(stepSeconds: number): void {
-      layoutSettle.update(
-        stepSeconds,
-        tracked.map((prize) => {
-          const linear = prize.body.linvel();
-          const angular = prize.body.angvel();
-          return {
-            linearSpeedMetersPerSecond: Math.hypot(
-              linear.x,
-              linear.y,
-              linear.z,
-            ),
-            angularSpeedRadiansPerSecond: Math.hypot(
-              angular.x,
-              angular.y,
-              angular.z,
-            ),
-          };
-        }),
-      );
+      if (!layoutSettle.ready) {
+        layoutSettle.update(
+          stepSeconds,
+          tracked.map((prize) => {
+            const linear = prize.body.linvel();
+            const angular = prize.body.angvel();
+            return {
+              linearSpeedMetersPerSecond: Math.hypot(
+                linear.x,
+                linear.y,
+                linear.z,
+              ),
+              angularSpeedRadiansPerSecond: Math.hypot(
+                angular.x,
+                angular.y,
+                angular.z,
+              ),
+            };
+          }),
+        );
+      }
 
       gantryScene.beforePhysicsStep?.(stepSeconds);
 
