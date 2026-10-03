@@ -1,11 +1,39 @@
 import { describe, expect, it } from "vitest";
 import { CLAW_LAB_CONFIG } from "../scenes/clawLab";
-import { M02_GANTRY_CONFIG } from "../scenes/gantryLab";
+import {
+  M02_GANTRY_CONFIG,
+  resolveGantryInitialPosition,
+} from "../scenes/gantryLab";
 import { M04_PLAY_CONFIG } from "../scenes/m04PlayCycle";
 import { M06_CABINET_CONFIG } from "./cabinetGeometry";
-import { CABINET_PLAY_TUNING } from "./cabinetPlayTuning";
+import {
+  CABINET_CLAW_PARK_POSITION,
+  CABINET_PLAY_TUNING,
+} from "./cabinetPlayTuning";
 
 describe("Cabinet play tuning", () => {
+  it("parks the initial cabinet claw directly over the chute", () => {
+    expect(CABINET_CLAW_PARK_POSITION).toEqual({
+      x: M06_CABINET_CONFIG.chuteCenterX,
+      z: M06_CABINET_CONFIG.chuteCenterZ,
+    });
+    expect(
+      resolveGantryInitialPosition(CABINET_CLAW_PARK_POSITION),
+    ).toEqual(CABINET_CLAW_PARK_POSITION);
+    expect(CABINET_CLAW_PARK_POSITION.x).toBeGreaterThanOrEqual(
+      M02_GANTRY_CONFIG.xMin,
+    );
+    expect(CABINET_CLAW_PARK_POSITION.x).toBeLessThanOrEqual(
+      M02_GANTRY_CONFIG.xMax,
+    );
+    expect(CABINET_CLAW_PARK_POSITION.z).toBeGreaterThanOrEqual(
+      M02_GANTRY_CONFIG.zMin,
+    );
+    expect(CABINET_CLAW_PARK_POSITION.z).toBeLessThanOrEqual(
+      M02_GANTRY_CONFIG.zMax,
+    );
+  });
+
   it("raises the idle claw while preserving the locked bottom reach", () => {
     const offset = CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
     const cabinetCarriageY = M02_GANTRY_CONFIG.carriageY + offset;
