@@ -121,7 +121,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-M07 remains a **closure candidate** after the depth/readability and starter-prize interaction pass. Player movement stays restricted to the front. No laser or projected aim guide is used: the cabinet now restores natural depth cues with a low-contrast woven deck texture, fixed cabinet-light shadows, occlusion and the existing small lateral player motion. The remaining M07 gate is deployed-build manual play/readability confirmation.
+M07 remains a **closure candidate**, now with a mobile-first input slice. Player movement stays restricted to the front. No laser or projected aim guide is used: the cabinet restores natural depth cues with a low-contrast woven deck texture, fixed cabinet-light shadows, occlusion and small lateral player motion. The remaining gate is real-device manual play/readability confirmation, with phone usability treated as a primary path rather than an afterthought.
 
 Root/default scene:
 - `https://edisontw.github.io/Claw-Chaos/` → `cabinet-lab`
@@ -148,21 +148,32 @@ Current cabinet realism baseline:
 - depth/readability uses woven deck texture + fixed shadow-casting cabinet light; **no laser / aim projection**
 - root/browser default-scene smoke is regression-gated
 
-Current `cabinet-lab` player-view controls:
+Current `cabinet-lab` controls:
+
+Desktop:
 - click canvas: capture mouse for first-person look; `Esc` releases pointer lock
 - mouse: head look, clamped to **±90° yaw** and **−70°/+25° pitch**
 - `W/S`: small front/back standing-position adjustment only
 - `A/D`: small left/right adjustment only; player remains in front of the cabinet
-- player X range = **±0.28 m**
-- player Z range ≈ **0.534–0.78 m**, always outside the front glass
-- `Q/E`: small bounded lean, max **30 mm**
-- walking around either cabinet side is intentionally disabled
-- center reticle: gaze target
-- `F`: interact when the reticle is on the red control-panel button
-- chute gaze is inspection-only
+- `Q/E` lean has been **removed**
+- `F`: direct primary action, same DROP / EARLY CLOSE action as `Space`; gaze focus is no longer required
+- Arrow keys: move the claw while READY
+- `Space`: DROP, then EARLY CLOSE if pressed again during descent
 - `F3`: collider debug in `cabinet-lab`
 - `M`: COM/origin debug
-- machine keyboard controls remain Arrow keys / Space / Shift / H / P / T
+
+Mobile / coarse pointer:
+- drag directly on the play view: look around; no pointer lock required
+- left virtual analog joystick: move the claw in the cabinet plane
+- large right `DROP / CLOSE` button: same physical primary action as desktop Space/F
+- safe-area insets are respected; debug overlay is hidden on touch layouts
+- the mobile joystick feeds the same gantry physics input path as the keyboard, not synthetic key events
+
+Coordinate note:
+- X/Z labels in diagnostics are **positions/axes**, not keyboard keys
+- player X range = **±0.28 m**
+- player Z range ≈ **0.534–0.78 m**, always outside the front glass
+- walking around either cabinet side remains disabled
 
 Current M07 front-view baseline:
 - eye height = 0.98 m; no vertical/free-fly input
@@ -171,7 +182,8 @@ Current M07 front-view baseline:
 - no side standing zones and no front-corner traversal
 - front-only movement plus head turn is used for aiming/readability
 - control-panel and chute gaze targets remain reachable from the legal front zone
-- **30 test files / 81 tests PASS**
+- touch-drag look + analog claw joystick + direct DROP/CLOSE touch button are initialized in `cabinet-lab`
+- **31 test files / 83 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:
