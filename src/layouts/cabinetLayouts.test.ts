@@ -28,10 +28,12 @@ describe("M09 cabinet layout foundation", () => {
     });
   });
 
-  it("is deterministic for a fixed seed", () => {
-    const first = createCabinetLayout("loose", "fixed-seed");
-    const second = createCabinetLayout("loose", "fixed-seed");
-    expect(second).toEqual(first);
+  it("is deterministic for a fixed seed across every implemented layout", () => {
+    for (const id of ["loose", "dense", "showcase"] as const) {
+      const first = createCabinetLayout(id, "fixed-seed");
+      const second = createCabinetLayout(id, "fixed-seed");
+      expect(second).toEqual(first);
+    }
   });
 
   it("changes physical spawn poses when the seed changes", () => {
@@ -76,6 +78,11 @@ describe("M09 cabinet layout foundation", () => {
     );
     const front = layout.placements.slice(0, 3);
     const rear = layout.placements.slice(3);
+
+    expect(front[0]!.x).toBeLessThan(-0.21);
+    expect(front[2]!.x).toBeGreaterThan(0.21);
+    expect(rear[0]!.x).toBeLessThan(-0.21);
+    expect(rear[2]!.x).toBeGreaterThan(0.21);
 
     for (const placement of front) {
       expect(placement.z).toBeLessThan(-0.10);
