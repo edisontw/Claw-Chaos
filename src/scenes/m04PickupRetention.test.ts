@@ -975,5 +975,137 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(heavyBall.finalLiftMeters).toBeLessThan(0.02);
   });
 
+
+  it("sweeps deeper cabinet closure for real plush-prize retention", async () => {
+    const candidates = [
+      {
+        label: "current",
+        fingerFriction: 1.25,
+        closePickupTorque: 6.0,
+        retainingTorque: 0.014,
+        pickupLiftDistanceMeters: 0.18,
+        closedAngleRadians: -0.42,
+      },
+      {
+        label: "plush-1",
+        fingerFriction: 1.40,
+        closePickupTorque: 7.0,
+        retainingTorque: 0.018,
+        pickupLiftDistanceMeters: 0.20,
+        closedAngleRadians: -0.50,
+      },
+      {
+        label: "plush-2",
+        fingerFriction: 1.55,
+        closePickupTorque: 8.0,
+        retainingTorque: 0.022,
+        pickupLiftDistanceMeters: 0.20,
+        closedAngleRadians: -0.56,
+      },
+      {
+        label: "plush-3",
+        fingerFriction: 1.70,
+        closePickupTorque: 9.0,
+        retainingTorque: 0.026,
+        pickupLiftDistanceMeters: 0.22,
+        closedAngleRadians: -0.60,
+      },
+      {
+        label: "plush-4",
+        fingerFriction: 1.90,
+        closePickupTorque: 10.0,
+        retainingTorque: 0.030,
+        pickupLiftDistanceMeters: 0.22,
+        closedAngleRadians: -0.64,
+      },
+    ] as const;
+
+    const plushPrizes = [
+      {
+        id: "prize/teddy_simple",
+        rotationYRadians: -0.22,
+      },
+      {
+        id: "prize/pillow_small",
+        rotationYRadians: 0.28,
+      },
+      {
+        id: "prize/animal_simple",
+        rotationYRadians: -0.12,
+      },
+    ] as const;
+
+    const sphere = getPrizeDefinition("prize/sphere_ball");
+    const sphereResolved = resolvePrizeSpec(sphere);
+    const rows = [];
+
+    for (const candidate of candidates) {
+      const results = [];
+      let plushSuccessCount = 0;
+
+      for (const prize of plushPrizes) {
+        const metrics = await simulateM04PickupRetention({
+          ...candidate,
+          prizeDefinitionId: prize.id,
+          prizeRotationYRadians: prize.rotationYRadians,
+          topHoldSeconds: 1.3,
+          supportMode: "flat-deck",
+        });
+        const success =
+          metrics.topReached &&
+          metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
+          metrics.finalLiftMeters >= 0.08;
+        if (success) {
+          plushSuccessCount += 1;
+        }
+        results.push({
+          id: prize.id,
+          success,
+          peak: metrics.peakLiftMeters,
+          retain1p2: metrics.liftAfterRetaining1p2sMeters,
+          final: metrics.finalLiftMeters,
+          planar: metrics.maxPlanarDisplacementMeters,
+        });
+      }
+
+      const heavyBall = await simulateM04PickupRetention({
+        ...candidate,
+        ballMassKg: sphereResolved.massKg * 2,
+        ballFriction: sphereResolved.material.dynamicFriction,
+        ballRadiusMeters: sphere.dimensions.x * 0.5,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+      });
+      const heavyBallSuccess =
+        heavyBall.liftAfterRetaining1p2sMeters >= 0.08 &&
+        heavyBall.finalLiftMeters >= 0.08;
+
+      rows.push({
+        ...candidate,
+        plushSuccessCount,
+        heavyBallSuccess,
+        heavyBall: {
+          peak: heavyBall.peakLiftMeters,
+          retain1p2: heavyBall.liftAfterRetaining1p2sMeters,
+          final: heavyBall.finalLiftMeters,
+        },
+        prizes: results,
+      });
+    }
+
+    console.log(
+      "Cabinet plush-grip sweep",
+      JSON.stringify(rows),
+    );
+
+    expect(
+      rows.some(
+        (row) =>
+          row.plushSuccessCount >= 2 &&
+          !row.heavyBallSuccess,
+      ),
+    ).toBe(true);
+  }, 15000);
+
 });
 
