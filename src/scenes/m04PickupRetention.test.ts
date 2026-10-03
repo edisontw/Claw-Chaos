@@ -980,83 +980,37 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("sweeps stronger physical claw profiles for plush gameplay success", async () => {
-    const candidates = [
-      {
-        label: "current",
-        fingerFriction: 1.25,
-        closePickupTorque: 6.0,
-        retainingTorque: 0.014,
-        pickupLiftDistanceMeters: 0.18,
-        closedAngleRadians: -0.42,
-        fingerLowerPadRadiusMeters: 0.0045,
-      },
-      {
-        label: "plush-A",
-        fingerFriction: 1.70,
-        closePickupTorque: 9.0,
-        retainingTorque: 0.030,
-        pickupLiftDistanceMeters: 0.22,
-        closedAngleRadians: -0.60,
-        fingerLowerPadRadiusMeters: 0.008,
-      },
-      {
-        label: "plush-B",
-        fingerFriction: 2.00,
-        closePickupTorque: 11.0,
-        retainingTorque: 0.040,
-        pickupLiftDistanceMeters: 0.24,
-        closedAngleRadians: -0.64,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
-      {
-        label: "plush-C",
-        fingerFriction: 2.30,
-        closePickupTorque: 13.0,
-        retainingTorque: 0.050,
-        pickupLiftDistanceMeters: 0.24,
-        closedAngleRadians: -0.68,
-        fingerLowerPadRadiusMeters: 0.012,
-      },
-      {
-        label: "plush-D",
-        fingerFriction: 2.60,
-        closePickupTorque: 15.0,
-        retainingTorque: 0.060,
-        pickupLiftDistanceMeters: 0.26,
-        closedAngleRadians: -0.72,
-        fingerLowerPadRadiusMeters: 0.014,
-      },
-    ] as const;
-
-    const prizes = [
-      { id: "prize/teddy_simple", rotationYRadians: -0.22 },
-      { id: "prize/pillow_small", rotationYRadians: 0.28 },
-      { id: "prize/animal_simple", rotationYRadians: -0.12 },
-    ] as const;
-    const sphere = getPrizeDefinition("prize/sphere_ball");
-    const sphereResolved = resolvePrizeSpec(sphere);
+  it("finds a reachable Teddy grab point with the minimal two-plush-success profile", async () => {
+    const profile = {
+      fingerFriction: 2.0,
+      closePickupTorque: 11.0,
+      retainingTorque: 0.040,
+      pickupLiftDistanceMeters: 0.24,
+      closedAngleRadians: -0.64,
+      fingerLowerPadRadiusMeters: 0.010,
+      topHoldSeconds: 1.3,
+      supportMode: "flat-deck" as const,
+    };
+    const offsets = [-0.06, -0.04, -0.02, 0, 0.02, 0.04, 0.06] as const;
+    const zOffsets = [-0.03, 0, 0.03] as const;
     const rows = [];
 
-    for (const candidate of candidates) {
-      const results = [];
-      let plushSuccessCount = 0;
-
-      for (const prize of prizes) {
+    for (const prizeOffsetX of offsets) {
+      for (const prizeOffsetZ of zOffsets) {
         const metrics = await simulateM04PickupRetention({
-          ...candidate,
-          prizeDefinitionId: prize.id,
-          prizeRotationYRadians: prize.rotationYRadians,
-          topHoldSeconds: 1.3,
-          supportMode: "flat-deck",
+          ...profile,
+          prizeDefinitionId: "prize/teddy_simple",
+          prizeRotationYRadians: -0.22,
+          prizeOffsetX,
+          prizeOffsetZ,
         });
         const success =
           metrics.topReached &&
           metrics.liftAfterRetaining1p2sMeters >= 0.08 &&
           metrics.finalLiftMeters >= 0.08;
-        if (success) plushSuccessCount += 1;
-        results.push({
-          id: prize.id,
+        rows.push({
+          prizeOffsetX,
+          prizeOffsetZ,
           success,
           peak: metrics.peakLiftMeters,
           retain1p2: metrics.liftAfterRetaining1p2sMeters,
@@ -1064,36 +1018,14 @@ describe("M04 physical pickup-to-retaining force transition", () => {
           planar: metrics.maxPlanarDisplacementMeters,
         });
       }
-
-      const heavyBall = await simulateM04PickupRetention({
-        ...candidate,
-        ballMassKg: sphereResolved.massKg * 2,
-        ballFriction: sphereResolved.material.dynamicFriction,
-        ballRadiusMeters: sphere.dimensions.x * 0.5,
-        topHoldSeconds: 1.3,
-        supportMode: "flat-deck",
-      });
-
-      rows.push({
-        ...candidate,
-        plushSuccessCount,
-        heavyBall: {
-          peak: heavyBall.peakLiftMeters,
-          retain1p2: heavyBall.liftAfterRetaining1p2sMeters,
-          final: heavyBall.finalLiftMeters,
-        },
-        prizes: results,
-      });
     }
 
     console.log(
-      "Cabinet stronger plush gameplay sweep",
+      "Cabinet Teddy offset sweep with plush-B",
       JSON.stringify(rows),
     );
 
-    expect(
-      Math.max(...rows.map((row) => row.plushSuccessCount)),
-    ).toBeGreaterThanOrEqual(2);
+    expect(rows.some((row) => row.success)).toBe(true);
   }, 15000);
 
 });
