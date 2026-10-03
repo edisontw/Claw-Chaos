@@ -456,19 +456,18 @@ Implementation status — 2026-10-01:
 - full M04 closure suite: **54 automated tests PASS**
 
 Cabinet gameplay calibration — updated 2026-10-03:
-- locked M04 lab values remain unchanged
-- cabinet-only finger friction = **0.72**
-- cabinet-only CLOSE/PICKUP torque = **2.9 N·m**
-- cabinet-only RETAINING torque = **0.0055 N·m**
-- cabinet-only strong PICKUP distance = **0.12 m** before RETAINING; locked M04 lab remains 0.06 m
-- HOLD BOOST remains 0.010 N·m
-- calibration now includes the broad physical play deck instead of relying only on a pedestal
+- locked standalone M04 lab values remain unchanged
+- cabinet-only finger friction = **1.25**
+- cabinet-only CLOSE/PICKUP torque = **6.0 N·m**
+- cabinet-only RETAINING torque = **0.014 N·m**
+- cabinet-only HOLD BOOST = **0.018 N·m**; standalone M04 HOLD BOOST remains 0.010 N·m
+- cabinet-only strong PICKUP distance = **0.18 m** before RETAINING; locked M04 lab remains 0.06 m
+- calibration uses the broad physical play deck and requires sustained retention, not merely transient lift
 - actual `prize/sphere_ball`: 0.075 kg, rubber dynamic friction 0.82, radius 0.0525 m
-- stronger-grip flat-deck result: 75 g ball peak/final lift ≈ **0.2330 m**
-- 0.150 kg same-size/same-friction control: peak lift ≈ **0.0092 m**, final ≈ 0 m
-- Foam Cube improves from ≈10.4 mm peak lift / 22.7 mm planar movement to ≈**14.5 mm / 30.3 mm**
-- Teddy peak lift improves from ≈14.6 mm to ≈**21.6 mm**
-- therefore an easy real gameplay prize can now be carried while a 2× mass control still fails physically
+- 75 g real ball: peak ≈ **0.2526 m**, RETAINING +1.2 s ≈ **0.2525 m**, final ≈ **0.2525 m** — SUCCESS
+- 75 g rounded Foam Cube: peak ≈ **0.2417 m**, RETAINING +1.2 s ≈ **0.2416 m**, final ≈ **0.2416 m** — SUCCESS
+- 0.150 kg same-size/same-friction control: brief peak ≈ **0.0248 m**, RETAINING +1.2 s / final ≈ 0 m — FAIL as intended
+- therefore two real starter prizes are now physically retained while the 2× mass control still fails
 - no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, or velocity reset is used.
 
 Starter-cube interaction update — 2026-10-03:
@@ -479,6 +478,7 @@ Starter-cube interaction update — 2026-10-03:
 - legacy sharp comparison: peak lift ≈ 2.1 mm, planar displacement ≈ 2.5 mm
 - acceptance requires visible physical interaction (>15 mm via lift or planar displacement) rather than forcing a rigid box to behave like a ball
 - hard box definitions remain sharp/high-difficulty.
+- current strong-4 production grip now fully retains the rounded Foam Cube: RETAINING +1.2 s / final ≈ **0.2416 m**; the earlier 10.4 mm/22.7 mm values remain historical pre-strong-grip baselines.
 
 Depth-readability manual acceptance — 2026-10-03:
 - no laser, projected drop marker or hidden aim guide
@@ -700,10 +700,12 @@ Current front-only implementation — 2026-10-03:
 - **Automated controller PASS**
 - yaw = ±90°
 - pitch = −70° / +25°
-- fixed eye height = 0.98 m
-- FOV = 50°
+- default eye height = **1.04 m**
+- bounded player-height range = **0.98…1.10 m** in 0.02 m steps
+- desktop uses `PageUp/PageDown`; mobile uses `VIEW + / VIEW −`
+- desktop FOV = 50°; mobile FOV = 58°
 - X = −0.28…+0.28 m
-- Z ≈ 0.534…0.78 m
+- desktop Z ≈ 0.534…0.84 m; mobile max Z = 0.90 m
 - Q/E lean/roll has been removed
 - player remains in front of the cabinet; side standing positions are intentionally removed
 - control-panel button and chute remain gaze-reachable from the legal front zone.
@@ -718,7 +720,7 @@ Normal play must reject:
 
 Current front-only implementation — 2026-10-03:
 - **Automated movement-integrity PASS**
-- no vertical/free-fly input exists
+- no free-fly input exists; the only vertical adjustment is the bounded 0.98–1.10 m player eye-height range
 - minimum Z stays outside the front-glass clearance
 - maximum |X| = 0.28 m, well inside the physical side-glass X extent
 - sustained diagonal movement saturates at the front standing rectangle
@@ -996,11 +998,13 @@ Setup:
 Expected:
 - mouse movement follows the same content-drag direction used on touch,
 - initial yaw = 0°,
-- initial pitch = **−19°**,
+- initial pitch = **−23°**,
+- default eye height = **1.04 m**,
 - desktop initial Z = **0.78 m** and max Z = **0.84 m**,
 - desktop FOV remains **50°**,
 - without moving the camera, representative upper-claw and front-prize-top points both lie inside the vertical FOV,
-- mobile retains Z 0.84 / max 0.90 / 58° FOV while inheriting the same starting pitch.
+- mobile retains Z 0.84 / max 0.90 / 58° FOV while inheriting the same starting pitch,
+- bounded eye-height controls cannot exceed 0.98–1.10 m.
 
 Automated status — 2026-10-03:
 - explicit desktop drag-direction regression PASS
@@ -1019,6 +1023,7 @@ Expected:
 - left virtual analog joystick moves the claw through the same gantry physics controller used by desktop input,
 - releasing the joystick returns input to zero,
 - right `DROP / CLOSE` button invokes the same primary action as Space/F,
+- `VIEW + / VIEW −` changes only bounded player eye height in 20 mm steps,
 - safe-area insets keep controls clear of notches/home indicators,
 - debug overlay does not occupy phone play space,
 - portrait and landscape remain playable without horizontal page scrolling.
@@ -1030,7 +1035,7 @@ Automated status — 2026-10-03:
 - touch-drag regression verifies scene-following drag semantics rather than opposite FPS-style touch motion
 - mobile framing regression locks Z 0.84 / max 0.90 and **58° FOV**, with representative upper-claw + prize-deck vertical span fitting in view
 - render-profile regression locks mobile DPR cap **1.5** / shadow **512** versus desktop DPR 2 / shadow 1024
-- browser smoke requires `data-mobile-controls="ready"` for explicit cabinet and root/default scenes
+- browser smoke requires `data-mobile-controls="ready"` and the `mobile-view-height` controls for explicit cabinet and root/default scenes
 - full suite = **32 test files / 92 tests PASS**
 - real-device Android Chrome / iPhone Safari comfort, portrait/landscape layout and sustained FPS remain manual M07 closure gates.
 
