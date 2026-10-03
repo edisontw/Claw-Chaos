@@ -8,7 +8,7 @@ import { FixedStepLoop } from "../core/FixedStepLoop";
 import { DebugOverlay } from "../debug/DebugOverlay";
 import { PhysicsDebugRenderer } from "../debug/PhysicsDebugRenderer";
 import { RigidBodyMassPropertiesDebugRenderer } from "../debug/RigidBodyMassPropertiesDebug";
-import { PhysicsRuntime } from "../physics/PhysicsRuntime";
+import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import {
   FirstPersonPlayerViewController,
   M07_CAMERA_FOV_DEGREES,
@@ -21,21 +21,84 @@ import {
   chooseRenderQualityProfile,
   isTouchLikeEnvironment,
 } from "../player/mobileRenderProfile";
-import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
-import { createPt003Scene } from "../scenes/pt003Scene";
-import { createPt004Scene } from "../scenes/pt004Scene";
-import { createPt005Scene } from "../scenes/pt005Scene";
-import { createOversizedCloseScene } from "../scenes/oversizedCloseScene";
-import { createFallingCubeScene } from "../scenes/fallingCube";
-import { createGantryLabScene } from "../scenes/gantryLab";
-import { createPrizeLabScene } from "../scenes/prizeLab";
-import { createCabinetLabScene } from "../scenes/cabinetLab";
-import { parseSceneSelection } from "../scenes/sceneSelection";
+import { parseSceneSelection, type SceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
+
+type SceneFactory = (
+  scene: THREE.Scene,
+  physics: PhysicsRuntime,
+) => SimulationScene;
+
+async function loadSelectedSceneFactory(
+  selection: SceneSelection,
+  search: string,
+): Promise<SceneFactory> {
+  switch (selection.id) {
+    case "cabinet-lab": {
+      const { createCabinetLabScene } = await import("../scenes/cabinetLab");
+      return (scene, physics) =>
+        createCabinetLabScene(scene, physics);
+    }
+    case "gantry-lab": {
+      const { createGantryLabScene } = await import("../scenes/gantryLab");
+      return (scene, physics) =>
+        createGantryLabScene(scene, physics);
+    }
+    case "prize-lab": {
+      const { createPrizeLabScene } = await import("../scenes/prizeLab");
+      return (scene, physics) =>
+        createPrizeLabScene(scene, physics, selection.seed);
+    }
+    case "claw-lab": {
+      const clawLab = await import("../scenes/clawLab");
+      const experiment = clawLab.parseClawLabExperiment(search);
+
+      if (experiment === "pt003") {
+        const { createPt003Scene } = await import("../scenes/pt003Scene");
+        return (scene, physics) =>
+          createPt003Scene(scene, physics);
+      }
+      if (experiment === "pt004") {
+        const { createPt004Scene } = await import("../scenes/pt004Scene");
+        return (scene, physics) =>
+          createPt004Scene(scene, physics);
+      }
+      if (experiment === "pt005") {
+        const { createPt005Scene } = await import("../scenes/pt005Scene");
+        return (scene, physics) =>
+          createPt005Scene(scene, physics);
+      }
+      if (experiment === "oversized") {
+        const { createOversizedCloseScene } =
+          await import("../scenes/oversizedCloseScene");
+        return (scene, physics) =>
+          createOversizedCloseScene(scene, physics);
+      }
+
+      return (scene, physics) =>
+        clawLab.createClawLabScene(scene, physics, search);
+    }
+    case "falling-cube":
+    default: {
+      const { createFallingCubeScene } =
+        await import("../scenes/fallingCube");
+      return (scene, physics) =>
+        createFallingCubeScene(scene, physics, selection.seed);
+    }
+  }
+}
 
 export async function startApp(root: HTMLElement): Promise<void> {
   const selection = parseSceneSelection(window.location.search);
-  const physics = await PhysicsRuntime.create();
+  root.dataset.sceneId = selection.id;
+  root.dataset.loading = "true";
+
+  const [physics, sceneFactory] = await Promise.all([
+    import("../physics/PhysicsRuntime").then(
+      ({ PhysicsRuntime }) => PhysicsRuntime.create(),
+    ),
+    loadSelectedSceneFactory(selection, window.location.search),
+  ]);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111722);
@@ -55,7 +118,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
   );
   root.dataset.renderProfile = renderQuality.id;
 
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer({
+    antialias: true,
+    powerPreference: "high-performance",
+  });
   renderer.setPixelRatio(
     Math.min(
       window.devicePixelRatio,
@@ -63,7 +129,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
     ),
   );
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = touchLike
+    ? THREE.PCFShadowMap
+    : THREE.PCFSoftShadowMap;
   root.append(renderer.domElement);
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x233047, 1.4));
@@ -77,25 +145,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   );
   scene.add(keyLight);
 
-  const experiment = parseClawLabExperiment(window.location.search);
-  const testScene: SimulationScene =
-    selection.id === "gantry-lab"
-      ? createGantryLabScene(scene, physics)
-      : selection.id === "cabinet-lab"
-        ? createCabinetLabScene(scene, physics)
-      : selection.id === "prize-lab"
-        ? createPrizeLabScene(scene, physics, selection.seed)
-      : selection.id === "claw-lab"
-        ? experiment === "pt003"
-        ? createPt003Scene(scene, physics)
-        : experiment === "pt004"
-          ? createPt004Scene(scene, physics)
-          : experiment === "pt005"
-            ? createPt005Scene(scene, physics)
-            : experiment === "oversized"
-              ? createOversizedCloseScene(scene, physics)
-              : createClawLabScene(scene, physics, window.location.search)
-      : createFallingCubeScene(scene, physics, selection.seed);
+  const testScene = sceneFactory(scene, physics);
 
   scene.traverse((object) => {
     if (
@@ -145,7 +195,12 @@ export async function startApp(root: HTMLElement): Promise<void> {
     );
   }
 
-  const debugOverlay = new DebugOverlay(root);
+  const debugRequested =
+    new URLSearchParams(window.location.search).get("debug") === "1";
+  const debugOverlay = new DebugOverlay(
+    root,
+    selection.id !== "cabinet-lab" || debugRequested,
+  );
   const physicsDebugRenderer = new PhysicsDebugRenderer(scene, false);
   const massPropertiesDebugRenderer =
     new RigidBodyMassPropertiesDebugRenderer(
@@ -171,7 +226,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
       return;
     }
 
-    if (
+    if (event.code === "F2") {
+      event.preventDefault();
+      debugOverlay.toggle();
+    } else if (
       event.code === "F3" ||
       (event.code === "KeyD" && selection.id !== "cabinet-lab")
     ) {
@@ -223,16 +281,23 @@ export async function startApp(root: HTMLElement): Promise<void> {
 
     syncRenderTransforms();
     playerViewController?.update(frameDeltaSeconds);
-    physicsDebugRenderer.update(physics.debugRender());
-    massPropertiesDebugRenderer.update();
+    if (physicsDebugRenderer.visible) {
+      physicsDebugRenderer.update(physics.debugRender());
+    }
+    if (massPropertiesDebugRenderer.visible) {
+      massPropertiesDebugRenderer.update();
+    }
     renderer.render(scene, camera);
 
     if (!firstFrameRendered) {
       root.dataset.simulationReady = "true";
+      root.dataset.loading = "false";
+      root.querySelector(".loading-shell")?.remove();
       firstFrameRendered = true;
     }
 
-    debugOverlay.update({
+    if (debugOverlay.visible) {
+      debugOverlay.update({
       milestone: testScene.milestone,
       fps: smoothedFps,
       physicsTicks,
@@ -246,8 +311,9 @@ export async function startApp(root: HTMLElement): Promise<void> {
       extraLines: [
         ...(testScene.debugLines?.() ?? []),
         ...(playerViewController?.debugLines() ?? []),
-      ],
-    });
+        ],
+      });
+    }
 
     requestAnimationFrame(frame);
   };

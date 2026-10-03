@@ -29,6 +29,27 @@ canvas {
 }
 .fatal-error { display: grid; place-content: center; height: 100%; padding: 32px; text-align: center; }
 
+.loading-shell {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  background: #0b0e13;
+  color: #f3f6fb;
+  pointer-events: none;
+}
+.loading-shell strong {
+  font: 800 22px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.08em;
+}
+.loading-shell span {
+  color: #aab6c6;
+  font: 500 13px/1.3 ui-sans-serif, system-ui, sans-serif;
+}
+
 .player-reticle {
   position: fixed;
   left: 50%;

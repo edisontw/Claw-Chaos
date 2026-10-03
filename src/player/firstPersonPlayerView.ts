@@ -71,7 +71,7 @@ const cabinetClearanceMeters = 0.10;
 
 export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   initialX: 0,
-  initialZ: 0.78,
+  initialZ: 0.84,
   initialYawRadians: 0,
   initialPitchRadians: THREE.MathUtils.degToRad(-23),
   eyeY: 1.04,
