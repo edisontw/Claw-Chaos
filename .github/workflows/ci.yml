@@ -285,6 +285,50 @@ jobs:
 
           echo "Preview/browser M09 bridge layout smoke passed: $ASSET_PATH"
 
+          EDGE_READY=0
+          for attempt in 1 2 3; do
+            EDGE_DOM_FILE="/tmp/claw-chaos-edge-dom-$attempt.html"
+            EDGE_LOG_FILE="/tmp/claw-chaos-edge-browser-$attempt.log"
+
+            timeout 30s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=8000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=cabinet-lab&layout=edge&seed=ci-m09-edge" \
+              > "$EDGE_DOM_FILE" 2> "$EDGE_LOG_FILE" || true
+
+            if grep -q 'data-simulation-ready="true"' "$EDGE_DOM_FILE" &&
+               grep -q 'data-physics-backend="native-wasm"' "$EDGE_DOM_FILE" &&
+               grep -q 'data-scene-id="cabinet-lab"' "$EDGE_DOM_FILE" &&
+               grep -q 'data-layout-id="edge"' "$EDGE_DOM_FILE" &&
+               grep -q 'data-player-view="active"' "$EDGE_DOM_FILE" &&
+               ! grep -q 'player-reticle' "$EDGE_DOM_FILE" &&
+               grep -q 'data-machine-audio="armed"' "$EDGE_DOM_FILE"; then
+              EDGE_READY=1
+              break
+            fi
+
+            echo "Headless browser edge smoke attempt $attempt did not reach readiness."
+            sleep 1
+          done
+
+          if [ "$EDGE_READY" -ne 1 ]; then
+            echo "Headless browser failed to initialize M09 edge layout."
+            for file in /tmp/claw-chaos-edge-browser-*.log; do
+              echo "===== $file ====="
+              cat "$file"
+            done
+            exit 1
+          fi
+
+          echo "Preview/browser M09 edge layout smoke passed: $ASSET_PATH"
+
           ROOT_READY=0
           for attempt in 1 2 3; do
             ROOT_DOM_FILE="/tmp/claw-chaos-root-dom-$attempt.html"
