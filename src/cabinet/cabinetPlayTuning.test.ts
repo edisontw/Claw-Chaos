@@ -49,6 +49,9 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_PLAY_TUNING.retainingTorque).toBeLessThan(
       M04_PLAY_CONFIG.holdBoostTorque,
     );
+    expect(CABINET_PLAY_TUNING.fingerFriction).toBe(0.82);
+    expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(3.6);
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.0075);
     expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBeGreaterThan(
