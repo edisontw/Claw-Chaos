@@ -165,6 +165,7 @@ Desktop:
 Mobile / coarse pointer:
 - drag directly on the play view: look around; no pointer lock required
 - touch-look sensitivity = **0.0030 rad/pixel**; desktop mouse remains **0.0022 rad/pixel**
+- touch uses **content-drag semantics**: drag right/down and the visible scene follows the finger
 - left virtual analog joystick: move the claw in the cabinet plane
 - joystick dead zone = **14%** of radius, then remaining travel is remapped to full analog range
 - large right `DROP / CLOSE` button: same physical primary action as desktop Space/F
@@ -187,9 +188,10 @@ Current M07 front-view baseline:
 - front-only movement plus head turn is used for aiming/readability
 - control-panel and chute gaze targets remain reachable from the legal front zone
 - touch-drag look + analog claw joystick + direct DROP/CLOSE touch button are initialized in `cabinet-lab`
+- mobile camera starts farther back at Z **0.84 m** (front zone max 0.90 m) and uses a modest **58° FOV**; desktop remains Z 0.68 m / 50°
 - mobile render budget: DPR cap **1.5**, shadow maps **512**; desktop remains DPR 2 / 1024
 - fixed physics timestep, forces and claw calibration are unchanged
-- **32 test files / 87 tests PASS**
+- **32 test files / 89 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:
