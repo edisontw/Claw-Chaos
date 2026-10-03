@@ -46,6 +46,7 @@ interface PickupRetentionProfile {
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
   prizeHalfExtents?: { x: number; y: number; z: number };
+  prizeRotationYRadians?: number;
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
@@ -95,6 +96,8 @@ async function simulateM04PickupRetention(
       y: ballRadiusMeters,
       z: ballRadiusMeters,
     };
+  const prizeRotationYRadians =
+    profile.prizeRotationYRadians ?? 0;
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -246,7 +249,7 @@ async function simulateM04PickupRetention(
       ? physics.createDynamicCuboid(
           { x: 0, y: ballCenterY, z: 0 },
           prizeHalfExtents,
-          0,
+          prizeRotationYRadians,
           {
             friction: ballFriction,
             restitution: ballRestitution,
@@ -850,6 +853,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         ballRestitution: resolved.material.restitution,
         prizeShape: "cuboid",
         prizeHalfExtents: halfExtents,
+        prizeRotationYRadians: 0.18,
         supportMode: "flat-deck",
       });
       sweep.push({
