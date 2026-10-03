@@ -160,15 +160,22 @@ export async function startApp(
   type MachineAudioController = InstanceType<
     typeof import("../audio/CabinetMachineAudio").CabinetMachineAudio
   >;
+  type CabinetHapticsController = InstanceType<
+    typeof import("../haptics/cabinetHaptics").CabinetHaptics
+  >;
 
   const machineAudioEligible =
     selection.id === "cabinet-lab" &&
     Boolean(testScene.getMachineAudioState);
   let machineAudio: MachineAudioController | null = null;
   let machineAudioPromise: Promise<MachineAudioController> | null = null;
+  let cabinetHaptics: CabinetHapticsController | null = null;
+  let cabinetHapticsPromise: Promise<CabinetHapticsController> | null =
+    null;
 
   if (machineAudioEligible) {
     root.dataset.machineAudio = "armed";
+    root.dataset.controllerHaptics = "armed";
   }
 
   const ensureMachineAudio = (): Promise<MachineAudioController | null> => {
@@ -189,6 +196,27 @@ export async function startApp(
   };
 
   void ensureMachineAudio();
+
+  const ensureCabinetHaptics =
+    (): Promise<CabinetHapticsController | null> => {
+      if (!machineAudioEligible) {
+        return Promise.resolve(null);
+      }
+      if (cabinetHaptics) {
+        return Promise.resolve(cabinetHaptics);
+      }
+      if (!cabinetHapticsPromise) {
+        cabinetHapticsPromise = import(
+          "../haptics/cabinetHaptics"
+        ).then(({ CabinetHaptics }) => {
+          cabinetHaptics = new CabinetHaptics(root);
+          return cabinetHaptics;
+        });
+      }
+      return cabinetHapticsPromise;
+    };
+
+  void ensureCabinetHaptics();
 
   const unlockMachineAudio = (): void => {
     if (machineAudio) {
@@ -343,11 +371,13 @@ export async function startApp(
       physics.consumeContactAudioImpacts();
     if (contactAudioImpacts.length > 0) {
       machineAudio?.playPrizeImpacts(contactAudioImpacts);
+      cabinetHaptics?.playPrizeImpacts(contactAudioImpacts);
     }
 
     const machineAudioState = testScene.getMachineAudioState?.();
     if (machineAudioState) {
       machineAudio?.update(machineAudioState);
+      cabinetHaptics?.updateMachineState(machineAudioState);
     }
     playerViewController?.update(frameDeltaSeconds);
     if (physicsDebugRenderer.visible) {
