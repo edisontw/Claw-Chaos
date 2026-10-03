@@ -101,7 +101,7 @@ async function simulateM04PickupRetention(
     profile.prizeRotationYRadians ?? 0;
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
-    claw.fingerRodRadius;
+    CLAW_LAB_CONFIG.fingerRodRadius;
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -835,7 +835,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-        fingerLowerPadRadiusMeters: claw.fingerRodRadius,
+        fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
       },
       {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
@@ -885,7 +885,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         finalLiftMeters: metrics.finalLiftMeters,
       });
       if (
-        candidate.fingerLowerPadRadiusMeters === claw.fingerRodRadius
+        candidate.fingerLowerPadRadiusMeters === CLAW_LAB_CONFIG.fingerRodRadius
       ) {
         actual = metrics;
       }
