@@ -367,7 +367,7 @@ export function createFingerVisual(
   points: readonly Vec3[],
   metalMaterial: THREE.Material,
   tipMaterial: THREE.Material,
-  tipRadius = CLAW_LAB_CONFIG.fingerTipVisualRadius,
+  tipRadius: number = CLAW_LAB_CONFIG.fingerTipVisualRadius,
 ): THREE.Group {
   const group = new THREE.Group();
   const yAxis = new THREE.Vector3(0, 1, 0);
@@ -420,7 +420,7 @@ export function createFingerVisual(
 
 export function createFingerSegments(
   points: readonly Vec3[],
-  lowerPadRadius = CLAW_LAB_CONFIG.fingerRodRadius,
+  lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
 ): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
 
