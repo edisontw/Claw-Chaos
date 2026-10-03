@@ -108,17 +108,6 @@ function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
 
-function moveToward(
-  current: number,
-  target: number,
-  maxDelta: number,
-): number {
-  if (Math.abs(target - current) <= maxDelta) {
-    return target;
-  }
-  return current + Math.sign(target - current) * maxDelta;
-}
-
 function normalizedAxis(value: number): number {
   return clamp(value, -1, 1);
 }
