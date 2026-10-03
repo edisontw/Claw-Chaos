@@ -48,6 +48,7 @@ interface PickupRetentionProfile {
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
   fingerLowerPadRadiusMeters?: number;
+  closedAngleRadians?: number;
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
@@ -102,6 +103,8 @@ async function simulateM04PickupRetention(
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
+  const closedAngleRadians =
+    profile.closedAngleRadians ?? claw.closedAngle;
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -237,7 +240,7 @@ async function simulateM04PickupRetention(
         anchor1: pivotLocal,
         anchor2: { x: 0, y: 0, z: 0 },
         axis: tangent,
-        minAngle: claw.closedAngle,
+        minAngle: closedAngleRadians,
         maxAngle: claw.openAngle,
         initialTarget: claw.openAngle,
         stiffness: claw.motorStiffness,
@@ -289,7 +292,7 @@ async function simulateM04PickupRetention(
   };
   const playConfig = {
     autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
-    closedAngleRadians: claw.closedAngle,
+    closedAngleRadians,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
@@ -374,7 +377,7 @@ async function simulateM04PickupRetention(
     const closing = m04FingerShouldClose(play);
     fingerCommand = advanceMotorCommand(
       fingerCommand,
-      closing ? claw.closedAngle : claw.openAngle,
+      closing ? closedAngleRadians : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
     );
@@ -833,30 +836,33 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     };
     const candidateProfiles = [
       {
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
         fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
+        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
       },
       {
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-        fingerLowerPadRadiusMeters: 0.008,
-      },
-      {
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
         fingerLowerPadRadiusMeters: 0.010,
+        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
       },
       {
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
-        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
-        fingerLowerPadRadiusMeters: 0.012,
+        fingerLowerPadRadiusMeters: 0.010,
+        closedAngleRadians: -0.48,
+      },
+      {
+        fingerLowerPadRadiusMeters: 0.010,
+        closedAngleRadians: -0.54,
+      },
+      {
+        fingerLowerPadRadiusMeters: 0.010,
+        closedAngleRadians: -0.60,
+      },
+      {
+        fingerLowerPadRadiusMeters: 0.008,
+        closedAngleRadians: -0.54,
       },
     ];
     const sweep: Array<{
-      fingerFriction: number;
-      closePickupTorque: number;
       fingerLowerPadRadiusMeters: number;
+      closedAngleRadians: number;
       peakLiftMeters: number;
       finalLiftMeters: number;
     }> = [];
@@ -864,11 +870,13 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     let actual: PickupRetentionMetrics | null = null;
     for (const candidate of candidateProfiles) {
       const metrics = await simulateM04PickupRetention({
-        fingerFriction: candidate.fingerFriction,
-        closePickupTorque: candidate.closePickupTorque,
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
         retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
         fingerLowerPadRadiusMeters:
           candidate.fingerLowerPadRadiusMeters,
+        closedAngleRadians:
+          candidate.closedAngleRadians,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         ballMassKg: resolved.massKg,
@@ -885,7 +893,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         finalLiftMeters: metrics.finalLiftMeters,
       });
       if (
-        candidate.fingerLowerPadRadiusMeters === CLAW_LAB_CONFIG.fingerRodRadius
+        candidate.fingerLowerPadRadiusMeters === CLAW_LAB_CONFIG.fingerRodRadius &&
+        candidate.closedAngleRadians === CLAW_LAB_CONFIG.closedAngle
       ) {
         actual = metrics;
       }
