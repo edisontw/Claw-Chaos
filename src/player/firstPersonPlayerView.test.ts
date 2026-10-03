@@ -7,6 +7,7 @@ import {
   M07_FIRST_PERSON_VIEW_CONFIG,
   M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
   advanceFirstPersonPlayerView,
+  applyFirstPersonDesktopDragDelta,
   applyFirstPersonLookDelta,
   applyFirstPersonTouchDragDelta,
   computeLookAnglesToPoint,
@@ -35,8 +36,61 @@ describe("M07 first-person player view constraints", () => {
 
     // Dragging the scene right/down turns the camera left/up so the
     // visible scene follows the finger instead of moving opposite it.
-    expect(draggedRight.yawRadians).toBeGreaterThan(0);
-    expect(draggedDown.pitchRadians).toBeGreaterThan(0);
+    expect(draggedRight.yawRadians).toBeGreaterThan(
+      initial.yawRadians,
+    );
+    expect(draggedDown.pitchRadians).toBeGreaterThan(
+      initial.pitchRadians,
+    );
+  });
+
+  it("uses the same content-drag direction on desktop", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    const initial = createFirstPersonPlayerViewState(config);
+
+    const draggedRight = applyFirstPersonDesktopDragDelta(
+      initial,
+      100,
+      0,
+      config,
+    );
+    const draggedDown = applyFirstPersonDesktopDragDelta(
+      initial,
+      0,
+      100,
+      config,
+    );
+
+    expect(draggedRight.yawRadians).toBeGreaterThan(
+      initial.yawRadians,
+    );
+    expect(draggedDown.pitchRadians).toBeGreaterThan(
+      initial.pitchRadians,
+    );
+  });
+
+  it("starts with a directly playable desktop framing", () => {
+    const config = M07_FIRST_PERSON_VIEW_CONFIG;
+    const state = createFirstPersonPlayerViewState(config);
+    const eye = playerCameraPosition(state, config);
+    const upperClawPoint = { x: 0, y: 1.05, z: 0 };
+    const frontPrizeTopPoint = { x: 0, y: 0.37, z: 0.14 };
+    const upper = computeLookAnglesToPoint(eye, upperClawPoint);
+    const lower = computeLookAnglesToPoint(eye, frontPrizeTopPoint);
+    const halfFovRadians =
+      (M07_CAMERA_FOV_DEGREES * Math.PI / 180) * 0.5;
+
+    expect(config.initialZ).toBe(0.78);
+    expect(config.maxZ).toBe(0.84);
+    expect(
+      config.initialPitchRadians * 180 / Math.PI,
+    ).toBeCloseTo(-19, 10);
+    expect(
+      Math.abs(upper.pitchRadians - state.pitchRadians),
+    ).toBeLessThan(halfFovRadians);
+    expect(
+      Math.abs(lower.pitchRadians - state.pitchRadians),
+    ).toBeLessThan(halfFovRadians);
   });
 
   it("uses a wider but still bounded mobile framing", () => {
