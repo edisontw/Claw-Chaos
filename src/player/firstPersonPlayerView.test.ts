@@ -73,7 +73,7 @@ describe("M07 first-person player view constraints", () => {
   it("starts with a directly playable desktop framing", () => {
     const config = M07_FIRST_PERSON_VIEW_CONFIG;
     const state = createFirstPersonPlayerViewState(config);
-    const eye = playerCameraPosition(state, config);
+    const eye = playerCameraPosition(state);
     const upperClawPoint = { x: 0, y: 1.05, z: 0 };
     const frontPrizeTopPoint = { x: 0, y: 0.37, z: 0.14 };
     const upper = computeLookAnglesToPoint(eye, upperClawPoint);
@@ -130,7 +130,6 @@ describe("M07 first-person player view constraints", () => {
 
     const eye = playerCameraPosition(
       createFirstPersonPlayerViewState(mobile),
-      mobile,
     );
     const upperClawPoint = { x: 0, y: 1.19, z: 0.02 };
     const prizeDeckPoint = { x: 0, y: 0.34, z: 0.02 };
@@ -269,7 +268,7 @@ describe("M07 first-person player view constraints", () => {
       x: 0,
       z: config.maxZ,
     };
-    const cameraPosition = playerCameraPosition(base, config);
+    const cameraPosition = playerCameraPosition(base);
 
     for (const target of M07_CABINET_VIEW_TARGETS) {
       const look = computeLookAnglesToPoint(
