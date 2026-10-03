@@ -10,6 +10,9 @@ export interface FirstPersonPlayerViewConfig {
   initialYawRadians: number;
   initialPitchRadians: number;
   eyeY: number;
+  minEyeY: number;
+  maxEyeY: number;
+  eyeHeightStepMeters: number;
   minX: number;
   maxX: number;
   minZ: number;
@@ -27,6 +30,7 @@ export interface FirstPersonPlayerViewConfig {
 export interface FirstPersonPlayerViewState {
   x: number;
   z: number;
+  eyeY: number;
   yawRadians: number;
   pitchRadians: number;
 }
@@ -69,8 +73,11 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   initialX: 0,
   initialZ: 0.78,
   initialYawRadians: 0,
-  initialPitchRadians: THREE.MathUtils.degToRad(-19),
-  eyeY: 0.98,
+  initialPitchRadians: THREE.MathUtils.degToRad(-23),
+  eyeY: 1.04,
+  minEyeY: 0.98,
+  maxEyeY: 1.10,
+  eyeHeightStepMeters: 0.02,
   minX: -0.28,
   maxX: 0.28,
   minZ: frontGlassOuterZ + 0.15,
@@ -180,8 +187,24 @@ export function createFirstPersonPlayerViewState(
   return {
     x: config.initialX,
     z: config.initialZ,
+    eyeY: config.eyeY,
     yawRadians: config.initialYawRadians,
     pitchRadians: config.initialPitchRadians,
+  };
+}
+
+export function adjustFirstPersonEyeHeight(
+  state: FirstPersonPlayerViewState,
+  deltaMeters: number,
+  config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
+): FirstPersonPlayerViewState {
+  return {
+    ...state,
+    eyeY: clamp(
+      state.eyeY + deltaMeters,
+      config.minEyeY,
+      config.maxEyeY,
+    ),
   };
 }
 
@@ -277,7 +300,7 @@ export function playerCameraPosition(
 ): { x: number; y: number; z: number } {
   return {
     x: state.x,
-    y: config.eyeY,
+    y: state.eyeY,
     z: state.z,
   };
 }
@@ -403,6 +426,19 @@ export class FirstPersonPlayerViewController {
     element.addEventListener("pointercancel", this.onPointerUp);
   }
 
+  adjustEyeHeight(deltaMeters: number): void {
+    this.state = adjustFirstPersonEyeHeight(
+      this.state,
+      deltaMeters,
+      this.config,
+    );
+    applyFirstPersonPlayerCamera(
+      this.camera,
+      this.state,
+      this.config,
+    );
+  }
+
   update(deltaSeconds: number): void {
     this.state = advanceFirstPersonPlayerView(
       this.state,
@@ -440,6 +476,7 @@ export class FirstPersonPlayerViewController {
     return [
       "Player view       WASD move / mouse-or-touch look / F action",
       `Player pos       lateral ${this.state.x.toFixed(3)} / depth ${this.state.z.toFixed(3)} m`,
+      `Eye height       ${this.state.eyeY.toFixed(3)} m`,
       `Head yaw/pitch   ${THREE.MathUtils.radToDeg(this.state.yawRadians).toFixed(1)} / ${THREE.MathUtils.radToDeg(this.state.pitchRadians).toFixed(1)} deg`,
       `View focus       ${this.focus?.target.id ?? "none"}`,
       `Interaction      ${this.lastInteraction}`,
@@ -448,6 +485,20 @@ export class FirstPersonPlayerViewController {
   }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
+    if (
+      (event.code === "PageUp" ||
+        event.code === "PageDown") &&
+      !event.repeat
+    ) {
+      event.preventDefault();
+      this.adjustEyeHeight(
+        event.code === "PageUp"
+          ? this.config.eyeHeightStepMeters
+          : -this.config.eyeHeightStepMeters,
+      );
+      return;
+    }
+
     if (event.code === "KeyF" && !event.repeat) {
       if (this.onPrimaryAction) {
         const accepted = this.onPrimaryAction();
