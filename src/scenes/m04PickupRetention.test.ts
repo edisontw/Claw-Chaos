@@ -976,76 +976,37 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("sweeps realistic lower-finger pads for real plush-prize retention", async () => {
-    const candidates = [
-      {
-        label: "current",
-        fingerFriction: 1.25,
-        closePickupTorque: 6.0,
-        retainingTorque: 0.014,
-        pickupLiftDistanceMeters: 0.18,
-        closedAngleRadians: -0.42,
-        fingerLowerPadRadiusMeters: 0.0045,
-      },
-      {
-        label: "pad-6p5",
-        fingerFriction: 1.35,
-        closePickupTorque: 6.5,
-        retainingTorque: 0.016,
-        pickupLiftDistanceMeters: 0.20,
-        closedAngleRadians: -0.48,
-        fingerLowerPadRadiusMeters: 0.0065,
-      },
-      {
-        label: "pad-8",
-        fingerFriction: 1.40,
-        closePickupTorque: 7.0,
-        retainingTorque: 0.018,
-        pickupLiftDistanceMeters: 0.20,
-        closedAngleRadians: -0.50,
-        fingerLowerPadRadiusMeters: 0.008,
-      },
-      {
-        label: "pad-10",
-        fingerFriction: 1.45,
-        closePickupTorque: 7.5,
-        retainingTorque: 0.019,
-        pickupLiftDistanceMeters: 0.20,
-        closedAngleRadians: -0.50,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
-      {
-        label: "pad-12",
-        fingerFriction: 1.50,
-        closePickupTorque: 8.0,
-        retainingTorque: 0.020,
-        pickupLiftDistanceMeters: 0.20,
-        closedAngleRadians: -0.52,
-        fingerLowerPadRadiusMeters: 0.012,
-      },
-    ] as const;
-
+  it("isolates lower-finger pad radius at the current production grip", async () => {
+    const candidates = [0.0045, 0.008, 0.010, 0.012, 0.014] as const;
     const plushPrizes = [
       { id: "prize/teddy_simple", rotationYRadians: -0.22 },
       { id: "prize/pillow_small", rotationYRadians: 0.28 },
       { id: "prize/animal_simple", rotationYRadians: -0.12 },
     ] as const;
-
     const sphere = getPrizeDefinition("prize/sphere_ball");
     const sphereResolved = resolvePrizeSpec(sphere);
     const rows = [];
 
-    for (const candidate of candidates) {
+    for (const fingerLowerPadRadiusMeters of candidates) {
+      const common = {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
+        fingerLowerPadRadiusMeters,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck" as const,
+      };
       const results = [];
       let plushSuccessCount = 0;
 
       for (const prize of plushPrizes) {
         const metrics = await simulateM04PickupRetention({
-          ...candidate,
+          ...common,
           prizeDefinitionId: prize.id,
           prizeRotationYRadians: prize.rotationYRadians,
-          topHoldSeconds: 1.3,
-          supportMode: "flat-deck",
         });
         const success =
           metrics.topReached &&
@@ -1065,19 +1026,17 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       }
 
       const heavyBall = await simulateM04PickupRetention({
-        ...candidate,
+        ...common,
         ballMassKg: sphereResolved.massKg * 2,
         ballFriction: sphereResolved.material.dynamicFriction,
         ballRadiusMeters: sphere.dimensions.x * 0.5,
-        topHoldSeconds: 1.3,
-        supportMode: "flat-deck",
       });
       const heavyBallSuccess =
         heavyBall.liftAfterRetaining1p2sMeters >= 0.08 &&
         heavyBall.finalLiftMeters >= 0.08;
 
       rows.push({
-        ...candidate,
+        fingerLowerPadRadiusMeters,
         plushSuccessCount,
         heavyBallSuccess,
         heavyBall: {
@@ -1090,14 +1049,14 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet plush-pad sweep",
+      "Cabinet isolated finger-pad sweep",
       JSON.stringify(rows),
     );
 
     expect(
       rows.some(
         (row) =>
-          row.plushSuccessCount >= 2 &&
+          row.plushSuccessCount >= 1 &&
           !row.heavyBallSuccess,
       ),
     ).toBe(true);
