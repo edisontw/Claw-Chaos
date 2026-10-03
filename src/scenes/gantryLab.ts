@@ -176,6 +176,8 @@ export interface GantryGripProfile {
   retainingTorque?: number;
   holdBoostTorque?: number;
   pickupLiftDistanceMeters?: number;
+  closedAngleRadians?: number;
+  fingerLowerPadRadiusMeters?: number;
 }
 
 export interface GantryLabOptions {
@@ -210,6 +212,11 @@ export function createGantryLabScene(
   const pickupLiftDistanceMeters =
     options.gripProfile?.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
+  const closedAngleRadians =
+    options.gripProfile?.closedAngleRadians ?? claw.closedAngle;
+  const fingerLowerPadRadiusMeters =
+    options.gripProfile?.fingerLowerPadRadiusMeters ??
+    claw.fingerRodRadius;
   const gantry =
     verticalHomeOffset === 0
       ? M02_GANTRY_CONFIG
@@ -414,12 +421,24 @@ export function createGantryLabScene(
       z: Math.cos(theta),
     };
     const points = createFingerPoints(theta);
-    const visual = createFingerVisual(points, chrome, tipMaterial);
+    const visual = createFingerVisual(
+      points,
+      chrome,
+      tipMaterial,
+      Math.max(
+        claw.fingerTipVisualRadius,
+        fingerLowerPadRadiusMeters,
+      ),
+      fingerLowerPadRadiusMeters,
+    );
     scene.add(visual);
 
     const body = physics.createDynamicCapsuleChain(
       pivotWorld,
-      createFingerSegments(points),
+      createFingerSegments(
+        points,
+        fingerLowerPadRadiusMeters,
+      ),
       {
         friction: activeFingerFriction,
         restitution: claw.fingerRestitution,
@@ -430,7 +449,7 @@ export function createGantryLabScene(
       anchor1: pivotLocal,
       anchor2: { x: 0, y: 0, z: 0 },
       axis: tangent,
-      minAngle: claw.closedAngle,
+      minAngle: closedAngleRadians,
       maxAngle: claw.openAngle,
       initialTarget: claw.openAngle,
       stiffness: claw.motorStiffness,
@@ -472,7 +491,7 @@ export function createGantryLabScene(
   const playConfig = {
     autoClosePayoutMeters:
       M04_PLAY_CONFIG.autoClosePayoutMeters + verticalHomeOffset,
-    closedAngleRadians: claw.closedAngle,
+    closedAngleRadians,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
@@ -962,7 +981,7 @@ export function createGantryLabScene(
         playConfig,
       );
       const fingerTarget = closingFinger
-        ? claw.closedAngle
+        ? closedAngleRadians
         : claw.openAngle;
       fingerCommand = advanceMotorCommand(
         fingerCommand,
