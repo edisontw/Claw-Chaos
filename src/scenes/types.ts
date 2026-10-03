@@ -21,6 +21,7 @@ export interface SimulationScene {
   bindings: RenderBinding[];
   camera: CameraPreset;
   milestone: string;
+  layoutId?: string;
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
