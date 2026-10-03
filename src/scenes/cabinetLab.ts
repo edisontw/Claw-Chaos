@@ -163,61 +163,6 @@ function addControlPanel(scene: THREE.Scene): void {
   scene.add(button);
 }
 
-function addChuteTrim(scene: THREE.Scene): void {
-  const c = M06_CABINET_CONFIG;
-  const t = CABINET_PLAY_TUNING.chuteTrimHalfWidth;
-  const halfHeight = CABINET_PLAY_TUNING.chuteTrimHalfHeight;
-  const y = c.playDeckY + halfHeight + 0.001;
-  const material = new THREE.MeshStandardMaterial({
-    color: 0x202630,
-    roughness: 0.58,
-    metalness: 0.22,
-  });
-
-  const pieces = [
-    {
-      x: c.chuteCenterX - c.chuteOpeningHalfX - t,
-      z: c.chuteCenterZ,
-      hx: t,
-      hz: c.chuteOpeningHalfZ + t * 2,
-    },
-    {
-      x: c.chuteCenterX + c.chuteOpeningHalfX + t,
-      z: c.chuteCenterZ,
-      hx: t,
-      hz: c.chuteOpeningHalfZ + t * 2,
-    },
-    {
-      x: c.chuteCenterX,
-      z: c.chuteCenterZ - c.chuteOpeningHalfZ - t,
-      hx: c.chuteOpeningHalfX,
-      hz: t,
-    },
-    {
-      x: c.chuteCenterX,
-      z: c.chuteCenterZ + c.chuteOpeningHalfZ + t,
-      hx: c.chuteOpeningHalfX,
-      hz: t,
-    },
-  ] as const;
-
-  for (const piece of pieces) {
-    const mesh = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        piece.hx * 2,
-        halfHeight * 2,
-        piece.hz * 2,
-      ),
-      material,
-    );
-    mesh.position.set(piece.x, y, piece.z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    mesh.renderOrder = 2;
-    scene.add(mesh);
-  }
-}
-
 export function createCabinetLabScene(
   scene: THREE.Scene,
   physics: PhysicsRuntime,
@@ -228,7 +173,6 @@ export function createCabinetLabScene(
   }
 
   addControlPanel(scene);
-  addChuteTrim(scene);
 
   const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.0, 2.2, 1.7);
   cabinetLight.position.set(-0.08, 1.08, 0.10);
@@ -411,7 +355,11 @@ export function createCabinetLabScene(
           ) +
           " mm",
         "Depth cues        woven deck + fixed cabinet-light shadows",
-        "Chute trim        raised solid rim / sensor debug hidden",
+        "Chute opening     " +
+          Math.round(M06_CABINET_CONFIG.chuteOpeningHalfX * 2000) +
+          " x " +
+          Math.round(M06_CABINET_CONFIG.chuteOpeningHalfZ * 2000) +
+          " mm / no raised trim",
         "Service wires     dual visual control leads",
         "Center ball       aligned for first physical pickup attempt",
       ];
