@@ -120,16 +120,16 @@ export const PRIZE_VARIANT_FAMILIES: Record<
 export const PRIZE_DEFINITIONS: readonly PrizeDefinition[] = [
   {
     id: "prize/cube_small",
-    displayName: "Small Cube",
+    displayName: "Foam Cube",
     shapeFamily: "cube",
     dimensions: { x: 0.095, y: 0.095, z: 0.095 },
-    nominalMassKg: 0.085,
-    materialId: "material/plastic",
+    nominalMassKg: 0.075,
+    materialId: "material/plush",
     massProfileId: "mass/standard",
     comProfileId: "com/centered",
-    colliderProfileId: "box/basic",
+    colliderProfileId: "box/rounded_v1",
     variantFamilyId: "variant/basic",
-    tags: ["rigid", "starter"],
+    tags: ["soft", "rounded", "starter"],
   },
   {
     id: "prize/box_standard",

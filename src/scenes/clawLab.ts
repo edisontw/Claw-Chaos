@@ -348,11 +348,15 @@ function addCylinder(
   parent.add(mesh);
 }
 
-export function createFingerPoints(theta: number): Vec3[] {
+export function createFingerPoints(
+  theta: number,
+  nodes: readonly { radial: number; down: number }[] =
+    CLAW_LAB_CONFIG.fingerNodes,
+): Vec3[] {
   const radialX = Math.cos(theta);
   const radialZ = Math.sin(theta);
 
-  return CLAW_LAB_CONFIG.fingerNodes.map((node) => ({
+  return nodes.map((node) => ({
     x: radialX * node.radial,
     y: -node.down,
     z: radialZ * node.radial,
@@ -363,6 +367,7 @@ export function createFingerVisual(
   points: readonly Vec3[],
   metalMaterial: THREE.Material,
   tipMaterial: THREE.Material,
+  tipRadius: number = CLAW_LAB_CONFIG.fingerTipVisualRadius,
 ): THREE.Group {
   const group = new THREE.Group();
   const yAxis = new THREE.Vector3(0, 1, 0);
@@ -403,7 +408,7 @@ export function createFingerVisual(
 
   const tip = points[points.length - 1]!;
   const tipCap = new THREE.Mesh(
-    new THREE.SphereGeometry(CLAW_LAB_CONFIG.fingerTipVisualRadius, 14, 10),
+    new THREE.SphereGeometry(tipRadius, 14, 10),
     tipMaterial,
   );
   tipCap.position.set(tip.x, tip.y, tip.z);
@@ -415,6 +420,7 @@ export function createFingerVisual(
 
 export function createFingerSegments(
   points: readonly Vec3[],
+  lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
 ): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
 
@@ -422,7 +428,10 @@ export function createFingerSegments(
     segments.push({
       start: points[index - 1]!,
       end: points[index]!,
-      radius: CLAW_LAB_CONFIG.fingerRodRadius,
+      radius:
+        index === points.length - 1
+          ? lowerPadRadius
+          : CLAW_LAB_CONFIG.fingerRodRadius,
     });
   }
 

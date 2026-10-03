@@ -13,6 +13,41 @@ import { createPrize } from "../prizes/PrizeFactory";
 import { createGantryLabScene } from "./gantryLab";
 import type { SimulationScene } from "./types";
 
+function createPlayDeckWeaveTexture(): THREE.DataTexture {
+  const size = 32;
+  const data = new Uint8Array(size * size * 4);
+
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      const index = (y * size + x) * 4;
+      const warp = x % 8 === 0 ? -7 : x % 4 === 0 ? -3 : 0;
+      const weft = y % 8 === 0 ? -6 : y % 4 === 0 ? -2 : 0;
+      const checker = ((Math.floor(x / 8) + Math.floor(y / 8)) % 2) * 3;
+      const value = 168 + warp + weft + checker;
+
+      data[index] = value;
+      data[index + 1] = value + 7;
+      data[index + 2] = value + 15;
+      data[index + 3] = 255;
+    }
+  }
+
+  const texture = new THREE.DataTexture(
+    data,
+    size,
+    size,
+    THREE.RGBAFormat,
+  );
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(5.5, 4.5);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.needsUpdate = true;
+  return texture;
+}
+
+const PLAY_DECK_WEAVE_TEXTURE = createPlayDeckWeaveTexture();
+
 function createPartMaterial(
   part: CabinetPartDefinition,
 ): THREE.Material {
@@ -47,9 +82,10 @@ function createPartMaterial(
 
   if (part.role === "play_deck") {
     return new THREE.MeshStandardMaterial({
-      color: 0x8a929d,
-      roughness: 0.86,
-      metalness: 0.03,
+      color: 0xffffff,
+      map: PLAY_DECK_WEAVE_TEXTURE,
+      roughness: 0.90,
+      metalness: 0.01,
     });
   }
 
@@ -194,8 +230,12 @@ export function createCabinetLabScene(
   addControlPanel(scene);
   addChuteTrim(scene);
 
-  const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.5, 2.2, 1.7);
-  cabinetLight.position.set(0, 1.05, 0.02);
+  const cabinetLight = new THREE.PointLight(0xf4f7ff, 5.0, 2.2, 1.7);
+  cabinetLight.position.set(-0.08, 1.08, 0.10);
+  cabinetLight.castShadow = true;
+  cabinetLight.shadow.mapSize.set(1024, 1024);
+  cabinetLight.shadow.bias = -0.00035;
+  cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
 
   const gantryScene = createGantryLabScene(
@@ -353,6 +393,7 @@ export function createCabinetLabScene(
           " / " +
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters.toFixed(3) +
           " m pickup",
+        "Depth cues        woven deck + fixed cabinet-light shadows",
         "Chute trim        raised solid rim / sensor debug hidden",
         "Service wires     dual visual control leads",
         "Center ball       aligned for first physical pickup attempt",

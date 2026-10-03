@@ -88,12 +88,124 @@ function estimatePrincipalAngularInertia(
   };
 }
 
+function buildRoundedBoxColliders(
+  dimensions: Vec3,
+  radiusMeters: number,
+): PrimitiveColliderSpec[] {
+  const hx = dimensions.x * 0.5;
+  const hy = dimensions.y * 0.5;
+  const hz = dimensions.z * 0.5;
+  const r = Math.min(
+    radiusMeters,
+    hx * 0.45,
+    hy * 0.45,
+    hz * 0.45,
+  );
+  const ix = hx - r;
+  const iy = hy - r;
+  const iz = hz - r;
+
+  const colliders: PrimitiveColliderSpec[] = [
+    {
+      shape: "cuboid",
+      halfExtents: { x: ix, y: iy, z: iz },
+    },
+    {
+      shape: "cuboid",
+      center: { x: hx - r * 0.5, y: 0, z: 0 },
+      halfExtents: { x: r * 0.5, y: iy, z: iz },
+    },
+    {
+      shape: "cuboid",
+      center: { x: -hx + r * 0.5, y: 0, z: 0 },
+      halfExtents: { x: r * 0.5, y: iy, z: iz },
+    },
+    {
+      shape: "cuboid",
+      center: { x: 0, y: hy - r * 0.5, z: 0 },
+      halfExtents: { x: ix, y: r * 0.5, z: iz },
+    },
+    {
+      shape: "cuboid",
+      center: { x: 0, y: -hy + r * 0.5, z: 0 },
+      halfExtents: { x: ix, y: r * 0.5, z: iz },
+    },
+    {
+      shape: "cuboid",
+      center: { x: 0, y: 0, z: hz - r * 0.5 },
+      halfExtents: { x: ix, y: iy, z: r * 0.5 },
+    },
+    {
+      shape: "cuboid",
+      center: { x: 0, y: 0, z: -hz + r * 0.5 },
+      halfExtents: { x: ix, y: iy, z: r * 0.5 },
+    },
+  ];
+
+  for (const sx of [-1, 1] as const) {
+    for (const sy of [-1, 1] as const) {
+      for (const sz of [-1, 1] as const) {
+        colliders.push({
+          shape: "sphere",
+          center: {
+            x: sx * ix,
+            y: sy * iy,
+            z: sz * iz,
+          },
+          radius: r,
+        });
+      }
+    }
+  }
+
+  for (const sy of [-1, 1] as const) {
+    for (const sz of [-1, 1] as const) {
+      colliders.push({
+        shape: "capsule",
+        start: { x: -hx, y: sy * iy, z: sz * iz },
+        end: { x: hx, y: sy * iy, z: sz * iz },
+        radius: r,
+      });
+    }
+  }
+  for (const sx of [-1, 1] as const) {
+    for (const sz of [-1, 1] as const) {
+      colliders.push({
+        shape: "capsule",
+        start: { x: sx * ix, y: -hy, z: sz * iz },
+        end: { x: sx * ix, y: hy, z: sz * iz },
+        radius: r,
+      });
+    }
+  }
+  for (const sx of [-1, 1] as const) {
+    for (const sy of [-1, 1] as const) {
+      colliders.push({
+        shape: "capsule",
+        start: { x: sx * ix, y: sy * iy, z: -hz },
+        end: { x: sx * ix, y: sy * iy, z: hz },
+        radius: r,
+      });
+    }
+  }
+
+  return colliders;
+}
+
 function buildColliders(definition: PrizeDefinition): PrimitiveColliderSpec[] {
   const { x, y, z } = definition.dimensions;
   const half = { x: x * 0.5, y: y * 0.5, z: z * 0.5 };
 
   switch (definition.shapeFamily) {
     case "cube":
+      if (definition.colliderProfileId === "box/rounded_v1") {
+        return buildRoundedBoxColliders(
+          definition.dimensions,
+          Math.min(x, y, z) * 0.15,
+        );
+      }
+      return [{ shape: "cuboid", halfExtents: half }];
+
     case "box":
     case "tall_box":
     case "flat_box":

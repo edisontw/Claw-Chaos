@@ -525,6 +525,10 @@ Grip/play correction:
 - real flat-deck ball reaches ≈226 mm peak/final lift
 - same geometry/friction at 150 g reaches only ≈7 mm peak lift
 - mass sensitivity remains physical; no attachment/magnet/kinematic shortcut
+- drop-position readability is improved without a laser: low-contrast woven deck texture + fixed cabinet-light shadows + existing small lateral parallax
+- `prize/cube_small` is reclassified as a 75 g rounded Foam Cube (`box/rounded_v1`) because the former ideal sharp plastic cuboid was confirmed through multiple physical sweeps to be an unrealistic starter target
+- Foam Cube produces ≈22.7 mm planar displacement and ≈10.4 mm peak lift; the legacy sharp cuboid produces only ≈2.5 mm / 2.1 mm
+- rigid cardboard boxes/cans remain difficult and are not globally softened
 
 Acceptance:
 - front-only movement bounds — PASS
@@ -532,12 +536,12 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **30 test files / 80 tests PASS**
+- **30 test files / 81 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step
 
-Deploy and manually verify the front-only view and real flat-deck pickup behavior. If the player can no longer walk to the side and the centered rubber ball can visibly be picked up/carried, close M07 and proceed to M08.
+Deploy and manually verify three things: front-only movement remains constrained; woven-deck/shadow cues make drop depth easier to judge without a laser; and the Foam Cube now visibly shifts/lifts while the centered rubber ball remains a clearly carryable easy prize. If these pass, close M07 and proceed to M08.
 
 ## Design-review additions
 

@@ -121,7 +121,7 @@ See the design documents for which behaviors are simulated directly and which ar
 
 ## Immediate next step
 
-M07 remains a **closure candidate** after the latest play-feel correction. Player movement is now intentionally restricted to a small standing zone in front of the cabinet; walking around either side is no longer allowed. Cabinet grip is now regression-tested against the actual center rubber-ball mass/material/size on a full flat play deck, not only a pedestal fixture. Automated gates pass; the remaining M07 gate is deployed-build manual play/readability confirmation.
+M07 remains a **closure candidate** after the depth/readability and starter-prize interaction pass. Player movement stays restricted to the front. No laser or projected aim guide is used: the cabinet now restores natural depth cues with a low-contrast woven deck texture, fixed cabinet-light shadows, occlusion and the existing small lateral player motion. The remaining M07 gate is deployed-build manual play/readability confirmation.
 
 Root/default scene:
 - `https://edisontw.github.io/Claw-Chaos/` → `cabinet-lab`
@@ -139,9 +139,13 @@ Current cabinet realism baseline:
 - cabinet strong PICKUP phase = **0.12 m lift** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
 - actual `prize/sphere_ball` on the full flat deck: 75 g / friction 0.82 / radius 52.5 mm → peak/final lift ≈ **226 mm**
 - same flat-deck geometry at 150 g → peak lift only ≈ **7.1 mm**, so grip remains mass-sensitive rather than magnetic
+- `prize/cube_small` is now a **75 g Foam Cube** with a rounded physical collider (~14 mm corner radius) instead of an ideal sharp plastic cuboid
+- rounded Foam Cube interaction: ≈ **22.7 mm planar displacement + 10.4 mm peak lift**; legacy sharp cuboid comparison ≈ 2.5 mm + 2.1 mm
+- rigid cardboard boxes/cans remain harder targets; the starter cube is not scripted to win
 - locked `gantry-lab` M04 force profile remains 0.60 / 2.5 / 0.003
 - EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
 - AUTO CLOSE remains the normal near-bottom fallback
+- depth/readability uses woven deck texture + fixed shadow-casting cabinet light; **no laser / aim projection**
 - root/browser default-scene smoke is regression-gated
 
 Current `cabinet-lab` player-view controls:
@@ -167,7 +171,7 @@ Current M07 front-view baseline:
 - no side standing zones and no front-corner traversal
 - front-only movement plus head turn is used for aiming/readability
 - control-panel and chute gaze targets remain reachable from the legal front zone
-- **30 test files / 80 tests PASS**
+- **30 test files / 81 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:

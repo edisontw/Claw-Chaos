@@ -469,6 +469,22 @@ Cabinet gameplay calibration — updated 2026-10-03:
 - therefore an easy real gameplay prize can now be carried while a 2× mass control still fails physically
 - no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, or velocity reset is used.
 
+Starter-cube interaction update — 2026-10-03:
+- former `prize/cube_small` sharp 95 mm plastic cuboid was reproduced as essentially immobile under a centered flat-deck grab
+- sweeps of close torque (2.9→5.0 N·m), finger friction, prize friction, deeper close angle, thicker/shorter tips and AUTO CLOSE depth did not make the sharp cuboid realistically grabbable
+- starter definition is now **Foam Cube**, 75 g, soft material, rounded physical collider `box/rounded_v1` (~14 mm corner radius)
+- rounded Foam Cube: peak lift ≈ **10.4 mm**, maximum planar displacement ≈ **22.7 mm**
+- legacy sharp comparison: peak lift ≈ 2.1 mm, planar displacement ≈ 2.5 mm
+- acceptance requires visible physical interaction (>15 mm via lift or planar displacement) rather than forcing a rigid box to behave like a ball
+- hard box definitions remain sharp/high-difficulty.
+
+Depth-readability manual acceptance — 2026-10-03:
+- no laser, projected drop marker or hidden aim guide
+- play deck carries a low-contrast woven texture so perspective scaling is visible
+- fixed cabinet light casts real claw/prize shadows onto the deck
+- player may use only the existing small front-zone lateral motion for parallax
+- PASS requires easier depth judgment without turning the shadow/texture into an explicit vertical targeting indicator.
+
 ## 14. PT-012 Hold boost
 
 Setup:

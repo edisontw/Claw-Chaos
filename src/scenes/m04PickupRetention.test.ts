@@ -3,7 +3,10 @@ import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
 import { getPrizeDefinition } from "../prizes/catalog";
-import { resolvePrizeSpec } from "../prizes/PrizeFactory";
+import {
+  createPrize,
+  resolvePrizeSpec,
+} from "../prizes/PrizeFactory";
 import type {
   RevoluteJointHandle,
   RigidBodyHandle,
@@ -42,7 +45,18 @@ interface PickupRetentionProfile {
   retainingTorque?: number;
   ballMassKg?: number;
   ballFriction?: number;
+  ballRestitution?: number;
   ballRadiusMeters?: number;
+  prizeShape?: "sphere" | "cuboid";
+  prizeDefinitionId?: string;
+  prizeHalfExtents?: { x: number; y: number; z: number };
+  prizeRotationYRadians?: number;
+  prizeOffsetX?: number;
+  prizeOffsetZ?: number;
+  fingerLowerPadRadiusMeters?: number;
+  fingerNodes?: readonly { radial: number; down: number }[];
+  closedAngleRadians?: number;
+  autoClosePayoutMeters?: number;
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
@@ -59,6 +73,7 @@ interface PickupRetentionMetrics {
   retainingStartPayoutMeters: number;
   finalPayoutMeters: number;
   maxSuspensionErrorMeters: number;
+  maxPlanarDisplacementMeters: number;
   retainingReached: boolean;
   topReached: boolean;
   boostUsedSeconds: number;
@@ -83,6 +98,32 @@ async function simulateM04PickupRetention(
     profile.ballFriction ?? claw.pt001BallFriction;
   const ballRadiusMeters =
     profile.ballRadiusMeters ?? claw.pt001BallRadius;
+  const ballRestitution =
+    profile.ballRestitution ?? claw.pt001BallRestitution;
+  const prizeShape = profile.prizeShape ?? "sphere";
+  const prizeDefinition = profile.prizeDefinitionId
+    ? getPrizeDefinition(profile.prizeDefinitionId)
+    : null;
+  const prizeHalfExtents =
+    profile.prizeHalfExtents ?? {
+      x: ballRadiusMeters,
+      y: ballRadiusMeters,
+      z: ballRadiusMeters,
+    };
+  const prizeRotationYRadians =
+    profile.prizeRotationYRadians ?? 0;
+  const prizeOffsetX = profile.prizeOffsetX ?? 0;
+  const prizeOffsetZ = profile.prizeOffsetZ ?? 0;
+  const fingerLowerPadRadiusMeters =
+    profile.fingerLowerPadRadiusMeters ??
+    CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerNodes =
+    profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
+  const closedAngleRadians =
+    profile.closedAngleRadians ?? claw.closedAngle;
+  const autoClosePayoutMeters =
+    profile.autoClosePayoutMeters ??
+    M04_PLAY_CONFIG.autoClosePayoutMeters;
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -102,10 +143,16 @@ async function simulateM04PickupRetention(
     initialHubY - gantry.reelMaxPayout;
   const m01HubToBallCenter =
     claw.hubCenterY - claw.pt001BallCenterY;
+  const supportHalfHeight =
+    prizeDefinition
+      ? prizeDefinition.dimensions.y * 0.5
+      : prizeShape === "cuboid"
+        ? prizeHalfExtents.y
+        : ballRadiusMeters;
   const ballCenterY =
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
-        ballRadiusMeters +
+        supportHalfHeight +
         0.002
       : bottomHubY -
         m01HubToBallCenter +
@@ -193,7 +240,10 @@ async function simulateM04PickupRetention(
 
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
-      createFingerSegments(createFingerPoints(theta)),
+      createFingerSegments(
+        createFingerPoints(theta, fingerNodes),
+        fingerLowerPadRadiusMeters,
+      ),
       {
         friction: fingerFriction,
         restitution: claw.fingerRestitution,
@@ -211,7 +261,7 @@ async function simulateM04PickupRetention(
         anchor1: pivotLocal,
         anchor2: { x: 0, y: 0, z: 0 },
         axis: tangent,
-        minAngle: claw.closedAngle,
+        minAngle: closedAngleRadians,
         maxAngle: claw.openAngle,
         initialTarget: claw.openAngle,
         stiffness: claw.motorStiffness,
@@ -225,15 +275,47 @@ async function simulateM04PickupRetention(
     joints.push(joint);
   }
 
-  const ball = physics.createDynamicSphere(
-    { x: 0, y: ballCenterY, z: 0 },
-    ballRadiusMeters,
-    ballMassKg,
-    {
-      friction: ballFriction,
-      restitution: claw.pt001BallRestitution,
-    },
-  );
+  const ball = prizeDefinition
+    ? createPrize(
+        physics,
+        prizeDefinition,
+        {
+          position: {
+            x: prizeOffsetX,
+            y: ballCenterY,
+            z: prizeOffsetZ,
+          },
+          rotationYRadians: prizeRotationYRadians,
+          variantSeed: "m04-flat-deck-regression",
+        },
+      ).body
+    : prizeShape === "cuboid"
+      ? physics.createDynamicCuboid(
+          { x: prizeOffsetX, y: ballCenterY, z: prizeOffsetZ },
+          prizeHalfExtents,
+          prizeRotationYRadians,
+          {
+            friction: ballFriction,
+            restitution: ballRestitution,
+            density:
+              ballMassKg /
+              (
+                prizeHalfExtents.x *
+                prizeHalfExtents.y *
+                prizeHalfExtents.z *
+                8
+              ),
+          },
+        )
+      : physics.createDynamicSphere(
+          { x: prizeOffsetX, y: ballCenterY, z: prizeOffsetZ },
+          ballRadiusMeters,
+          ballMassKg,
+          {
+            friction: ballFriction,
+            restitution: ballRestitution,
+          },
+        );
 
   const reelConfig = {
     minPayout: gantry.reelMinPayout,
@@ -243,8 +325,8 @@ async function simulateM04PickupRetention(
     braking: gantry.reelBraking,
   };
   const playConfig = {
-    autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
-    closedAngleRadians: claw.closedAngle,
+    autoClosePayoutMeters,
+    closedAngleRadians,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
@@ -329,7 +411,7 @@ async function simulateM04PickupRetention(
     const closing = m04FingerShouldClose(play);
     fingerCommand = advanceMotorCommand(
       fingerCommand,
-      closing ? claw.closedAngle : claw.openAngle,
+      closing ? closedAngleRadians : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
     );
@@ -432,10 +514,14 @@ async function simulateM04PickupRetention(
     step();
   }
 
-  const baselineBallY = ball.translation().y;
+  const baselineBall = ball.translation();
+  const baselineBallY = baselineBall.y;
+  const baselineBallX = baselineBall.x;
+  const baselineBallZ = baselineBall.z;
   play = applyM04Action(play, reel.payout);
 
   let peakLiftMeters = 0;
+  let maxPlanarDisplacementMeters = 0;
   let liftAtRetainingStartMeters = 0;
   let retainingReached = false;
   let topReached = false;
@@ -449,8 +535,16 @@ async function simulateM04PickupRetention(
     const previousPhase = play.phase;
     step();
 
-    const lift = ball.translation().y - baselineBallY;
+    const ballPosition = ball.translation();
+    const lift = ballPosition.y - baselineBallY;
     peakLiftMeters = Math.max(peakLiftMeters, lift);
+    maxPlanarDisplacementMeters = Math.max(
+      maxPlanarDisplacementMeters,
+      Math.hypot(
+        ballPosition.x - baselineBallX,
+        ballPosition.z - baselineBallZ,
+      ),
+    );
 
     if (
       !retainingReached &&
@@ -506,6 +600,7 @@ async function simulateM04PickupRetention(
       play.retainingStartPayoutMeters ?? Number.NaN,
     finalPayoutMeters: reel.payout,
     maxSuspensionErrorMeters,
+    maxPlanarDisplacementMeters,
     retainingReached,
     topReached,
     boostUsedSeconds: play.holdBoostUsedSeconds,
@@ -775,6 +870,69 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(actual.finalLiftMeters).toBeGreaterThan(0.10);
     expect(heavy.peakLiftMeters).toBeLessThan(0.03);
     expect(heavy.finalLiftMeters).toBeLessThan(0.03);
+  });
+
+
+  it("cabinet claw can interact with the rounded starter cube from the flat deck", async () => {
+    const definition = getPrizeDefinition("prize/cube_small");
+    const resolved = resolvePrizeSpec(definition);
+    const halfExtents = {
+      x: definition.dimensions.x * 0.5,
+      y: definition.dimensions.y * 0.5,
+      z: definition.dimensions.z * 0.5,
+    };
+
+    const rounded = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      prizeDefinitionId: definition.id,
+      prizeRotationYRadians: 0.18,
+      supportMode: "flat-deck",
+    });
+
+    const legacySharp = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      ballMassKg: resolved.massKg,
+      ballFriction: resolved.material.dynamicFriction,
+      ballRestitution: resolved.material.restitution,
+      prizeShape: "cuboid",
+      prizeHalfExtents: halfExtents,
+      prizeRotationYRadians: 0.18,
+      supportMode: "flat-deck",
+    });
+
+    console.log(
+      "Cabinet rounded-cube interaction metrics",
+      JSON.stringify({
+        colliderProfileId: definition.colliderProfileId,
+        rounded,
+        legacySharp,
+      }),
+    );
+
+    expect(rounded.finiteAndBounded).toBe(true);
+    expect(rounded.retainingReached).toBe(true);
+    expect(
+      Math.max(
+        rounded.peakLiftMeters,
+        rounded.maxPlanarDisplacementMeters,
+      ),
+    ).toBeGreaterThan(0.015);
+    expect(
+      rounded.peakLiftMeters +
+        rounded.maxPlanarDisplacementMeters,
+    ).toBeGreaterThan(
+      legacySharp.peakLiftMeters +
+        legacySharp.maxPlanarDisplacementMeters +
+        0.008,
+    );
   });
 
 });
