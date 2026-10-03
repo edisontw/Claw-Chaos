@@ -861,35 +861,18 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     };
     const candidateProfiles = [
       {
-        label: "centered",
-        prizeOffsetX: 0,
-        prizeOffsetZ: 0,
+        label: "plastic-baseline",
+        ballFriction: resolved.material.dynamicFriction,
       },
-      {
-        label: "offset-x-0.015",
-        prizeOffsetX: 0.015,
-        prizeOffsetZ: 0,
-      },
-      {
-        label: "offset-x-0.025",
-        prizeOffsetX: 0.025,
-        prizeOffsetZ: 0,
-      },
-      {
-        label: "offset-x-0.035",
-        prizeOffsetX: 0.035,
-        prizeOffsetZ: 0,
-      },
-      {
-        label: "offset-diagonal-0.025",
-        prizeOffsetX: 0.025,
-        prizeOffsetZ: 0.025,
-      },
+      { label: "matte-0.56", ballFriction: 0.56 },
+      { label: "fabric-0.62", ballFriction: 0.62 },
+      { label: "plush-0.70", ballFriction: 0.70 },
+      { label: "rubber-0.82", ballFriction: 0.82 },
+      { label: "high-grip-0.95", ballFriction: 0.95 },
     ];
     const sweep: Array<{
       label: string;
-      prizeOffsetX: number;
-      prizeOffsetZ: number;
+      ballFriction: number;
       peakLiftMeters: number;
       maxPlanarDisplacementMeters: number;
       finalLiftMeters: number;
@@ -901,12 +884,10 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
         retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
-        prizeOffsetX: candidate.prizeOffsetX,
-        prizeOffsetZ: candidate.prizeOffsetZ,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         ballMassKg: resolved.massKg,
-        ballFriction: resolved.material.dynamicFriction,
+        ballFriction: candidate.ballFriction,
         ballRestitution: resolved.material.restitution,
         prizeShape: "cuboid",
         prizeHalfExtents: halfExtents,
@@ -915,15 +896,14 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       });
       sweep.push({
         label: candidate.label,
-        prizeOffsetX: candidate.prizeOffsetX,
-        prizeOffsetZ: candidate.prizeOffsetZ,
+        ballFriction: candidate.ballFriction,
         peakLiftMeters: metrics.peakLiftMeters,
         maxPlanarDisplacementMeters:
           metrics.maxPlanarDisplacementMeters,
         finalLiftMeters: metrics.finalLiftMeters,
       });
       if (
-        candidate.label === "centered"
+        candidate.label === "plastic-baseline"
       ) {
         actual = metrics;
       }
