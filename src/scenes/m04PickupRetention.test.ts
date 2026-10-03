@@ -1029,8 +1029,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 15000);
 
 
-  it("finds the minimum friction that retains all target plush grabs", async () => {
-    const frictions = [1.90, 1.91, 1.92, 1.93, 1.94, 1.95] as const;
+  it("minimizes the strong-pickup phase while keeping target plush grabs", async () => {
+    const pickupDistances = [0.18, 0.20, 0.21, 0.22, 0.23] as const;
     const requiredPrizes = [
       {
         id: "prize/pillow_small",
@@ -1055,12 +1055,12 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     const resolved = resolvePrizeSpec(sphere);
     const rows = [];
 
-    for (const fingerFriction of frictions) {
+    for (const pickupLiftDistanceMeters of pickupDistances) {
       const profile = {
-        fingerFriction,
+        fingerFriction: 1.94,
         closePickupTorque: 10.0,
-        retainingTorque: 0.026,
-        pickupLiftDistanceMeters: 0.23,
+        retainingTorque: 0.014,
+        pickupLiftDistanceMeters,
         closedAngleRadians: -0.63,
         fingerLowerPadRadiusMeters: 0.010,
         topHoldSeconds: 1.3,
@@ -1102,7 +1102,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         heavy.finalLiftMeters >= 0.08;
 
       rows.push({
-        fingerFriction,
+        pickupLiftDistanceMeters,
         requiredSuccessCount,
         heavySuccess,
         heavyFinal: heavy.finalLiftMeters,
@@ -1111,7 +1111,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet minimum plush-friction sweep",
+      "Cabinet pickup-distance de-escalation sweep",
       JSON.stringify(rows),
     );
 
