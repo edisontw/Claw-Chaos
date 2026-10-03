@@ -464,8 +464,10 @@ Cabinet gameplay calibration — updated 2026-10-03:
 - HOLD BOOST remains 0.010 N·m
 - calibration now includes the broad physical play deck instead of relying only on a pedestal
 - actual `prize/sphere_ball`: 0.075 kg, rubber dynamic friction 0.82, radius 0.0525 m
-- real flat-deck result: peak lift ≈ **0.2263 m**, lift at RETAINING start ≈ 0.0672 m, lift after 0.8 s ≈ 0.2262 m, final lift ≈ 0.2262 m
-- 0.150 kg same-size/same-friction flat-deck control: peak lift ≈ **0.0071 m**, final ≈ 0 m
+- stronger-grip flat-deck result: 75 g ball peak/final lift ≈ **0.2330 m**
+- 0.150 kg same-size/same-friction control: peak lift ≈ **0.0092 m**, final ≈ 0 m
+- Foam Cube improves from ≈10.4 mm peak lift / 22.7 mm planar movement to ≈**14.5 mm / 30.3 mm**
+- Teddy peak lift improves from ≈14.6 mm to ≈**21.6 mm**
 - therefore an easy real gameplay prize can now be carried while a 2× mass control still fails physically
 - no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, or velocity reset is used.
 
@@ -1008,7 +1010,7 @@ Automated status — 2026-10-03:
 - mobile framing regression locks Z 0.84 / max 0.90 and **58° FOV**, with representative upper-claw + prize-deck vertical span fitting in view
 - render-profile regression locks mobile DPR cap **1.5** / shadow **512** versus desktop DPR 2 / shadow 1024
 - browser smoke requires `data-mobile-controls="ready"` for explicit cabinet and root/default scenes
-- full suite = **32 test files / 89 tests PASS**
+- full suite = **32 test files / 90 tests PASS**
 - real-device Android Chrome / iPhone Safari comfort, portrait/landscape layout and sustained FPS remain manual M07 closure gates.
 
 ## PT-044 Calibration record completeness

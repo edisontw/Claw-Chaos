@@ -539,11 +539,13 @@ Grip/play correction:
 - root cause: pedestal calibration allowed favorable under-grip geometry while real prizes rest on a broad flat play deck
 - regression now reproduces the full flat play deck
 - actual `prize/sphere_ball`: 75 g, rubber friction 0.82, radius 52.5 mm
-- cabinet CLOSE/PICKUP remains 2.9 N·m and finger friction remains 0.72
-- cabinet RETAINING remains 0.0055 N·m
+- cabinet CLOSE/PICKUP = 3.6 N·m and finger friction = 0.82
+- cabinet RETAINING = 0.0075 N·m
 - cabinet-only strong PICKUP distance increases from 0.06 m to **0.12 m**
-- real flat-deck ball reaches ≈226 mm peak/final lift
-- same geometry/friction at 150 g reaches only ≈7 mm peak lift
+- real flat-deck ball reaches ≈233 mm peak/final lift
+- same geometry/friction at 150 g reaches only ≈9 mm peak lift and still falls back
+- Foam Cube improves to ≈30.3 mm planar displacement / 14.5 mm peak lift
+- Teddy peak lift improves to ≈21.6 mm
 - mass sensitivity remains physical; no attachment/magnet/kinematic shortcut
 - drop-position readability is improved without a laser: low-contrast woven deck texture + fixed cabinet-light shadows + existing small lateral parallax
 - `prize/cube_small` is reclassified as a 75 g rounded Foam Cube (`box/rounded_v1`) because the former ideal sharp plastic cuboid was confirmed through multiple physical sweeps to be an unrealistic starter target
@@ -556,7 +558,7 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **32 test files / 89 tests PASS**
+- **32 test files / 90 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step

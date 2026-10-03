@@ -1011,15 +1011,17 @@ Current physical regression instead uses:
 - existing 3-finger Rapier contact model
 
 Cabinet-only play tuning:
-- finger friction = 0.72
-- CLOSE/PICKUP torque = 2.9 N·m
-- RETAINING torque = 0.0055 N·m
+- finger friction = 0.82
+- CLOSE/PICKUP torque = 3.6 N·m
+- RETAINING torque = 0.0075 N·m
 - strong PICKUP lift distance = **0.12 m** before RETAINING
 - standalone locked M04 lab keeps the original 0.06 m pickup distance
 
-Measured flat-deck result:
-- 75 g real rubber-ball profile: peak lift ≈ 0.2263 m; final lift ≈ 0.2262 m
-- 150 g same-size/same-friction control: peak lift ≈ 0.0071 m; final ≈ 0 m
+Measured stronger-grip result:
+- 75 g real rubber-ball profile: peak/final lift ≈ **0.2330 m**
+- 150 g same-size/same-friction control: peak lift ≈ **0.0092 m**, final ≈ 0 m
+- Foam Cube improves from ≈10.4 mm peak lift / 22.7 mm planar movement to ≈**14.5 mm / 30.3 mm**
+- Teddy peak lift improves from ≈14.6 mm to ≈**21.6 mm**
 - no magnet, prize parenting, weld, scripted carry, kinematic prize conversion or velocity reset
 
 ## Depth/readability and starter-prize pass
@@ -1050,7 +1052,7 @@ Starter cube behavior:
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **32 test files / 89 tests PASS**
+- **32 test files / 90 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS

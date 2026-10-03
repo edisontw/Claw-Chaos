@@ -135,12 +135,12 @@ Current cabinet realism baseline:
 - cabinet reel maximum payout is extended by the same 85 mm, preserving bottom reach; carriage top keeps ≈10 mm ceiling clearance
 - two visual service/control wires accompany the main suspension cable
 - chute sensor debug wireframe is hidden during normal play; a raised solid trim sits above the deck around the opening to avoid moving-camera seam/z-fighting artifacts
-- cabinet-only grip profile = finger friction **0.72**, CLOSE/PICKUP **2.9 N·m**, RETAINING **0.0055 N·m**
+- cabinet-only grip profile = finger friction **0.82**, CLOSE/PICKUP **3.6 N·m**, RETAINING **0.0075 N·m**
 - cabinet strong PICKUP phase = **0.12 m lift** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
 - actual `prize/sphere_ball` on the full flat deck: 75 g / friction 0.82 / radius 52.5 mm → peak/final lift ≈ **226 mm**
 - same flat-deck geometry at 150 g → peak lift only ≈ **7.1 mm**, so grip remains mass-sensitive rather than magnetic
 - `prize/cube_small` is now a **75 g Foam Cube** with a rounded physical collider (~14 mm corner radius) instead of an ideal sharp plastic cuboid
-- rounded Foam Cube interaction: ≈ **22.7 mm planar displacement + 10.4 mm peak lift**; legacy sharp cuboid comparison ≈ 2.5 mm + 2.1 mm
+- stronger cabinet grip regression: Foam Cube ≈ **30.3 mm planar displacement + 14.5 mm peak lift**; prior cabinet profile ≈ 22.7 mm + 10.4 mm
 - rigid cardboard boxes/cans remain harder targets; the starter cube is not scripted to win
 - locked `gantry-lab` M04 force profile remains 0.60 / 2.5 / 0.003
 - EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
@@ -191,7 +191,7 @@ Current M07 front-view baseline:
 - mobile camera starts farther back at Z **0.84 m** (front zone max 0.90 m) and uses a modest **58° FOV**; desktop remains Z 0.68 m / 50°
 - mobile render budget: DPR cap **1.5**, shadow maps **512**; desktop remains DPR 2 / 1024
 - fixed physics timestep, forces and claw calibration are unchanged
-- **32 test files / 89 tests PASS**
+- **32 test files / 90 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:

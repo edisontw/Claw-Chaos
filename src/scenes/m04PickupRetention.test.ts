@@ -935,5 +935,117 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   });
 
+
+  it("stronger cabinet grip improves real starter-prize contact without making heavy prizes magnetic", async () => {
+    const oldProfile = {
+      fingerFriction: 0.72,
+      closePickupTorque: 2.9,
+      retainingTorque: 0.0055,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      supportMode: "flat-deck" as const,
+    };
+    const newProfile = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      supportMode: "flat-deck" as const,
+    };
+
+    const oldCube = await simulateM04PickupRetention({
+      ...oldProfile,
+      prizeDefinitionId: "prize/cube_small",
+      prizeRotationYRadians: 0.18,
+    });
+    const newCube = await simulateM04PickupRetention({
+      ...newProfile,
+      prizeDefinitionId: "prize/cube_small",
+      prizeRotationYRadians: 0.18,
+    });
+    const oldTeddy = await simulateM04PickupRetention({
+      ...oldProfile,
+      prizeDefinitionId: "prize/teddy_simple",
+      prizeRotationYRadians: 0.16,
+    });
+    const newTeddy = await simulateM04PickupRetention({
+      ...newProfile,
+      prizeDefinitionId: "prize/teddy_simple",
+      prizeRotationYRadians: 0.16,
+    });
+
+    const sphere = getPrizeDefinition("prize/sphere_ball");
+    const sphereResolved = resolvePrizeSpec(sphere);
+    const easyBall = await simulateM04PickupRetention({
+      ...newProfile,
+      prizeDefinitionId: "prize/sphere_ball",
+    });
+    const heavyBall = await simulateM04PickupRetention({
+      ...newProfile,
+      ballMassKg: sphereResolved.massKg * 2,
+      ballFriction: sphereResolved.material.dynamicFriction,
+      ballRadiusMeters: sphere.dimensions.x * 0.5,
+    });
+
+    console.log(
+      "Cabinet stronger grip production metrics",
+      JSON.stringify({
+        profile: {
+          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+          closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+          retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        },
+        oldCube: {
+          peak: oldCube.peakLiftMeters,
+          planar: oldCube.maxPlanarDisplacementMeters,
+        },
+        newCube: {
+          peak: newCube.peakLiftMeters,
+          planar: newCube.maxPlanarDisplacementMeters,
+        },
+        oldTeddy: {
+          peak: oldTeddy.peakLiftMeters,
+          planar: oldTeddy.maxPlanarDisplacementMeters,
+        },
+        newTeddy: {
+          peak: newTeddy.peakLiftMeters,
+          planar: newTeddy.maxPlanarDisplacementMeters,
+        },
+        easyBall: {
+          peak: easyBall.peakLiftMeters,
+          final: easyBall.finalLiftMeters,
+        },
+        heavyBall: {
+          peak: heavyBall.peakLiftMeters,
+          final: heavyBall.finalLiftMeters,
+        },
+      }),
+    );
+
+    expect(newCube.finiteAndBounded).toBe(true);
+    expect(newTeddy.finiteAndBounded).toBe(true);
+    expect(easyBall.finiteAndBounded).toBe(true);
+    expect(heavyBall.finiteAndBounded).toBe(true);
+
+    expect(newCube.peakLiftMeters).toBeGreaterThan(
+      oldCube.peakLiftMeters + 0.003,
+    );
+    expect(
+      newCube.peakLiftMeters +
+        newCube.maxPlanarDisplacementMeters,
+    ).toBeGreaterThan(
+      oldCube.peakLiftMeters +
+        oldCube.maxPlanarDisplacementMeters +
+        0.008,
+    );
+    expect(newTeddy.peakLiftMeters).toBeGreaterThan(
+      oldTeddy.peakLiftMeters + 0.005,
+    );
+    expect(easyBall.finalLiftMeters).toBeGreaterThan(0.15);
+    expect(heavyBall.peakLiftMeters).toBeLessThan(0.02);
+    expect(heavyBall.finalLiftMeters).toBeLessThan(0.02);
+  });
+
 });
 
