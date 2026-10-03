@@ -160,7 +160,7 @@ jobs:
               --enable-unsafe-swiftshader \
               --virtual-time-budget=8000 \
               --dump-dom \
-              "http://127.0.0.1:4173/Claw-Chaos/?scene=cabinet-lab&seed=ci-smoke" \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=cabinet-lab&layout=dense&seed=ci-m09-dense" \
               > "$DOM_FILE" 2> "$LOG_FILE" || true
 
             if grep -q 'data-simulation-ready="true"' "$DOM_FILE" &&
