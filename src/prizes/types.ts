@@ -92,6 +92,11 @@ export interface PrizeSpawnOptions {
   materialId?: string;
   massProfileId?: string;
   comProfileId?: string;
+  /**
+   * Physics-only scale for compound soft-prize colliders.
+   * Visual dimensions, mass and inertia remain unchanged.
+   */
+  compoundColliderScale?: number;
 }
 
 export interface SpawnedPrize {
