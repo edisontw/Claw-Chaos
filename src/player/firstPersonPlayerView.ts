@@ -18,9 +18,6 @@ export interface FirstPersonPlayerViewConfig {
   pitchMaxRadians: number;
   moveSpeedMetersPerSecond: number;
   mouseSensitivityRadiansPerPixel: number;
-  maxLeanMeters: number;
-  leanSpeedMetersPerSecond: number;
-  maxLeanRollRadians: number;
 }
 
 export interface FirstPersonPlayerViewState {
@@ -28,13 +25,11 @@ export interface FirstPersonPlayerViewState {
   z: number;
   yawRadians: number;
   pitchRadians: number;
-  leanMeters: number;
 }
 
 export interface FirstPersonPlayerViewInput {
   strafe: number;
   forward: number;
-  lean: number;
 }
 
 export interface PlayerViewTarget {
@@ -81,9 +76,6 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   pitchMaxRadians: THREE.MathUtils.degToRad(25),
   moveSpeedMetersPerSecond: 0.55,
   mouseSensitivityRadiansPerPixel: 0.0022,
-  maxLeanMeters: 0.030,
-  leanSpeedMetersPerSecond: 0.20,
-  maxLeanRollRadians: THREE.MathUtils.degToRad(2.5),
 };
 
 export const M07_CABINET_VIEW_TARGETS: readonly PlayerViewTarget[] = [
@@ -179,37 +171,6 @@ export function constrainPlayerPosition(
   return { x, z };
 }
 
-function constrainLeanForCabinet(
-  x: number,
-  z: number,
-  desiredLean: number,
-  config: FirstPersonPlayerViewConfig,
-): number {
-  let lean = clamp(
-    desiredLean,
-    -config.maxLeanMeters,
-    config.maxLeanMeters,
-  );
-
-  if (z >= config.cabinetFrontClearZ) {
-    return lean;
-  }
-
-  if (x >= config.cabinetSideClearX) {
-    lean = Math.max(
-      lean,
-      config.cabinetSideClearX - x,
-    );
-  } else if (x <= -config.cabinetSideClearX) {
-    lean = Math.min(
-      lean,
-      -config.cabinetSideClearX - x,
-    );
-  }
-
-  return lean;
-}
-
 export function createFirstPersonPlayerViewState(
   config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): FirstPersonPlayerViewState {
@@ -218,7 +179,6 @@ export function createFirstPersonPlayerViewState(
     z: config.initialZ,
     yawRadians: 0,
     pitchRadians: 0,
-    leanMeters: 0,
   };
 }
 
@@ -267,24 +227,10 @@ export function advanceFirstPersonPlayerView(
     config,
   );
 
-  const rawLeanTarget =
-    normalizedAxis(input.lean) * config.maxLeanMeters;
-  const leanTarget = constrainLeanForCabinet(
-    position.x,
-    position.z,
-    rawLeanTarget,
-    config,
-  );
-
   return {
     ...state,
     x: position.x,
     z: position.z,
-    leanMeters: moveToward(
-      state.leanMeters,
-      leanTarget,
-      config.leanSpeedMetersPerSecond * dt,
-    ),
   };
 }
 
@@ -293,7 +239,7 @@ export function playerCameraPosition(
   config: FirstPersonPlayerViewConfig = M07_FIRST_PERSON_VIEW_CONFIG,
 ): { x: number; y: number; z: number } {
   return {
-    x: state.x + state.leanMeters,
+    x: state.x,
     y: config.eyeY,
     z: state.z,
   };
@@ -369,15 +315,11 @@ export function applyFirstPersonPlayerCamera(
   const position = playerCameraPosition(state, config);
   camera.position.set(position.x, position.y, position.z);
 
-  const leanFraction =
-    config.maxLeanMeters > 0
-      ? state.leanMeters / config.maxLeanMeters
-      : 0;
   camera.rotation.order = "YXZ";
   camera.rotation.set(
     state.pitchRadians,
     state.yawRadians,
-    -leanFraction * config.maxLeanRollRadians,
+    0,
   );
 }
 
@@ -387,6 +329,9 @@ export class FirstPersonPlayerViewController {
   private focus: PlayerViewFocus | null = null;
   private lastInteraction = "none";
   private readonly prompt: HTMLDivElement;
+  private touchLookPointerId: number | null = null;
+  private touchLookX = 0;
+  private touchLookY = 0;
 
   constructor(
     private readonly camera: THREE.PerspectiveCamera,
@@ -415,6 +360,10 @@ export class FirstPersonPlayerViewController {
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("mousemove", this.onMouseMove);
     element.addEventListener("click", this.onClick);
+    element.addEventListener("pointerdown", this.onPointerDown);
+    element.addEventListener("pointermove", this.onPointerMove);
+    element.addEventListener("pointerup", this.onPointerUp);
+    element.addEventListener("pointercancel", this.onPointerUp);
   }
 
   update(deltaSeconds: number): void {
@@ -427,9 +376,6 @@ export class FirstPersonPlayerViewController {
         forward:
           (this.pressed.has("KeyW") ? 1 : 0) -
           (this.pressed.has("KeyS") ? 1 : 0),
-        lean:
-          (this.pressed.has("KeyE") ? 1 : 0) -
-          (this.pressed.has("KeyQ") ? 1 : 0),
       },
       Math.min(Math.max(deltaSeconds, 0), 0.05),
       this.config,
@@ -455,10 +401,9 @@ export class FirstPersonPlayerViewController {
 
   debugLines(): string[] {
     return [
-      "Player view       WASD move / mouse look / Q-E lean / F interact",
-      `Player X/Z       ${this.state.x.toFixed(3)} / ${this.state.z.toFixed(3)} m`,
+      "Player view       WASD move / mouse-or-touch look / F action",
+      `Player pos       lateral ${this.state.x.toFixed(3)} / depth ${this.state.z.toFixed(3)} m`,
       `Head yaw/pitch   ${THREE.MathUtils.radToDeg(this.state.yawRadians).toFixed(1)} / ${THREE.MathUtils.radToDeg(this.state.pitchRadians).toFixed(1)} deg`,
-      `Lean             ${(this.state.leanMeters * 1000).toFixed(0)} mm`,
       `View focus       ${this.focus?.target.id ?? "none"}`,
       `Interaction      ${this.lastInteraction}`,
       `Pointer look     ${document.pointerLockElement === this.element ? "LOCKED" : "click canvas"}`,
@@ -467,14 +412,10 @@ export class FirstPersonPlayerViewController {
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
     if (event.code === "KeyF" && !event.repeat) {
-      if (
-        this.focus?.target.action === "primary" &&
-        this.onPrimaryAction
-      ) {
+      if (this.onPrimaryAction) {
         const accepted = this.onPrimaryAction();
         this.lastInteraction =
-          this.focus.target.id +
-          (accepted ? " ACCEPTED" : " blocked");
+          "F primary " + (accepted ? "ACCEPTED" : "blocked");
       }
       return;
     }
@@ -483,9 +424,7 @@ export class FirstPersonPlayerViewController {
       event.code === "KeyW" ||
       event.code === "KeyA" ||
       event.code === "KeyS" ||
-      event.code === "KeyD" ||
-      event.code === "KeyQ" ||
-      event.code === "KeyE"
+      event.code === "KeyD"
     ) {
       this.pressed.add(event.code);
     }
@@ -508,7 +447,53 @@ export class FirstPersonPlayerViewController {
     );
   };
 
+  private readonly onPointerDown = (event: PointerEvent): void => {
+    if (event.pointerType === "mouse") {
+      return;
+    }
+    this.touchLookPointerId = event.pointerId;
+    this.touchLookX = event.clientX;
+    this.touchLookY = event.clientY;
+    this.element.setPointerCapture?.(event.pointerId);
+    event.preventDefault();
+  };
+
+  private readonly onPointerMove = (event: PointerEvent): void => {
+    if (
+      event.pointerType === "mouse" ||
+      this.touchLookPointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    const dx = event.clientX - this.touchLookX;
+    const dy = event.clientY - this.touchLookY;
+    this.touchLookX = event.clientX;
+    this.touchLookY = event.clientY;
+    this.state = applyFirstPersonLookDelta(
+      this.state,
+      dx,
+      dy,
+      this.config,
+    );
+    event.preventDefault();
+  };
+
+  private readonly onPointerUp = (event: PointerEvent): void => {
+    if (this.touchLookPointerId !== event.pointerId) {
+      return;
+    }
+    this.touchLookPointerId = null;
+    event.preventDefault();
+  };
+
   private readonly onClick = (): void => {
+    if (
+      matchMedia("(pointer: coarse)").matches ||
+      navigator.maxTouchPoints > 0
+    ) {
+      return;
+    }
     if (document.pointerLockElement !== this.element) {
       void this.element.requestPointerLock();
     }
