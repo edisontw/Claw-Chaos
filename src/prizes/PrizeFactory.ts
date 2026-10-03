@@ -551,6 +551,9 @@ export function createPrize(
     {
       friction: resolved.material.dynamicFriction,
       restitution: resolved.material.restitution,
+      contactAudioProfileId: options.enableContactAudio
+        ? resolved.material.audioProfileId
+        : undefined,
     },
     rotationYQuaternion(rotationYRadians),
   );
