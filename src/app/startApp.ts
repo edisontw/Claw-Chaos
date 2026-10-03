@@ -90,6 +90,7 @@ async function loadSelectedSceneFactory(
 
 export async function startApp(root: HTMLElement): Promise<void> {
   const selection = parseSceneSelection(window.location.search);
+  root.dataset.sceneId = selection.id;
   root.dataset.loading = "true";
 
   const [physics, sceneFactory] = await Promise.all([
