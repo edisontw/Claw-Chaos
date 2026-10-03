@@ -81,7 +81,7 @@ describe("M07 first-person player view constraints", () => {
     const halfFovRadians =
       (M07_CAMERA_FOV_DEGREES * Math.PI / 180) * 0.5;
 
-    expect(config.initialZ).toBe(0.78);
+    expect(config.initialZ).toBe(0.84);
     expect(config.maxZ).toBe(0.84);
     expect(config.eyeY).toBe(1.04);
     expect(config.minEyeY).toBe(0.98);
@@ -94,6 +94,18 @@ describe("M07 first-person player view constraints", () => {
     ).toBeLessThan(halfFovRadians);
     expect(
       Math.abs(lower.pitchRadians - state.pitchRadians),
+    ).toBeLessThan(halfFovRadians);
+
+    const chute = M07_CABINET_VIEW_TARGETS.find(
+      (target) => target.id === "chute",
+    );
+    expect(chute).toBeDefined();
+    const chuteLook = computeLookAnglesToPoint(
+      eye,
+      chute!.position,
+    );
+    expect(
+      Math.abs(chuteLook.pitchRadians - state.pitchRadians),
     ).toBeLessThan(halfFovRadians);
   });
 
@@ -124,7 +136,7 @@ describe("M07 first-person player view constraints", () => {
 
     expect(M07_CAMERA_FOV_DEGREES).toBe(50);
     expect(M07_MOBILE_CAMERA_FOV_DEGREES).toBe(58);
-    expect(mobile.initialZ).toBeGreaterThan(desktop.initialZ);
+    expect(mobile.initialZ).toBe(desktop.initialZ);
     expect(mobile.initialZ).toBe(0.84);
     expect(mobile.maxZ).toBe(0.90);
 
