@@ -523,6 +523,14 @@ Mobile-first input:
 - diagnostic X/Z values are coordinates, not keyboard keys
 - mobile-controls initialization is browser-smoke gated
 
+Desktop/default framing correction:
+- desktop pointer-lock movement now follows content-drag semantics, matching touch
+- desktop initial player Z = 0.78 m; max Z = 0.84 m
+- initial yaw = 0°, initial pitch = −19°
+- desktop FOV remains 50°
+- representative upper-claw and front-prize points fit inside the initial desktop vertical FOV without any first-user camera adjustment
+- mobile keeps Z 0.84 / max 0.90 and 58° FOV while inheriting the same −19° starting pitch
+
 Mobile calibration:
 - virtual joystick dead zone = 14%; post-dead-zone travel is remapped to full analog output
 - touch-look sensitivity = 0.0030 rad/pixel; desktop mouse remains 0.0022
@@ -558,12 +566,12 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **32 test files / 90 tests PASS**
+- **32 test files / 92 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step
 
-Deploy and manually verify on real phones first: the 14% joystick dead zone, 0.0030 rad/pixel touch look, 140 ms action debounce, portrait/landscape layout, safe areas and mobile performance. Also recheck front-only movement, depth cues, Foam Cube interaction, and centered rubber-ball pickup. If these pass on Android Chrome and iPhone Safari, close M07 and proceed to M08.
+Deploy and manually verify the new startup framing on desktop and phone: the player should enter ready-to-play with the claw body and prize field visible, and both desktop mouse movement and touch drag should feel directionally natural. Then recheck the existing mobile controls, depth cues, Foam Cube interaction, and centered rubber-ball pickup.
 
 ## Design-review additions
 
