@@ -31,8 +31,7 @@ interface DualRumbleActuator {
   ) => Promise<boolean> | boolean;
 }
 
-interface HapticGamepad extends Gamepad {
-  vibrationActuator?: DualRumbleActuator;
+interface HapticGamepadExtras {
   hapticActuators?: readonly DualRumbleActuator[];
 }
 
@@ -150,11 +149,14 @@ export class CabinetHaptics {
         continue;
       }
 
-      const hapticGamepad = gamepad as HapticGamepad;
+      const hapticGamepad =
+        gamepad as Gamepad & HapticGamepadExtras;
       const actuators: DualRumbleActuator[] = [];
+      const vibrationActuator =
+        gamepad.vibrationActuator as unknown as DualRumbleActuator;
 
-      if (hapticGamepad.vibrationActuator) {
-        actuators.push(hapticGamepad.vibrationActuator);
+      if (vibrationActuator) {
+        actuators.push(vibrationActuator);
       }
       if (hapticGamepad.hapticActuators) {
         actuators.push(...hapticGamepad.hapticActuators);
