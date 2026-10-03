@@ -1,4 +1,4 @@
-import * as RAPIER from "@dimforge/rapier3d";
+import RAPIER from "@dimforge/rapier3d/rapier.js";
 import { FIXED_TIMESTEP_SECONDS } from "../config/simulation";
 
 export interface Vec3 {
