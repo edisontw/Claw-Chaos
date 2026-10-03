@@ -723,7 +723,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   it("cabinet grip profile can lift and retain a normal ball without magnetic hold", async () => {
     const baseline = await simulateM04PickupRetention();
     const cabinet = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
@@ -734,7 +734,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       "Cabinet grip calibration metrics",
       JSON.stringify({
         profile: {
-          fingerFriction: profile.fingerFriction,
+          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
           closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
           retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
@@ -781,14 +781,14 @@ describe("M04 physical pickup-to-retaining force transition", () => {
 
   it("cabinet grip still responds to prize mass instead of acting like a magnet", async () => {
     const easy = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
         CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     });
     const heavy = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
@@ -827,7 +827,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     const definition = getPrizeDefinition("prize/sphere_ball");
     const resolved = resolvePrizeSpec(definition);
     const actual = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
@@ -838,7 +838,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       supportMode: "flat-deck",
     });
     const heavy = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
@@ -883,7 +883,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     };
 
     const rounded = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
@@ -894,7 +894,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     });
 
     const legacySharp = await simulateM04PickupRetention({
-      fingerFriction: profile.fingerFriction,
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
       retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
