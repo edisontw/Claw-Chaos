@@ -107,6 +107,7 @@ export async function startApp(
     physicsPromise,
     loadSelectedSceneFactory(selection, window.location.search),
   ]);
+  root.dataset.physicsBackend = "native-wasm";
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x111722);

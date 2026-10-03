@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — startup performance correction after mechanical audio slice 2**
+**Status: IN PROGRESS — native browser WASM startup optimization after mechanical audio slice 2**
 
 ## Goal
 
@@ -1213,6 +1213,32 @@ Measured candidate build:
 - total heavy payload is not claimed to have disappeared; the improvement comes from removing the startup waterfall and allowing the two major chunks to download/parse concurrently
 - all 101 tests, lint, build, Pages base-path, bundle-size gate, and gantry/cabinet/root browser smoke pass
 - no collider, force, friction, claw torque, reel, timestep, camera, control, chute or prize-physics behavior changed
+
+### Native browser WASM follow-up — PR #48
+
+The earlier PR #46 failure was isolated to using the standard Rapier package inside the Vitest worker environment. The browser path is now separated from tests instead of forcing one backend everywhere:
+
+- both packages remain pinned to Rapier 0.21.0
+- Vitest mode keeps `@dimforge/rapier3d-compat`, preserving the existing 101 physics/regression tests
+- Vite browser builds alias that same import to `@dimforge/rapier3d/rapier.js`
+- `PhysicsRuntime.create()` calls `init()` only when the selected backend exposes it
+- browser diagnostics expose `data-physics-backend="native-wasm"`
+- gantry, cabinet and default-root headless browser smoke all initialize successfully on the native-WASM production build
+
+Measured production bundle:
+- bootstrap entry: 1.76 kB raw / 0.96 kB gzip
+- PhysicsRuntime JavaScript: 299.75 kB raw / 52.97 kB gzip
+- Rapier WASM: 3,082.10 kB raw / 1,187.63 kB gzip
+- previous compat PhysicsRuntime JavaScript: 4,338.90 kB raw / 1,670.84 kB gzip
+- Rapier-related compressed transfer therefore drops by about 26%, while JavaScript parsing falls much more sharply because the 3 MB physics core is now actual WASM instead of base64 text embedded in JS
+- Vite also split Three core from the app chunk during this build; this is a bundling consequence only, not a rendering or gameplay change
+
+New CI regression gates:
+- a hashed Rapier `.wasm` asset must exist and remain <=3.5 MB raw
+- PhysicsRuntime JS must remain <=500 kB raw, preventing accidental return to the compat/base64 browser bundle
+- gantry/cabinet/root browser smoke must report `data-physics-backend="native-wasm"`
+
+No collider, force, friction, torque, reel, timestep, camera, control, chute, prize setup or game-rule parameter changed.
 
 ## Exit criteria
 
