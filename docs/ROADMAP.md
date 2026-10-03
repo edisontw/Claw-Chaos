@@ -1373,9 +1373,48 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
+**Status: IN PROGRESS — layout foundation slice 1 candidate**
+
 ## Goal
 
 Expand beyond loose piles.
+
+## Layout foundation slice 1 — deterministic layouts + settle pipeline
+
+Implemented candidate:
+- data-driven cabinet layout IDs with URL selection via `?layout=...`
+- deterministic layout generation from the existing scene `seed`
+- `loose` layout:
+  - preserves the familiar five-prize starter arrangement
+  - adds only millimeter-scale seeded position variation and small seeded yaw variation
+- `dense` layout:
+  - eight prizes
+  - compact seeded arrangement using existing prize definitions
+  - small vertical spawn clearance so the real solver determines final contact poses
+- visual variants use layout-derived seeds, keeping pose/content reproducible for a fixed seed
+- generated prize centers remain bounded inside the current cabinet play envelope
+- cabinet controls are temporarily gated by a physics settle pipeline:
+  - linear-speed threshold: 0.025 m/s
+  - angular-speed threshold: 0.30 rad/s
+  - stable window: 0.30 s
+  - maximum settling window: 2.50 s
+  - timeout is fail-open, so controls cannot become permanently trapped
+- settling happens after the first rendered frame; the loading screen is not extended
+- gantry control gating is optional and supplied only by cabinet layout gameplay, so laboratory scenes retain existing behavior
+- debug output reports layout ID, seed, prize count, settle state and elapsed settle time
+- CI cabinet browser smoke now boots the `dense` layout with a fixed seed; default-root smoke continues to cover the normal `loose` layout
+
+Automated regression:
+- supported layout parsing and fallback
+- fixed seed produces identical layout placements
+- different seeds produce different physical spawn poses
+- loose/dense prize-count contract
+- generated placement bounds
+- continuous stable-window requirement
+- motion resets the settle window
+- settle timeout fails open rather than trapping controls
+
+No claw, gantry, reel, grip, collider, material, chute, camera or timestep tuning changed.
 
 ## Deliverables
 
