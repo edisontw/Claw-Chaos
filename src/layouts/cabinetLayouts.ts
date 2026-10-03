@@ -3,6 +3,7 @@ import { createSeededRandom } from "../core/seededRng";
 export const CABINET_LAYOUT_IDS = [
   "loose",
   "dense",
+  "showcase",
 ] as const;
 
 export type CabinetLayoutId =
@@ -120,6 +121,45 @@ const DENSE_BASE: readonly PlacementBase[] = [
   },
 ];
 
+const SHOWCASE_BASE: readonly PlacementBase[] = [
+  {
+    prizeId: "prize/box_standard",
+    x: -0.20,
+    z: -0.13,
+    rotationYRadians: 0.03,
+  },
+  {
+    prizeId: "prize/sphere_ball",
+    x: 0,
+    z: -0.13,
+    rotationYRadians: 0,
+  },
+  {
+    prizeId: "prize/cylinder_can",
+    x: 0.20,
+    z: -0.13,
+    rotationYRadians: -0.03,
+  },
+  {
+    prizeId: "prize/teddy_simple",
+    x: -0.20,
+    z: 0.12,
+    rotationYRadians: -0.08,
+  },
+  {
+    prizeId: "prize/pillow_small",
+    x: 0,
+    z: 0.12,
+    rotationYRadians: 0.06,
+  },
+  {
+    prizeId: "prize/animal_simple",
+    x: 0.20,
+    z: 0.12,
+    rotationYRadians: 0.08,
+  },
+];
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -130,28 +170,51 @@ function materializePlacements(
   bases: readonly PlacementBase[],
 ): CabinetLayoutPlacement[] {
   const rng = createSeededRandom(`m09:${layoutId}:${seed}`);
-  const dense = layoutId === "dense";
-  const positionJitter = dense ? 0.009 : 0.006;
-  const rotationJitter = dense ? 0.10 : 0.055;
+  const variation =
+    layoutId === "dense"
+      ? {
+          positionJitter: 0.009,
+          rotationJitter: 0.10,
+          verticalJitterMin: 0.006,
+          verticalJitterMax: 0.014,
+        }
+      : layoutId === "showcase"
+        ? {
+            positionJitter: 0.003,
+            rotationJitter: 0.025,
+            verticalJitterMin: 0,
+            verticalJitterMax: 0,
+          }
+        : {
+            positionJitter: 0.006,
+            rotationJitter: 0.055,
+            verticalJitterMin: 0,
+            verticalJitterMax: 0,
+          };
 
   return bases.map((base, index) => ({
     prizeId: base.prizeId,
     x: clamp(
-      base.x + rng.range(-positionJitter, positionJitter),
+      base.x + rng.range(-variation.positionJitter, variation.positionJitter),
       -0.265,
       0.265,
     ),
     z: clamp(
-      base.z + rng.range(-positionJitter, positionJitter),
+      base.z + rng.range(-variation.positionJitter, variation.positionJitter),
       -0.195,
       0.195,
     ),
     yOffsetMeters:
       (base.yOffsetMeters ?? 0.002) +
-      (dense ? rng.range(0.006, 0.014) : 0),
+      (variation.verticalJitterMax > 0
+        ? rng.range(
+            variation.verticalJitterMin,
+            variation.verticalJitterMax,
+          )
+        : 0),
     rotationYRadians:
       base.rotationYRadians +
-      rng.range(-rotationJitter, rotationJitter),
+      rng.range(-variation.rotationJitter, variation.rotationJitter),
     variantSeed: `m09:${layoutId}:${seed}:${index}`,
   }));
 }
@@ -175,7 +238,12 @@ export function createCabinetLayout(
   id: CabinetLayoutId,
   seed: string,
 ): CabinetLayout {
-  const bases = id === "dense" ? DENSE_BASE : LOOSE_BASE;
+  const bases =
+    id === "dense"
+      ? DENSE_BASE
+      : id === "showcase"
+        ? SHOWCASE_BASE
+        : LOOSE_BASE;
   return {
     id,
     seed,
