@@ -12,7 +12,16 @@ describe("M08 visual-only cabinet realism configuration", () => {
     expect(M08_CABINET_VISUAL_STYLE.glass.opacity).toBeLessThanOrEqual(0.10);
     expect(M08_CABINET_VISUAL_STYLE.glass.transmission).toBeGreaterThan(0);
     expect(M08_CABINET_VISUAL_STYLE.glass.roughness).toBeGreaterThan(0);
-    expect(M08_CABINET_VISUAL_STYLE.glass.edgeOpacity).toBeLessThan(0.35);
+    expect(M08_CABINET_VISUAL_STYLE.glass.edgeOpacity).toBeLessThanOrEqual(0.10);
+    expect(M08_CABINET_VISUAL_STYLE.glass.roughness).toBeGreaterThanOrEqual(0.8);
+    expect(M08_CABINET_VISUAL_STYLE.glass.clearcoat).toBe(0);
+  });
+
+  it("keeps cabinet highlights matte and LEDs subdued", () => {
+    expect(M08_CABINET_VISUAL_STYLE.frame.roughness).toBeGreaterThanOrEqual(0.6);
+    expect(M08_CABINET_VISUAL_STYLE.frame.clearcoat).toBe(0);
+    expect(M08_CABINET_VISUAL_STYLE.controlPanel.clearcoat).toBe(0);
+    expect(M08_CABINET_VISUAL_STYLE.led.emissiveIntensity).toBeLessThanOrEqual(1);
   });
 
   it("places LED strips inside the upper cabinet envelope", () => {

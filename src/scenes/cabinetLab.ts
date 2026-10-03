@@ -11,7 +11,10 @@ import {
   createCabinetLedStripSpecs,
   type VisualBoxSpec,
 } from "../cabinet/cabinetVisualStyle";
-import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
+import {
+  CABINET_CLAW_PARK_POSITION,
+  CABINET_PLAY_TUNING,
+} from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { getPrizeDefinition } from "../prizes/catalog";
@@ -215,11 +218,11 @@ function addControlPanel(scene: THREE.Scene): void {
     new THREE.MeshPhysicalMaterial({
       color: 0xd94141,
       emissive: 0x6b0b0b,
-      emissiveIntensity: 1.1,
-      roughness: 0.24,
-      metalness: 0.12,
-      clearcoat: 0.75,
-      clearcoatRoughness: 0.16,
+      emissiveIntensity: 0.7,
+      roughness: 0.62,
+      metalness: 0.05,
+      clearcoat: 0,
+      clearcoatRoughness: 1,
     }),
   );
   button.rotation.x = Math.PI * 0.5;
@@ -259,6 +262,7 @@ export function createCabinetLabScene(
       verticalHomeOffset:
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
+      initialPosition: CABINET_CLAW_PARK_POSITION,
       gripProfile: {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque:
@@ -274,10 +278,7 @@ export function createCabinetLabScene(
         fingerLowerPadRadiusMeters:
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
-      playReturnTarget: {
-        x: M06_CABINET_CONFIG.chuteCenterX,
-        z: M06_CABINET_CONFIG.chuteCenterZ,
-      },
+      playReturnTarget: CABINET_CLAW_PARK_POSITION,
       milestone: "M08 / Visual realism pass 1",
       camera: {
         position: [1.08, 1.00, 1.30],
@@ -401,7 +402,8 @@ export function createCabinetLabScene(
         `Inventory prizes  ${resultInventory.inventoryCount}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
-        "M08 visuals       powder-coated frame / LED strips / gantry detail",
+        "M08 visuals       matte frame / subdued glass / gantry detail",
+        "Claw park         starts and returns directly over chute",
         "Cabinet claw      +" +
           Math.round(
             CABINET_PLAY_TUNING.verticalHomeOffsetMeters * 1000,

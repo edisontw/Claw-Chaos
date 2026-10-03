@@ -132,11 +132,7 @@ export async function startApp(root: HTMLElement): Promise<void> {
   renderer.shadowMap.type = touchLike
     ? THREE.PCFShadowMap
     : THREE.PCFSoftShadowMap;
-  if (selection.id === "cabinet-lab") {
-    renderer.outputColorSpace = THREE.SRGBColorSpace;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.05;
-  }
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
   root.append(renderer.domElement);
 
   scene.add(new THREE.HemisphereLight(0xffffff, 0x233047, 1.4));
