@@ -408,11 +408,6 @@ export class FirstPersonPlayerViewController {
     this.prompt.setAttribute("aria-live", "polite");
     this.element.parentElement?.append(this.prompt);
 
-    const reticle = document.createElement("div");
-    reticle.className = "player-reticle";
-    reticle.setAttribute("aria-hidden", "true");
-    this.element.parentElement?.append(reticle);
-
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
     window.addEventListener("mousemove", this.onMouseMove);

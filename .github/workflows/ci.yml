@@ -170,6 +170,7 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' "$DOM_FILE" &&
                grep -q 'data-player-view="active"' "$DOM_FILE" &&
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
+               ! grep -q 'player-reticle' "$DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$DOM_FILE" &&
                grep -q 'mobile-view-height' "$DOM_FILE" &&
                grep -q 'data-render-profile="desktop"' "$DOM_FILE" &&
@@ -219,6 +220,7 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' "$SHOWCASE_DOM_FILE" &&
                grep -q 'data-layout-id="showcase"' "$SHOWCASE_DOM_FILE" &&
                grep -q 'data-player-view="active"' "$SHOWCASE_DOM_FILE" &&
+               ! grep -q 'player-reticle' "$SHOWCASE_DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$SHOWCASE_DOM_FILE"; then
               SHOWCASE_READY=1
               break
@@ -238,6 +240,50 @@ jobs:
           fi
 
           echo "Preview/browser M09 showcase layout smoke passed: $ASSET_PATH"
+
+          BRIDGE_READY=0
+          for attempt in 1 2 3; do
+            BRIDGE_DOM_FILE="/tmp/claw-chaos-bridge-dom-$attempt.html"
+            BRIDGE_LOG_FILE="/tmp/claw-chaos-bridge-browser-$attempt.log"
+
+            timeout 30s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=8000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=cabinet-lab&layout=bridge&seed=ci-m09-bridge" \
+              > "$BRIDGE_DOM_FILE" 2> "$BRIDGE_LOG_FILE" || true
+
+            if grep -q 'data-simulation-ready="true"' "$BRIDGE_DOM_FILE" &&
+               grep -q 'data-physics-backend="native-wasm"' "$BRIDGE_DOM_FILE" &&
+               grep -q 'data-scene-id="cabinet-lab"' "$BRIDGE_DOM_FILE" &&
+               grep -q 'data-layout-id="bridge"' "$BRIDGE_DOM_FILE" &&
+               grep -q 'data-player-view="active"' "$BRIDGE_DOM_FILE" &&
+               ! grep -q 'player-reticle' "$BRIDGE_DOM_FILE" &&
+               grep -q 'data-machine-audio="armed"' "$BRIDGE_DOM_FILE"; then
+              BRIDGE_READY=1
+              break
+            fi
+
+            echo "Headless browser bridge smoke attempt $attempt did not reach readiness."
+            sleep 1
+          done
+
+          if [ "$BRIDGE_READY" -ne 1 ]; then
+            echo "Headless browser failed to initialize M09 bridge layout."
+            for file in /tmp/claw-chaos-bridge-browser-*.log; do
+              echo "===== $file ====="
+              cat "$file"
+            done
+            exit 1
+          fi
+
+          echo "Preview/browser M09 bridge layout smoke passed: $ASSET_PATH"
 
           ROOT_READY=0
           for attempt in 1 2 3; do
@@ -262,6 +308,7 @@ jobs:
                grep -q 'data-startup-ms=' "$ROOT_DOM_FILE" &&
                grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" &&
                grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" &&
+               ! grep -q 'player-reticle' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
                grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
                grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE" &&
