@@ -293,7 +293,6 @@ describe("M07 first-person player view constraints", () => {
           pitchRadians: look.pitchRadians,
         },
         M07_CABINET_VIEW_TARGETS,
-        config,
       );
 
       expect(focused?.target.id).toBe(target.id);
