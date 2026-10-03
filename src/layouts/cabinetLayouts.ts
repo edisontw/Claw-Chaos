@@ -5,6 +5,7 @@ export const CABINET_LAYOUT_IDS = [
   "dense",
   "showcase",
   "bridge",
+  "edge",
 ] as const;
 
 export type CabinetLayoutId =
@@ -13,6 +14,7 @@ export type CabinetLayoutId =
 export type CabinetLayoutRole =
   | "support"
   | "bridge"
+  | "edge_target"
   | "filler";
 
 export interface CabinetLayoutPlacement {
@@ -207,6 +209,44 @@ const BRIDGE_BASE: readonly PlacementBase[] = [
   },
 ];
 
+const EDGE_BASE: readonly PlacementBase[] = [
+  {
+    prizeId: "prize/box_standard",
+    role: "edge_target",
+    x: 0.38,
+    z: -0.04,
+    rotationYRadians: 0.08,
+  },
+  {
+    prizeId: "prize/cylinder_can",
+    role: "edge_target",
+    x: 0.10,
+    z: -0.305,
+    rotationYRadians: 0,
+  },
+  {
+    prizeId: "prize/cube_small",
+    role: "filler",
+    x: -0.03,
+    z: -0.08,
+    rotationYRadians: 0.12,
+  },
+  {
+    prizeId: "prize/pillow_small",
+    role: "filler",
+    x: -0.20,
+    z: -0.03,
+    rotationYRadians: -0.16,
+  },
+  {
+    prizeId: "prize/animal_simple",
+    role: "filler",
+    x: 0.08,
+    z: 0.13,
+    rotationYRadians: 0.10,
+  },
+];
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -239,25 +279,47 @@ function materializePlacements(
               verticalJitterMin: 0,
               verticalJitterMax: 0,
             }
-          : {
+          : layoutId === "edge"
+            ? {
+                positionJitter: 0.001,
+                rotationJitter: 0.010,
+                verticalJitterMin: 0,
+                verticalJitterMax: 0,
+              }
+            : {
             positionJitter: 0.006,
             rotationJitter: 0.055,
             verticalJitterMin: 0,
             verticalJitterMax: 0,
           };
 
+  const bounds =
+    layoutId === "edge"
+      ? {
+          minX: -0.40,
+          maxX: 0.40,
+          minZ: -0.315,
+          maxZ: 0.315,
+        }
+      : {
+          minX: -0.265,
+          maxX: 0.265,
+          minZ: -0.195,
+          maxZ: 0.195,
+        };
+
   return bases.map((base, index) => ({
     prizeId: base.prizeId,
     role: base.role,
     x: clamp(
       base.x + rng.range(-variation.positionJitter, variation.positionJitter),
-      -0.265,
-      0.265,
+      bounds.minX,
+      bounds.maxX,
     ),
     z: clamp(
       base.z + rng.range(-variation.positionJitter, variation.positionJitter),
-      -0.195,
-      0.195,
+      bounds.minZ,
+      bounds.maxZ,
     ),
     yOffsetMeters:
       (base.yOffsetMeters ?? 0.002) +
@@ -300,7 +362,9 @@ export function createCabinetLayout(
         ? SHOWCASE_BASE
         : id === "bridge"
           ? BRIDGE_BASE
-          : LOOSE_BASE;
+          : id === "edge"
+            ? EDGE_BASE
+            : LOOSE_BASE;
   return {
     id,
     seed,
