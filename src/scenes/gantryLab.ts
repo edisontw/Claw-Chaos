@@ -4,6 +4,7 @@ import type {
   RevoluteJointHandle,
   RigidBodyHandle,
 } from "../physics/PhysicsRuntime";
+import { M08_GANTRY_VISUAL_STYLE } from "../cabinet/cabinetVisualStyle";
 import {
   CLAW_LAB_CONFIG,
   advanceMotorCommand,
@@ -248,10 +249,12 @@ export function createGantryLabScene(
     );
   }
 
-  const railMaterial = new THREE.MeshStandardMaterial({
-    color: 0x465363,
-    roughness: 0.4,
-    metalness: 0.72,
+  const railMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x5d6876,
+    roughness: 0.26,
+    metalness: 0.86,
+    clearcoat: 0.18,
+    clearcoatRoughness: 0.22,
   });
   for (const z of [gantry.zMin - 0.04, gantry.zMax + 0.04]) {
     const rail = new THREE.Mesh(
@@ -267,19 +270,122 @@ export function createGantryLabScene(
     scene.add(rail);
   }
 
+  const bridgeHalfSpanZ =
+    (gantry.zMax - gantry.zMin) * 0.5 +
+    M08_GANTRY_VISUAL_STYLE.bridgeExtraHalfSpanZ;
+  const bridgeVisual = new THREE.Group();
+  bridgeVisual.name = "m08-moving-gantry-bridge";
+  bridgeVisual.position.set(0, gantry.carriageY + 0.034, 0);
+
+  const bridgeMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x727e8c,
+    roughness: 0.24,
+    metalness: 0.84,
+    clearcoat: 0.22,
+    clearcoatRoughness: 0.20,
+  });
+  const bridgeBeam = new THREE.Mesh(
+    new THREE.BoxGeometry(
+      M08_GANTRY_VISUAL_STYLE.bridgeBeamHalfX * 2,
+      M08_GANTRY_VISUAL_STYLE.bridgeBeamHalfY * 2,
+      bridgeHalfSpanZ * 2,
+    ),
+    bridgeMaterial,
+  );
+  bridgeBeam.castShadow = true;
+  bridgeVisual.add(bridgeBeam);
+
+  for (const z of [-bridgeHalfSpanZ, bridgeHalfSpanZ]) {
+    const endBlock = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        M08_GANTRY_VISUAL_STYLE.bridgeEndBlockHalfX * 2,
+        M08_GANTRY_VISUAL_STYLE.bridgeEndBlockHalfY * 2,
+        M08_GANTRY_VISUAL_STYLE.bridgeEndBlockHalfZ * 2,
+      ),
+      bridgeMaterial,
+    );
+    endBlock.position.z = z;
+    endBlock.castShadow = true;
+    bridgeVisual.add(endBlock);
+  }
+  scene.add(bridgeVisual);
+
   const carriageVisual = new THREE.Mesh(
     new THREE.BoxGeometry(
       gantry.carriageHalfX * 2,
       gantry.carriageHalfY * 2,
       gantry.carriageHalfZ * 2,
     ),
-    new THREE.MeshStandardMaterial({
-      color: 0x9aa7b5,
-      roughness: 0.3,
-      metalness: 0.78,
+    new THREE.MeshPhysicalMaterial({
+      color: 0xaeb8c3,
+      roughness: 0.22,
+      metalness: 0.84,
+      clearcoat: 0.26,
+      clearcoatRoughness: 0.18,
     }),
   );
   carriageVisual.castShadow = true;
+
+  const winchMetal = new THREE.MeshPhysicalMaterial({
+    color: 0xb7c0c9,
+    roughness: 0.20,
+    metalness: 0.90,
+    clearcoat: 0.18,
+    clearcoatRoughness: 0.16,
+  });
+  const winchDark = new THREE.MeshStandardMaterial({
+    color: 0x20262d,
+    roughness: 0.40,
+    metalness: 0.66,
+  });
+  const drum = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      M08_GANTRY_VISUAL_STYLE.winchDrumRadius,
+      M08_GANTRY_VISUAL_STYLE.winchDrumRadius,
+      M08_GANTRY_VISUAL_STYLE.winchDrumLength,
+      24,
+    ),
+    winchDark,
+  );
+  drum.name = "m08-winch-drum";
+  drum.rotation.z = Math.PI * 0.5;
+  drum.position.y = 0.043;
+  carriageVisual.add(drum);
+
+  for (const x of [
+    -M08_GANTRY_VISUAL_STYLE.winchDrumLength * 0.5,
+    M08_GANTRY_VISUAL_STYLE.winchDrumLength * 0.5,
+  ]) {
+    const flange = new THREE.Mesh(
+      new THREE.CylinderGeometry(
+        M08_GANTRY_VISUAL_STYLE.winchFlangeRadius,
+        M08_GANTRY_VISUAL_STYLE.winchFlangeRadius,
+        M08_GANTRY_VISUAL_STYLE.winchFlangeThickness,
+        24,
+      ),
+      winchMetal,
+    );
+    flange.rotation.z = Math.PI * 0.5;
+    flange.position.set(x, 0.043, 0);
+    flange.castShadow = true;
+    carriageVisual.add(flange);
+  }
+
+  const pulley = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      M08_GANTRY_VISUAL_STYLE.pulleyRadius,
+      M08_GANTRY_VISUAL_STYLE.pulleyRadius,
+      M08_GANTRY_VISUAL_STYLE.pulleyThickness,
+      20,
+    ),
+    winchMetal,
+  );
+  pulley.name = "m08-cable-pulley";
+  pulley.rotation.z = Math.PI * 0.5;
+  pulley.position.y = -0.035;
+  pulley.castShadow = true;
+  carriageVisual.add(pulley);
+
   scene.add(carriageVisual);
 
   const carriageBody = physics.createKinematicCuboid(
@@ -554,6 +660,7 @@ export function createGantryLabScene(
   };
 
   const updateCableVisual = (): void => {
+    bridgeVisual.position.x = motion.x.position;
     const hub = hubBody.translation();
     cableTop.set(motion.x.position, anchorY, motion.z.position);
     cableBottom.set(
