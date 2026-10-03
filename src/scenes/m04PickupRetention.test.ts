@@ -1029,55 +1029,15 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 15000);
 
 
-  it("refines the minimum plush profile while rejecting an over-strong 600 g control", async () => {
-    const candidates = [
-      {
-        label: "refine-0",
-        fingerFriction: 1.80,
-        closePickupTorque: 9.5,
-        retainingTorque: 0.026,
-        pickupLiftDistanceMeters: 0.22,
-        closedAngleRadians: -0.62,
-        fingerLowerPadRadiusMeters: 0.009,
-      },
-      {
-        label: "refine-1",
-        fingerFriction: 1.85,
-        closePickupTorque: 10.0,
-        retainingTorque: 0.030,
-        pickupLiftDistanceMeters: 0.23,
-        closedAngleRadians: -0.62,
-        fingerLowerPadRadiusMeters: 0.009,
-      },
-      {
-        label: "refine-2",
-        fingerFriction: 1.90,
-        closePickupTorque: 10.0,
-        retainingTorque: 0.032,
-        pickupLiftDistanceMeters: 0.23,
-        closedAngleRadians: -0.63,
-        fingerLowerPadRadiusMeters: 0.0095,
-      },
-      {
-        label: "refine-3",
-        fingerFriction: 1.95,
-        closePickupTorque: 10.5,
-        retainingTorque: 0.035,
-        pickupLiftDistanceMeters: 0.23,
-        closedAngleRadians: -0.63,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
-      {
-        label: "plush-B",
-        fingerFriction: 2.00,
-        closePickupTorque: 11.0,
-        retainingTorque: 0.040,
-        pickupLiftDistanceMeters: 0.24,
-        closedAngleRadians: -0.64,
-        fingerLowerPadRadiusMeters: 0.010,
-      },
+  it("separates plush acquisition from heavy retention by tuning retaining torque", async () => {
+    const retainingTorques = [
+      0.026,
+      0.028,
+      0.030,
+      0.032,
+      0.034,
+      0.035,
     ] as const;
-
     const requiredPrizes = [
       {
         id: "prize/pillow_small",
@@ -1098,24 +1058,31 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         prizeOffsetZ: -0.03,
       },
     ] as const;
-
     const sphere = getPrizeDefinition("prize/sphere_ball");
     const resolved = resolvePrizeSpec(sphere);
     const rows = [];
 
-    for (const candidate of candidates) {
+    for (const retainingTorque of retainingTorques) {
+      const profile = {
+        fingerFriction: 1.95,
+        closePickupTorque: 10.5,
+        retainingTorque,
+        pickupLiftDistanceMeters: 0.23,
+        closedAngleRadians: -0.63,
+        fingerLowerPadRadiusMeters: 0.010,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck" as const,
+      };
+
       let requiredSuccessCount = 0;
       const prizes = [];
-
       for (const prize of requiredPrizes) {
         const metrics = await simulateM04PickupRetention({
-          ...candidate,
+          ...profile,
           prizeDefinitionId: prize.id,
           prizeRotationYRadians: prize.rotationYRadians,
           prizeOffsetX: prize.prizeOffsetX,
           prizeOffsetZ: prize.prizeOffsetZ,
-          topHoldSeconds: 1.3,
-          supportMode: "flat-deck",
         });
         const success =
           metrics.topReached &&
@@ -1132,19 +1099,17 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       }
 
       const heavy = await simulateM04PickupRetention({
-        ...candidate,
+        ...profile,
         ballMassKg: 0.60,
         ballFriction: resolved.material.dynamicFriction,
         ballRadiusMeters: sphere.dimensions.x * 0.5,
-        topHoldSeconds: 1.3,
-        supportMode: "flat-deck",
       });
       const heavySuccess =
         heavy.liftAfterRetaining1p2sMeters >= 0.08 &&
         heavy.finalLiftMeters >= 0.08;
 
       rows.push({
-        ...candidate,
+        retainingTorque,
         requiredSuccessCount,
         heavySuccess,
         heavy: {
@@ -1157,7 +1122,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet refined plush profile sweep",
+      "Cabinet retaining-torque separation sweep",
       JSON.stringify(rows),
     );
 
