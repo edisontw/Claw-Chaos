@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — arcade ambience slice 4 candidate**
+**Status: CLOSED — visual/audio realism pass 1 accepted**
 
 ## Goal
 
@@ -1235,8 +1235,36 @@ Automated regression:
 
 No physics, prize behavior, camera, controls, visual materials or loading-path change.
 
-Still pending in later M08 slices:
-- optional controller haptics
+## Controller haptics slice 5 — optional enhancement
+
+Scope is feedback-only. Haptics never drive simulation state and are strictly feature-detected.
+
+Implemented:
+- cabinet-only lazy-loaded haptics controller
+- supported gamepads receive short event-based pulses for:
+  - DROP start
+  - claw CLOSE
+  - claw RELEASE
+  - gantry stop
+  - meaningful prize impacts
+- dual-rumble `playEffect("dual-rumble", ...)` is used when available
+- generic `pulse(value, duration)` actuator fallback is supported when exposed by the browser
+- unsupported browsers/controllers remain silent with no error path
+- prize-impact rumble intensity scales from the same real Rapier contact-force events used by material audio
+- dispatch is separated by at least 16 ms to avoid same-frame duplicate chatter
+- pulse duration is <=50 ms and magnitudes remain moderate
+- the existing mobile action-button vibration remains unchanged
+- browser diagnostics expose `data-controller-haptics="armed"`; physical controller hardware is not required for CI
+
+Automated regression:
+- all action pulses remain <=50 ms
+- weak magnitude remains <=0.40 and strong magnitude <=0.25
+- claw CLOSE is stronger than a gantry-stop cue
+- prize impact haptics scale monotonically from real contact force and clamp to 1.0
+- unsupported/no-controller paths are no-op by construction
+- native-WASM build and cabinet/root browser smoke require the haptics integration layer to be armed
+
+No physics, controls, camera, audio mix, rendering, startup path or game-rule parameter changed.
 
 ## Startup performance correction — 2026-10-03
 
@@ -1301,6 +1329,45 @@ No collider, force, friction, torque, reel, timestep, camera, control, chute, pr
 - cardboard/plastic/plush contacts differ
 - glass reflections do not obscure aiming
 - no major visual mismatch between collision and mesh
+
+## M08 closure audit — 2026-10-04
+
+Final verification on PR #51 branch head after the haptics build fix:
+
+- lint: PASS
+- test files: 38 / 38 PASS
+- automated tests: 116 / 116 PASS
+- production TypeScript/Vite build: PASS
+- GitHub Pages base-path check: PASS
+- native Rapier WASM bundle gate: PASS
+- bootstrap entry: 1,767 bytes
+- PhysicsRuntime JS: 300,847 bytes
+- Rapier WASM: 3,082,103 bytes
+- gantry-lab browser smoke: PASS
+- cabinet-lab browser smoke: PASS
+- default root cabinet browser smoke: PASS
+
+Exit-criteria disposition:
+- **machine movement has identifiable mechanical sound — PASS**
+  Gantry and reel audio follow simulation velocity; DROP/CLOSE/RELEASE/stop cues are phase- or motion-transition driven.
+- **cardboard/plastic/plush contacts differ — PASS**
+  Material audio is selected from the existing prize material profile and synthesized as distinct cardboard, plastic, rubber and soft fabric/plush families using real Rapier contact-force events.
+- **glass reflections do not obscure aiming — PASS**
+  The deployed visual correction uses very low-opacity, high-roughness glass with restrained edges and no cabinet ACES highlight boost; this was manually accepted during M08.
+- **no major visual mismatch between collision and mesh — PASS**
+  M08 did not alter collider geometry; existing prize/cabinet render bindings and established physical calibration remain intact, and full regression/browser smoke remains green.
+
+Additional accepted M08 deliverables:
+- matte cabinet / controlled glass / gantry-winch-rail details / LEDs
+- procedural machine audio
+- material-specific prize impacts
+- low-level cabinet + arcade ambience
+- optional gamepad haptics with graceful no-hardware fallback
+- startup loading correction with parallel bootstrap and native browser WASM
+
+Closure rule:
+- M08 is CLOSED at this branch head, subject only to the normal merge-after-green-main verification.
+- Later tuning requests may adjust mix levels or presentation, but they do not reopen M08 unless an exit criterion regresses.
 
 ---
 
