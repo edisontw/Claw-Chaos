@@ -368,6 +368,7 @@ export function createFingerVisual(
   metalMaterial: THREE.Material,
   tipMaterial: THREE.Material,
   tipRadius: number = CLAW_LAB_CONFIG.fingerTipVisualRadius,
+  lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
 ): THREE.Group {
   const group = new THREE.Group();
   const yAxis = new THREE.Vector3(0, 1, 0);
@@ -380,10 +381,14 @@ export function createFingerVisual(
     const direction = endVector.clone().sub(startVector);
     const length = direction.length();
 
+    const segmentRadius =
+      index === points.length - 1
+        ? lowerPadRadius
+        : CLAW_LAB_CONFIG.fingerRodRadius;
     const rod = new THREE.Mesh(
       new THREE.CylinderGeometry(
-        CLAW_LAB_CONFIG.fingerRodRadius,
-        CLAW_LAB_CONFIG.fingerRodRadius,
+        segmentRadius,
+        segmentRadius,
         length,
         12,
       ),
@@ -396,8 +401,15 @@ export function createFingerVisual(
     group.add(rod);
 
     if (index < points.length - 1) {
+      const nodeRadius =
+        index === points.length - 2
+          ? Math.max(
+              CLAW_LAB_CONFIG.fingerRodRadius,
+              lowerPadRadius,
+            )
+          : CLAW_LAB_CONFIG.fingerRodRadius;
       const node = new THREE.Mesh(
-        new THREE.SphereGeometry(CLAW_LAB_CONFIG.fingerRodRadius, 12, 8),
+        new THREE.SphereGeometry(nodeRadius, 12, 8),
         metalMaterial,
       );
       node.position.copy(endVector);

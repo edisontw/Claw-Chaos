@@ -545,31 +545,28 @@ Mobile calibration:
 - physics timestep and all locked machine parameters are unchanged
 
 Grip/play correction:
-- deployed feedback showed prizes could not be usefully carried even though earlier pedestal and mild flat-deck calibration passed
-- production calibration now requires actual **successful retention**, not merely transient lift
-- actual `prize/sphere_ball`: 75 g, rubber friction 0.82, radius 52.5 mm
-- cabinet finger friction = **1.25**
-- cabinet CLOSE/PICKUP = **6.0 N·m**
-- cabinet RETAINING = **0.014 N·m**
-- cabinet HOLD BOOST = **0.018 N·m**
-- cabinet-only strong PICKUP distance = **0.18 m**
-- standalone locked M04 values remain unchanged
-- with an extra 1.3 s top-hold observation, real ball retains ≈**252.5 mm** at +1.2 s/final
-- rounded Foam Cube retains ≈**241.6 mm** at +1.2 s/final
-- same-size 150 g rubber-ball control may briefly peak ≈24.8 mm but returns to ≈0 mm by +1.2 s/final
-- mass sensitivity therefore remains physical; no attachment/magnet/kinematic shortcut
-- drop-position readability is improved without a laser: low-contrast woven deck texture + fixed cabinet-light shadows + existing small lateral parallax
-- `prize/cube_small` is reclassified as a 75 g rounded Foam Cube (`box/rounded_v1`) because the former ideal sharp plastic cuboid was confirmed through multiple physical sweeps to be an unrealistic starter target
-- Foam Cube produces ≈22.7 mm planar displacement and ≈10.4 mm peak lift; the legacy sharp cuboid produces only ≈2.5 mm / 2.1 mm
-- rigid cardboard boxes/cans remain difficult and are not globally softened
-
+- deployed feedback confirmed Foam Cube could be captured but plush prizes were still too difficult
+- systematic sweeps rejected brute-force-only torque, oversized pads, hooked geometry alone, soft-material friction overrides and collider shrinking
+- final minimal all-target profile uses finger friction **1.94**, CLOSE/PICKUP **10.0 N·m**, existing RETAINING **0.014 N·m**, existing HOLD BOOST **0.018 N·m**, and existing strong PICKUP **0.18 m**
+- cabinet-only closed angle = **−0.63 rad**
+- cabinet-only lower-finger contact radius = **10 mm**, reflected in both physics and render geometry
+- standalone M04 laboratory calibration remains unchanged
+- centered Rubber Ball final ≈252.9 mm
+- centered Foam Cube final ≈241.9 mm
+- centered Pillow final ≈246.4 mm
+- centered Animal final ≈209.2 mm
+- Teddy succeeds at a reachable +20 mm X / −30 mm Z torso-offset aim with final ≈112.4 mm; centered Teddy is not scripted to win
+- this stronger profile can also physically retain dense high-friction spheres, so the previous 150 g rejection gate is no longer a gameplay requirement
+- all carries remain solver/contact-driven; no attachment, magnet, prize joint, kinematic carry, teleport or velocity reset
+- drop-position readability remains woven deck texture + fixed cabinet-light shadows + small lateral parallax, with no laser/aim projection
+- rigid cardboard boxes/cans remain geometry-dependent
 Acceptance:
 - front-only movement bounds — PASS
 - no side traversal — PASS
 - ±90° yaw and look-down interaction framing — PASS
-- actual flat-deck easy-prize pickup — PASS
-- 2× mass flat-deck rejection — PASS
-- **32 test files / 92 tests PASS**
+- Rubber Ball / Foam Cube / Pillow / Animal production retention — PASS
+- reachable offset Teddy production retention — PASS
+- **32 test files / 89 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step

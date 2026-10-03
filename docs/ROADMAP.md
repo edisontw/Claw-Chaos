@@ -1029,17 +1029,23 @@ Current physical regression instead uses:
 - existing 3-finger Rapier contact model
 
 Cabinet-only play tuning:
-- finger friction = **1.25**
-- CLOSE/PICKUP torque = **6.0 N·m**
-- RETAINING torque = **0.014 N·m**
-- cabinet HOLD BOOST = **0.018 N·m**
-- strong PICKUP lift distance = **0.18 m** before RETAINING
-- standalone locked M04 lab keeps 0.60 / 2.5 / 0.003 N·m, HOLD BOOST 0.010 N·m and the original 0.06 m pickup distance
+- finger friction = **1.94**
+- CLOSE/PICKUP torque = **10.0 N·m**
+- RETAINING torque remains **0.014 N·m**
+- cabinet HOLD BOOST remains **0.018 N·m**
+- strong PICKUP lift distance remains **0.18 m** before RETAINING
+- closed angle = **−0.63 rad**
+- lower-finger physical/visual contact radius = **10 mm**
+- standalone locked M04 lab keeps 0.60 / 2.5 / 0.003 N·m, HOLD BOOST 0.010 N·m, −0.42 rad close angle and the original 0.06 m pickup distance
 
-Measured successful-grip result with 1.3 s top-hold observation:
-- 75 g real rubber ball: RETAINING +1.2 s ≈ **0.2525 m**, final ≈ **0.2525 m** — SUCCESS
-- 75 g rounded Foam Cube: RETAINING +1.2 s ≈ **0.2416 m**, final ≈ **0.2416 m** — SUCCESS
-- 150 g same-size rubber-ball control: brief peak ≈ **0.0248 m**, RETAINING +1.2 s / final ≈ **0 m** — FAIL as intended
+Measured plush-capable result with 1.3 s top-hold observation:
+- centered Rubber Ball: final ≈ **0.2529 m** — SUCCESS
+- centered rounded Foam Cube: final ≈ **0.2419 m** — SUCCESS
+- centered Small Pillow: final ≈ **0.2464 m** — SUCCESS
+- centered Simple Animal: final ≈ **0.2092 m** — SUCCESS
+- Simple Teddy at reachable torso-offset grab (+0.02 m X / −0.03 m Z): final ≈ **0.1124 m** — SUCCESS
+- centered Teddy remains alignment-sensitive rather than being converted into a guaranteed win
+- the former 150 g rejection gate is intentionally retired after deployed feedback requested a stronger claw; high-friction dense spheres can also be physically clamped
 - no magnet, prize parenting, weld, scripted carry, kinematic prize conversion or velocity reset
 
 ## Depth/readability and starter-prize pass
@@ -1067,11 +1073,13 @@ Starter cube behavior:
 - no free-fly/overhead teleport path — PASS by controller design
 - real flat-deck rubber-ball full retention — PASS
 - real flat-deck Foam Cube full retention — PASS
-- flat-deck 2× mass rejection after 1.2 s retaining hold — PASS
+- centered Pillow full retention — PASS
+- centered Animal full retention — PASS
+- reachable offset Teddy full retention — PASS
 - closed M01–M06 physics remain unchanged outside cabinet-only tuning
 
 Verification:
-- **32 test files / 92 tests PASS**
+- **32 test files / 89 tests PASS**
 - lint PASS
 - TypeScript/Vite build PASS
 - GitHub Pages base-path PASS

@@ -135,13 +135,13 @@ Current cabinet realism baseline:
 - cabinet reel maximum payout is extended by the same 85 mm, preserving bottom reach; carriage top keeps ≈10 mm ceiling clearance
 - two visual service/control wires accompany the main suspension cable
 - chute sensor debug wireframe is hidden during normal play; a raised solid trim sits above the deck around the opening to avoid moving-camera seam/z-fighting artifacts
-- cabinet-only grip profile = finger friction **1.25**, CLOSE/PICKUP **6.0 N·m**, RETAINING **0.014 N·m**, HOLD BOOST **0.018 N·m**
-- cabinet strong PICKUP phase = **0.18 m lift** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
-- actual `prize/sphere_ball` on the full flat deck: 75 g / friction 0.82 / radius 52.5 mm → at RETAINING +1.2 s / final ≈ **252.5 mm**
-- same geometry at 150 g may be nudged/lifted briefly (peak ≈ **24.8 mm**) but RETAINING +1.2 s / final returns to ≈ **0 mm**
-- `prize/cube_small` is a **75 g Foam Cube** with a rounded physical collider (~14 mm corner radius) and now reaches RETAINING +1.2 s / final ≈ **241.6 mm**
-- production regression therefore proves two real starter prizes can be fully retained while the 2× mass control still fails
-- rigid cardboard boxes/cans remain harder targets; the starter cube is not scripted to win
+- cabinet-only plush-capable grip profile = finger friction **1.94**, CLOSE/PICKUP **10.0 N·m**, RETAINING **0.014 N·m**, HOLD BOOST **0.018 N·m**
+- cabinet close geometry = **−0.63 rad** with a visible/physical **10 mm lower-finger contact section**
+- cabinet strong PICKUP phase remains **0.18 m** before switching to RETAINING; locked `gantry-lab` remains **0.06 m**
+- 1.3 s top-hold production regression: Rubber Ball final ≈ **252.9 mm**, Foam Cube ≈ **241.9 mm**, Pillow ≈ **246.4 mm**, Animal ≈ **209.2 mm**
+- Teddy is intentionally not made center-grab automatic: a reachable torso-offset grab (+20 mm X / −30 mm Z in the deterministic regression) retains ≈ **112.4 mm** final lift
+- the previous 150 g mass-rejection gate is retired for this stronger gameplay profile; a same-size high-friction dense sphere can also be physically clamped, while all success still comes from Rapier contact with no attachment/magnet
+- rigid cardboard boxes/cans and unfavorable alignments remain geometry-dependent rather than scripted wins
 - locked `gantry-lab` M04 force profile remains 0.60 / 2.5 / 0.003
 - EARLY CLOSE from Space/F immediately locks current reel payout; closing fingers no longer keep descending
 - AUTO CLOSE remains the normal near-bottom fallback
@@ -195,7 +195,7 @@ Current M07 front-view baseline:
 - mobile starts at Z **0.84 m** (front zone max 0.90 m), uses the same −23° initial pitch, and keeps a modest **58° FOV**
 - mobile render budget: DPR cap **1.5**, shadow maps **512**; desktop remains DPR 2 / 1024
 - fixed physics timestep and closed M01–M04 lab calibration remain unchanged; only the cabinet-specific grip profile is strengthened
-- **32 test files / 92 tests PASS**
+- **32 test files / 89 tests PASS**
 - lint/build/base-path and browser smokes PASS
 
 Current `gantry-lab` controls:
