@@ -11,7 +11,7 @@
     "lint": "eslint src vite.config.ts"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "0.21.0",
+    "@dimforge/rapier3d": "0.21.0",
     "three": "0.186.0"
   },
   "devDependencies": {
