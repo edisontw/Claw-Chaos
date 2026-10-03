@@ -923,7 +923,7 @@ Move the working simulation into a real cabinet.
 
 # M07 — First-Person Player View
 
-**Status: IN PROGRESS — mobile calibration closure candidate verified 2026-10-03**
+**Status: CLOSED — deployed desktop/mobile manual acceptance verified 2026-10-03**
 
 ## Goal
 
@@ -941,7 +941,7 @@ Make play feel like standing directly in front of a real cabinet, without free w
 - fixed realistic FOV — PASS, 50°
 - control-panel interaction — PASS
 - chute look-down framing — PASS
-- final subjective deployed-build play/readability confirmation — pending
+- final subjective deployed-build play/readability confirmation — PASS
 
 ## Current front-player envelope
 
@@ -986,7 +986,7 @@ Deployed desktop feedback showed two remaining view issues:
 
 Current correction:
 - desktop mouse movement uses the same **content-drag semantics** as touch
-- desktop initial Z = **0.78 m**, max Z = **0.84 m**
+- desktop initial Z = **0.84 m**, max Z = **0.84 m**
 - initial yaw = 0°
 - initial pitch = **−23°**
 - default eye height = **1.04 m**; bounded player-height range = **0.98–1.10 m** in 0.02 m steps
@@ -1085,14 +1085,26 @@ Verification:
 - GitHub Pages base-path PASS
 - `gantry-lab`, explicit `cabinet-lab`, and root-default cabinet browser smokes PASS
 
-Remaining M07 closure gate:
-- real-phone manual confirmation on Android Chrome and iPhone Safari that the 14% dead zone, touch-look sensitivity, action debounce and portrait/landscape placement feel comfortable
-- verify mobile render quality/performance is acceptable without visible physics degradation
-- deployed-build confirmation that the front-only camera feels appropriately constrained and the center/easy prize can visibly be carried.
+M07 closure record — 2026-10-03:
+- deployed phone framing/control path manually accepted
+- deployed desktop startup framing manually accepted after moving the default standing position to Z = 0.84 m
+- enlarged physical prize chute is visible from the untouched desktop startup view
+- cabinet debug overlay is hidden by default; F2 or `?debug=1` restores diagnostics
+- hidden collider/COM debug paths no longer generate per-frame render buffers
+- startup now shows an immediate lightweight loading shell
+- selected scene code is dynamically loaded while Rapier initializes in parallel
+- production entry chunk reduced from about 4.97 MB / 1.83 MB gzip to about 566 KB / 143 KB gzip; Rapier remains a separate ~1.67 MB gzip chunk
+- mobile uses the lighter PCF shadow filter while preserving the same fixed physics
+- PR #42 and deployed `main` commit `8421f344ea8a21e3dc9aaf645e474bbafed0e0f9`
+- 32 test files / 89 tests PASS, lint/build/base-path/browser smokes PASS, GitHub Pages deploy PASS
+
+**M07 CLOSED. Next phase:** M08 — Visual & Audio Realism Pass 1.
 
 ---
 
 # M08 — Visual & Audio Realism Pass 1
+
+**Status: IN PROGRESS — visual slice 1 implementation**
 
 ## Goal
 
@@ -1108,6 +1120,28 @@ Make the single cabinet believable without overbuilding content.
 - prize contact audio
 - simple arcade ambience
 - optional controller haptics
+
+## Visual slice 1 — cabinet / glass / gantry / LED realism
+
+Scope is render-only; no collider, force, friction, timing, claw, gantry-motion, reel, or fixed-step parameters are changed.
+
+Implemented candidate:
+- powder-coated/clear-coated PBR cabinet frame and control-panel materials
+- restrained physical-glass material with low opacity, controlled transmission, IOR/thickness and subdued edge reflection
+- brushed/stainless chute material without restoring any raised chute rim
+- front corner posts and top header aligned with the existing cabinet/glass boundary
+- three cool-white emissive LED strips inside the upper cabinet envelope
+- moving bridge beam spanning the gantry side rails
+- bridge end trolley blocks
+- visible carriage winch drum, flanges and lower cable pulley
+- cabinet-only ACES filmic tone mapping / sRGB output
+- mobile keeps the established lower-cost render profile
+
+Automated visual-configuration regression checks:
+- glass stays at or below 10% opacity and retains nonzero controlled transmission
+- LED strips remain inside the physical cabinet envelope
+- decorative frame definitions contain no chute-border/rim part
+- bridge/winch proportions remain compact and visibly distinct
 
 ## Exit criteria
 
