@@ -297,7 +297,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M09 / Layout foundation",
+      milestone: "M09 / Showcase layout",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -360,7 +360,8 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M09 / Layout foundation",
+    milestone: "M09 / Showcase layout",
+    layoutId: layout.id,
     camera: gantryScene.camera,
     primaryAction: () =>
       layoutSettle.ready
@@ -456,7 +457,9 @@ export function createCabinetLabScene(
         "Service wires     dual visual control leads",
         layout.id === "loose"
           ? "Loose layout      familiar five-prize starter arrangement"
-          : "Dense layout      seeded compact multi-prize arrangement",
+          : layout.id === "dense"
+            ? "Dense layout      seeded compact multi-prize arrangement"
+            : "Showcase layout   separated material/geometry display rows",
       ];
     },
   };
