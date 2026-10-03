@@ -1104,7 +1104,7 @@ M07 closure record — 2026-10-03:
 
 # M08 — Visual & Audio Realism Pass 1
 
-**Status: IN PROGRESS — visual slice 1 implementation**
+**Status: IN PROGRESS — visual slice 1 deployed-feedback correction**
 
 ## Goal
 
@@ -1126,22 +1126,34 @@ Make the single cabinet believable without overbuilding content.
 Scope is render-only; no collider, force, friction, timing, claw, gantry-motion, reel, or fixed-step parameters are changed.
 
 Implemented candidate:
-- powder-coated/clear-coated PBR cabinet frame and control-panel materials
-- restrained physical-glass material with low opacity, controlled transmission, IOR/thickness and subdued edge reflection
+- matte cabinet frame and control-panel materials with clearcoat removed after deployed feedback
+- very low-reflection physical-glass material with low opacity, high roughness, minimal transmission and faint edge definition
 - brushed/stainless chute material without restoring any raised chute rim
 - front corner posts and top header aligned with the existing cabinet/glass boundary
 - three cool-white emissive LED strips inside the upper cabinet envelope
 - moving bridge beam spanning the gantry side rails
 - bridge end trolley blocks
 - visible carriage winch drum, flanges and lower cable pulley
-- cabinet-only ACES filmic tone mapping / sRGB output
+- sRGB output without cabinet-only filmic highlight processing
 - mobile keeps the established lower-cost render profile
 
 Automated visual-configuration regression checks:
-- glass stays at or below 10% opacity and retains nonzero controlled transmission
+- glass stays at or below 10% opacity, >=0.8 roughness, <=0.10 edge opacity, zero clearcoat and only minimal transmission
 - LED strips remain inside the physical cabinet envelope
 - decorative frame definitions contain no chute-border/rim part
 - bridge/winch proportions remain compact and visibly distinct
+- frame/control-panel clearcoat remains zero and LED emissive intensity remains <=1
+
+## Deployed visual correction — 2026-10-03
+
+- cabinet claw now starts at the same X/Z as the physical chute center, matching the real-machine parked position
+- cabinet-only start position is passed through the generic gantry scene without changing the M02 home calibration
+- normal play RETURN already targets the same chute position, so startup and post-play parking are consistent
+- bright decorative/specular highlights were removed: frame, panel, rails, bridge, carriage, winch and claw metals use substantially higher roughness and lower metalness
+- glass edge opacity reduced to 0.08 and glass roughness raised to 0.82
+- LED emissive intensity reduced from 2.4 to 0.9
+- cabinet-only ACES filmic tone mapping removed
+- no collider, force, friction, claw torque, reel, movement, timestep or chute geometry change
 
 ## Exit criteria
 
