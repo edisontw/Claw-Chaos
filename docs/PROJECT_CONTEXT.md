@@ -497,7 +497,7 @@ Final verification baseline:
 - headless Rapier/WebGL smoke PASS
 - GitHub Pages deployment PASS after merge
 
-## M07 implementation status — mobile-first closure candidate verified 2026-10-03
+## M07 implementation status — mobile calibration closure candidate verified 2026-10-03
 
 **Status: IN PROGRESS — closure candidate**
 
@@ -523,6 +523,15 @@ Mobile-first input:
 - diagnostic X/Z values are coordinates, not keyboard keys
 - mobile-controls initialization is browser-smoke gated
 
+Mobile calibration:
+- virtual joystick dead zone = 14%; post-dead-zone travel is remapped to full analog output
+- touch-look sensitivity = 0.0030 rad/pixel; desktop mouse remains 0.0022
+- accepted DROP/CLOSE taps have 140 ms debounce; visual feedback clears after 180 ms
+- portrait/landscape control layouts are separate and safe-area aware
+- touch layouts suppress browser overscroll
+- mobile render profile caps DPR at 1.5 and shadow maps at 512; desktop stays 2 / 1024
+- physics timestep and all locked machine parameters are unchanged
+
 Grip/play correction:
 - deployed feedback showed prizes could not be usefully carried even though pedestal calibration passed
 - root cause: pedestal calibration allowed favorable under-grip geometry while real prizes rest on a broad flat play deck
@@ -545,12 +554,12 @@ Acceptance:
 - ±90° yaw and look-down interaction framing — PASS
 - actual flat-deck easy-prize pickup — PASS
 - 2× mass flat-deck rejection — PASS
-- **31 test files / 83 tests PASS**
+- **32 test files / 87 tests PASS**
 - lint/build/base-path/browser smokes PASS
 
 ## Current next step
 
-Deploy and manually verify on a real phone first: touch-drag look, analog claw movement, DROP/CLOSE action, safe-area layout, and portrait/landscape usability. Also recheck front-only movement, depth cues, Foam Cube interaction, and the centered rubber-ball pickup. If these pass, close M07 and proceed to M08.
+Deploy and manually verify on real phones first: the 14% joystick dead zone, 0.0030 rad/pixel touch look, 140 ms action debounce, portrait/landscape layout, safe areas and mobile performance. Also recheck front-only movement, depth cues, Foam Cube interaction, and centered rubber-ball pickup. If these pass on Android Chrome and iPhone Safari, close M07 and proceed to M08.
 
 ## Design-review additions
 
