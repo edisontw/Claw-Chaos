@@ -457,18 +457,22 @@ Implementation status — 2026-10-01:
 
 Cabinet gameplay calibration — updated 2026-10-03:
 - locked standalone M04 lab values remain unchanged
-- cabinet-only finger friction = **1.25**
-- cabinet-only CLOSE/PICKUP torque = **6.0 N·m**
-- cabinet-only RETAINING torque = **0.014 N·m**
-- cabinet-only HOLD BOOST = **0.018 N·m**; standalone M04 HOLD BOOST remains 0.010 N·m
-- cabinet-only strong PICKUP distance = **0.18 m** before RETAINING; locked M04 lab remains 0.06 m
-- calibration uses the broad physical play deck and requires sustained retention, not merely transient lift
-- actual `prize/sphere_ball`: 0.075 kg, rubber dynamic friction 0.82, radius 0.0525 m
-- 75 g real ball: peak ≈ **0.2526 m**, RETAINING +1.2 s ≈ **0.2525 m**, final ≈ **0.2525 m** — SUCCESS
-- 75 g rounded Foam Cube: peak ≈ **0.2417 m**, RETAINING +1.2 s ≈ **0.2416 m**, final ≈ **0.2416 m** — SUCCESS
-- 0.150 kg same-size/same-friction control: brief peak ≈ **0.0248 m**, RETAINING +1.2 s / final ≈ 0 m — FAIL as intended
-- therefore two real starter prizes are now physically retained while the 2× mass control still fails
-- no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, or velocity reset is used.
+- cabinet-only finger friction = **1.94**
+- cabinet-only CLOSE/PICKUP torque = **10.0 N·m**
+- cabinet-only RETAINING torque remains **0.014 N·m**
+- cabinet-only HOLD BOOST remains **0.018 N·m**
+- cabinet-only strong PICKUP distance remains **0.18 m**
+- cabinet-only closed angle = **−0.63 rad**
+- cabinet-only lower-finger contact radius = **10 mm**, matched by the visible lower finger section
+- success requires reaching top and remaining at least 80 mm above the starting deck height after 1.2 s RETAINING and at final observation
+- centered Rubber Ball: peak ≈ **0.2529 m**, +1.2 s/final ≈ **0.2529 m** — PASS
+- centered Foam Cube: peak ≈ **0.2419 m**, +1.2 s/final ≈ **0.2419 m** — PASS
+- centered Small Pillow: peak ≈ **0.2514 m**, +1.2 s ≈ **0.2465 m**, final ≈ **0.2464 m** — PASS
+- centered Simple Animal: peak ≈ **0.2098 m**, +1.2 s/final ≈ **0.2092 m** — PASS
+- Simple Teddy at +20 mm X / −30 mm Z torso-offset aim: peak ≈ **0.1664 m**, +1.2 s ≈ **0.1123 m**, final ≈ **0.1124 m** — PASS
+- centered Teddy is deliberately not a guaranteed pickup; alignment remains meaningful
+- the previous 150 g mass-rejection criterion is retired for the stronger gameplay profile; dense high-friction spheres may also be physically retained
+- no magnet, kinematic prize conversion, prize joint, parenting, scripted carry, teleport, or velocity reset is used.
 
 Starter-cube interaction update — 2026-10-03:
 - former `prize/cube_small` sharp 95 mm plastic cuboid was reproduced as essentially immobile under a centered flat-deck grab
@@ -478,7 +482,7 @@ Starter-cube interaction update — 2026-10-03:
 - legacy sharp comparison: peak lift ≈ 2.1 mm, planar displacement ≈ 2.5 mm
 - acceptance requires visible physical interaction (>15 mm via lift or planar displacement) rather than forcing a rigid box to behave like a ball
 - hard box definitions remain sharp/high-difficulty.
-- current strong-4 production grip now fully retains the rounded Foam Cube: RETAINING +1.2 s / final ≈ **0.2416 m**; the earlier 10.4 mm/22.7 mm values remain historical pre-strong-grip baselines.
+- current plush-capable production grip fully retains the rounded Foam Cube at ≈ **0.2419 m** final; the earlier 10.4 mm/22.7 mm values remain historical pre-strong-grip baselines.
 
 Depth-readability manual acceptance — 2026-10-03:
 - no laser, projected drop marker or hidden aim guide
@@ -1009,7 +1013,7 @@ Expected:
 Automated status — 2026-10-03:
 - explicit desktop drag-direction regression PASS
 - explicit zero-input startup-framing regression PASS
-- full suite = **32 test files / 92 tests PASS**
+- full suite = **32 test files / 89 tests PASS**
 - lint/build/base-path/browser smokes PASS.
 
 ## PT-045 Mobile touch play path
@@ -1036,7 +1040,7 @@ Automated status — 2026-10-03:
 - mobile framing regression locks Z 0.84 / max 0.90 and **58° FOV**, with representative upper-claw + prize-deck vertical span fitting in view
 - render-profile regression locks mobile DPR cap **1.5** / shadow **512** versus desktop DPR 2 / shadow 1024
 - browser smoke requires `data-mobile-controls="ready"` and the `mobile-view-height` controls for explicit cabinet and root/default scenes
-- full suite = **32 test files / 92 tests PASS**
+- full suite = **32 test files / 89 tests PASS**
 - real-device Android Chrome / iPhone Safari comfort, portrait/landscape layout and sustained FPS remain manual M07 closure gates.
 
 ## PT-044 Calibration record completeness
