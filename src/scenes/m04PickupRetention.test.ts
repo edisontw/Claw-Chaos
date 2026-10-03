@@ -47,6 +47,8 @@ interface PickupRetentionProfile {
   prizeShape?: "sphere" | "cuboid";
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
+  prizeOffsetX?: number;
+  prizeOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
@@ -67,6 +69,7 @@ interface PickupRetentionMetrics {
   retainingStartPayoutMeters: number;
   finalPayoutMeters: number;
   maxSuspensionErrorMeters: number;
+  maxPlanarDisplacementMeters: number;
   retainingReached: boolean;
   topReached: boolean;
   boostUsedSeconds: number;
@@ -102,6 +105,8 @@ async function simulateM04PickupRetention(
     };
   const prizeRotationYRadians =
     profile.prizeRotationYRadians ?? 0;
+  const prizeOffsetX = profile.prizeOffsetX ?? 0;
+  const prizeOffsetZ = profile.prizeOffsetZ ?? 0;
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
@@ -264,7 +269,7 @@ async function simulateM04PickupRetention(
   const ball =
     prizeShape === "cuboid"
       ? physics.createDynamicCuboid(
-          { x: 0, y: ballCenterY, z: 0 },
+          { x: prizeOffsetX, y: ballCenterY, z: prizeOffsetZ },
           prizeHalfExtents,
           prizeRotationYRadians,
           {
@@ -281,7 +286,7 @@ async function simulateM04PickupRetention(
           },
         )
       : physics.createDynamicSphere(
-          { x: 0, y: ballCenterY, z: 0 },
+          { x: prizeOffsetX, y: ballCenterY, z: prizeOffsetZ },
           ballRadiusMeters,
           ballMassKg,
           {
@@ -487,10 +492,14 @@ async function simulateM04PickupRetention(
     step();
   }
 
-  const baselineBallY = ball.translation().y;
+  const baselineBall = ball.translation();
+  const baselineBallY = baselineBall.y;
+  const baselineBallX = baselineBall.x;
+  const baselineBallZ = baselineBall.z;
   play = applyM04Action(play, reel.payout);
 
   let peakLiftMeters = 0;
+  let maxPlanarDisplacementMeters = 0;
   let liftAtRetainingStartMeters = 0;
   let retainingReached = false;
   let topReached = false;
@@ -504,8 +513,16 @@ async function simulateM04PickupRetention(
     const previousPhase = play.phase;
     step();
 
-    const lift = ball.translation().y - baselineBallY;
+    const ballPosition = ball.translation();
+    const lift = ballPosition.y - baselineBallY;
     peakLiftMeters = Math.max(peakLiftMeters, lift);
+    maxPlanarDisplacementMeters = Math.max(
+      maxPlanarDisplacementMeters,
+      Math.hypot(
+        ballPosition.x - baselineBallX,
+        ballPosition.z - baselineBallZ,
+      ),
+    );
 
     if (
       !retainingReached &&
@@ -561,6 +578,7 @@ async function simulateM04PickupRetention(
       play.retainingStartPayoutMeters ?? Number.NaN,
     finalPayoutMeters: reel.payout,
     maxSuspensionErrorMeters,
+    maxPlanarDisplacementMeters,
     retainingReached,
     topReached,
     boostUsedSeconds: play.holdBoostUsedSeconds,
