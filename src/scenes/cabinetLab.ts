@@ -256,6 +256,10 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.holdBoostTorque,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       },
       playReturnTarget: {
         x: M06_CABINET_CONFIG.chuteCenterX,
@@ -399,7 +403,13 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.holdBoostTorque.toFixed(3) +
           " / " +
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters.toFixed(3) +
-          " m pickup",
+          " m pickup / close " +
+          CABINET_PLAY_TUNING.closedAngleRadians.toFixed(2) +
+          " rad / pad " +
+          Math.round(
+            CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters * 1000,
+          ) +
+          " mm",
         "Depth cues        woven deck + fixed cabinet-light shadows",
         "Chute trim        raised solid rim / sensor debug hidden",
         "Service wires     dual visual control leads",
