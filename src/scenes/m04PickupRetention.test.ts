@@ -50,6 +50,7 @@ interface PickupRetentionProfile {
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
   prizeMaterialId?: string;
+  prizeColliderScale?: number;
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
   prizeOffsetX?: number;
@@ -291,6 +292,7 @@ async function simulateM04PickupRetention(
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
           materialId: profile.prizeMaterialId,
+          compoundColliderScale: profile.prizeColliderScale,
         },
       ).body
     : prizeShape === "cuboid"
@@ -978,62 +980,22 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   });
 
 
-  it("sweeps soft-prize effective contact friction at the current production claw", async () => {
-    const candidates = [
-      {
-        label: "current",
-        teddyMaterialId: "material/plush",
-        pillowMaterialId: "material/fabric",
-        animalMaterialId: "material/plush",
-      },
-      {
-        label: "soft-1",
-        teddyMaterialId: "material/plush_grip_090",
-        pillowMaterialId: "material/fabric_grip_085",
-        animalMaterialId: "material/plush_grip_090",
-      },
-      {
-        label: "soft-2",
-        teddyMaterialId: "material/plush_grip_105",
-        pillowMaterialId: "material/fabric_grip_100",
-        animalMaterialId: "material/plush_grip_105",
-      },
-      {
-        label: "soft-3",
-        teddyMaterialId: "material/plush_grip_120",
-        pillowMaterialId: "material/fabric_grip_115",
-        animalMaterialId: "material/plush_grip_120",
-      },
-    ] as const;
-
+  it("sweeps soft-prize collider compression at the current production claw", async () => {
+    const scales = [1.0, 0.95, 0.90, 0.85, 0.80] as const;
     const prizes = [
-      {
-        id: "prize/teddy_simple",
-        rotationYRadians: -0.22,
-        materialKey: "teddyMaterialId",
-      },
-      {
-        id: "prize/pillow_small",
-        rotationYRadians: 0.28,
-        materialKey: "pillowMaterialId",
-      },
-      {
-        id: "prize/animal_simple",
-        rotationYRadians: -0.12,
-        materialKey: "animalMaterialId",
-      },
+      { id: "prize/teddy_simple", rotationYRadians: -0.22 },
+      { id: "prize/pillow_small", rotationYRadians: 0.28 },
+      { id: "prize/animal_simple", rotationYRadians: -0.12 },
     ] as const;
-
     const sphere = getPrizeDefinition("prize/sphere_ball");
     const sphereResolved = resolvePrizeSpec(sphere);
     const rows = [];
 
-    for (const candidate of candidates) {
+    for (const prizeColliderScale of scales) {
       const results = [];
       let plushSuccessCount = 0;
 
       for (const prize of prizes) {
-        const prizeMaterialId = candidate[prize.materialKey];
         const metrics = await simulateM04PickupRetention({
           fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
           closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
@@ -1042,7 +1004,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
             CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
           closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
           prizeDefinitionId: prize.id,
-          prizeMaterialId,
+          prizeColliderScale,
           prizeRotationYRadians: prize.rotationYRadians,
           topHoldSeconds: 1.3,
           supportMode: "flat-deck",
@@ -1054,7 +1016,6 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         if (success) plushSuccessCount += 1;
         results.push({
           id: prize.id,
-          materialId: prizeMaterialId,
           success,
           peak: metrics.peakLiftMeters,
           retain1p2: metrics.liftAfterRetaining1p2sMeters,
@@ -1081,7 +1042,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         heavyBall.finalLiftMeters >= 0.08;
 
       rows.push({
-        label: candidate.label,
+        prizeColliderScale,
         plushSuccessCount,
         heavyBallSuccess,
         heavyBall: {
@@ -1094,7 +1055,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "Cabinet soft-contact sweep",
+      "Cabinet soft-collider sweep",
       JSON.stringify(rows),
     );
 
