@@ -47,6 +47,7 @@ interface PickupRetentionProfile {
   prizeShape?: "sphere" | "cuboid";
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationYRadians?: number;
+  fingerLowerPadRadiusMeters?: number;
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
@@ -98,6 +99,9 @@ async function simulateM04PickupRetention(
     };
   const prizeRotationYRadians =
     profile.prizeRotationYRadians ?? 0;
+  const fingerLowerPadRadiusMeters =
+    profile.fingerLowerPadRadiusMeters ??
+    claw.fingerRodRadius;
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -212,7 +216,10 @@ async function simulateM04PickupRetention(
 
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
-      createFingerSegments(createFingerPoints(theta)),
+      createFingerSegments(
+        createFingerPoints(theta),
+        fingerLowerPadRadiusMeters,
+      ),
       {
         friction: fingerFriction,
         restitution: claw.fingerRestitution,
@@ -825,17 +832,31 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       z: definition.dimensions.z * 0.5,
     };
     const candidateProfiles = [
-      { fingerFriction: CABINET_PLAY_TUNING.fingerFriction, closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque },
-      { fingerFriction: 0.90, closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque },
-      { fingerFriction: 1.05, closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque },
-      { fingerFriction: CABINET_PLAY_TUNING.fingerFriction, closePickupTorque: 4.0 },
-      { fingerFriction: 0.90, closePickupTorque: 4.0 },
-      { fingerFriction: 1.05, closePickupTorque: 4.0 },
-      { fingerFriction: 1.05, closePickupTorque: 5.0 },
+      {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        fingerLowerPadRadiusMeters: claw.fingerRodRadius,
+      },
+      {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        fingerLowerPadRadiusMeters: 0.008,
+      },
+      {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        fingerLowerPadRadiusMeters: 0.010,
+      },
+      {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        fingerLowerPadRadiusMeters: 0.012,
+      },
     ];
     const sweep: Array<{
       fingerFriction: number;
       closePickupTorque: number;
+      fingerLowerPadRadiusMeters: number;
       peakLiftMeters: number;
       finalLiftMeters: number;
     }> = [];
@@ -846,6 +867,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         fingerFriction: candidate.fingerFriction,
         closePickupTorque: candidate.closePickupTorque,
         retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        fingerLowerPadRadiusMeters:
+          candidate.fingerLowerPadRadiusMeters,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         ballMassKg: resolved.massKg,
@@ -862,8 +885,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         finalLiftMeters: metrics.finalLiftMeters,
       });
       if (
-        candidate.fingerFriction === CABINET_PLAY_TUNING.fingerFriction &&
-        candidate.closePickupTorque === CABINET_PLAY_TUNING.closePickupTorque
+        candidate.fingerLowerPadRadiusMeters === claw.fingerRodRadius
       ) {
         actual = metrics;
       }
