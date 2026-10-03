@@ -116,8 +116,10 @@ describe("Cabinet realism geometry", () => {
     const c = M06_CABINET_CONFIG;
 
     expect(c.chuteCenterX).toBeLessThan(0);
-    expect(c.chuteOpeningHalfX * 2).toBeGreaterThanOrEqual(0.24);
-    expect(c.chuteOpeningHalfZ * 2).toBeGreaterThanOrEqual(0.18);
+    expect(c.chuteOpeningHalfX * 2).toBeCloseTo(0.30, 6);
+    expect(c.chuteOpeningHalfZ * 2).toBeCloseTo(0.23, 6);
+    expect(c.chuteSensorHalfX).toBeLessThan(c.chuteOpeningHalfX);
+    expect(c.chuteSensorHalfZ).toBeLessThan(c.chuteOpeningHalfZ);
     expect(
       c.chuteCenterX - c.chuteOpeningHalfX,
     ).toBeGreaterThan(-c.interiorHalfX);
