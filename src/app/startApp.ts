@@ -15,6 +15,10 @@ import {
   M07_CABINET_VIEW_TARGETS,
 } from "../player/firstPersonPlayerView";
 import { MobileCabinetControls } from "../player/mobileCabinetControls";
+import {
+  chooseRenderQualityProfile,
+  isTouchLikeEnvironment,
+} from "../player/mobileRenderProfile";
 import { createClawLabScene, parseClawLabExperiment } from "../scenes/clawLab";
 import { createPt003Scene } from "../scenes/pt003Scene";
 import { createPt004Scene } from "../scenes/pt004Scene";
@@ -41,8 +45,18 @@ export async function startApp(root: HTMLElement): Promise<void> {
     100,
   );
 
+  const renderQuality = chooseRenderQualityProfile(
+    isTouchLikeEnvironment(),
+  );
+  root.dataset.renderProfile = renderQuality.id;
+
   const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setPixelRatio(
+    Math.min(
+      window.devicePixelRatio,
+      renderQuality.pixelRatioCap,
+    ),
+  );
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   root.append(renderer.domElement);
@@ -52,7 +66,10 @@ export async function startApp(root: HTMLElement): Promise<void> {
   const keyLight = new THREE.DirectionalLight(0xffffff, 2.8);
   keyLight.position.set(4, 8, 5);
   keyLight.castShadow = true;
-  keyLight.shadow.mapSize.set(1024, 1024);
+  keyLight.shadow.mapSize.set(
+    renderQuality.shadowMapSize,
+    renderQuality.shadowMapSize,
+  );
   scene.add(keyLight);
 
   const experiment = parseClawLabExperiment(window.location.search);
@@ -74,6 +91,24 @@ export async function startApp(root: HTMLElement): Promise<void> {
               ? createOversizedCloseScene(scene, physics)
               : createClawLabScene(scene, physics, window.location.search)
       : createFallingCubeScene(scene, physics, selection.seed);
+
+  scene.traverse((object) => {
+    if (
+      object instanceof THREE.DirectionalLight ||
+      object instanceof THREE.PointLight
+    ) {
+      object.shadow.mapSize.set(
+        Math.min(
+          object.shadow.mapSize.width,
+          renderQuality.shadowMapSize,
+        ),
+        Math.min(
+          object.shadow.mapSize.height,
+          renderQuality.shadowMapSize,
+        ),
+      );
+    }
+  });
 
   camera.position.set(...testScene.camera.position);
   camera.lookAt(...testScene.camera.target);
