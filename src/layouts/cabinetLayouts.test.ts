@@ -21,6 +21,13 @@ describe("M09 cabinet layout foundation", () => {
     });
 
     expect(
+      parseCabinetLayoutSelection("?layout=bridge"),
+    ).toEqual({
+      id: "bridge",
+      usedFallback: false,
+    });
+
+    expect(
       parseCabinetLayoutSelection("?layout=unknown"),
     ).toEqual({
       id: "loose",
@@ -29,7 +36,12 @@ describe("M09 cabinet layout foundation", () => {
   });
 
   it("is deterministic for a fixed seed across every implemented layout", () => {
-    for (const id of ["loose", "dense", "showcase"] as const) {
+    for (const id of [
+      "loose",
+      "dense",
+      "showcase",
+      "bridge",
+    ] as const) {
       const first = createCabinetLayout(id, "fixed-seed");
       const second = createCabinetLayout(id, "fixed-seed");
       expect(second).toEqual(first);
@@ -43,7 +55,7 @@ describe("M09 cabinet layout foundation", () => {
     expect(second.placements).not.toEqual(first.placements);
   });
 
-  it("keeps loose, dense, and showcase content contracts", () => {
+  it("keeps loose, dense, showcase, and bridge content contracts", () => {
     expect(
       createCabinetLayout("loose", "count").placements,
     ).toHaveLength(5);
@@ -53,6 +65,59 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       createCabinetLayout("showcase", "count").placements,
     ).toHaveLength(6);
+    expect(
+      createCabinetLayout("bridge", "count").placements,
+    ).toHaveLength(5);
+  });
+
+  it("builds bridge from two dynamic supports and one elevated flat-box beam", () => {
+    const layout = createCabinetLayout(
+      "bridge",
+      "bridge-structure",
+    );
+    const supports = layout.placements.filter(
+      (placement) => placement.role === "support",
+    );
+    const beam = layout.placements.find(
+      (placement) => placement.role === "bridge",
+    );
+
+    expect(supports).toHaveLength(2);
+    expect(
+      supports.every(
+        (placement) =>
+          placement.prizeId === "prize/box_standard",
+      ),
+    ).toBe(true);
+    expect(beam?.prizeId).toBe("prize/box_flat");
+    expect(beam?.yOffsetMeters).toBe(0.087);
+    expect(supports[0]!.x).toBeLessThan(-0.085);
+    expect(supports[1]!.x).toBeGreaterThan(0.085);
+  });
+
+  it("keeps structural bridge seed jitter small enough to preserve the initial span", () => {
+    const layout = createCabinetLayout(
+      "bridge",
+      "bridge-jitter",
+    );
+    const beam = layout.placements.find(
+      (placement) => placement.role === "bridge",
+    );
+    const supports = layout.placements.filter(
+      (placement) => placement.role === "support",
+    );
+
+    expect(beam).toBeDefined();
+    expect(Math.abs(beam!.x)).toBeLessThanOrEqual(0.0015);
+    expect(
+      Math.abs(beam!.rotationYRadians),
+    ).toBeLessThanOrEqual(0.012);
+    expect(
+      Math.abs(supports[0]!.x + 0.09),
+    ).toBeLessThanOrEqual(0.0015);
+    expect(
+      Math.abs(supports[1]!.x - 0.09),
+    ).toBeLessThanOrEqual(0.0015);
   });
 
   it("showcase exposes representative rigid and soft prize families", () => {
@@ -95,7 +160,12 @@ describe("M09 cabinet layout foundation", () => {
   });
 
   it("keeps generated centers inside the current cabinet play envelope", () => {
-    for (const id of ["loose", "dense", "showcase"] as const) {
+    for (const id of [
+      "loose",
+      "dense",
+      "showcase",
+      "bridge",
+    ] as const) {
       for (const placement of createCabinetLayout(
         id,
         "bounds",
