@@ -3,19 +3,50 @@ export interface VirtualJoystickVector {
   z: number;
 }
 
+export const MOBILE_JOYSTICK_DEAD_ZONE_FRACTION = 0.14;
+export const MOBILE_ACTION_DEBOUNCE_MS = 140;
+
 export function normalizeVirtualJoystick(
   deltaX: number,
   deltaY: number,
   radiusPixels: number,
+  deadZoneFraction = MOBILE_JOYSTICK_DEAD_ZONE_FRACTION,
 ): VirtualJoystickVector {
   const radius = Math.max(1, radiusPixels);
-  const length = Math.hypot(deltaX, deltaY);
-  const scale = length > radius ? radius / length : 1;
+  const rawLength = Math.hypot(deltaX, deltaY);
+  if (rawLength <= 1e-8) {
+    return { x: 0, z: 0 };
+  }
+
+  const clampedLength = Math.min(rawLength, radius);
+  const normalizedLength = clampedLength / radius;
+  const deadZone = Math.max(0, Math.min(0.9, deadZoneFraction));
+
+  if (normalizedLength <= deadZone) {
+    return { x: 0, z: 0 };
+  }
+
+  const remappedLength =
+    (normalizedLength - deadZone) / (1 - deadZone);
+  const directionX = deltaX / rawLength;
+  const directionZ = deltaY / rawLength;
 
   return {
-    x: (deltaX * scale) / radius,
-    z: (deltaY * scale) / radius,
+    x: directionX * remappedLength,
+    z: directionZ * remappedLength,
   };
+}
+
+export function isActionPressAllowed(
+  previousAcceptedMilliseconds: number,
+  nowMilliseconds: number,
+  debounceMilliseconds = MOBILE_ACTION_DEBOUNCE_MS,
+): boolean {
+  return (
+    !Number.isFinite(previousAcceptedMilliseconds) ||
+    nowMilliseconds - previousAcceptedMilliseconds >=
+      Math.max(0, debounceMilliseconds)
+  );
 }
 
 export class MobileCabinetControls {
@@ -24,6 +55,7 @@ export class MobileCabinetControls {
   private readonly thumb: HTMLDivElement;
   private readonly actionButton: HTMLButtonElement;
   private joystickPointerId: number | null = null;
+  private lastAcceptedActionMilliseconds = Number.NEGATIVE_INFINITY;
 
   constructor(
     parent: HTMLElement,
@@ -105,10 +137,25 @@ export class MobileCabinetControls {
   };
 
   private readonly onActionPointerDown = (event: PointerEvent): void => {
+    const now = performance.now();
+    if (
+      !isActionPressAllowed(
+        this.lastAcceptedActionMilliseconds,
+        now,
+      )
+    ) {
+      this.actionButton.dataset.result = "debounced";
+      event.preventDefault();
+      return;
+    }
+
     const accepted = this.onAction();
     this.actionButton.dataset.result = accepted ? "accepted" : "blocked";
-    if (accepted && typeof navigator.vibrate === "function") {
-      navigator.vibrate(18);
+    if (accepted) {
+      this.lastAcceptedActionMilliseconds = now;
+      if (typeof navigator.vibrate === "function") {
+        navigator.vibrate(18);
+      }
     }
     event.preventDefault();
   };
