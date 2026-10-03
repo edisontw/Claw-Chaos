@@ -935,5 +935,95 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   });
 
+
+  it("reports stronger cabinet grip candidates across real starter prizes", async () => {
+    const sphere = getPrizeDefinition("prize/sphere_ball");
+    const sphereResolved = resolvePrizeSpec(sphere);
+    const profiles = [
+      { label: "current", closePickupTorque: 2.9, retainingTorque: 0.0055 },
+      { label: "moderate", closePickupTorque: 3.2, retainingTorque: 0.0065 },
+      { label: "strong", closePickupTorque: 3.4, retainingTorque: 0.0070 },
+      { label: "strong-plus", closePickupTorque: 3.6, retainingTorque: 0.0075 },
+    ] as const;
+
+    const rows = [];
+    for (const profile of profiles) {
+      const common = {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: profile.closePickupTorque,
+        retainingTorque: profile.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        supportMode: "flat-deck" as const,
+      };
+
+      const ball = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: "prize/sphere_ball",
+      });
+      const cube = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: "prize/cube_small",
+        prizeRotationYRadians: 0.18,
+      });
+      const pillow = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: "prize/pillow_small",
+        prizeRotationYRadians: 0.12,
+      });
+      const teddy = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: "prize/teddy_simple",
+        prizeRotationYRadians: 0.16,
+      });
+      const heavyBall = await simulateM04PickupRetention({
+        ...common,
+        ballMassKg: sphereResolved.massKg * 2,
+        ballFriction: sphereResolved.material.dynamicFriction,
+        ballRadiusMeters: sphere.dimensions.x * 0.5,
+      });
+
+      rows.push({
+        ...profile,
+        ball: {
+          peak: ball.peakLiftMeters,
+          retain0p8: ball.liftAfterRetaining0p8sMeters,
+          final: ball.finalLiftMeters,
+        },
+        cube: {
+          peak: cube.peakLiftMeters,
+          planar: cube.maxPlanarDisplacementMeters,
+          final: cube.finalLiftMeters,
+        },
+        pillow: {
+          peak: pillow.peakLiftMeters,
+          planar: pillow.maxPlanarDisplacementMeters,
+          final: pillow.finalLiftMeters,
+        },
+        teddy: {
+          peak: teddy.peakLiftMeters,
+          planar: teddy.maxPlanarDisplacementMeters,
+          final: teddy.finalLiftMeters,
+        },
+        heavyBall: {
+          peak: heavyBall.peakLiftMeters,
+          retain0p8: heavyBall.liftAfterRetaining0p8sMeters,
+          final: heavyBall.finalLiftMeters,
+        },
+      });
+
+      expect(ball.finiteAndBounded).toBe(true);
+      expect(cube.finiteAndBounded).toBe(true);
+      expect(pillow.finiteAndBounded).toBe(true);
+      expect(teddy.finiteAndBounded).toBe(true);
+      expect(heavyBall.finiteAndBounded).toBe(true);
+    }
+
+    console.log(
+      "Cabinet stronger grip candidate sweep",
+      JSON.stringify(rows),
+    );
+  });
+
 });
 
