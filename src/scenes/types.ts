@@ -1,4 +1,5 @@
 import type * as THREE from "three";
+import type { MachineAudioState } from "../audio/machineAudioState";
 import type { RigidBodyHandle } from "../physics/PhysicsRuntime";
 
 export interface RenderBinding {
@@ -24,5 +25,6 @@ export interface SimulationScene {
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
   setManualGantryInput?(x: number, z: number): void;
+  getMachineAudioState?(): MachineAudioState;
   debugLines?(): string[];
 }
