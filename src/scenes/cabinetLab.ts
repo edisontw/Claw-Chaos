@@ -252,6 +252,8 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.closePickupTorque,
         retainingTorque:
           CABINET_PLAY_TUNING.retainingTorque,
+        holdBoostTorque:
+          CABINET_PLAY_TUNING.holdBoostTorque,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       },
@@ -393,6 +395,8 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.closePickupTorque.toFixed(3) +
           " / " +
           CABINET_PLAY_TUNING.retainingTorque.toFixed(3) +
+          " / boost " +
+          CABINET_PLAY_TUNING.holdBoostTorque.toFixed(3) +
           " / " +
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters.toFixed(3) +
           " m pickup",
