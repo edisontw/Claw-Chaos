@@ -69,7 +69,7 @@ export const M07_FIRST_PERSON_VIEW_CONFIG: FirstPersonPlayerViewConfig = {
   initialX: 0,
   initialZ: 0.78,
   initialYawRadians: 0,
-  initialPitchRadians: THREE.MathUtils.degToRad(-18.5),
+  initialPitchRadians: THREE.MathUtils.degToRad(-19),
   eyeY: 0.98,
   minX: -0.28,
   maxX: 0.28,
