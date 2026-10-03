@@ -50,6 +50,7 @@ interface PickupRetentionProfile {
   fingerLowerPadRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
+  autoClosePayoutMeters?: number;
   pickupLiftDistanceMeters?: number;
   supportMode?: "pedestal" | "flat-deck";
 }
@@ -108,6 +109,9 @@ async function simulateM04PickupRetention(
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
     profile.closedAngleRadians ?? claw.closedAngle;
+  const autoClosePayoutMeters =
+    profile.autoClosePayoutMeters ??
+    M04_PLAY_CONFIG.autoClosePayoutMeters;
   const pickupLiftDistanceMeters =
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
@@ -294,7 +298,7 @@ async function simulateM04PickupRetention(
     braking: gantry.reelBraking,
   };
   const playConfig = {
-    autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
+    autoClosePayoutMeters,
     closedAngleRadians,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
@@ -843,29 +847,21 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
         closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
         fingerNodes: CLAW_LAB_CONFIG.fingerNodes,
+        autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
       },
-      ...[
-        { tipRadial: 0.090, padRadius: 0.006 },
-        { tipRadial: 0.098, padRadius: 0.006 },
-        { tipRadial: 0.102, padRadius: 0.006 },
-        { tipRadial: 0.106, padRadius: 0.006 },
-        { tipRadial: 0.102, padRadius: 0.008 },
-      ].map(({ tipRadial, padRadius }) => ({
-        label: `vertical-pad-${tipRadial.toFixed(3)}-${padRadius.toFixed(3)}`,
-        fingerLowerPadRadiusMeters: padRadius,
-        closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-        fingerNodes: [
-          { radial: 0, down: 0 },
-          { radial: 0.03, down: 0.07 },
-          { radial: 0.075, down: 0.165 },
-          { radial: tipRadial, down: 0.225 },
-        ] as const,
-      })),
+      ...[0.270, 0.265, 0.260, 0.255, 0.250, 0.245].map(
+        (autoClosePayoutMeters) => ({
+          label: `auto-close-${autoClosePayoutMeters.toFixed(3)}`,
+          fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
+          closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
+          fingerNodes: CLAW_LAB_CONFIG.fingerNodes,
+          autoClosePayoutMeters,
+        }),
+      ),
     ];
     const sweep: Array<{
       label: string;
-      fingerLowerPadRadiusMeters: number;
-      closedAngleRadians: number;
+      autoClosePayoutMeters: number;
       peakLiftMeters: number;
       liftAtRetainingStartMeters: number;
       finalLiftMeters: number;
@@ -883,6 +879,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
           candidate.fingerNodes,
         closedAngleRadians:
           candidate.closedAngleRadians,
+        autoClosePayoutMeters:
+          candidate.autoClosePayoutMeters,
         pickupLiftDistanceMeters:
           CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
         ballMassKg: resolved.massKg,
@@ -895,10 +893,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       });
       sweep.push({
         label: candidate.label,
-        fingerLowerPadRadiusMeters:
-          candidate.fingerLowerPadRadiusMeters,
-        closedAngleRadians:
-          candidate.closedAngleRadians,
+        autoClosePayoutMeters:
+          candidate.autoClosePayoutMeters,
         peakLiftMeters: metrics.peakLiftMeters,
         liftAtRetainingStartMeters:
           metrics.liftAtRetainingStartMeters,
