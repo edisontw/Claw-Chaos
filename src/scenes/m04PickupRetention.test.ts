@@ -849,14 +849,25 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         fingerNodes: CLAW_LAB_CONFIG.fingerNodes,
         autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
       },
-      ...[0.270, 0.265, 0.260, 0.255, 0.250, 0.245].map(
-        (autoClosePayoutMeters) => ({
-          label: `auto-close-${autoClosePayoutMeters.toFixed(3)}`,
-          fingerLowerPadRadiusMeters: CLAW_LAB_CONFIG.fingerRodRadius,
-          closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
-          fingerNodes: CLAW_LAB_CONFIG.fingerNodes,
-          autoClosePayoutMeters,
-        }),
+      ...[0.180, 0.185, 0.190, 0.195, 0.200, 0.205].map(
+        (tipDown) => {
+          const verticalClosedTipRadial =
+            0.075 +
+            Math.tan(Math.abs(CLAW_LAB_CONFIG.closedAngle)) *
+              (tipDown - 0.165);
+          return {
+            label: `short-vertical-tip-${tipDown.toFixed(3)}`,
+            fingerLowerPadRadiusMeters: 0.006,
+            closedAngleRadians: CLAW_LAB_CONFIG.closedAngle,
+            fingerNodes: [
+              { radial: 0, down: 0 },
+              { radial: 0.03, down: 0.07 },
+              { radial: 0.075, down: 0.165 },
+              { radial: verticalClosedTipRadial, down: tipDown },
+            ] as const,
+            autoClosePayoutMeters: M04_PLAY_CONFIG.autoClosePayoutMeters,
+          };
+        },
       ),
     ];
     const sweep: Array<{
