@@ -1164,5 +1164,107 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(results).toHaveLength(candidates.length);
   }, 20000);
 
+
+  it("scans J-shaped cabinet finger tips for mechanical ring retention", async () => {
+    const base = CLAW_LAB_CONFIG.fingerNodes;
+    const candidates = [
+      {
+        label: "baseline",
+        nodes: base,
+        entryNodeIndex: 3,
+      },
+      {
+        label: "j10",
+        nodes: [
+          ...base,
+          { radial: 0.060, down: 0.215 },
+        ],
+        entryNodeIndex: 3,
+      },
+      {
+        label: "j15",
+        nodes: [
+          ...base,
+          { radial: 0.065, down: 0.210 },
+        ],
+        entryNodeIndex: 3,
+      },
+      {
+        label: "j20",
+        nodes: [
+          ...base,
+          { radial: 0.070, down: 0.205 },
+        ],
+        entryNodeIndex: 3,
+      },
+      {
+        label: "j-wide",
+        nodes: [
+          ...base,
+          { radial: 0.075, down: 0.210 },
+        ],
+        entryNodeIndex: 3,
+      },
+    ] as const;
+    const theta = Math.PI * 4 / 3;
+    const results = [];
+
+    for (const candidate of candidates) {
+      const entry = candidate.nodes[candidate.entryNodeIndex]!;
+      const entryRadius =
+        CLAW_LAB_CONFIG.fingerPivotRadius +
+        entry.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+        entry.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+      const prizeOffsetX = Math.cos(theta) * entryRadius;
+      const prizeOffsetZ = Math.sin(theta) * entryRadius;
+
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerNodes: candidate.nodes,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        label: candidate.label,
+        entryRadius,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+      });
+    }
+
+    console.log(
+      "M09 ring J-hook geometry sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 20000);
+
 });
 
