@@ -13,6 +13,7 @@ import {
   createFingerPoints,
   createFingerSegments,
 } from "./clawLab";
+import { M02_FINGER_TRANSPORT_CONFIG } from "./gantryLab";
 
 function multiply(a: Quaternion, b: Quaternion): Quaternion {
   return {
@@ -55,6 +56,9 @@ interface EmptyCloseMetrics {
   commandRadians: number;
   fingerTravelRadians: number[];
   travelSpreadRadians: number;
+  reopenedPairContacts: number[];
+  reopenErrorRadians: number[];
+  maxReopenErrorRadians: number;
 }
 
 function createTangentialTipOffsetPoints(
@@ -232,6 +236,44 @@ async function simulateEmptyClose(
     Math.max(...fingerTravelRadians) -
     Math.min(...fingerTravelRadians);
 
+  for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
+    command = advanceMotorCommand(
+      command,
+      claw.openAngle,
+      claw.motorSpeedRadiansPerSecond,
+      dt,
+    );
+    for (const joint of joints) {
+      joint.configureMotorPosition(
+        command,
+        M02_FINGER_TRANSPORT_CONFIG.stiffness,
+        M02_FINGER_TRANSPORT_CONFIG.damping,
+      );
+      joint.setMotorMaxForce(
+        M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+      );
+    }
+    for (const finger of fingers) {
+      finger.wakeUp();
+    }
+    physics.step();
+  }
+
+  const reopenedPairContacts = pairs.map(([a, b]) =>
+    physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
+  );
+  const reopenedHubRotation = hub.rotation();
+  const reopenErrorRadians = fingers.map((finger, index) =>
+    angularDistance(
+      openFingerRotations[index]!,
+      relativeRotation(
+        reopenedHubRotation,
+        finger.rotation(),
+      ),
+    ),
+  );
+  const maxReopenErrorRadians = Math.max(...reopenErrorRadians);
+
   return {
     closedAngleRadians,
     peakPairContacts,
@@ -240,12 +282,15 @@ async function simulateEmptyClose(
     commandRadians: command,
     fingerTravelRadians,
     travelSpreadRadians,
+    reopenedPairContacts,
+    reopenErrorRadians,
+    maxReopenErrorRadians,
     tipTangentialOffsetMeters,
   };
 }
 
 describe("M09 production claw empty-close self contact", () => {
-  it("measures symmetric mechanical closure before sibling-finger binding", async () => {
+  it("measures close contact and reliable reopening after sibling-finger contact", async () => {
     const angles = [
       -0.63,
       -0.55,
