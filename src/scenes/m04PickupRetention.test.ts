@@ -1575,5 +1575,72 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(results).toHaveLength(candidates.length);
   }, 20000);
 
+
+  it("scans passive retaining torque with the lip50 mechanical hook", async () => {
+    const base = CLAW_LAB_CONFIG.fingerNodes;
+    const fingerNodes = [
+      ...base,
+      { radial: 0.100, down: 0.205 },
+    ] as const;
+    const entry = base[3]!;
+    const entryRadius =
+      CLAW_LAB_CONFIG.fingerPivotRadius +
+      entry.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+      entry.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+    const theta = Math.PI * 4 / 3;
+    const prizeOffsetX = Math.cos(theta) * entryRadius;
+    const prizeOffsetZ = Math.sin(theta) * entryRadius;
+    const candidates = [0, 0.002, 0.005, 0.008, 0.014] as const;
+    const results = [];
+
+    for (const retainingTorque of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerLowerPadSegmentCount: 1,
+        fingerNodes,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        retainingTorque,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+      });
+    }
+
+    console.log(
+      "M09 lip50 passive-retention sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 20000);
+
 });
 
