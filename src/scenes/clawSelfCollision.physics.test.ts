@@ -13,7 +13,10 @@ import {
   createFingerPoints,
   createFingerSegments,
 } from "./clawLab";
-import { M02_FINGER_TRANSPORT_CONFIG } from "./gantryLab";
+import {
+  M02_FINGER_TRANSPORT_CONFIG,
+  advanceFingerCommandWithSelfContactGuard,
+} from "./gantryLab";
 
 function multiply(a: Quaternion, b: Quaternion): Quaternion {
   return {
@@ -219,11 +222,26 @@ async function simulateEmptyClose(
   const contactTicks = [0, 0, 0];
 
   for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
-    command = advanceMotorCommand(
+    const siblingFingerContact =
+      physics.countBodyContactPairs(
+        fingers[0]!,
+        fingers[1]!,
+      ) > 0 ||
+      physics.countBodyContactPairs(
+        fingers[1]!,
+        fingers[2]!,
+      ) > 0 ||
+      physics.countBodyContactPairs(
+        fingers[2]!,
+        fingers[0]!,
+      ) > 0;
+    command = advanceFingerCommandWithSelfContactGuard(
       command,
       closedAngleRadians,
       claw.motorSpeedRadiansPerSecond,
       dt,
+      true,
+      siblingFingerContact,
     );
     for (const joint of joints) {
       joint.configureMotorPosition(
