@@ -118,8 +118,8 @@ describe("Cabinet play tuning", () => {
     });
     expect(nodes[4]).toEqual(originalTerminalEnd);
     expect(nodes.slice(5)).toEqual([
-      { radial: 0.09, down: 0.205 },
-      { radial: 0.082, down: 0.183 },
+      { radial: 0.075, down: 0.205 },
+      { radial: 0.068, down: 0.185 },
     ]);
     expect(
       CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
