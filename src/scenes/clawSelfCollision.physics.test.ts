@@ -59,6 +59,9 @@ interface EmptyCloseMetrics {
   reopenedPairContacts: number[];
   reopenErrorRadians: number[];
   maxReopenErrorRadians: number;
+  openJointAngles: number[];
+  closedJointAngles: number[];
+  reopenedJointAngles: number[];
 }
 
 function createTangentialTipOffsetPoints(
@@ -176,6 +179,15 @@ async function simulateEmptyClose(
   const openFingerRotations = fingers.map((finger) =>
     relativeRotation(openHubRotation, finger.rotation()),
   );
+  const jointAngles = (): number[] =>
+    joints.map((joint) =>
+      (
+        joint as unknown as {
+          angle(): number;
+        }
+      ).angle(),
+    );
+  const openJointAngles = jointAngles();
 
   const pairs: Array<[number, number]> = [
     [0, 1],
@@ -225,6 +237,7 @@ async function simulateEmptyClose(
   const finalPairContacts = pairs.map(([a, b]) =>
     physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
   );
+  const closedJointAngles = jointAngles();
   const finalHubRotation = hub.rotation();
   const fingerTravelRadians = fingers.map((finger, index) =>
     angularDistance(
@@ -262,6 +275,7 @@ async function simulateEmptyClose(
   const reopenedPairContacts = pairs.map(([a, b]) =>
     physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
   );
+  const reopenedJointAngles = jointAngles();
   const reopenedHubRotation = hub.rotation();
   const reopenErrorRadians = fingers.map((finger, index) =>
     angularDistance(
@@ -285,6 +299,9 @@ async function simulateEmptyClose(
     reopenedPairContacts,
     reopenErrorRadians,
     maxReopenErrorRadians,
+    openJointAngles,
+    closedJointAngles,
+    reopenedJointAngles,
     tipTangentialOffsetMeters,
   };
 }
