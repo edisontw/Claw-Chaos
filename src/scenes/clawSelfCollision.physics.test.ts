@@ -183,7 +183,7 @@ async function simulateGuardedEmptyClose(): Promise<EmptyCloseMetrics> {
     selfContactGuardActive = updateFingerSelfContactGuard(
       selfContactGuardActive,
       true,
-      selfContactGuardActive,
+      siblingFingerContact,
     );
     command = advanceFingerCommandWithSelfContactGuard(
       command,
@@ -191,7 +191,7 @@ async function simulateGuardedEmptyClose(): Promise<EmptyCloseMetrics> {
       claw.motorSpeedRadiansPerSecond,
       dt,
       true,
-      siblingFingerContact,
+      selfContactGuardActive,
     );
 
     for (const joint of joints) {
