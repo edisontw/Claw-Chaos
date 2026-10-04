@@ -1804,6 +1804,8 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
+**Status: IN PROGRESS — slice 1 inventory/staff-policy foundation**
+
 ## Goal
 
 Simulate cabinet maintenance and prize depletion.
@@ -1824,6 +1826,33 @@ Simulate cabinet maintenance and prize depletion.
 - depleted machine can be restocked
 - post-restock pile is physically stable and non-identical across seeds
 - machine pauses safely during service
+
+## Slice 1 — inventory / staff-policy foundation
+
+Implemented:
+- cabinet stock now has an explicit initial count, awarded count and remaining count
+- only accepted ChuteSensor-derived win results decrement remaining stock
+- duplicate prize awards cannot decrement inventory twice
+- restock threshold is explicit; current cabinet policy uses 1 remaining prize
+- staff requests are rejected while stock is above threshold, preventing arbitrary requests for an ideal placement
+- reaching the threshold makes CALL STAFF policy-eligible
+- requesting staff transitions service state from `operating` to `staff_requested`
+- `staff_requested` latches a machine-pause gate for player controls
+- current scene debug exposes stock remaining, threshold, staff-call eligibility and service state
+
+Deliberately deferred to later M10 slices:
+- player-facing CALL STAFF control
+- safe idle/play-cycle handoff before service begins
+- staff approach / open / reposition / close sequence
+- seeded restock placement
+- post-restock settle validation
+- reopening the machine after service
+
+No prize force, claw force, collision, ChuteSensor logic or payout shortcut was changed.
+
+### Carry-forward UX backlog
+
+A physical chute win is already detected correctly by the existing ChuteSensor, but normal play still needs an unmistakable player-facing win/output indication. Add visual + text + sound feedback later while keeping ChuteSensor as the sole authoritative win source. This is a UX backlog item, not a physics defect.
 
 ---
 

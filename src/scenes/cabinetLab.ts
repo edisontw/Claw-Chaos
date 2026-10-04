@@ -5,6 +5,7 @@ import {
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
+import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
 import {
   M08_CABINET_VISUAL_STYLE,
   createCabinetFrameTrimSpecs,
@@ -262,6 +263,11 @@ export function createCabinetLabScene(
     options.layoutSeed ?? "m09-default",
   );
   const layoutSettle = new LayoutSettlePipeline();
+  const inventoryService =
+    new CabinetInventoryServiceState(
+      layout.placements.length,
+      { restockThresholdCount: 1 },
+    );
 
   const cabinetLight = new THREE.PointLight(0xf4f7ff, 4.2, 2.2, 1.7);
   cabinetLight.position.set(-0.08, 1.08, 0.10);
@@ -280,7 +286,9 @@ export function createCabinetLabScene(
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
       initialPosition: CABINET_CLAW_PARK_POSITION,
-      controlsEnabled: () => layoutSettle.ready,
+      controlsEnabled: () =>
+        layoutSettle.ready &&
+        !inventoryService.machinePaused,
       gripProfile: {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque:
@@ -299,7 +307,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M09 / Layout gameplay",
+      milestone: "M10 / Staff & restocking",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -363,7 +371,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M09 / Layout gameplay",
+    milestone: "M10 / Staff & restocking",
     layoutId: layout.id,
     camera: gantryScene.camera,
     primaryAction: () =>
@@ -402,7 +410,10 @@ export function createCabinetLabScene(
       for (const prize of tracked) {
         const event = sensor.pollPrize(prize.id, prize.body);
         if (event) {
-          resultInventory.consume(event);
+          const result = resultInventory.consume(event);
+          if (result) {
+            inventoryService.consumeWin(result);
+          }
         }
       }
     },
@@ -420,7 +431,10 @@ export function createCabinetLabScene(
           " m",
         `Sensor wins       ${sensor.winCount}`,
         `Results accepted  ${resultInventory.resultCount}`,
-        `Inventory prizes  ${resultInventory.inventoryCount}`,
+        `Awarded prizes    ${resultInventory.inventoryCount}`,
+        `Stock remaining   ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
+        `Restock threshold ${inventoryService.restockThresholdCount}`,
+        `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",
