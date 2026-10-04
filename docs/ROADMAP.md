@@ -1692,30 +1692,29 @@ Full production lifecycle diagnosis:
 - therefore this is a mechanical anti-slip geometry problem, not a motor-force or material-friction problem
 
 Mechanical crook sweep:
-- preserve the original four production finger nodes exactly
-- append only two terminal nodes, forming a small physical return lip:
-  - `{ radial: 0.090, down: 0.205 }`
-  - `{ radial: 0.082, down: 0.183 }`
-- diagnostic `crook-a` result with **zero retaining torque**:
-  - peak lift ≈157.7 mm
-  - retaining 0.4 s ≈156.2 mm
-  - retaining 0.8 s ≈155.9 mm
-  - retaining 1.2 s ≈154.6 mm
-  - final lift ≈150.9 mm
-- this shows the Ring is mechanically supported by the crook instead of being held by artificial motor force
+- keep the closed M01/M02/M03 claw centerline unchanged
+- split only the original terminal segment at its midpoint so the normal 10 mm lower grip pad can remain on the proximal half without blocking the Ring entry path
+- append a small two-segment physical return lip:
+  - `{ radial: 0.075, down: 0.205 }`
+  - `{ radial: 0.068, down: 0.185 }`
+- cabinet lower-pad segments are `[2, 5]`: the original proximal lower grip surface plus the terminal crook surface, with thin rod around the actual Ring entry neck
+- a dual-objective production lifecycle sweep selected this as the smallest tested geometry that preserves both targets:
+  - Loop Ring: peak ≈158.0 mm, retaining 1.2 s ≈152.9 mm, final ≈147.4 mm
+  - existing Teddy +20 mm X / −30 mm Z torso grab: peak ≈186.9 mm, retaining 1.2 s ≈178.5 mm, final ≈178.8 mm
+- larger crooks also retained the Ring but blocked the Teddy path, so they were rejected
 
 Production implementation strategy:
 - keep `CLAW_LAB_CONFIG.fingerNodes` unchanged, preserving the closed M01/M02/M03 baseline
-- add the crook only through the cabinet `GantryGripProfile`
-- cabinet visual and collision geometry use the same crook points
+- apply the split-pad crook only through the cabinet `GantryGripProfile`
+- cabinet visual and collision geometry use the same points and selected pad segments
 - all existing force values remain unchanged:
   - finger friction 1.94
   - close pickup torque 10.0 N·m
   - retaining torque 0.014 N·m
   - HOLD BOOST 0.018 N·m
   - closed angle −0.63 rad
-- production regression requires the existing Ball, Foam Cube, Pillow, Animal and Teddy grab paths to continue passing with the crook geometry
-- a new full lifecycle Ring regression requires >=120 mm lift after 0.4, 0.8 and 1.2 s of retaining and at the final hold state
+- production regression requires Ball, Foam Cube, Pillow, Animal and the original Teddy torso grab path to continue passing
+- the full lifecycle Ring regression requires >=120 mm lift after 0.4, 0.8 and 1.2 s of retaining and at the final hold state
 
 No ring-specific magnet, joint, weld, parenting, hidden attachment, force boost or material override is used.
 
