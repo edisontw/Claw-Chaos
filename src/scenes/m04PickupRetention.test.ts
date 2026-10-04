@@ -19,6 +19,7 @@ import {
   M02_FINGER_TRANSPORT_CONFIG,
   M02_GANTRY_CONFIG,
   advanceFingerCommandWithSelfContactGuard,
+  updateFingerSelfContactGuard,
 } from "./gantryLab";
 import {
   M04_PLAY_CONFIG,
@@ -342,6 +343,7 @@ async function simulateM04PickupRetention(
   let play = createM04PlayState();
   let reel: ReelState = { payout: 0, velocity: 0 };
   let fingerCommand = 0;
+  let selfContactGuardActive = false;
   let maxSuspensionErrorMeters = 0;
   let finiteAndBounded = true;
   let retainingTransitionSpeedBeforeMetersPerSecond = Number.NaN;
@@ -427,13 +429,20 @@ async function simulateM04PickupRetention(
           fingers[0]!,
         ) > 0
       );
+    selfContactGuardActive = selfContactGuard
+      ? updateFingerSelfContactGuard(
+          selfContactGuardActive,
+          closing,
+          siblingFingerContact,
+        )
+      : false;
     fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
       closing ? closedAngleRadians : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
       closing,
-      siblingFingerContact,
+      selfContactGuardActive,
     );
 
     const forcePhase = m04ForcePhase(play);
