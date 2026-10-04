@@ -66,6 +66,7 @@ export class MobileCabinetControls {
     this.root = document.createElement("div");
     this.root.className = "mobile-cabinet-controls";
     this.root.dataset.mobileControls = "ready";
+    this.root.dataset.mobileControlStyle = "compact-translucent";
 
     const joystickWrap = document.createElement("div");
     joystickWrap.className = "mobile-joystick-wrap";
@@ -83,7 +84,7 @@ export class MobileCabinetControls {
     this.actionButton = document.createElement("button");
     this.actionButton.type = "button";
     this.actionButton.className = "mobile-claw-action";
-    this.actionButton.textContent = "DROP / CLOSE";
+    this.actionButton.textContent = "DROP\nCLOSE";
     this.actionButton.setAttribute("aria-label", "Drop or close claw");
 
     const viewHeight = document.createElement("div");
@@ -139,6 +140,7 @@ export class MobileCabinetControls {
 
   private readonly onJoystickPointerDown = (event: PointerEvent): void => {
     this.joystickPointerId = event.pointerId;
+    this.joystick.dataset.active = "true";
     this.joystick.setPointerCapture?.(event.pointerId);
     this.updateJoystick(event);
     event.preventDefault();
@@ -157,6 +159,7 @@ export class MobileCabinetControls {
       return;
     }
     this.joystickPointerId = null;
+    this.joystick.dataset.active = "false";
     this.thumb.style.transform = "translate(-50%, -50%)";
     this.onMove(0, 0);
     event.preventDefault();
