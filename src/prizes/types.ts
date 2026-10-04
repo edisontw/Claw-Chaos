@@ -88,6 +88,7 @@ export interface ResolvedPrizeSpec {
 
 export interface PrizeSpawnOptions {
   position: Vec3;
+  rotationXRadians?: number;
   rotationYRadians?: number;
   variantSeed?: string | number;
   materialId?: string;
