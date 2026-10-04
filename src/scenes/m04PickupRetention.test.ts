@@ -19,6 +19,7 @@ import {
 import {
   M02_FINGER_TRANSPORT_CONFIG,
   M02_GANTRY_CONFIG,
+  advanceFingerCommandWithSelfContactGuard,
 } from "./gantryLab";
 import {
   M04_PLAY_CONFIG,
@@ -57,6 +58,7 @@ interface PickupRetentionProfile {
   pickupLiftDistanceMeters?: number;
   topHoldSeconds?: number;
   supportMode?: "pedestal" | "flat-deck";
+  selfContactGuard?: boolean;
 }
 
 interface PickupRetentionMetrics {
@@ -127,6 +129,7 @@ async function simulateM04PickupRetention(
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const topHoldSeconds = profile.topHoldSeconds ?? 0.6;
   const supportMode = profile.supportMode ?? "pedestal";
+  const selfContactGuard = profile.selfContactGuard ?? false;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -408,11 +411,30 @@ async function simulateM04PickupRetention(
     }
 
     const closing = m04FingerShouldClose(play);
-    fingerCommand = advanceMotorCommand(
+    const siblingFingerContact =
+      selfContactGuard &&
+      closing &&
+      (
+        physics.countBodyContactPairs(
+          fingers[0]!,
+          fingers[1]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[1]!,
+          fingers[2]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[2]!,
+          fingers[0]!,
+        ) > 0
+      );
+    fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
       closing ? closedAngleRadians : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
+      closing,
+      siblingFingerContact,
     );
 
     const forcePhase = m04ForcePhase(play);
@@ -733,6 +755,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         CABINET_PLAY_TUNING.closedAngleRadians,
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      selfContactGuard: true,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
