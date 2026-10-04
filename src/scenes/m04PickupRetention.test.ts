@@ -833,19 +833,10 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         peak: metrics.peakLiftMeters,
         retain1p2: metrics.liftAfterRetaining1p2sMeters,
         final: metrics.finalLiftMeters,
+        retainingReached: metrics.retainingReached,
         topReached: metrics.topReached,
         finiteAndBounded: metrics.finiteAndBounded,
       });
-
-      expect(metrics.finiteAndBounded).toBe(true);
-      expect(metrics.retainingReached).toBe(true);
-      expect(metrics.topReached).toBe(true);
-      expect(
-        metrics.liftAfterRetaining1p2sMeters,
-      ).toBeGreaterThanOrEqual(0.08);
-      expect(metrics.finalLiftMeters).toBeGreaterThanOrEqual(
-        0.08,
-      );
     }
 
     console.log(
@@ -869,6 +860,18 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         results,
       }),
     );
+
+    for (const result of results) {
+      expect(result.finiteAndBounded, result.label).toBe(true);
+      expect(result.retainingReached, result.label).toBe(true);
+      expect(result.topReached, result.label).toBe(true);
+      expect(result.retain1p2, result.label).toBeGreaterThanOrEqual(
+        0.08,
+      );
+      expect(result.final, result.label).toBeGreaterThanOrEqual(
+        0.08,
+      );
+    }
   }, 15000);
 
   it("production cabinet crook tip mechanically retains a one-prong Loop Ring hook", async () => {
