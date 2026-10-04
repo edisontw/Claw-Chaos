@@ -22,6 +22,7 @@ export const CABINET_PLAY_TUNING = {
     { radial: 0.09, down: 0.205 },
     { radial: 0.082, down: 0.183 },
   ],
+  fingerLowerPadSegmentIndices: [2, 4],
   chuteTrimHalfWidth: 0.012,
   chuteTrimHalfHeight: 0.004,
 } as const;
