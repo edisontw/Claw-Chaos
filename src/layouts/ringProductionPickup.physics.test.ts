@@ -55,6 +55,14 @@ interface ApproachCase {
   tangentOffsetMeters: number;
 }
 
+interface SupportCase {
+  label: string;
+  primaryXOffsetMeters?: number;
+  primaryZOffsetMeters?: number;
+  secondaryXOffsetMeters?: number;
+  secondaryZOffsetMeters?: number;
+}
+
 interface RingPickupMetrics {
   label: string;
   fingerIndex: number;
@@ -84,6 +92,8 @@ interface RingPickupMetrics {
   returningReached: boolean;
   releasingReached: boolean;
   escapedPhase: string | null;
+  poseCollapsePhase: string | null;
+  supportCaseLabel: string;
   success: boolean;
 }
 
@@ -125,12 +135,49 @@ function horizontalUnit(vector: {
 
 async function simulateProductionRingPickup(
   approach: ApproachCase,
+  supportCase: SupportCase = { label: "production" },
 ): Promise<RingPickupMetrics> {
   const physics = await PhysicsRuntime.create();
   createCabinetPhysics(physics);
 
   const layout = createCabinetLayout("ring", "grabbable");
-  const spawned = layout.placements.map((placement) => {
+  const placements = layout.placements.flatMap((placement) => {
+    const isLeftSupport =
+      placement.role === "ring_support" && placement.x < 0;
+    if (!isLeftSupport) {
+      return [placement];
+    }
+
+    const primary = {
+      ...placement,
+      x:
+        placement.x +
+        (supportCase.primaryXOffsetMeters ?? 0),
+      z:
+        placement.z +
+        (supportCase.primaryZOffsetMeters ?? 0),
+    };
+    if (supportCase.secondaryXOffsetMeters === undefined) {
+      return [primary];
+    }
+
+    return [
+      primary,
+      {
+        ...placement,
+        x:
+          placement.x +
+          supportCase.secondaryXOffsetMeters,
+        z:
+          placement.z +
+          (supportCase.secondaryZOffsetMeters ??
+            supportCase.primaryZOffsetMeters ??
+            0),
+        variantSeed: placement.variantSeed + ":secondary",
+      },
+    ];
+  });
+  const spawned = placements.map((placement) => {
     const definition = getPrizeDefinition(placement.prizeId);
     return {
       placement,
@@ -429,6 +476,7 @@ async function simulateProductionRingPickup(
   let returningReached = false;
   let releasingReached = false;
   let escapedPhase: string | null = null;
+  let poseCollapsePhase: string | null = null;
   let hadMeaningfulLift = false;
   let returnStartRingPosition: { x: number; z: number } | null = null;
 
@@ -639,6 +687,13 @@ async function simulateProductionRingPickup(
       );
     }
 
+    if (
+      poseCollapsePhase === null &&
+      lift < -0.012
+    ) {
+      poseCollapsePhase = play.phase;
+    }
+
     hadMeaningfulLift ||= lift > 0.015;
     const anyContact = fingerContactTicks.some((count, index) => {
       const pairs = physics.countBodyContactPairs(
@@ -713,6 +768,8 @@ async function simulateProductionRingPickup(
     returningReached,
     releasingReached,
     escapedPhase,
+    poseCollapsePhase,
+    supportCaseLabel: supportCase.label,
     success,
   };
 }
@@ -776,5 +833,56 @@ describe("M09 production-claw ring pickup", () => {
 
     const successful = metrics.filter((result) => result.success);
     expect(successful.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("diagnoses dynamic support geometries before production tuning", async () => {
+    const approach: ApproachCase = {
+      label: "finger-2 centered-high-side",
+      fingerIndex: 2,
+      highSideFraction: 0.35,
+      tangentOffsetMeters: 0,
+    };
+    const supportCases: SupportCase[] = [
+      { label: "baseline" },
+      {
+        label: "single-15mm-closer",
+        primaryZOffsetMeters: 0.015,
+      },
+      {
+        label: "single-25mm-closer",
+        primaryZOffsetMeters: 0.025,
+      },
+      {
+        label: "two-lateral-50mm",
+        primaryXOffsetMeters: -0.050,
+        secondaryXOffsetMeters: 0.050,
+      },
+      {
+        label: "two-lateral-50mm-15mm-closer",
+        primaryXOffsetMeters: -0.050,
+        primaryZOffsetMeters: 0.015,
+        secondaryXOffsetMeters: 0.050,
+        secondaryZOffsetMeters: 0.015,
+      },
+    ];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const supportCase of supportCases) {
+      metrics.push(
+        await simulateProductionRingPickup(approach, supportCase),
+      );
+    }
+
+    console.log(
+      "M09 ring support sweep metrics",
+      JSON.stringify(metrics),
+    );
+
+    const stable = metrics.filter(
+      (result) =>
+        result.poseCollapsePhase === null &&
+        result.peakLiftMeters > 0.015,
+    );
+    expect(stable.length).toBeGreaterThanOrEqual(1);
   });
 });
