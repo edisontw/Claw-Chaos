@@ -56,6 +56,7 @@ interface PickupRetentionProfile {
   supportOffsetX?: number;
   supportOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerLowerPadSegmentIndices?: readonly number[];
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
@@ -129,6 +130,8 @@ async function simulateM04PickupRetention(
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerLowerPadSegmentIndices =
+    profile.fingerLowerPadSegmentIndices;
   const fingerNodes =
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
@@ -275,6 +278,7 @@ async function simulateM04PickupRetention(
       createFingerSegments(
         createFingerPoints(theta, fingerNodes),
         fingerLowerPadRadiusMeters,
+        fingerLowerPadSegmentIndices,
       ),
       {
         friction: fingerFriction,
@@ -768,6 +772,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
+      fingerLowerPadSegmentIndices:
+        CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
@@ -887,6 +893,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
+      fingerLowerPadSegmentIndices:
+        CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck",
       prizeDefinitionId: "prize/ring_loop",
