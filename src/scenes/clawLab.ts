@@ -369,40 +369,82 @@ export function createFingerVisual(
   tipMaterial: THREE.Material,
   tipRadius: number = CLAW_LAB_CONFIG.fingerTipVisualRadius,
   lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
+  lowerPadLengthMeters?: number,
 ): THREE.Group {
   const group = new THREE.Group();
   const yAxis = new THREE.Vector3(0, 1, 0);
+  const shortPadMode = lowerPadLengthMeters !== undefined;
+
+  const addRod = (
+    startVector: THREE.Vector3,
+    endVector: THREE.Vector3,
+    radius: number,
+  ): void => {
+    const direction = endVector.clone().sub(startVector);
+    const length = direction.length();
+    if (length <= Number.EPSILON) {
+      return;
+    }
+
+    const rod = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, length, 12),
+      metalMaterial,
+    );
+    rod.position.copy(startVector).add(endVector).multiplyScalar(0.5);
+    rod.quaternion.setFromUnitVectors(
+      yAxis,
+      direction.clone().normalize(),
+    );
+    rod.castShadow = true;
+    rod.receiveShadow = true;
+    group.add(rod);
+  };
 
   for (let index = 1; index < points.length; index += 1) {
     const start = points[index - 1]!;
     const end = points[index]!;
     const startVector = new THREE.Vector3(start.x, start.y, start.z);
     const endVector = new THREE.Vector3(end.x, end.y, end.z);
-    const direction = endVector.clone().sub(startVector);
-    const length = direction.length();
+    const isTerminalSegment = index === points.length - 1;
 
-    const segmentRadius =
-      index === points.length - 1
-        ? lowerPadRadius
-        : CLAW_LAB_CONFIG.fingerRodRadius;
-    const rod = new THREE.Mesh(
-      new THREE.CylinderGeometry(
-        segmentRadius,
-        segmentRadius,
+    if (isTerminalSegment && shortPadMode) {
+      const direction = endVector.clone().sub(startVector);
+      const length = direction.length();
+      const padLength = Math.min(
+        Math.max(0, lowerPadLengthMeters),
         length,
-        12,
-      ),
-      metalMaterial,
-    );
-    rod.position.copy(startVector).add(endVector).multiplyScalar(0.5);
-    rod.quaternion.setFromUnitVectors(yAxis, direction.clone().normalize());
-    rod.castShadow = true;
-    rod.receiveShadow = true;
-    group.add(rod);
+      );
+      const stemLength = length - padLength;
+      const padStart =
+        length <= Number.EPSILON
+          ? endVector.clone()
+          : startVector
+              .clone()
+              .add(
+                direction
+                  .clone()
+                  .multiplyScalar(stemLength / length),
+              );
+
+      addRod(
+        startVector,
+        padStart,
+        CLAW_LAB_CONFIG.fingerRodRadius,
+      );
+      addRod(padStart, endVector, lowerPadRadius);
+    } else {
+      addRod(
+        startVector,
+        endVector,
+        isTerminalSegment
+          ? lowerPadRadius
+          : CLAW_LAB_CONFIG.fingerRodRadius,
+      );
+    }
 
     if (index < points.length - 1) {
       const nodeRadius =
-        index === points.length - 2
+        index === points.length - 2 && !shortPadMode
           ? Math.max(
               CLAW_LAB_CONFIG.fingerRodRadius,
               lowerPadRadius,
@@ -433,18 +475,58 @@ export function createFingerVisual(
 export function createFingerSegments(
   points: readonly Vec3[],
   lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
+  lowerPadLengthMeters?: number,
 ): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
 
   for (let index = 1; index < points.length; index += 1) {
-    segments.push({
-      start: points[index - 1]!,
-      end: points[index]!,
-      radius:
-        index === points.length - 1
+    const start = points[index - 1]!;
+    const end = points[index]!;
+    const isTerminalSegment = index === points.length - 1;
+
+    if (!isTerminalSegment || lowerPadLengthMeters === undefined) {
+      segments.push({
+        start,
+        end,
+        radius: isTerminalSegment
           ? lowerPadRadius
           : CLAW_LAB_CONFIG.fingerRodRadius,
-    });
+      });
+      continue;
+    }
+
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const dz = end.z - start.z;
+    const length = Math.hypot(dx, dy, dz);
+    const padLength = Math.min(
+      Math.max(0, lowerPadLengthMeters),
+      length,
+    );
+    const stemFraction =
+      length <= Number.EPSILON
+        ? 0
+        : (length - padLength) / length;
+    const padStart = {
+      x: start.x + dx * stemFraction,
+      y: start.y + dy * stemFraction,
+      z: start.z + dz * stemFraction,
+    };
+
+    if (padLength < length - 1e-6) {
+      segments.push({
+        start,
+        end: padStart,
+        radius: CLAW_LAB_CONFIG.fingerRodRadius,
+      });
+    }
+    if (padLength > 1e-6) {
+      segments.push({
+        start: padStart,
+        end,
+        radius: lowerPadRadius,
+      });
+    }
   }
 
   return segments;
