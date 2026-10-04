@@ -192,7 +192,7 @@ describe("M09 ring hook physics", () => {
     expect(
       supports.every(({ prize }) => {
         const y = prize.body.translation().y;
-        return y > 0.035 && y < 0.050;
+        return y > 0.075 && y < 0.095;
       }),
     ).toBe(true);
 
