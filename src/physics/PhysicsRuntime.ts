@@ -174,6 +174,25 @@ export class PhysicsRuntime {
     return this.dynamicBodyCountValue;
   }
 
+  countBodyContactPairs(
+    bodyA: RigidBodyHandle,
+    bodyB: RigidBodyHandle,
+  ): number {
+    let contactPairs = 0;
+
+    for (let indexA = 0; indexA < bodyA.numColliders(); indexA += 1) {
+      const colliderA = bodyA.collider(indexA);
+      for (let indexB = 0; indexB < bodyB.numColliders(); indexB += 1) {
+        const colliderB = bodyB.collider(indexB);
+        this.world.contactPair(colliderA, colliderB, () => {
+          contactPairs += 1;
+        });
+      }
+    }
+
+    return contactPairs;
+  }
+
   createStaticCuboid(
     center: Vec3,
     halfExtents: Vec3,
