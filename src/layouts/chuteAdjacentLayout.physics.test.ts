@@ -26,6 +26,7 @@ interface ChuteNudgeResult {
 async function runChuteNudge(
   prizeId: "prize/sphere_ball" | "prize/cube_small",
   impulse: { x: number; y: number; z: number },
+  pointOffset?: { x: number; y: number; z: number },
 ): Promise<ChuteNudgeResult> {
   const physics = await PhysicsRuntime.create();
   createCabinetPhysics(physics);
@@ -69,7 +70,19 @@ async function runChuteNudge(
   const initialWin =
     sensor.pollPrize(prizeId, prize.body) !== null;
 
-  prize.body.applyImpulse(impulse, true);
+  if (pointOffset) {
+    prize.body.applyImpulseAtPoint(
+      impulse,
+      {
+        x: settled.x + pointOffset.x,
+        y: settled.y + pointOffset.y,
+        z: settled.z + pointOffset.z,
+      },
+      true,
+    );
+  } else {
+    prize.body.applyImpulse(impulse, true);
+  }
 
   let entryTick: number | null = null;
   let entryPosition:
@@ -108,6 +121,7 @@ describe("M09 chute-adjacent layout physics", () => {
     const cube = await runChuteNudge(
       "prize/cube_small",
       { x: 0, y: 0, z: 0.035 },
+      { x: 0, y: 0.040, z: -0.030 },
     );
 
     console.log(
