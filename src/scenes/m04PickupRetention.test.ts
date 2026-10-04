@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
+import { createCabinetLayout } from "../layouts/cabinetLayouts";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
 import type {
@@ -35,6 +36,16 @@ import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 
 const M04_TEST_BALL_HEIGHT_OFFSET_METERS = 0.015;
 
+interface AuxiliaryPrizePlacement {
+  prizeDefinitionId: string;
+  offsetX: number;
+  offsetZ: number;
+  yOffsetMeters?: number;
+  rotationXRadians?: number;
+  rotationYRadians?: number;
+  variantSeed?: string;
+}
+
 interface PickupRetentionProfile {
   holdBoostTorque?: number;
   fingerFriction?: number;
@@ -46,17 +57,26 @@ interface PickupRetentionProfile {
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
+  prizeMaterialIdOverride?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
+  prizeRotationXRadians?: number;
   prizeRotationYRadians?: number;
+  prizeYOffsetMeters?: number;
   prizeOffsetX?: number;
   prizeOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerTipPadRadiusMeters?: number;
+  fingerTipToeInwardMeters?: number;
+  fingerTipToeRiseMeters?: number;
+  fingerTipToeRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
   pickupLiftDistanceMeters?: number;
   topHoldSeconds?: number;
+  initialSettleSeconds?: number;
   supportMode?: "pedestal" | "flat-deck";
+  auxiliaryPrizes?: readonly AuxiliaryPrizePlacement[];
 }
 
 interface PickupRetentionMetrics {
@@ -99,21 +119,42 @@ async function simulateM04PickupRetention(
   const ballRestitution =
     profile.ballRestitution ?? claw.pt001BallRestitution;
   const prizeShape = profile.prizeShape ?? "sphere";
-  const prizeDefinition = profile.prizeDefinitionId
+  const basePrizeDefinition = profile.prizeDefinitionId
     ? getPrizeDefinition(profile.prizeDefinitionId)
     : null;
+  const prizeDefinition =
+    basePrizeDefinition && profile.prizeMaterialIdOverride
+      ? {
+          ...basePrizeDefinition,
+          materialId: profile.prizeMaterialIdOverride,
+        }
+      : basePrizeDefinition;
   const prizeHalfExtents =
     profile.prizeHalfExtents ?? {
       x: ballRadiusMeters,
       y: ballRadiusMeters,
       z: ballRadiusMeters,
     };
+  const prizeRotationXRadians =
+    profile.prizeRotationXRadians ?? 0;
   const prizeRotationYRadians =
     profile.prizeRotationYRadians ?? 0;
+  const prizeYOffsetMeters =
+    profile.prizeYOffsetMeters ?? 0.002;
   const prizeOffsetX = profile.prizeOffsetX ?? 0;
   const prizeOffsetZ = profile.prizeOffsetZ ?? 0;
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
+    CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerTipPadRadiusMeters =
+    profile.fingerTipPadRadiusMeters ??
+    fingerLowerPadRadiusMeters;
+  const fingerTipToeInwardMeters =
+    profile.fingerTipToeInwardMeters ?? 0;
+  const fingerTipToeRiseMeters =
+    profile.fingerTipToeRiseMeters ?? 0;
+  const fingerTipToeRadiusMeters =
+    profile.fingerTipToeRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
   const fingerNodes =
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
@@ -126,7 +167,10 @@ async function simulateM04PickupRetention(
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const topHoldSeconds = profile.topHoldSeconds ?? 0.6;
+  const initialSettleSeconds =
+    profile.initialSettleSeconds ?? 1;
   const supportMode = profile.supportMode ?? "pedestal";
+  const auxiliaryPrizes = profile.auxiliaryPrizes ?? [];
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -152,7 +196,7 @@ async function simulateM04PickupRetention(
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
         supportHalfHeight +
-        0.002
+        prizeYOffsetMeters
       : bottomHubY -
         m01HubToBallCenter +
         M04_TEST_BALL_HEIGHT_OFFSET_METERS;
@@ -184,6 +228,35 @@ async function simulateM04PickupRetention(
       claw.pt001PedestalRadius,
       0.75,
     );
+  }
+
+  if (supportMode === "flat-deck") {
+    for (const auxiliary of auxiliaryPrizes) {
+      const definition = getPrizeDefinition(
+        auxiliary.prizeDefinitionId,
+      );
+      createPrize(
+        physics,
+        definition,
+        {
+          position: {
+            x: auxiliary.offsetX,
+            y:
+              M06_CABINET_CONFIG.playDeckY +
+              definition.dimensions.y * 0.5 +
+              (auxiliary.yOffsetMeters ?? 0.002),
+            z: auxiliary.offsetZ,
+          },
+          rotationXRadians:
+            auxiliary.rotationXRadians ?? 0,
+          rotationYRadians:
+            auxiliary.rotationYRadians ?? 0,
+          variantSeed:
+            auxiliary.variantSeed ??
+            "m04-auxiliary-regression",
+        },
+      );
+    }
   }
 
   const reelAnchor = physics.createKinematicBody({
@@ -237,10 +310,25 @@ async function simulateM04PickupRetention(
       z: Math.cos(theta),
     };
 
+    const fingerPoints = createFingerPoints(
+      theta,
+      fingerNodes,
+    );
+    const fingerTip =
+      fingerPoints[fingerPoints.length - 1]!;
+    const toeEnd = {
+      x:
+        fingerTip.x -
+        radialX * fingerTipToeInwardMeters,
+      y: fingerTip.y + fingerTipToeRiseMeters,
+      z:
+        fingerTip.z -
+        radialZ * fingerTipToeInwardMeters,
+    };
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
-        createFingerPoints(theta, fingerNodes),
+        fingerPoints,
         fingerLowerPadRadiusMeters,
       ),
       {
@@ -248,6 +336,24 @@ async function simulateM04PickupRetention(
         restitution: claw.fingerRestitution,
         density: claw.fingerDensity,
       },
+      fingerTipPadRadiusMeters >
+      fingerLowerPadRadiusMeters + 1e-6
+        ? [
+            {
+              center: fingerTip,
+              radius: fingerTipPadRadiusMeters,
+            },
+          ]
+        : [],
+      fingerTipToeInwardMeters > 1e-6
+        ? [
+            {
+              start: fingerTip,
+              end: toeEnd,
+              radius: fingerTipToeRadiusMeters,
+            },
+          ]
+        : [],
     );
     finger.setAngularDamping(
       M02_FINGER_TRANSPORT_CONFIG.angularDamping,
@@ -284,6 +390,7 @@ async function simulateM04PickupRetention(
             y: ballCenterY,
             z: prizeOffsetZ,
           },
+          rotationXRadians: prizeRotationXRadians,
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
         },
@@ -509,7 +616,11 @@ async function simulateM04PickupRetention(
       Math.abs(ball.translation().z) < 0.5;
   };
 
-  for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
+  for (
+    let tick = 0;
+    tick < Math.ceil(initialSettleSeconds * PHYSICS_HZ);
+    tick += 1
+  ) {
     step();
   }
 
@@ -733,6 +844,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         CABINET_PLAY_TUNING.closedAngleRadians,
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
@@ -824,11 +937,353 @@ describe("M04 physical pickup-to-retaining force transition", () => {
             CABINET_PLAY_TUNING.closedAngleRadians,
           fingerLowerPadRadiusMeters:
             CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+          fingerTipPadRadiusMeters:
+            CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
         },
         results,
       }),
     );
   }, 15000);
+
+  it("sweeps Ring surface friction with the unchanged production claw", async () => {
+    const ringLayout = createCabinetLayout(
+      "ring",
+      "retention-regression",
+    );
+    const target = ringLayout.placements.find(
+      (placement) =>
+        placement.role === "ring_target" &&
+        placement.x > 0,
+    )!;
+    const support = ringLayout.placements.find(
+      (placement) =>
+        placement.role === "ring_support" &&
+        placement.x > 0,
+    )!;
+
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque:
+        CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipToeInwardMeters: 0,
+      fingerTipToeRiseMeters: 0,
+      topHoldSeconds: 1.3,
+      initialSettleSeconds: 4,
+      supportMode: "flat-deck" as const,
+      prizeDefinitionId: target.prizeId,
+      prizeRotationXRadians: target.rotationXRadians,
+      prizeRotationYRadians: target.rotationYRadians,
+      prizeYOffsetMeters: target.yOffsetMeters,
+      prizeOffsetX: target.x,
+      prizeOffsetZ: target.z,
+      auxiliaryPrizes: [
+        {
+          prizeDefinitionId: support.prizeId,
+          offsetX: support.x,
+          offsetZ: support.z,
+          yOffsetMeters: support.yOffsetMeters,
+          rotationXRadians: support.rotationXRadians,
+          rotationYRadians: support.rotationYRadians,
+          variantSeed: support.variantSeed,
+        },
+      ],
+    };
+
+    const candidates = [
+      { label: "plastic_0p42", materialId: "material/plastic" },
+      { label: "rubber_0p82", materialId: "material/rubber" },
+      {
+        label: "ring_grip_0p95",
+        materialId: "material/ring_grip_095",
+      },
+      {
+        label: "ring_grip_1p10",
+        materialId: "material/ring_grip_110",
+      },
+      {
+        label: "ring_grip_1p25",
+        materialId: "material/ring_grip_125",
+      },
+      {
+        label: "ring_grip_1p40",
+        materialId: "material/ring_grip_140",
+      },
+    ] as const;
+
+    const results = [];
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        ...common,
+        prizeMaterialIdOverride: candidate.materialId,
+      });
+      results.push({
+        ...candidate,
+        peakLiftMeters: metrics.peakLiftMeters,
+        retain0p8Meters:
+          metrics.liftAfterRetaining0p8sMeters,
+        retain1p2Meters:
+          metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        slipLossMeters: metrics.slipLossMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+        finiteAndBounded: metrics.finiteAndBounded,
+      });
+      expect(metrics.finiteAndBounded).toBe(true);
+    }
+
+    console.log(
+      "M09 Ring material-friction sweep",
+      JSON.stringify(results),
+    );
+  }, 30000);
+
+  it("sweeps 24 mm toe radius for Ring retention versus Teddy compatibility", async () => {
+    const ringLayout = createCabinetLayout(
+      "ring",
+      "retention-regression",
+    );
+    const target = ringLayout.placements.find(
+      (placement) =>
+        placement.role === "ring_target" &&
+        placement.x > 0,
+    )!;
+    const support = ringLayout.placements.find(
+      (placement) =>
+        placement.role === "ring_support" &&
+        placement.x > 0,
+    )!;
+
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque:
+        CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipToeInwardMeters: 0.024,
+      fingerTipToeRiseMeters: 0.008,
+      topHoldSeconds: 1.3,
+      supportMode: "flat-deck" as const,
+    };
+
+    const candidates = [
+      { label: "toe_r4p5", toeRadiusMeters: 0.0045 },
+      { label: "toe_r5p0", toeRadiusMeters: 0.0050 },
+      { label: "toe_r5p5", toeRadiusMeters: 0.0055 },
+      { label: "toe_r6p0", toeRadiusMeters: 0.0060 },
+    ] as const;
+
+    const results = [];
+    for (const candidate of candidates) {
+      const ring = await simulateM04PickupRetention({
+        ...common,
+        fingerTipToeRadiusMeters:
+          candidate.toeRadiusMeters,
+        initialSettleSeconds: 4,
+        prizeDefinitionId: target.prizeId,
+        prizeRotationXRadians: target.rotationXRadians,
+        prizeRotationYRadians: target.rotationYRadians,
+        prizeYOffsetMeters: target.yOffsetMeters,
+        prizeOffsetX: target.x,
+        prizeOffsetZ: target.z,
+        auxiliaryPrizes: [
+          {
+            prizeDefinitionId: support.prizeId,
+            offsetX: support.x,
+            offsetZ: support.z,
+            yOffsetMeters: support.yOffsetMeters,
+            rotationXRadians: support.rotationXRadians,
+            rotationYRadians: support.rotationYRadians,
+            variantSeed: support.variantSeed,
+          },
+        ],
+      });
+
+      const teddy = await simulateM04PickupRetention({
+        ...common,
+        fingerTipToeRadiusMeters:
+          candidate.toeRadiusMeters,
+        prizeDefinitionId: "prize/teddy_simple",
+        prizeRotationYRadians: -0.22,
+        prizeOffsetX: 0.02,
+        prizeOffsetZ: -0.03,
+      });
+
+      results.push({
+        ...candidate,
+        ringFinalLiftMeters: ring.finalLiftMeters,
+        ringRetain1p2Meters:
+          ring.liftAfterRetaining1p2sMeters,
+        ringSlipMeters: ring.slipLossMeters,
+        teddyFinalLiftMeters: teddy.finalLiftMeters,
+        teddyRetain1p2Meters:
+          teddy.liftAfterRetaining1p2sMeters,
+        ringFinite: ring.finiteAndBounded,
+        teddyFinite: teddy.finiteAndBounded,
+      });
+
+      expect(ring.finiteAndBounded).toBe(true);
+      expect(teddy.finiteAndBounded).toBe(true);
+    }
+
+    console.log(
+      "M09 Ring/Teddy toe-radius sweep",
+      JSON.stringify(results),
+    );
+  }, 30000);
+
+  it("sweeps small inward-upturned toe geometry for Ring retention", async () => {
+    const layout = createCabinetLayout(
+      "ring",
+      "retention-regression",
+    );
+    const target = layout.placements.find(
+      (placement) =>
+        placement.role === "ring_target" &&
+        placement.x > 0,
+    )!;
+    const support = layout.placements.find(
+      (placement) =>
+        placement.role === "ring_support" &&
+        placement.x > 0,
+    )!;
+
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque:
+        CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      topHoldSeconds: 1.3,
+      initialSettleSeconds: 4,
+      supportMode: "flat-deck" as const,
+      prizeDefinitionId: target.prizeId,
+      prizeRotationXRadians: target.rotationXRadians,
+      prizeRotationYRadians: target.rotationYRadians,
+      prizeYOffsetMeters: target.yOffsetMeters,
+      prizeOffsetX: target.x,
+      prizeOffsetZ: target.z,
+      auxiliaryPrizes: [
+        {
+          prizeDefinitionId: support.prizeId,
+          offsetX: support.x,
+          offsetZ: support.z,
+          yOffsetMeters: support.yOffsetMeters,
+          rotationXRadians: support.rotationXRadians,
+          rotationYRadians: support.rotationYRadians,
+          variantSeed: support.variantSeed,
+        },
+      ],
+    };
+
+    const candidates = [
+      {
+        label: "baseline",
+        toeInwardMeters: 0,
+        toeRiseMeters: 0,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "toe20_up7",
+        toeInwardMeters: 0.020,
+        toeRiseMeters: 0.007,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "toe21_up7",
+        toeInwardMeters: 0.021,
+        toeRiseMeters: 0.007,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "toe22_up7",
+        toeInwardMeters: 0.022,
+        toeRiseMeters: 0.007,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "toe23_up8",
+        toeInwardMeters: 0.023,
+        toeRiseMeters: 0.008,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "toe24_up8",
+        toeInwardMeters: 0.024,
+        toeRiseMeters: 0.008,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.014,
+      },
+    ] as const;
+
+    const results = [];
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        ...common,
+        fingerTipToeInwardMeters:
+          candidate.toeInwardMeters,
+        fingerTipToeRiseMeters:
+          candidate.toeRiseMeters,
+        fingerTipToeRadiusMeters:
+          candidate.toeRadiusMeters,
+        retainingTorque: candidate.retainingTorque,
+      });
+      results.push({
+        ...candidate,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        liftAfterRetaining0p4sMeters:
+          metrics.liftAfterRetaining0p4sMeters,
+        liftAfterRetaining0p8sMeters:
+          metrics.liftAfterRetaining0p8sMeters,
+        liftAfterRetaining1p2sMeters:
+          metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        slipLossMeters: metrics.slipLossMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+        finiteAndBounded: metrics.finiteAndBounded,
+      });
+      expect(metrics.finiteAndBounded).toBe(true);
+    }
+
+    console.log(
+      "M09 Ring toe candidate sweep",
+      JSON.stringify(results),
+    );
+  }, 30000);
 
 });
 

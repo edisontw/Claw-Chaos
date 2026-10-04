@@ -295,6 +295,8 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.closedAngleRadians,
         fingerLowerPadRadiusMeters:
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerTipPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
       milestone: "M09 / Ring layout",
