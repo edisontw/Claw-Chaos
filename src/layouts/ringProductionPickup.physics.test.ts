@@ -7,6 +7,7 @@ import {
   M06_CABINET_CONFIG,
   createCabinetPhysics,
 } from "../cabinet/cabinetGeometry";
+import { ChuteSensor } from "../cabinet/chuteSensor";
 import { PHYSICS_HZ } from "../config/simulation";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { getPrizeDefinition } from "../prizes/catalog";
@@ -97,6 +98,10 @@ interface RingPickupMetrics {
   peakLiftMeters: number;
   minimumLiftDuringReturningMeters: number;
   ringReturnTravelMeters: number;
+  chuteReached: boolean;
+  chuteReachedPhase: string | null;
+  ringReturnTravelAtChuteMeters: number;
+  gantryDistanceToReturnTargetAtChuteMeters: number;
   maxRingSpeedMetersPerSecond: number;
   retainingReached: boolean;
   returningReached: boolean;
@@ -504,6 +509,11 @@ async function simulateProductionRingPickup(
   let poseCollapsePhase: string | null = null;
   let hadMeaningfulLift = false;
   let returnStartRingPosition: { x: number; z: number } | null = null;
+  const chuteSensor = new ChuteSensor();
+  let chuteReached = false;
+  let chuteReachedPhase: string | null = null;
+  let ringReturnTravelAtChuteMeters = Number.NaN;
+  let gantryDistanceToReturnTargetAtChuteMeters = Number.NaN;
 
   const tolerance = {
     position: gantry.homePositionTolerance,
@@ -727,6 +737,27 @@ async function simulateProductionRingPickup(
     }
 
     if (
+      !chuteReached &&
+      chuteSensor.pollPrize(
+        "m09-production-ring",
+        target.prize.body,
+      )
+    ) {
+      chuteReached = true;
+      chuteReachedPhase = play.phase;
+      ringReturnTravelAtChuteMeters = returnStartRingPosition
+        ? Math.hypot(
+            ringPosition.x - returnStartRingPosition.x,
+            ringPosition.z - returnStartRingPosition.z,
+          )
+        : 0;
+      gantryDistanceToReturnTargetAtChuteMeters = Math.hypot(
+        motion.x.position - CABINET_CLAW_PARK_POSITION.x,
+        motion.z.position - CABINET_CLAW_PARK_POSITION.z,
+      );
+    }
+
+    if (
       poseCollapsePhase === null &&
       lift < -0.012
     ) {
@@ -801,6 +832,10 @@ async function simulateProductionRingPickup(
     peakLiftMeters,
     minimumLiftDuringReturningMeters: minReturnLift,
     ringReturnTravelMeters,
+    chuteReached,
+    chuteReachedPhase,
+    ringReturnTravelAtChuteMeters,
+    gantryDistanceToReturnTargetAtChuteMeters,
     maxRingSpeedMetersPerSecond,
     retainingReached,
     returningReached,
@@ -1118,5 +1153,73 @@ describe("M09 production-claw ring pickup", () => {
           result.minimumLiftDuringReturningMeters > 0.015,
       ),
     ).toBe(true);
+  });
+
+  it("checks Cube support pickup tolerance and chute delivery", async () => {
+    const supportCase: SupportCase = {
+      label: "cube-candidate-z--0.0065",
+      supportPrizeId: "prize/cube_small",
+      primaryZOffsetMeters: -0.0065,
+    };
+    const approaches: ApproachCase[] = [
+      {
+        label: "finger-1 centered-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.35,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-1 mid-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.42,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-1 tangent-plus-10mm",
+        fingerIndex: 1,
+        highSideFraction: 0.42,
+        tangentOffsetMeters: 0.010,
+      },
+      {
+        label: "finger-1 tangent-minus-10mm",
+        fingerIndex: 1,
+        highSideFraction: 0.42,
+        tangentOffsetMeters: -0.010,
+      },
+      {
+        label: "finger-1 deeper-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.52,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-2 centered-high-side",
+        fingerIndex: 2,
+        highSideFraction: 0.35,
+        tangentOffsetMeters: 0,
+      },
+    ];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const approach of approaches) {
+      metrics.push(
+        await simulateProductionRingPickup(
+          approach,
+          supportCase,
+        ),
+      );
+    }
+
+    console.log(
+      "M09 Cube candidate tolerance metrics",
+      JSON.stringify(metrics),
+    );
+
+    const chuteWins = metrics.filter(
+      (result) =>
+        result.chuteReached &&
+        result.chuteReachedPhase === "RETURNING",
+    );
+    expect(chuteWins.length).toBeGreaterThanOrEqual(2);
   });
 });
