@@ -8,6 +8,7 @@ import type {
   Vec3,
 } from "../physics/PhysicsRuntime";
 import { createCompoundPrizeProfile } from "./compoundProfiles";
+import { createRingLoopGeometry } from "./ringProfile";
 import {
   PRIZE_COLOR_PALETTE,
   PRIZE_COM_PROFILES,
@@ -230,6 +231,9 @@ function buildColliders(definition: PrizeDefinition): PrimitiveColliderSpec[] {
         radius,
       }];
     }
+
+    case "ring":
+      return [...createRingLoopGeometry().colliders];
 
     case "ellipsoid": {
       const centralRadius = Math.min(x, z) * 0.5;
@@ -517,6 +521,24 @@ function buildVisual(spec: ResolvedPrizeSpec): THREE.Object3D {
         radius,
         material,
       );
+      return group;
+    }
+
+    case "ring": {
+      const group = new THREE.Group();
+      const geometry = createRingLoopGeometry();
+      for (const collider of geometry.colliders) {
+        if (collider.shape !== "capsule") {
+          continue;
+        }
+        addCapsuleVisual(
+          group,
+          collider.start,
+          collider.end,
+          collider.radius,
+          material,
+        );
+      }
       return group;
     }
 
