@@ -17,6 +17,7 @@ export type CabinetLayoutRole =
   | "bridge"
   | "edge_target"
   | "ring_target"
+  | "ring_support"
   | "filler";
 
 export interface CabinetLayoutPlacement {
@@ -25,6 +26,7 @@ export interface CabinetLayoutPlacement {
   x: number;
   z: number;
   yOffsetMeters: number;
+  rotationXRadians: number;
   rotationYRadians: number;
   variantSeed: string;
 }
@@ -45,6 +47,7 @@ interface PlacementBase {
   role?: CabinetLayoutRole;
   x: number;
   z: number;
+  rotationXRadians?: number;
   rotationYRadians: number;
   yOffsetMeters?: number;
 }
@@ -253,28 +256,39 @@ const RING_BASE: readonly PlacementBase[] = [
   {
     prizeId: "prize/ring_loop",
     role: "ring_target",
-    x: -0.13,
-    z: -0.06,
-    rotationYRadians: 0.08,
+    x: -0.16,
+    z: -0.025,
+    yOffsetMeters: 0.034,
+    rotationXRadians: 0.61,
+    rotationYRadians: 0.04,
+  },
+  {
+    prizeId: "prize/box_standard",
+    role: "ring_support",
+    x: -0.16,
+    z: -0.125,
+    rotationYRadians: 0.02,
   },
   {
     prizeId: "prize/ring_loop",
     role: "ring_target",
-    x: 0.13,
-    z: 0.06,
-    rotationYRadians: -0.12,
+    x: 0.16,
+    z: 0.025,
+    yOffsetMeters: 0.034,
+    rotationXRadians: -0.61,
+    rotationYRadians: -0.05,
   },
   {
-    prizeId: "prize/sphere_ball",
-    role: "filler",
-    x: 0,
-    z: -0.16,
-    rotationYRadians: 0,
+    prizeId: "prize/box_standard",
+    role: "ring_support",
+    x: 0.16,
+    z: 0.125,
+    rotationYRadians: -0.02,
   },
   {
     prizeId: "prize/cube_small",
     role: "filler",
-    x: -0.02,
+    x: 0,
     z: 0.16,
     rotationYRadians: 0.10,
   },
@@ -369,6 +383,7 @@ function materializePlacements(
             variation.verticalJitterMax,
           )
         : 0),
+    rotationXRadians: base.rotationXRadians ?? 0,
     rotationYRadians:
       base.rotationYRadians +
       rng.range(-variation.rotationJitter, variation.rotationJitter),

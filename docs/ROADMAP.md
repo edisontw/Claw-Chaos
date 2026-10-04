@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — ring / loop layout slice 5 candidate**
+**Status: IN PROGRESS — ring grabbable-pose correction after slice 5**
 
 ## Goal
 
@@ -1563,7 +1563,7 @@ Implemented candidate:
   - inner clear half-width ≈ 55 mm
   - inner clear half-depth ≈ 45 mm
 - visual geometry is generated from the exact same capsule segments used by physics, avoiding a fake visible hole over a solid collider
-- loop lies flat on the deck so a descending claw finger can enter the actual center opening before lateral movement contacts the inner rim
+- initial slice 5 loop lay flat on the deck, which proved the hole/collision geometry but deployed-play feedback showed that this pose was not actually grabbable; the corrective pose below supersedes the flat presentation
 - new `ring` layout:
   - two `ring_target` Loop Ring prizes at separated positions/approach angles
   - Rubber Ball and Foam Cube fillers keep the scene playable
@@ -1595,6 +1595,45 @@ Catalog regression is updated from 11 to 12 prize definitions while preserving t
 Deployed browser smoke boots `layout=ring` and requires `data-layout-id="ring"`.
 
 No claw, gantry, reel, grip, material, cabinet, chute, camera or timestep tuning changed.
+
+## Ring grabbable-pose correction — 2026-10-04
+
+Deployed-play feedback identified a real gameplay defect in slice 5: a physically hollow ring lying flat on the deck still cannot be reliably picked because the claw has no under-rim access.
+
+Correction:
+- add X-axis prize spawn rotation support while preserving the existing yaw-only behavior for all current layouts
+- replace each flat ring target with a physically tilted target:
+  - initial X tilt ≈ ±0.61 rad (≈35°)
+  - initial center X ≈ ±0.16 m
+  - initial ring vertical offset = 34 mm
+- place one normal dynamic Standard Box behind each ring as a physical support
+- move the supports outward to approximately Z ±0.125 m so the boxes brace the outer rim/side rather than occupying the ring opening
+- the boxes and rings remain ordinary dynamic prize bodies:
+  - no fixed fixture
+  - no joint or weld
+  - no parenting
+  - no magnet
+  - no scripted pose lock
+  - no special ring pickup force
+- one Foam Cube remains as a filler prize
+
+Production-layout settle regression:
+- both ring targets settle at ≈0.63 rad (≈36°) tilt
+- ring center height ≈41.1–41.2 mm
+- low-side centerline ≈8.65 mm above the deck
+- elevated high-side inner-rim underside ≈63.5–63.8 mm above the deck
+- dedicated supports settle normally and remain outside the nominal clear opening
+
+Hook-and-lift geometry regression:
+- after the production ring layout has settled, a claw-tip surrogate is inserted from inside the hollow opening
+- surrogate geometry uses a narrow stem through the opening and a wider lower pad beneath the elevated inner rim
+- the ring body is explicitly awakened before contact, matching production dynamic-claw contact rather than testing a sleeping-body artifact
+- a 50 mm upward hook motion raises the ring center by ≈18.95 mm
+- this proves the corrected pose supplies actual under-rim geometry that can be mechanically hooked and lifted
+
+The final M09 acceptance gate still requires manual pickup with the production three-finger claw through normal controls; this regression verifies that the layout no longer makes pickup geometrically impossible.
+
+No claw force, grip torque, friction, gantry, reel, material, cabinet, chute, camera or timestep tuning changed.
 
 ## Deliverables
 

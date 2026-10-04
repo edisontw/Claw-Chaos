@@ -89,10 +89,10 @@ describe("M09 cabinet layout foundation", () => {
     ).toHaveLength(5);
     expect(
       createCabinetLayout("ring", "count").placements,
-    ).toHaveLength(4);
+    ).toHaveLength(5);
   });
 
-  it("creates two true hollow ring targets with separated approach angles", () => {
+  it("creates two tilted hollow ring targets with dedicated dynamic supports", () => {
     const layout = createCabinetLayout(
       "ring",
       "ring-structure",
@@ -108,10 +108,32 @@ describe("M09 cabinet layout foundation", () => {
           placement.prizeId === "prize/ring_loop",
       ),
     ).toBe(true);
-    expect(targets[0]!.x).toBeLessThan(-0.12);
-    expect(targets[1]!.x).toBeGreaterThan(0.12);
-    expect(targets[0]!.rotationYRadians)
-      .not.toBeCloseTo(targets[1]!.rotationYRadians, 3);
+    const supports = layout.placements.filter(
+      (placement) => placement.role === "ring_support",
+    );
+
+    expect(supports).toHaveLength(2);
+    expect(
+      supports.every(
+        (placement) =>
+          placement.prizeId === "prize/box_standard",
+      ),
+    ).toBe(true);
+    expect(targets[0]!.x).toBeLessThan(-0.15);
+    expect(targets[1]!.x).toBeGreaterThan(0.15);
+    expect(targets[0]!.rotationXRadians).toBeGreaterThan(0.60);
+    expect(targets[1]!.rotationXRadians).toBeLessThan(-0.60);
+    expect(targets[0]!.yOffsetMeters).toBeCloseTo(0.034, 6);
+    expect(targets[1]!.yOffsetMeters).toBeCloseTo(0.034, 6);
+
+    const leftSupport = supports.find(
+      (placement) => placement.x < 0,
+    )!;
+    const rightSupport = supports.find(
+      (placement) => placement.x > 0,
+    )!;
+    expect(leftSupport.z).toBeLessThan(-0.12);
+    expect(rightSupport.z).toBeGreaterThan(0.12);
   });
 
   it("keeps ring seed jitter small enough to preserve clear hole access", () => {
@@ -124,13 +146,15 @@ describe("M09 cabinet layout foundation", () => {
     );
 
     expect(
-      Math.abs(targets[0]!.x + 0.13),
+      Math.abs(targets[0]!.x + 0.16),
     ).toBeLessThanOrEqual(0.0015);
     expect(
-      Math.abs(targets[1]!.x - 0.13),
+      Math.abs(targets[1]!.x - 0.16),
     ).toBeLessThanOrEqual(0.0015);
+    expect(targets[0]!.rotationXRadians).toBeCloseTo(0.61, 8);
+    expect(targets[1]!.rotationXRadians).toBeCloseTo(-0.61, 8);
     expect(
-      Math.abs(targets[0]!.rotationYRadians - 0.08),
+      Math.abs(targets[0]!.rotationYRadians - 0.04),
     ).toBeLessThanOrEqual(0.015);
   });
 
