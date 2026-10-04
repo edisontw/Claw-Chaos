@@ -17,7 +17,7 @@ import {
 
 describe("M05 PrizeFactory", () => {
   it("exposes a data-driven starter catalog with reusable profiles", () => {
-    expect(PRIZE_DEFINITIONS).toHaveLength(11);
+    expect(PRIZE_DEFINITIONS).toHaveLength(12);
     expect(new Set(PRIZE_DEFINITIONS.map((entry) => entry.id)).size).toBe(11);
     expect(Object.keys(PRIZE_COLOR_PALETTE)).toHaveLength(8);
     expect(Object.keys(PRIZE_MATERIAL_PROFILES).length).toBeGreaterThanOrEqual(5);
@@ -44,6 +44,7 @@ describe("M05 PrizeFactory", () => {
         "ellipsoid",
         "cylinder",
         "capsule",
+        "ring",
         "pillow",
         "plush_humanoid",
         "plush_animal",
@@ -68,7 +69,7 @@ describe("M05 PrizeFactory", () => {
         `${variant.definitionId}|${variant.colorId}|${variant.finishId}`,
     );
 
-    expect(variants).toHaveLength(11 * 8 * 2);
+    expect(variants).toHaveLength(12 * 8 * 2);
     expect(new Set(keys).size).toBe(variants.length);
     expect(variants.length).toBeGreaterThanOrEqual(100);
   });
