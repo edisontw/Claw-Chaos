@@ -1281,4 +1281,64 @@ describe("M09 production-claw ring pickup", () => {
       Math.max(...grouped.map((entry) => entry.chuteWins)),
     ).toBeGreaterThanOrEqual(2);
   });
+
+  it("maps lateral Cube support clearance against finger-1 entry depth", async () => {
+    const supportXOffsets = [
+      -0.030,
+      -0.020,
+      -0.010,
+      0,
+      0.010,
+    ];
+    const entryFractions = [0.35, 0.42, 0.50];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const primaryXOffsetMeters of supportXOffsets) {
+      for (const highSideFraction of entryFractions) {
+        metrics.push(
+          await simulateProductionRingPickup(
+            {
+              label:
+                "finger-1-depth-" +
+                highSideFraction.toFixed(2),
+              fingerIndex: 1,
+              highSideFraction,
+              tangentOffsetMeters: 0,
+            },
+            {
+              label:
+                "cube-x-" +
+                primaryXOffsetMeters.toFixed(3),
+              supportPrizeId: "prize/cube_small",
+              primaryXOffsetMeters,
+              primaryZOffsetMeters: -0.0065,
+            },
+          ),
+        );
+      }
+    }
+
+    console.log(
+      "M09 Cube lateral support matrix metrics",
+      JSON.stringify(metrics),
+    );
+
+    const grouped = supportXOffsets.map((offset) => ({
+      offset,
+      chuteWins: metrics.filter(
+        (result) =>
+          result.supportCaseLabel ===
+            "cube-x-" + offset.toFixed(3) &&
+          result.chuteReached,
+      ).length,
+    }));
+    console.log(
+      "M09 Cube lateral support win counts",
+      JSON.stringify(grouped),
+    );
+
+    expect(
+      Math.max(...grouped.map((entry) => entry.chuteWins)),
+    ).toBeGreaterThanOrEqual(2);
+  });
 });
