@@ -84,7 +84,7 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(10.0);
     expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
     expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.018);
-    expect(CABINET_PLAY_TUNING.closedAngleRadians).toBe(-0.50);
+    expect(CABINET_PLAY_TUNING.closedAngleRadians).toBe(-0.63);
     expect(
       CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
     ).toBe(0.010);
