@@ -57,6 +57,7 @@ interface PickupRetentionProfile {
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
+  prizeMaterialIdOverride?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationXRadians?: number;
   prizeRotationYRadians?: number;
@@ -118,9 +119,16 @@ async function simulateM04PickupRetention(
   const ballRestitution =
     profile.ballRestitution ?? claw.pt001BallRestitution;
   const prizeShape = profile.prizeShape ?? "sphere";
-  const prizeDefinition = profile.prizeDefinitionId
+  const basePrizeDefinition = profile.prizeDefinitionId
     ? getPrizeDefinition(profile.prizeDefinitionId)
     : null;
+  const prizeDefinition =
+    basePrizeDefinition && profile.prizeMaterialIdOverride
+      ? {
+          ...basePrizeDefinition,
+          materialId: profile.prizeMaterialIdOverride,
+        }
+      : basePrizeDefinition;
   const prizeHalfExtents =
     profile.prizeHalfExtents ?? {
       x: ballRadiusMeters,
@@ -936,6 +944,99 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       }),
     );
   }, 15000);
+
+  it("sweeps Ring surface friction with the unchanged production claw", async () => {
+    const ringLayout = createCabinetLayout(
+      "ring",
+      "retention-regression",
+    );
+    const target = ringLayout.placements.find(
+      (placement) =>
+        placement.role === "ring_target" &&
+        placement.x > 0,
+    )!;
+    const support = ringLayout.placements.find(
+      (placement) =>
+        placement.role === "ring_support" &&
+        placement.x > 0,
+    )!;
+
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque:
+        CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipToeInwardMeters: 0,
+      fingerTipToeRiseMeters: 0,
+      topHoldSeconds: 1.3,
+      initialSettleSeconds: 4,
+      supportMode: "flat-deck" as const,
+      prizeDefinitionId: target.prizeId,
+      prizeRotationXRadians: target.rotationXRadians,
+      prizeRotationYRadians: target.rotationYRadians,
+      prizeYOffsetMeters: target.yOffsetMeters,
+      prizeOffsetX: target.x,
+      prizeOffsetZ: target.z,
+      auxiliaryPrizes: [
+        {
+          prizeDefinitionId: support.prizeId,
+          offsetX: support.x,
+          offsetZ: support.z,
+          yOffsetMeters: support.yOffsetMeters,
+          rotationXRadians: support.rotationXRadians,
+          rotationYRadians: support.rotationYRadians,
+          variantSeed: support.variantSeed,
+        },
+      ],
+    };
+
+    const candidates = [
+      { label: "plastic_0p42", materialId: "material/plastic" },
+      {
+        label: "cardboard_0p56",
+        materialId: "material/cardboard_matte",
+      },
+      { label: "fabric_0p62", materialId: "material/fabric" },
+      { label: "plush_0p70", materialId: "material/plush" },
+      { label: "rubber_0p82", materialId: "material/rubber" },
+    ] as const;
+
+    const results = [];
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        ...common,
+        prizeMaterialIdOverride: candidate.materialId,
+      });
+      results.push({
+        ...candidate,
+        peakLiftMeters: metrics.peakLiftMeters,
+        retain0p8Meters:
+          metrics.liftAfterRetaining0p8sMeters,
+        retain1p2Meters:
+          metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        slipLossMeters: metrics.slipLossMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+        finiteAndBounded: metrics.finiteAndBounded,
+      });
+      expect(metrics.finiteAndBounded).toBe(true);
+    }
+
+    console.log(
+      "M09 Ring material-friction sweep",
+      JSON.stringify(results),
+    );
+  }, 30000);
 
   it("sweeps 24 mm toe radius for Ring retention versus Teddy compatibility", async () => {
     const ringLayout = createCabinetLayout(
