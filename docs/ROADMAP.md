@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — mobile-control visibility correction after edge slice 4**
+**Status: IN PROGRESS — ring / loop layout slice 5 candidate**
 
 ## Goal
 
@@ -1550,6 +1550,46 @@ Implemented candidate:
 - expose `data-mobile-control-style="compact-translucent"` for deployed browser diagnostics
 
 No joystick dead zone, analog remapping, action debounce, haptics, view-height step, camera envelope, claw input, physics or gameplay parameter changed.
+
+## Ring / loop layout slice 5 — actual hollow hook geometry
+
+Implemented candidate:
+- add a new reusable `prize/ring_loop` definition
+- add `ring` as a first-class prize shape family
+- ring collider is **not** a filled disc or cylinder:
+  - 12 capsule segments form a closed loop in the X/Z plane
+  - outer footprint ≈ 150 × 130 mm
+  - tube radius = 10 mm
+  - inner clear half-width ≈ 55 mm
+  - inner clear half-depth ≈ 45 mm
+- visual geometry is generated from the exact same capsule segments used by physics, avoiding a fake visible hole over a solid collider
+- loop lies flat on the deck so a descending claw finger can enter the actual center opening before lateral movement contacts the inner rim
+- new `ring` layout:
+  - two `ring_target` Loop Ring prizes at separated positions/approach angles
+  - Rubber Ball and Foam Cube fillers keep the scene playable
+  - seeded variation remains intentionally tight:
+    - ±1.5 mm X/Z
+    - ±0.015 rad yaw
+    - no extra vertical jitter
+- `ring_target` is semantic metadata only and never alters forces, collisions, grip or scoring
+
+Automated geometry regression:
+- exactly 12 capsule segments form the loop
+- physical outer bounds match the prize catalog dimensions
+- center opening remains substantially wider than the existing 10 mm claw finger pad radius
+
+Physics hook regression:
+- a 9 mm-radius vertical kinematic probe is placed through the center opening
+- the Loop Ring settles around the centered probe without being pushed aside, proving the center is physically hollow
+- the same probe then moves laterally
+- lateral motion must move the ring by measurable distance, proving the probe catches the real inner rim rather than passing through a fake/non-colliding mesh
+- this is a geometry proof only; M09 final acceptance still requires the production claw to hook the ring through normal player controls
+
+Catalog regression is updated from 11 to 12 prize definitions while preserving the existing 12-prize long-settle stability test.
+
+Deployed browser smoke boots `layout=ring` and requires `data-layout-id="ring"`.
+
+No claw, gantry, reel, grip, material, cabinet, chute, camera or timestep tuning changed.
 
 ## Deliverables
 
