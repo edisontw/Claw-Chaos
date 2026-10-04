@@ -36,9 +36,24 @@ function requireProfile<T>(
   return value;
 }
 
-function rotationYQuaternion(radians: number): Quaternion {
-  const half = radians * 0.5;
-  return { x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) };
+function spawnRotationQuaternion(
+  rotationXRadians: number,
+  rotationYRadians: number,
+): Quaternion {
+  const halfX = rotationXRadians * 0.5;
+  const halfY = rotationYRadians * 0.5;
+  const sinX = Math.sin(halfX);
+  const cosX = Math.cos(halfX);
+  const sinY = Math.sin(halfY);
+  const cosY = Math.cos(halfY);
+
+  // qY * qX: tilt the prize in its local X/Z plane, then yaw it in cabinet space.
+  return {
+    x: cosY * sinX,
+    y: sinY * cosX,
+    z: -sinY * sinX,
+    w: cosY * cosX,
+  };
 }
 
 function resolveCenterOfMass(
@@ -565,6 +580,7 @@ export function createPrize(
     centerOfMass: resolved.centerOfMass,
     principalAngularInertia: resolved.principalAngularInertia,
   };
+  const rotationXRadians = options.rotationXRadians ?? 0;
   const rotationYRadians = options.rotationYRadians ?? 0;
   const body = physics.createDynamicBodyWithMassProperties(
     options.position,
@@ -577,7 +593,10 @@ export function createPrize(
         ? resolved.material.audioProfileId
         : undefined,
     },
-    rotationYQuaternion(rotationYRadians),
+    spawnRotationQuaternion(
+      rotationXRadians,
+      rotationYRadians,
+    ),
   );
 
   return {
