@@ -930,6 +930,58 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 30000);
 
 
+  it("maps Teddy yaw and nearby torso/limb entry paths with the cabinet crook tip", async () => {
+    const rotations = [-0.60, -0.40, -0.22, -0.10, 0, 0.10, 0.20, 0.40, 0.60] as const;
+    const offsets = [
+      { x: 0.00, z: -0.03 },
+      { x: 0.01, z: -0.03 },
+      { x: 0.00, z: -0.01 },
+    ] as const;
+    const results = [];
+
+    for (const rotationYRadians of rotations) {
+      for (const offset of offsets) {
+        const metrics = await simulateM04PickupRetention({
+          fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+          closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+          retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+          pickupLiftDistanceMeters:
+            CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+          closedAngleRadians:
+            CABINET_PLAY_TUNING.closedAngleRadians,
+          fingerLowerPadRadiusMeters:
+            CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+          fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
+          fingerLowerPadSegmentIndices:
+            CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
+          topHoldSeconds: 1.3,
+          supportMode: "flat-deck",
+          prizeDefinitionId: "prize/teddy_simple",
+          prizeRotationYRadians: rotationYRadians,
+          prizeOffsetX: offset.x,
+          prizeOffsetZ: offset.z,
+        });
+
+        results.push({
+          rotationYRadians,
+          ...offset,
+          peak: metrics.peakLiftMeters,
+          retain1p2: metrics.liftAfterRetaining1p2sMeters,
+          final: metrics.finalLiftMeters,
+          topReached: metrics.topReached,
+        });
+      }
+    }
+
+    console.log(
+      "M09 Teddy crook-tip yaw sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(rotations.length * offsets.length);
+  }, 30000);
+
+
   it("production cabinet crook tip mechanically retains a one-prong Loop Ring hook", async () => {
     const entry = CLAW_LAB_CONFIG.fingerNodes[3];
     const theta = Math.PI * 4 / 3;
