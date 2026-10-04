@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — production-claw ring entry correction after slice 5**
+**Status: IN PROGRESS — chute-adjacent layout slice 6**
 
 ## Goal
 
@@ -1676,6 +1676,57 @@ Calibrated production-layout physics result:
 This correction deliberately does **not** increase claw power. If manual play still cannot insert one production prong after deployment, the next investigation must use full production-claw approach/contact telemetry rather than adding more closing torque.
 
 No claw force, grip torque, friction, gantry, reel, cabinet, chute, camera or timestep tuning changed.
+
+## Production-claw Ring retention tolerance + self-jam correction — 2026-10-04
+
+Deployed play then identified two production-claw issues that the geometric entry proof did not cover.
+
+Ring retention tolerance:
+- full production-claw telemetry reproduced the narrow centered sweet spot
+- increasing retaining torque did not solve the failure
+- support-only and larger-pad sweeps also failed to create a useful tolerance window
+- root cause was that the 10 mm lower pad radius covered the entire final finger segment, so offset entry pushed the Ring before the tip could form a useful hook
+- production geometry now keeps the lower arm at the normal 4.5 mm radius and limits the 10 mm radius contact pad to the terminal 12 mm
+- centered, moderate-depth and ±5 mm tangent Ring approaches all complete physical pickup/retain/return regressions
+- deployed manual Ring pickup was accepted after this change
+
+Sibling-finger self-jam:
+- after a prize fell out, continued motor closure could force sibling fingers into each other
+- sibling contact is now detected from real Rapier body contact
+- once sibling contact occurs during a close cycle, the guard latches and the motor command stops advancing inward for that cycle
+- the guard clears only when the claw opens again
+- contact-limited closure is accepted by the M04 state machine as a valid mechanical close so failed/empty grabs still proceed through lift, return and release
+- empty-claw regression stops around −0.157 rad instead of continuing to the nominal −0.63 rad target
+- after settle and reopen, sibling contact pairs are 0 / 0 / 0
+- Ring pickup regression remains green
+- exact short-pad Ball / Cube / Pillow / Animal / Teddy guard OFF vs ON comparison is numerically unchanged
+- deployed manual self-jam correction: PASS
+
+No collision is disabled; no finger is allowed to pass through another finger.
+
+## Chute-adjacent layout slice 6 — prize-lip manipulation
+
+Implemented candidate:
+- add `chute` as a first-class deterministic cabinet layout ID
+- two explicit `chute_target` prizes stage immediately outside the existing physical opening:
+  - Rubber Ball beside the right lip, intended for inward roll/push play
+  - Foam Cube behind the back lip, intended for push/flip play
+- two separated filler prizes preserve a normal playable cabinet scene
+- chute-specific seed variation is deliberately tight:
+  - ±1 mm X/Z
+  - ±0.010 rad yaw
+  - no added vertical jitter
+- target placement uses the existing cabinet opening and deck geometry; there is no raised artificial lip or invisible fixture
+- the existing `ChuteSensor` remains the only win detector
+
+Physics regression:
+- each target is tested in the production cabinet geometry
+- target must settle on the play deck without an initial sensor win
+- only a horizontal rigid-body impulse is then applied toward the physical opening
+- success requires the ordinary dynamic body to fall far enough into the chute for the existing sensor to record it
+- no prize teleport, sensor injection, scripted win, hidden force field, parenting, magnet, weld or kinematic conversion
+
+Browser CI boots `?scene=cabinet-lab&layout=chute&seed=ci-m09-chute` and requires `data-layout-id="chute"`.
 
 ## Deliverables
 
