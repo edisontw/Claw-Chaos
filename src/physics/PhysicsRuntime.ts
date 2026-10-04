@@ -44,6 +44,12 @@ export interface SpherePadSpec {
   radius: number;
 }
 
+export interface CapsulePadSpec {
+  start: Vec3;
+  end: Vec3;
+  radius: number;
+}
+
 export type CompoundColliderSpec =
   | {
       shape: "sphere";
@@ -568,6 +574,7 @@ export class PhysicsRuntime {
     segments: readonly CapsuleSegmentSpec[],
     material: CuboidMaterialOptions = {},
     spherePads: readonly SpherePadSpec[] = [],
+    capsulePads: readonly CapsulePadSpec[] = [],
   ): RigidBodyHandle {
     const body = this.world.createRigidBody(
       RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z),
@@ -611,6 +618,42 @@ export class PhysicsRuntime {
           pad.center.y,
           pad.center.z,
         )
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08)
+        .setDensity(0);
+      this.world.createCollider(collider, body);
+    }
+
+    for (const pad of capsulePads) {
+      const dx = pad.end.x - pad.start.x;
+      const dy = pad.end.y - pad.start.y;
+      const dz = pad.end.z - pad.start.z;
+      const length = Math.hypot(dx, dy, dz);
+      if (length <= Number.EPSILON) {
+        continue;
+      }
+
+      const center = {
+        x: (pad.start.x + pad.end.x) * 0.5,
+        y: (pad.start.y + pad.end.y) * 0.5,
+        z: (pad.start.z + pad.end.z) * 0.5,
+      };
+      const rotation = rotationFromYDirection({
+        x: dx,
+        y: dy,
+        z: dz,
+      });
+      const halfHeight = Math.max(
+        0.0001,
+        length * 0.5 - pad.radius,
+      );
+
+      const collider = RAPIER.ColliderDesc.capsule(
+        halfHeight,
+        pad.radius,
+      )
+        .setTranslation(center.x, center.y, center.z)
+        .setRotation(rotation)
         .setFriction(material.friction ?? 0.7)
         .setRestitution(material.restitution ?? 0.08)
         .setDensity(0);
