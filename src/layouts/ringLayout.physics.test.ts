@@ -210,7 +210,7 @@ describe("M09 ring hook physics", () => {
       towardCenterX,
       towardCenterZ,
     );
-    const inwardOffsetMeters = 0.014;
+    const inwardOffsetMeters = 0.018;
     const hookX =
       hookMetric.highestPoint.x +
       (towardCenterX / towardCenterLength) *
@@ -222,23 +222,42 @@ describe("M09 ring hook physics", () => {
     const hookHalfY = 0.004;
     const hookStartY =
       hookMetric.highRimUndersideMeters - hookHalfY - 0.002;
-    const hook = physics.createKinematicCylinder(
+    const hookPad = physics.createKinematicCylinder(
       {
         x: hookX,
         y: hookStartY,
         z: hookZ,
       },
       hookHalfY,
-      0.012,
+      0.014,
+      0.85,
+    );
+    const stemHalfHeight = 0.025;
+    const stemStartY =
+      hookStartY + hookHalfY + stemHalfHeight;
+    const hookStem = physics.createKinematicCylinder(
+      {
+        x: hookX,
+        y: stemStartY,
+        z: hookZ,
+      },
+      stemHalfHeight,
+      0.006,
       0.85,
     );
 
     const liftMeters = 0.050;
     const liftTicks = 72;
     for (let tick = 1; tick <= liftTicks; tick += 1) {
-      hook.setNextKinematicTranslation({
+      const lift = liftMeters * (tick / liftTicks);
+      hookPad.setNextKinematicTranslation({
         x: hookX,
-        y: hookStartY + liftMeters * (tick / liftTicks),
+        y: hookStartY + lift,
+        z: hookZ,
+      });
+      hookStem.setNextKinematicTranslation({
+        x: hookX,
+        y: stemStartY + lift,
         z: hookZ,
       });
       physics.step();
@@ -257,6 +276,7 @@ describe("M09 ring hook physics", () => {
         hookX,
         hookZ,
         inwardOffsetMeters,
+        stemStartY,
         liftMeters,
       }),
     );
