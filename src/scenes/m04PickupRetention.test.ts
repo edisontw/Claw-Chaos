@@ -64,6 +64,7 @@ interface PickupRetentionProfile {
   prizeOffsetX?: number;
   prizeOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerTipPadRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
@@ -134,6 +135,9 @@ async function simulateM04PickupRetention(
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerTipPadRadiusMeters =
+    profile.fingerTipPadRadiusMeters ??
+    fingerLowerPadRadiusMeters;
   const fingerNodes =
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
@@ -288,10 +292,16 @@ async function simulateM04PickupRetention(
       z: Math.cos(theta),
     };
 
+    const fingerPoints = createFingerPoints(
+      theta,
+      fingerNodes,
+    );
+    const fingerTip =
+      fingerPoints[fingerPoints.length - 1]!;
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
-        createFingerPoints(theta, fingerNodes),
+        fingerPoints,
         fingerLowerPadRadiusMeters,
       ),
       {
@@ -299,6 +309,15 @@ async function simulateM04PickupRetention(
         restitution: claw.fingerRestitution,
         density: claw.fingerDensity,
       },
+      fingerTipPadRadiusMeters >
+      fingerLowerPadRadiusMeters + 1e-6
+        ? [
+            {
+              center: fingerTip,
+              radius: fingerTipPadRadiusMeters,
+            },
+          ]
+        : [],
     );
     finger.setAngularDamping(
       M02_FINGER_TRANSPORT_CONFIG.angularDamping,
@@ -789,6 +808,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         CABINET_PLAY_TUNING.closedAngleRadians,
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
@@ -880,6 +901,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
             CABINET_PLAY_TUNING.closedAngleRadians,
           fingerLowerPadRadiusMeters:
             CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+          fingerTipPadRadiusMeters:
+            CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
         },
         results,
       }),
@@ -906,6 +929,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque:
         CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
         CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       closedAngleRadians:
@@ -934,30 +959,42 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       ],
     };
 
-    const current = await simulateM04PickupRetention({
+    const smoothTip = await simulateM04PickupRetention({
       ...common,
-      retainingTorque:
-        CABINET_PLAY_TUNING.retainingTorque,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
     });
-    const strongerRetention =
+    const paddedTip = await simulateM04PickupRetention({
+      ...common,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
+    });
+    const paddedTipHighRetention =
       await simulateM04PickupRetention({
         ...common,
+        fingerTipPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
         retainingTorque: 0.08,
       });
 
     console.log(
       "M09 production Ring retention diagnostic",
       JSON.stringify({
-        currentTorque:
+        retainingTorque:
           CABINET_PLAY_TUNING.retainingTorque,
-        candidateTorque: 0.08,
-        current,
-        strongerRetention,
+        smoothTipRadius:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        paddedTipRadius:
+          CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
+        smoothTip,
+        paddedTip,
+        paddedTipHighRetention,
       }),
     );
 
-    expect(current.finiteAndBounded).toBe(true);
-    expect(strongerRetention.finiteAndBounded).toBe(true);
+    expect(smoothTip.finiteAndBounded).toBe(true);
+    expect(paddedTip.finiteAndBounded).toBe(true);
+    expect(paddedTipHighRetention.finiteAndBounded).toBe(true);
   }, 15000);
 
 });
