@@ -941,4 +941,59 @@ describe("M09 production-claw ring pickup", () => {
 
     expect(coreToleranceSuccesses.length).toBeGreaterThanOrEqual(3);
   }, 10_000);
+
+  it("diagnoses Ring support Z tolerance before production tuning", async () => {
+    const approaches: ApproachCase[] = [
+      {
+        label: "center",
+        fingerIndex: 1,
+        highSideFraction: 0.35,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "moderate-depth",
+        fingerIndex: 1,
+        highSideFraction: 0.44,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "plus-5mm",
+        fingerIndex: 1,
+        highSideFraction: 0.40,
+        tangentOffsetMeters: 0.005,
+      },
+      {
+        label: "minus-5mm",
+        fingerIndex: 1,
+        highSideFraction: 0.40,
+        tangentOffsetMeters: -0.005,
+      },
+    ];
+    const supportOffsets = [0.005, 0.010, 0.015, 0.020, 0.025];
+    const sweep: Array<{
+      zOffsetMeters: number;
+      successes: number;
+      results: RingPickupMetrics[];
+    }> = [];
+
+    for (const zOffsetMeters of supportOffsets) {
+      const results: RingPickupMetrics[] = [];
+      for (const approach of approaches) {
+        results.push(
+          await simulateProductionRingPickup(approach, {
+            label: `support-z+${Math.round(zOffsetMeters * 1000)}mm`,
+            primaryZOffsetMeters: zOffsetMeters,
+          }),
+        );
+      }
+      sweep.push({
+        zOffsetMeters,
+        successes: results.filter((result) => result.success).length,
+        results,
+      });
+    }
+
+    console.log("M09 Ring support Z sweep", JSON.stringify(sweep));
+    expect(sweep).toHaveLength(supportOffsets.length);
+  }, 30_000);
 });
