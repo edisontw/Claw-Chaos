@@ -226,7 +226,7 @@ export const PRIZE_DEFINITIONS: readonly PrizeDefinition[] = [
     id: "prize/ring_loop",
     displayName: "Loop Ring",
     shapeFamily: "ring",
-    dimensions: { x: 0.150, y: 0.020, z: 0.130 },
+    dimensions: { x: 0.190, y: 0.020, z: 0.170 },
     nominalMassKg: 0.070,
     materialId: "material/plastic",
     massProfileId: "mass/standard",
