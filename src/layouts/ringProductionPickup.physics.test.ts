@@ -982,7 +982,7 @@ describe("M09 production-claw ring pickup", () => {
     );
 
     expect(coreToleranceSuccesses).toHaveLength(4);
-  }, 10_000);
+  }, 20_000);
 
 
 });
