@@ -1583,6 +1583,11 @@ Physics hook regression:
 - the Loop Ring settles around the centered probe without being pushed aside, proving the center is physically hollow
 - the same probe then moves laterally
 - lateral motion must move the ring by measurable distance, proving the probe catches the real inner rim rather than passing through a fake/non-colliding mesh
+- calibrated regression result:
+  - centered-probe ring offset ≈ 0.019 mm
+  - settled ring center height ≈ 9.99 mm
+  - probe lateral travel = 60 mm
+  - resulting ring travel ≈ 15.58 mm
 - this is a geometry proof only; M09 final acceptance still requires the production claw to hook the ring through normal player controls
 
 Catalog regression is updated from 11 to 12 prize definitions while preserving the existing 12-prize long-settle stability test.
