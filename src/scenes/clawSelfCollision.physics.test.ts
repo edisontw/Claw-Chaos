@@ -51,61 +51,19 @@ function angularDistance(a: Quaternion, b: Quaternion): number {
   return 2 * Math.acos(dot);
 }
 
-function signedAngleAroundAxis(
-  rotation: Quaternion,
-  axis: { x: number; y: number; z: number },
-): number {
-  const projected =
-    rotation.x * axis.x +
-    rotation.y * axis.y +
-    rotation.z * axis.z;
-  let angle = 2 * Math.atan2(projected, rotation.w);
-  while (angle > Math.PI) {
-    angle -= Math.PI * 2;
-  }
-  while (angle < -Math.PI) {
-    angle += Math.PI * 2;
-  }
-  return angle;
-}
-
 interface EmptyCloseMetrics {
-  closedAngleRadians: number;
+  firstContactCommandRadians: number;
+  closedCommandRadians: number;
+  targetClosedAngleRadians: number;
   peakPairContacts: number[];
   contactTicks: number[];
-  finalPairContacts: number[];
-  commandRadians: number;
-  closedCommandRadians: number;
-  maxClosureOverdriveRadians: number;
-  fingerTravelRadians: number[];
-  travelSpreadRadians: number;
+  closedPairContacts: number[];
   reopenedPairContacts: number[];
   reopenErrorRadians: number[];
   maxReopenErrorRadians: number;
-  openJointAngles: number[];
-  closedJointAngles: number[];
-  reopenedJointAngles: number[];
 }
 
-function createTangentialTipOffsetPoints(
-  theta: number,
-  offsetMeters: number,
-) {
-  const points = createFingerPoints(theta).map((point) => ({ ...point }));
-  const tip = points.at(-1);
-  if (tip) {
-    tip.x += -Math.sin(theta) * offsetMeters;
-    tip.z += Math.cos(theta) * offsetMeters;
-  }
-  return points;
-}
-
-async function simulateEmptyClose(
-  closedAngleRadians: number,
-  tipTangentialOffsetMeters: number,
-): Promise<EmptyCloseMetrics & {
-  tipTangentialOffsetMeters: number;
-}> {
+async function simulateGuardedEmptyClose(): Promise<EmptyCloseMetrics> {
   const claw = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -119,7 +77,6 @@ async function simulateEmptyClose(
 
   const fingers: RigidBodyHandle[] = [];
   const joints: RevoluteJointHandle[] = [];
-  const fingerAxes: Array<{ x: number; y: number; z: number }> = [];
   const fingerPivotLocalY =
     claw.fingerPivotY - claw.hubCenterY;
 
@@ -142,13 +99,11 @@ async function simulateEmptyClose(
       y: 0,
       z: Math.cos(theta),
     };
+
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
-        createTangentialTipOffsetPoints(
-          theta,
-          tipTangentialOffsetMeters,
-        ),
+        createFingerPoints(theta),
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
         CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       ),
@@ -162,7 +117,7 @@ async function simulateEmptyClose(
       anchor1: pivotLocal,
       anchor2: { x: 0, y: 0, z: 0 },
       axis: tangent,
-      minAngle: closedAngleRadians,
+      minAngle: CABINET_PLAY_TUNING.closedAngleRadians,
       maxAngle: claw.openAngle,
       initialTarget: claw.openAngle,
       stiffness: claw.motorStiffness,
@@ -173,25 +128,28 @@ async function simulateEmptyClose(
 
     fingers.push(finger);
     joints.push(joint);
-    fingerAxes.push(tangent);
   }
 
-  let command = 0;
-  for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
-    command = advanceMotorCommand(
-      command,
-      claw.openAngle,
-      claw.motorSpeedRadiansPerSecond,
-      dt,
+  const pairs: Array<[number, number]> = [
+    [0, 1],
+    [1, 2],
+    [2, 0],
+  ];
+  const pairContacts = (): number[] =>
+    pairs.map(([a, b]) =>
+      physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
     );
+
+  let command = claw.openAngle;
+  for (let tick = 0; tick < PHYSICS_HZ * 3; tick += 1) {
     for (const joint of joints) {
       joint.configureMotorPosition(
         command,
-        claw.motorStiffness,
-        claw.motorDamping,
+        M02_FINGER_TRANSPORT_CONFIG.stiffness,
+        M02_FINGER_TRANSPORT_CONFIG.damping,
       );
       joint.setMotorMaxForce(
-        CABINET_PLAY_TUNING.closePickupTorque,
+        M02_FINGER_TRANSPORT_CONFIG.maxTorque,
       );
     }
     for (const finger of fingers) {
@@ -204,45 +162,31 @@ async function simulateEmptyClose(
   const openFingerRotations = fingers.map((finger) =>
     relativeRotation(openHubRotation, finger.rotation()),
   );
-  const physicalFingerAngles = (): number[] =>
-    fingers.map((finger, index) =>
-      signedAngleAroundAxis(
-        finger.rotation(),
-        fingerAxes[index]!,
-      ),
-    );
-  const openJointAngles = physicalFingerAngles();
 
-  const pairs: Array<[number, number]> = [
-    [0, 1],
-    [1, 2],
-    [2, 0],
-  ];
   const peakPairContacts = [0, 0, 0];
   const contactTicks = [0, 0, 0];
+  let firstContactCommandRadians = Number.NaN;
 
   for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
+    const beforeContacts = pairContacts();
     const siblingFingerContact =
-      physics.countBodyContactPairs(
-        fingers[0]!,
-        fingers[1]!,
-      ) > 0 ||
-      physics.countBodyContactPairs(
-        fingers[1]!,
-        fingers[2]!,
-      ) > 0 ||
-      physics.countBodyContactPairs(
-        fingers[2]!,
-        fingers[0]!,
-      ) > 0;
+      beforeContacts.some((contacts) => contacts > 0);
+    if (
+      siblingFingerContact &&
+      !Number.isFinite(firstContactCommandRadians)
+    ) {
+      firstContactCommandRadians = command;
+    }
+
     command = advanceFingerCommandWithSelfContactGuard(
       command,
-      closedAngleRadians,
+      CABINET_PLAY_TUNING.closedAngleRadians,
       claw.motorSpeedRadiansPerSecond,
       dt,
       true,
       siblingFingerContact,
     );
+
     for (const joint of joints) {
       joint.configureMotorPosition(
         command,
@@ -258,11 +202,7 @@ async function simulateEmptyClose(
     }
     physics.step();
 
-    pairs.forEach(([a, b], index) => {
-      const contacts = physics.countBodyContactPairs(
-        fingers[a]!,
-        fingers[b]!,
-      );
+    pairContacts().forEach((contacts, index) => {
       peakPairContacts[index] = Math.max(
         peakPairContacts[index]!,
         contacts,
@@ -273,28 +213,10 @@ async function simulateEmptyClose(
     });
   }
 
-  const finalPairContacts = pairs.map(([a, b]) =>
-    physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
-  );
   const closedCommandRadians = command;
-  const closedJointAngles = physicalFingerAngles();
-  const maxClosureOverdriveRadians = Math.max(
-    ...closedJointAngles.map((angle) =>
-      Math.abs(closedCommandRadians - angle),
-    ),
-  );
-  const finalHubRotation = hub.rotation();
-  const fingerTravelRadians = fingers.map((finger, index) =>
-    angularDistance(
-      openFingerRotations[index]!,
-      relativeRotation(finalHubRotation, finger.rotation()),
-    ),
-  );
-  const travelSpreadRadians =
-    Math.max(...fingerTravelRadians) -
-    Math.min(...fingerTravelRadians);
+  const closedPairContacts = pairContacts();
 
-  for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
+  for (let tick = 0; tick < PHYSICS_HZ * 3; tick += 1) {
     command = advanceMotorCommand(
       command,
       claw.openAngle,
@@ -317,10 +239,7 @@ async function simulateEmptyClose(
     physics.step();
   }
 
-  const reopenedPairContacts = pairs.map(([a, b]) =>
-    physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
-  );
-  const reopenedJointAngles = physicalFingerAngles();
+  const reopenedPairContacts = pairContacts();
   const reopenedHubRotation = hub.rotation();
   const reopenErrorRadians = fingers.map((finger, index) =>
     angularDistance(
@@ -331,51 +250,44 @@ async function simulateEmptyClose(
       ),
     ),
   );
-  const maxReopenErrorRadians = Math.max(...reopenErrorRadians);
 
   return {
-    closedAngleRadians,
+    firstContactCommandRadians,
+    closedCommandRadians,
+    targetClosedAngleRadians:
+      CABINET_PLAY_TUNING.closedAngleRadians,
     peakPairContacts,
     contactTicks,
-    finalPairContacts,
-    commandRadians: command,
-    closedCommandRadians,
-    maxClosureOverdriveRadians,
-    fingerTravelRadians,
-    travelSpreadRadians,
+    closedPairContacts,
     reopenedPairContacts,
     reopenErrorRadians,
-    maxReopenErrorRadians,
-    openJointAngles,
-    closedJointAngles,
-    reopenedJointAngles,
-    tipTangentialOffsetMeters,
+    maxReopenErrorRadians: Math.max(...reopenErrorRadians),
   };
 }
 
-describe("M09 production claw empty-close self contact", () => {
-  it("diagnoses tangential terminal offsets that let closed fingers nest without binding", async () => {
-    const offsetsMeters = [0, 0.004, 0.006, 0.008, 0.010, 0.012];
-    const metrics = [];
-
-    for (const terminalTangentialOffsetMeters of offsetsMeters) {
-      metrics.push(
-        await simulateEmptyClose(
-          CABINET_PLAY_TUNING.closedAngleRadians,
-          terminalTangentialOffsetMeters,
-        ),
-      );
-    }
-
-    const clean = metrics.filter((result) =>
-      result.finalPairContacts.every((value) => value === 0),
-    );
+describe("M09 production claw empty-close self-contact guard", () => {
+  it("stops closing at sibling contact and reopens without a finger jam", async () => {
+    const metrics = await simulateGuardedEmptyClose();
 
     console.log(
-      "M09 empty-close terminal-offset sweep",
-      JSON.stringify({ metrics, clean }),
+      "M09 guarded empty-close metrics",
+      JSON.stringify(metrics),
     );
 
-    expect(metrics).toHaveLength(offsetsMeters.length);
-  }, 15_000);
+    expect(Number.isFinite(metrics.firstContactCommandRadians)).toBe(true);
+    expect(
+      metrics.peakPairContacts.some((contacts) => contacts > 0),
+    ).toBe(true);
+    expect(metrics.closedCommandRadians).toBeGreaterThan(
+      metrics.targetClosedAngleRadians + 0.12,
+    );
+    expect(metrics.closedCommandRadians).toBeCloseTo(
+      metrics.firstContactCommandRadians,
+      6,
+    );
+    expect(metrics.contactTicks.some((ticks) => ticks > 0)).toBe(true);
+
+    expect(metrics.reopenedPairContacts).toEqual([0, 0, 0]);
+    expect(metrics.maxReopenErrorRadians).toBeLessThan(0.03);
+  }, 12_000);
 });
