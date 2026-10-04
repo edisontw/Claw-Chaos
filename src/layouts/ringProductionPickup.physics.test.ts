@@ -69,6 +69,7 @@ interface GripDiagnostic {
   label?: string;
   closedAngleRadians?: number;
   retainingTorque?: number;
+  fingerLowerPadRadiusMeters?: number;
 }
 
 interface RingPickupMetrics {
@@ -112,6 +113,7 @@ interface RingPickupMetrics {
   gripDiagnosticLabel: string;
   closedAngleRadians: number;
   retainingTorque: number;
+  fingerLowerPadRadiusMeters: number;
   success: boolean;
 }
 
@@ -278,6 +280,9 @@ async function simulateProductionRingPickup(
   const retainingTorque =
     gripDiagnostic.retainingTorque ??
     CABINET_PLAY_TUNING.retainingTorque;
+  const fingerLowerPadRadiusMeters =
+    gripDiagnostic.fingerLowerPadRadiusMeters ??
+    CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters;
   const verticalHomeOffset =
     CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
   const gantry = {
@@ -351,7 +356,7 @@ async function simulateProductionRingPickup(
       pivotWorld,
       createFingerSegments(
         createFingerPoints(fingerTheta),
-        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerLowerPadRadiusMeters,
       ),
       {
         friction: CABINET_PLAY_TUNING.fingerFriction,
@@ -849,6 +854,7 @@ async function simulateProductionRingPickup(
     gripDiagnosticLabel: gripDiagnostic.label ?? "production",
     closedAngleRadians,
     retainingTorque,
+    fingerLowerPadRadiusMeters,
     success,
   };
 }
@@ -942,7 +948,7 @@ describe("M09 production-claw ring pickup", () => {
     expect(coreToleranceSuccesses.length).toBeGreaterThanOrEqual(3);
   }, 10_000);
 
-  it("diagnoses Ring support Z tolerance before production tuning", async () => {
+  it("diagnoses lower-pad geometry tolerance before production tuning", async () => {
     const approaches: ApproachCase[] = [
       {
         label: "center",
@@ -969,31 +975,35 @@ describe("M09 production-claw ring pickup", () => {
         tangentOffsetMeters: -0.005,
       },
     ];
-    const supportOffsets = [0.005, 0.010, 0.015, 0.020, 0.025];
+    const padRadiiMeters = [0.011, 0.012, 0.013, 0.014];
     const sweep: Array<{
-      zOffsetMeters: number;
+      padRadiusMeters: number;
       successes: number;
       results: RingPickupMetrics[];
     }> = [];
 
-    for (const zOffsetMeters of supportOffsets) {
+    for (const padRadiusMeters of padRadiiMeters) {
       const results: RingPickupMetrics[] = [];
       for (const approach of approaches) {
         results.push(
-          await simulateProductionRingPickup(approach, {
-            label: `support-z+${Math.round(zOffsetMeters * 1000)}mm`,
-            primaryZOffsetMeters: zOffsetMeters,
-          }),
+          await simulateProductionRingPickup(
+            approach,
+            { label: "production" },
+            {
+              label: `pad-${Math.round(padRadiusMeters * 1000)}mm`,
+              fingerLowerPadRadiusMeters: padRadiusMeters,
+            },
+          ),
         );
       }
       sweep.push({
-        zOffsetMeters,
+        padRadiusMeters,
         successes: results.filter((result) => result.success).length,
         results,
       });
     }
 
-    console.log("M09 Ring support Z sweep", JSON.stringify(sweep));
-    expect(sweep).toHaveLength(supportOffsets.length);
+    console.log("M09 Ring lower-pad sweep", JSON.stringify(sweep));
+    expect(sweep).toHaveLength(padRadiiMeters.length);
   }, 30_000);
 });
