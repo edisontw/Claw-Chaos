@@ -89,6 +89,14 @@ describe("Cabinet play tuning", () => {
       CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
     ).toBe(0.010);
     expect(
+      CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
+    ).toBe(0.014);
+    expect(
+      CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
+    ).toBeGreaterThan(
+      CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+    );
+    expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBeGreaterThan(
       M04_PLAY_CONFIG.pickupLiftDistanceMeters,
