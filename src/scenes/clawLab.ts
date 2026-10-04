@@ -352,15 +352,28 @@ export function createFingerPoints(
   theta: number,
   nodes: readonly { radial: number; down: number }[] =
     CLAW_LAB_CONFIG.fingerNodes,
+  terminalTangentialOffsetMeters = 0,
 ): Vec3[] {
   const radialX = Math.cos(theta);
   const radialZ = Math.sin(theta);
+  const tangentX = -Math.sin(theta);
+  const tangentZ = Math.cos(theta);
 
-  return nodes.map((node) => ({
-    x: radialX * node.radial,
-    y: -node.down,
-    z: radialZ * node.radial,
-  }));
+  return nodes.map((node, index) => {
+    const terminalOffset =
+      index === nodes.length - 1
+        ? terminalTangentialOffsetMeters
+        : 0;
+    return {
+      x:
+        radialX * node.radial +
+        tangentX * terminalOffset,
+      y: -node.down,
+      z:
+        radialZ * node.radial +
+        tangentZ * terminalOffset,
+    };
+  });
 }
 
 export function createFingerVisual(
