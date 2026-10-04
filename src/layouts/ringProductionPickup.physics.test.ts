@@ -675,10 +675,10 @@ async function simulateProductionRingPickup(
         pairs,
       );
       if (pairs > 0) {
-        fingerContactTicks[index] += 1;
+        fingerContactTicks[index] = (fingerContactTicks[index] ?? 0) + 1;
         firstFingerContactPhase[index] ??= play.phase;
         if (play.phase === "RETURNING") {
-          returningContactTicks[index] += 1;
+          returningContactTicks[index] = (returningContactTicks[index] ?? 0) + 1;
         }
       }
     }
