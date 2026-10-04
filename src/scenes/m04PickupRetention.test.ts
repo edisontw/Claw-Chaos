@@ -395,6 +395,7 @@ async function simulateM04PickupRetention(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
       },
       playConfig,
       0,
@@ -460,6 +461,7 @@ async function simulateM04PickupRetention(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
         holdBoostRequested: boostRequested,
       },
       playConfig,
