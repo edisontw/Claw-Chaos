@@ -200,17 +200,36 @@ describe("M09 ring hook physics", () => {
     // that a claw-finger-sized hook has physical access and can lift.
     const hookTarget = targets[0]!;
     const hookMetric = metrics[0]!;
-    const beforeLiftY = hookTarget.prize.body.translation().y;
+    const ringCenter = hookTarget.prize.body.translation();
+    const beforeLiftY = ringCenter.y;
+    const towardCenterX =
+      ringCenter.x - hookMetric.highestPoint.x;
+    const towardCenterZ =
+      ringCenter.z - hookMetric.highestPoint.z;
+    const towardCenterLength = Math.hypot(
+      towardCenterX,
+      towardCenterZ,
+    );
+    const inwardOffsetMeters = 0.014;
+    const hookX =
+      hookMetric.highestPoint.x +
+      (towardCenterX / towardCenterLength) *
+        inwardOffsetMeters;
+    const hookZ =
+      hookMetric.highestPoint.z +
+      (towardCenterZ / towardCenterLength) *
+        inwardOffsetMeters;
     const hookHalfY = 0.004;
     const hookStartY =
       hookMetric.highRimUndersideMeters - hookHalfY - 0.002;
-    const hook = physics.createKinematicCuboid(
+    const hook = physics.createKinematicCylinder(
       {
-        x: hookMetric.highestPoint.x,
+        x: hookX,
         y: hookStartY,
-        z: hookMetric.highestPoint.z,
+        z: hookZ,
       },
-      { x: 0.008, y: hookHalfY, z: 0.008 },
+      hookHalfY,
+      0.012,
       0.85,
     );
 
@@ -218,9 +237,9 @@ describe("M09 ring hook physics", () => {
     const liftTicks = 72;
     for (let tick = 1; tick <= liftTicks; tick += 1) {
       hook.setNextKinematicTranslation({
-        x: hookMetric.highestPoint.x,
+        x: hookX,
         y: hookStartY + liftMeters * (tick / liftTicks),
-        z: hookMetric.highestPoint.z,
+        z: hookZ,
       });
       physics.step();
     }
@@ -235,6 +254,9 @@ describe("M09 ring hook physics", () => {
         afterLiftY,
         ringLiftMeters,
         hookStartY,
+        hookX,
+        hookZ,
+        inwardOffsetMeters,
         liftMeters,
       }),
     );
