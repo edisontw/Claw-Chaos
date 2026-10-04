@@ -1001,13 +1001,23 @@ describe("M04 physical pickup-to-retaining force transition", () => {
 
     const candidates = [
       { label: "plastic_0p42", materialId: "material/plastic" },
-      {
-        label: "cardboard_0p56",
-        materialId: "material/cardboard_matte",
-      },
-      { label: "fabric_0p62", materialId: "material/fabric" },
-      { label: "plush_0p70", materialId: "material/plush" },
       { label: "rubber_0p82", materialId: "material/rubber" },
+      {
+        label: "ring_grip_0p95",
+        materialId: "material/ring_grip_095",
+      },
+      {
+        label: "ring_grip_1p10",
+        materialId: "material/ring_grip_110",
+      },
+      {
+        label: "ring_grip_1p25",
+        materialId: "material/ring_grip_125",
+      },
+      {
+        label: "ring_grip_1p40",
+        materialId: "material/ring_grip_140",
+      },
     ] as const;
 
     const results = [];
