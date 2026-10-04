@@ -246,6 +246,8 @@ describe("M09 ring hook physics", () => {
       0.85,
     );
 
+    hookTarget.prize.body.wakeUp();
+
     const liftMeters = 0.050;
     const liftTicks = 72;
     for (let tick = 1; tick <= liftTicks; tick += 1) {
