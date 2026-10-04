@@ -72,6 +72,8 @@ interface EmptyCloseMetrics {
   contactTicks: number[];
   finalPairContacts: number[];
   commandRadians: number;
+  closedCommandRadians: number;
+  maxClosureOverdriveRadians: number;
   fingerTravelRadians: number[];
   travelSpreadRadians: number;
   reopenedPairContacts: number[];
@@ -256,7 +258,13 @@ async function simulateEmptyClose(
   const finalPairContacts = pairs.map(([a, b]) =>
     physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
   );
+  const closedCommandRadians = command;
   const closedJointAngles = physicalFingerAngles();
+  const maxClosureOverdriveRadians = Math.max(
+    ...closedJointAngles.map((angle) =>
+      Math.abs(closedCommandRadians - angle),
+    ),
+  );
   const finalHubRotation = hub.rotation();
   const fingerTravelRadians = fingers.map((finger, index) =>
     angularDistance(
@@ -313,6 +321,8 @@ async function simulateEmptyClose(
     contactTicks,
     finalPairContacts,
     commandRadians: command,
+    closedCommandRadians,
+    maxClosureOverdriveRadians,
     fingerTravelRadians,
     travelSpreadRadians,
     reopenedPairContacts,
@@ -326,28 +336,25 @@ async function simulateEmptyClose(
 }
 
 describe("M09 production claw empty-close self contact", () => {
-  it("measures close contact and reliable reopening after sibling-finger contact", async () => {
-    const angles = [
-      -0.63,
-      -0.55,
-      -0.50,
-      -0.45,
-      -0.42,
-      -0.40,
-      -0.38,
-      -0.36,
-    ];
-    const metrics = [];
-
-    for (const angle of angles) {
-      metrics.push(await simulateEmptyClose(angle, 0));
-    }
+  it("limits self-contact overdrive and reopens cleanly after an empty close", async () => {
+    const metrics = await simulateEmptyClose(
+      CABINET_PLAY_TUNING.closedAngleRadians,
+      0,
+    );
 
     console.log(
-      "M09 empty-close symmetry sweep",
+      "M09 production empty-close recovery",
       JSON.stringify(metrics),
     );
 
-    expect(metrics).toHaveLength(angles.length);
-  }, 20_000);
+    expect(metrics.travelSpreadRadians).toBeLessThan(0.005);
+    expect(metrics.maxClosureOverdriveRadians).toBeLessThan(0.10);
+    expect(
+      metrics.finalPairContacts.every((value) => value <= 2),
+    ).toBe(true);
+    expect(metrics.reopenedPairContacts).toEqual([0, 0, 0]);
+    expect(
+      metrics.reopenedJointAngles.every((angle) => angle > 0.30),
+    ).toBe(true);
+  }, 10_000);
 });
