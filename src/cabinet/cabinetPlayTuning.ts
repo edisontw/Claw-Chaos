@@ -12,7 +12,7 @@ export const CABINET_PLAY_TUNING = {
   retainingTorque: 0.014,
   holdBoostTorque: 0.018,
   pickupLiftDistanceMeters: 0.18,
-  closedAngleRadians: -0.45,
+  closedAngleRadians: -0.50,
   fingerLowerPadRadiusMeters: 0.010,
   fingerLowerPadLengthMeters: 0.012,
   chuteTrimHalfWidth: 0.012,
