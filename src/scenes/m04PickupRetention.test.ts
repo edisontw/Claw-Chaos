@@ -57,6 +57,7 @@ interface PickupRetentionProfile {
   supportOffsetX?: number;
   supportOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerLowerPadSegmentCount?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
@@ -130,6 +131,8 @@ async function simulateM04PickupRetention(
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerLowerPadSegmentCount =
+    profile.fingerLowerPadSegmentCount ?? 1;
   const fingerNodes =
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
@@ -276,6 +279,7 @@ async function simulateM04PickupRetention(
       createFingerSegments(
         createFingerPoints(theta, fingerNodes),
         fingerLowerPadRadiusMeters,
+        fingerLowerPadSegmentCount,
       ),
       {
         friction: fingerFriction,
@@ -1329,6 +1333,96 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
 
     expect(results.every((result) => result.topReached)).toBe(true);
+  }, 20000);
+
+
+  it("scans padded J-hook contact surfaces for ring retention", async () => {
+    const base = CLAW_LAB_CONFIG.fingerNodes;
+    const candidates = [
+      {
+        label: "j20-thin",
+        nodes: [...base, { radial: 0.070, down: 0.205 }],
+        padSegments: 1,
+      },
+      {
+        label: "j20-wide2",
+        nodes: [...base, { radial: 0.070, down: 0.205 }],
+        padSegments: 2,
+      },
+      {
+        label: "jwide-wide2",
+        nodes: [...base, { radial: 0.075, down: 0.210 }],
+        padSegments: 2,
+      },
+      {
+        label: "j25-wide2",
+        nodes: [...base, { radial: 0.075, down: 0.200 }],
+        padSegments: 2,
+      },
+      {
+        label: "j30-wide2",
+        nodes: [...base, { radial: 0.080, down: 0.195 }],
+        padSegments: 2,
+      },
+    ] as const;
+    const theta = Math.PI * 4 / 3;
+    const entry = base[3]!;
+    const entryRadius =
+      CLAW_LAB_CONFIG.fingerPivotRadius +
+      entry.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+      entry.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+    const prizeOffsetX = Math.cos(theta) * entryRadius;
+    const prizeOffsetZ = Math.sin(theta) * entryRadius;
+    const results = [];
+
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerLowerPadSegmentCount: candidate.padSegments,
+        fingerNodes: candidate.nodes,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        label: candidate.label,
+        padSegments: candidate.padSegments,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+      });
+    }
+
+    console.log(
+      "M09 ring padded J-hook sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
   }, 20000);
 
 });
