@@ -373,6 +373,50 @@ jobs:
 
           echo "Preview/browser M09 ring layout smoke passed: $ASSET_PATH"
 
+          CHUTE_READY=0
+          for attempt in 1 2 3; do
+            CHUTE_DOM_FILE="/tmp/claw-chaos-chute-dom-$attempt.html"
+            CHUTE_LOG_FILE="/tmp/claw-chaos-chute-browser-$attempt.log"
+
+            timeout 30s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=8000 \
+              --dump-dom \
+              "http://127.0.0.1:4173/Claw-Chaos/?scene=cabinet-lab&layout=chute&seed=ci-m09-chute" \
+              > "$CHUTE_DOM_FILE" 2> "$CHUTE_LOG_FILE" || true
+
+            if grep -q 'data-simulation-ready="true"' "$CHUTE_DOM_FILE" &&
+               grep -q 'data-physics-backend="native-wasm"' "$CHUTE_DOM_FILE" &&
+               grep -q 'data-scene-id="cabinet-lab"' "$CHUTE_DOM_FILE" &&
+               grep -q 'data-layout-id="chute"' "$CHUTE_DOM_FILE" &&
+               grep -q 'data-player-view="active"' "$CHUTE_DOM_FILE" &&
+               ! grep -q 'player-reticle' "$CHUTE_DOM_FILE" &&
+               grep -q 'data-machine-audio="armed"' "$CHUTE_DOM_FILE"; then
+              CHUTE_READY=1
+              break
+            fi
+
+            echo "Headless browser chute smoke attempt $attempt did not reach readiness."
+            sleep 1
+          done
+
+          if [ "$CHUTE_READY" -ne 1 ]; then
+            echo "Headless browser failed to initialize M09 chute layout."
+            for file in /tmp/claw-chaos-chute-browser-*.log; do
+              echo "===== $file ====="
+              cat "$file"
+            done
+            exit 1
+          fi
+
+          echo "Preview/browser M09 chute layout smoke passed: $ASSET_PATH"
+
           ROOT_READY=0
           for attempt in 1 2 3; do
             ROOT_DOM_FILE="/tmp/claw-chaos-root-dom-$attempt.html"
