@@ -116,7 +116,7 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       supports.every(
         (placement) =>
-          placement.prizeId === "prize/box_tall",
+          placement.prizeId === "prize/cube_small",
       ),
     ).toBe(true);
     expect(targets[0]!.x).toBeLessThan(-0.15);
