@@ -39,6 +39,11 @@ export interface CapsuleSegmentSpec {
   radius: number;
 }
 
+export interface SpherePadSpec {
+  center: Vec3;
+  radius: number;
+}
+
 export type CompoundColliderSpec =
   | {
       shape: "sphere";
@@ -562,6 +567,7 @@ export class PhysicsRuntime {
     origin: Vec3,
     segments: readonly CapsuleSegmentSpec[],
     material: CuboidMaterialOptions = {},
+    spherePads: readonly SpherePadSpec[] = [],
   ): RigidBodyHandle {
     const body = this.world.createRigidBody(
       RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z),
@@ -595,6 +601,19 @@ export class PhysicsRuntime {
         collider = collider.setDensity(material.density);
       }
 
+      this.world.createCollider(collider, body);
+    }
+
+    for (const pad of spherePads) {
+      const collider = RAPIER.ColliderDesc.ball(pad.radius)
+        .setTranslation(
+          pad.center.x,
+          pad.center.y,
+          pad.center.z,
+        )
+        .setFriction(material.friction ?? 0.7)
+        .setRestitution(material.restitution ?? 0.08)
+        .setDensity(0);
       this.world.createCollider(collider, body);
     }
 
