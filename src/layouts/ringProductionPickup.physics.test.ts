@@ -835,27 +835,44 @@ describe("M09 production-claw ring pickup", () => {
     expect(successful.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("diagnoses dynamic support geometries before production tuning", async () => {
-    const approach: ApproachCase = {
-      label: "finger-2 centered-high-side",
-      fingerIndex: 2,
-      highSideFraction: 0.35,
-      tangentOffsetMeters: 0,
-    };
+  it("diagnoses support geometry against multiple production closing trajectories", async () => {
+    const approaches: ApproachCase[] = [
+      {
+        label: "finger-1 centered-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.35,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-1 deeper-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.52,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-2 centered-high-side",
+        fingerIndex: 2,
+        highSideFraction: 0.35,
+        tangentOffsetMeters: 0,
+      },
+    ];
     const supportCases: SupportCase[] = [
       { label: "baseline" },
+      {
+        label: "single-10mm-closer",
+        primaryZOffsetMeters: 0.010,
+      },
       {
         label: "single-15mm-closer",
         primaryZOffsetMeters: 0.015,
       },
       {
-        label: "single-25mm-closer",
-        primaryZOffsetMeters: 0.025,
+        label: "single-20mm-closer",
+        primaryZOffsetMeters: 0.020,
       },
       {
-        label: "two-lateral-50mm",
-        primaryXOffsetMeters: -0.050,
-        secondaryXOffsetMeters: 0.050,
+        label: "single-25mm-closer",
+        primaryZOffsetMeters: 0.025,
       },
       {
         label: "two-lateral-50mm-15mm-closer",
@@ -867,10 +884,12 @@ describe("M09 production-claw ring pickup", () => {
     ];
 
     const metrics: RingPickupMetrics[] = [];
-    for (const supportCase of supportCases) {
-      metrics.push(
-        await simulateProductionRingPickup(approach, supportCase),
-      );
+    for (const approach of approaches) {
+      for (const supportCase of supportCases) {
+        metrics.push(
+          await simulateProductionRingPickup(approach, supportCase),
+        );
+      }
     }
 
     console.log(
