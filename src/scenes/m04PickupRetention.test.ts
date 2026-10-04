@@ -65,6 +65,9 @@ interface PickupRetentionProfile {
   prizeOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
   fingerTipPadRadiusMeters?: number;
+  fingerTipToeInwardMeters?: number;
+  fingerTipToeRiseMeters?: number;
+  fingerTipToeRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
@@ -138,6 +141,13 @@ async function simulateM04PickupRetention(
   const fingerTipPadRadiusMeters =
     profile.fingerTipPadRadiusMeters ??
     fingerLowerPadRadiusMeters;
+  const fingerTipToeInwardMeters =
+    profile.fingerTipToeInwardMeters ?? 0;
+  const fingerTipToeRiseMeters =
+    profile.fingerTipToeRiseMeters ?? 0;
+  const fingerTipToeRadiusMeters =
+    profile.fingerTipToeRadiusMeters ??
+    CLAW_LAB_CONFIG.fingerRodRadius;
   const fingerNodes =
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
@@ -298,6 +308,15 @@ async function simulateM04PickupRetention(
     );
     const fingerTip =
       fingerPoints[fingerPoints.length - 1]!;
+    const toeEnd = {
+      x:
+        fingerTip.x -
+        radialX * fingerTipToeInwardMeters,
+      y: fingerTip.y + fingerTipToeRiseMeters,
+      z:
+        fingerTip.z -
+        radialZ * fingerTipToeInwardMeters,
+    };
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
@@ -315,6 +334,15 @@ async function simulateM04PickupRetention(
             {
               center: fingerTip,
               radius: fingerTipPadRadiusMeters,
+            },
+          ]
+        : [],
+      fingerTipToeInwardMeters > 1e-6
+        ? [
+            {
+              start: fingerTip,
+              end: toeEnd,
+              radius: fingerTipToeRadiusMeters,
             },
           ]
         : [],
@@ -909,7 +937,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   }, 15000);
 
-  it("sweeps inward-curved production finger tips for Ring retention", async () => {
+  it("sweeps small inward-upturned toe geometry for Ring retention", async () => {
     const layout = createCabinetLayout(
       "ring",
       "retention-regression",
@@ -961,47 +989,54 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       ],
     };
 
-    const baseNodes = CLAW_LAB_CONFIG.fingerNodes;
     const candidates = [
       {
-        label: "baseline_50mm",
-        tipRadialMeters: 0.050,
+        label: "baseline",
+        toeInwardMeters: 0,
+        toeRiseMeters: 0,
+        toeRadiusMeters: 0.006,
         retainingTorque: 0.014,
       },
       {
-        label: "hook_40mm",
-        tipRadialMeters: 0.040,
+        label: "toe12_up4",
+        toeInwardMeters: 0.012,
+        toeRiseMeters: 0.004,
+        toeRadiusMeters: 0.006,
         retainingTorque: 0.014,
       },
       {
-        label: "hook_35mm",
-        tipRadialMeters: 0.035,
+        label: "toe18_up6",
+        toeInwardMeters: 0.018,
+        toeRiseMeters: 0.006,
+        toeRadiusMeters: 0.006,
         retainingTorque: 0.014,
       },
       {
-        label: "hook_30mm",
-        tipRadialMeters: 0.030,
+        label: "toe24_up8",
+        toeInwardMeters: 0.024,
+        toeRiseMeters: 0.008,
+        toeRadiusMeters: 0.006,
         retainingTorque: 0.014,
       },
       {
-        label: "hook_35mm_ret08",
-        tipRadialMeters: 0.035,
-        retainingTorque: 0.08,
+        label: "toe18_up6_ret05",
+        toeInwardMeters: 0.018,
+        toeRiseMeters: 0.006,
+        toeRadiusMeters: 0.006,
+        retainingTorque: 0.05,
       },
     ] as const;
 
     const results = [];
     for (const candidate of candidates) {
-      const fingerNodes = [
-        ...baseNodes.slice(0, -1),
-        {
-          radial: candidate.tipRadialMeters,
-          down: baseNodes[baseNodes.length - 1]!.down,
-        },
-      ];
       const metrics = await simulateM04PickupRetention({
         ...common,
-        fingerNodes,
+        fingerTipToeInwardMeters:
+          candidate.toeInwardMeters,
+        fingerTipToeRiseMeters:
+          candidate.toeRiseMeters,
+        fingerTipToeRadiusMeters:
+          candidate.toeRadiusMeters,
         retainingTorque: candidate.retainingTorque,
       });
       results.push({
@@ -1025,7 +1060,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "M09 Ring curved-tip candidate sweep",
+      "M09 Ring toe candidate sweep",
       JSON.stringify(results),
     );
   }, 30000);
