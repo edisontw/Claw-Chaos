@@ -97,4 +97,16 @@ describe("Cabinet play tuning", () => {
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBe(0.18);
   });
+
+  it("keeps the original claw entry path and adds only a terminal crook", () => {
+    expect(
+      CABINET_PLAY_TUNING.fingerNodes.slice(0, 4),
+    ).toEqual([...CLAW_LAB_CONFIG.fingerNodes]);
+    expect(
+      CABINET_PLAY_TUNING.fingerNodes.slice(4),
+    ).toEqual([
+      { radial: 0.09, down: 0.205 },
+      { radial: 0.082, down: 0.183 },
+    ]);
+  });
 });
