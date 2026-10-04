@@ -23,6 +23,7 @@ import {
 import {
   M02_FINGER_TRANSPORT_CONFIG,
   M02_GANTRY_CONFIG,
+  advanceFingerCommandWithSelfContactGuard,
 } from "../scenes/gantryLab";
 import {
   advanceGantryMotionTowardPosition,
@@ -594,13 +595,31 @@ async function simulateProductionRingPickup(
     applyStabilizer();
 
     const closing = m04FingerShouldClose(play);
-    fingerCommand = advanceMotorCommand(
+    const siblingFingerContact =
+      closing &&
+      (
+        physics.countBodyContactPairs(
+          fingers[0]!,
+          fingers[1]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[1]!,
+          fingers[2]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[2]!,
+          fingers[0]!,
+        ) > 0
+      );
+    fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
       closing
         ? closedAngleRadians
         : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
+      closing,
+      siblingFingerContact,
     );
 
     play = advanceM04PlayState(
