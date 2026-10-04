@@ -336,6 +336,7 @@ export function createCabinetLabScene(
             placement.yOffsetMeters,
           z: placement.z,
         },
+        rotationXRadians: placement.rotationXRadians,
         rotationYRadians: placement.rotationYRadians,
         variantSeed: placement.variantSeed,
         enableContactAudio: true,
@@ -465,7 +466,7 @@ export function createCabinetLabScene(
                 ? "Bridge layout     two supports + movable elevated flat-box span"
                 : layout.id === "edge"
                   ? "Edge layout       side/back wall targets beyond direct carriage center"
-                  : "Ring layout       true hollow loops for finger-through hook play",
+                  : "Ring layout       tilted hollow loops propped for real hook-and-lift play",
       ];
     },
   };
