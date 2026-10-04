@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
+import { createCabinetLayout } from "../layouts/cabinetLayouts";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
 import type {
@@ -35,6 +36,16 @@ import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
 
 const M04_TEST_BALL_HEIGHT_OFFSET_METERS = 0.015;
 
+interface AuxiliaryPrizePlacement {
+  prizeDefinitionId: string;
+  offsetX: number;
+  offsetZ: number;
+  yOffsetMeters?: number;
+  rotationXRadians?: number;
+  rotationYRadians?: number;
+  variantSeed?: string;
+}
+
 interface PickupRetentionProfile {
   holdBoostTorque?: number;
   fingerFriction?: number;
@@ -47,7 +58,9 @@ interface PickupRetentionProfile {
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
+  prizeRotationXRadians?: number;
   prizeRotationYRadians?: number;
+  prizeYOffsetMeters?: number;
   prizeOffsetX?: number;
   prizeOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
@@ -56,7 +69,9 @@ interface PickupRetentionProfile {
   autoClosePayoutMeters?: number;
   pickupLiftDistanceMeters?: number;
   topHoldSeconds?: number;
+  initialSettleSeconds?: number;
   supportMode?: "pedestal" | "flat-deck";
+  auxiliaryPrizes?: readonly AuxiliaryPrizePlacement[];
 }
 
 interface PickupRetentionMetrics {
@@ -108,8 +123,12 @@ async function simulateM04PickupRetention(
       y: ballRadiusMeters,
       z: ballRadiusMeters,
     };
+  const prizeRotationXRadians =
+    profile.prizeRotationXRadians ?? 0;
   const prizeRotationYRadians =
     profile.prizeRotationYRadians ?? 0;
+  const prizeYOffsetMeters =
+    profile.prizeYOffsetMeters ?? 0.002;
   const prizeOffsetX = profile.prizeOffsetX ?? 0;
   const prizeOffsetZ = profile.prizeOffsetZ ?? 0;
   const fingerLowerPadRadiusMeters =
@@ -126,7 +145,10 @@ async function simulateM04PickupRetention(
     profile.pickupLiftDistanceMeters ??
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const topHoldSeconds = profile.topHoldSeconds ?? 0.6;
+  const initialSettleSeconds =
+    profile.initialSettleSeconds ?? 1;
   const supportMode = profile.supportMode ?? "pedestal";
+  const auxiliaryPrizes = profile.auxiliaryPrizes ?? [];
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -152,7 +174,7 @@ async function simulateM04PickupRetention(
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
         supportHalfHeight +
-        0.002
+        prizeYOffsetMeters
       : bottomHubY -
         m01HubToBallCenter +
         M04_TEST_BALL_HEIGHT_OFFSET_METERS;
@@ -184,6 +206,35 @@ async function simulateM04PickupRetention(
       claw.pt001PedestalRadius,
       0.75,
     );
+  }
+
+  if (supportMode === "flat-deck") {
+    for (const auxiliary of auxiliaryPrizes) {
+      const definition = getPrizeDefinition(
+        auxiliary.prizeDefinitionId,
+      );
+      createPrize(
+        physics,
+        definition,
+        {
+          position: {
+            x: auxiliary.offsetX,
+            y:
+              M06_CABINET_CONFIG.playDeckY +
+              definition.dimensions.y * 0.5 +
+              (auxiliary.yOffsetMeters ?? 0.002),
+            z: auxiliary.offsetZ,
+          },
+          rotationXRadians:
+            auxiliary.rotationXRadians ?? 0,
+          rotationYRadians:
+            auxiliary.rotationYRadians ?? 0,
+          variantSeed:
+            auxiliary.variantSeed ??
+            "m04-auxiliary-regression",
+        },
+      );
+    }
   }
 
   const reelAnchor = physics.createKinematicBody({
@@ -284,6 +335,7 @@ async function simulateM04PickupRetention(
             y: ballCenterY,
             z: prizeOffsetZ,
           },
+          rotationXRadians: prizeRotationXRadians,
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
         },
@@ -509,7 +561,11 @@ async function simulateM04PickupRetention(
       Math.abs(ball.translation().z) < 0.5;
   };
 
-  for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
+  for (
+    let tick = 0;
+    tick < Math.ceil(initialSettleSeconds * PHYSICS_HZ);
+    tick += 1
+  ) {
     step();
   }
 
@@ -828,6 +884,80 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         results,
       }),
     );
+  }, 15000);
+
+  it("diagnoses production one-prong Ring retention across retaining torque levels", async () => {
+    const layout = createCabinetLayout(
+      "ring",
+      "retention-regression",
+    );
+    const target = layout.placements.find(
+      (placement) =>
+        placement.role === "ring_target" &&
+        placement.x > 0,
+    )!;
+    const support = layout.placements.find(
+      (placement) =>
+        placement.role === "ring_support" &&
+        placement.x > 0,
+    )!;
+
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque:
+        CABINET_PLAY_TUNING.closePickupTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      topHoldSeconds: 1.3,
+      initialSettleSeconds: 4,
+      supportMode: "flat-deck" as const,
+      prizeDefinitionId: target.prizeId,
+      prizeRotationXRadians: target.rotationXRadians,
+      prizeRotationYRadians: target.rotationYRadians,
+      prizeYOffsetMeters: target.yOffsetMeters,
+      prizeOffsetX: target.x,
+      prizeOffsetZ: target.z,
+      auxiliaryPrizes: [
+        {
+          prizeDefinitionId: support.prizeId,
+          offsetX: support.x,
+          offsetZ: support.z,
+          yOffsetMeters: support.yOffsetMeters,
+          rotationXRadians: support.rotationXRadians,
+          rotationYRadians: support.rotationYRadians,
+          variantSeed: support.variantSeed,
+        },
+      ],
+    };
+
+    const current = await simulateM04PickupRetention({
+      ...common,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
+    });
+    const strongerRetention =
+      await simulateM04PickupRetention({
+        ...common,
+        retainingTorque: 0.08,
+      });
+
+    console.log(
+      "M09 production Ring retention diagnostic",
+      JSON.stringify({
+        currentTorque:
+          CABINET_PLAY_TUNING.retainingTorque,
+        candidateTorque: 0.08,
+        current,
+        strongerRetention,
+      }),
+    );
+
+    expect(current.finiteAndBounded).toBe(true);
+    expect(strongerRetention.finiteAndBounded).toBe(true);
   }, 15000);
 
 });
