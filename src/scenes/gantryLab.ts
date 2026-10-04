@@ -179,6 +179,7 @@ export interface GantryGripProfile {
   pickupLiftDistanceMeters?: number;
   closedAngleRadians?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerTipPadRadiusMeters?: number;
 }
 
 export interface GantryLabOptions {
@@ -235,6 +236,9 @@ export function createGantryLabScene(
   const fingerLowerPadRadiusMeters =
     options.gripProfile?.fingerLowerPadRadiusMeters ??
     claw.fingerRodRadius;
+  const fingerTipPadRadiusMeters =
+    options.gripProfile?.fingerTipPadRadiusMeters ??
+    fingerLowerPadRadiusMeters;
   const gantry =
     verticalHomeOffset === 0
       ? M02_GANTRY_CONFIG
@@ -558,11 +562,13 @@ export function createGantryLabScene(
       Math.max(
         claw.fingerTipVisualRadius,
         fingerLowerPadRadiusMeters,
+        fingerTipPadRadiusMeters,
       ),
       fingerLowerPadRadiusMeters,
     );
     scene.add(visual);
 
+    const tip = points[points.length - 1]!;
     const body = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
@@ -574,6 +580,15 @@ export function createGantryLabScene(
         restitution: claw.fingerRestitution,
         density: claw.fingerDensity,
       },
+      fingerTipPadRadiusMeters >
+      fingerLowerPadRadiusMeters + 1e-6
+        ? [
+            {
+              center: tip,
+              radius: fingerTipPadRadiusMeters,
+            },
+          ]
+        : [],
     );
     const joint = physics.createRevoluteJoint(hubBody, body, {
       anchor1: pivotLocal,
