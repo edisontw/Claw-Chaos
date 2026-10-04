@@ -116,7 +116,7 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       supports.every(
         (placement) =>
-          placement.prizeId === "prize/box_tall",
+          placement.prizeId === "prize/cube_small",
       ),
     ).toBe(true);
     expect(targets[0]!.x).toBeLessThan(-0.15);
@@ -132,8 +132,8 @@ describe("M09 cabinet layout foundation", () => {
     const rightSupport = supports.find(
       (placement) => placement.x > 0,
     )!;
-    expect(leftSupport.z).toBeLessThan(-0.13);
-    expect(rightSupport.z).toBeGreaterThan(0.13);
+    expect(leftSupport.z).toBeLessThan(-0.14);
+    expect(rightSupport.z).toBeGreaterThan(0.14);
   });
 
   it("keeps ring seed jitter small enough to preserve clear hole access", () => {
