@@ -575,6 +575,7 @@ async function simulateProductionRingPickup(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
         reelAtTop,
         homeReached,
         holdBoostRequested: false,
@@ -634,6 +635,7 @@ async function simulateProductionRingPickup(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
         reelAtTop,
         homeReached,
         holdBoostRequested: false,
