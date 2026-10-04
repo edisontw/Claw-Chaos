@@ -63,6 +63,12 @@ interface SupportCase {
   secondaryZOffsetMeters?: number;
 }
 
+interface GripDiagnostic {
+  label?: string;
+  closedAngleRadians?: number;
+  retainingTorque?: number;
+}
+
 interface RingPickupMetrics {
   label: string;
   fingerIndex: number;
@@ -76,6 +82,9 @@ interface RingPickupMetrics {
   fingerContactTicks: number[];
   peakFingerContactPairs: number[];
   firstFingerContactPhase: Array<string | null>;
+  contactAtRetainingStart: boolean[];
+  contactAtReturningStart: boolean[];
+  returningContactTicks: number[];
   closePlanarDisplacementMeters: number;
   displacementAtClosedAtDepthMeters: number;
   displacementAtPickupStartMeters: number;
@@ -94,6 +103,9 @@ interface RingPickupMetrics {
   escapedPhase: string | null;
   poseCollapsePhase: string | null;
   supportCaseLabel: string;
+  gripDiagnosticLabel: string;
+  closedAngleRadians: number;
+  retainingTorque: number;
   success: boolean;
 }
 
@@ -136,6 +148,7 @@ function horizontalUnit(vector: {
 async function simulateProductionRingPickup(
   approach: ApproachCase,
   supportCase: SupportCase = { label: "production" },
+  gripDiagnostic: GripDiagnostic = {},
 ): Promise<RingPickupMetrics> {
   const physics = await PhysicsRuntime.create();
   createCabinetPhysics(physics);
@@ -251,6 +264,12 @@ async function simulateProductionRingPickup(
   expect(carriageZ).toBeLessThanOrEqual(M02_GANTRY_CONFIG.zMax);
 
   const claw = CLAW_LAB_CONFIG;
+  const closedAngleRadians =
+    gripDiagnostic.closedAngleRadians ??
+    CABINET_PLAY_TUNING.closedAngleRadians;
+  const retainingTorque =
+    gripDiagnostic.retainingTorque ??
+    CABINET_PLAY_TUNING.retainingTorque;
   const verticalHomeOffset =
     CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
   const gantry = {
@@ -339,7 +358,7 @@ async function simulateProductionRingPickup(
       anchor1: pivotLocal,
       anchor2: { x: 0, y: 0, z: 0 },
       axis: tangent,
-      minAngle: CABINET_PLAY_TUNING.closedAngleRadians,
+      minAngle: closedAngleRadians,
       maxAngle: claw.openAngle,
       initialTarget: claw.openAngle,
       stiffness: claw.motorStiffness,
@@ -378,7 +397,7 @@ async function simulateProductionRingPickup(
   const playConfig = {
     autoClosePayoutMeters:
       M04_PLAY_CONFIG.autoClosePayoutMeters + verticalHomeOffset,
-    closedAngleRadians: CABINET_PLAY_TUNING.closedAngleRadians,
+    closedAngleRadians,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
@@ -462,6 +481,9 @@ async function simulateProductionRingPickup(
     null,
     null,
   ];
+  const contactAtRetainingStart = [false, false, false];
+  const contactAtReturningStart = [false, false, false];
+  const returningContactTicks = [0, 0, 0];
   let closePlanarDisplacementMeters = 0;
   let displacementAtClosedAtDepthMeters = Number.NaN;
   let displacementAtPickupStartMeters = Number.NaN;
@@ -551,7 +573,7 @@ async function simulateProductionRingPickup(
     fingerCommand = advanceMotorCommand(
       fingerCommand,
       closing
-        ? CABINET_PLAY_TUNING.closedAngleRadians
+        ? closedAngleRadians
         : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
@@ -573,7 +595,7 @@ async function simulateProductionRingPickup(
     const forcePhase = m04ForcePhase(play);
     const activeTorque =
       forcePhase === "RETAINING"
-        ? CABINET_PLAY_TUNING.retainingTorque
+        ? retainingTorque
         : CABINET_PLAY_TUNING.closePickupTorque;
 
     for (const joint of joints) {
@@ -627,11 +649,14 @@ async function simulateProductionRingPickup(
       );
     }
 
-    for (let index = 0; index < fingers.length; index += 1) {
-      const pairs = physics.countBodyContactPairs(
-        fingers[index]!,
+    const currentContactPairs = fingers.map((finger) =>
+      physics.countBodyContactPairs(
+        finger,
         target.prize.body,
-      );
+      ),
+    );
+    for (let index = 0; index < fingers.length; index += 1) {
+      const pairs = currentContactPairs[index]!;
       peakFingerContactPairs[index] = Math.max(
         peakFingerContactPairs[index]!,
         pairs,
@@ -639,6 +664,9 @@ async function simulateProductionRingPickup(
       if (pairs > 0) {
         fingerContactTicks[index] += 1;
         firstFingerContactPhase[index] ??= play.phase;
+        if (play.phase === "RETURNING") {
+          returningContactTicks[index] += 1;
+        }
       }
     }
 
@@ -666,6 +694,10 @@ async function simulateProductionRingPickup(
     ) {
       retainingReached = true;
       liftAtRetainingStartMeters = lift;
+      for (let index = 0; index < currentContactPairs.length; index += 1) {
+        contactAtRetainingStart[index] =
+          currentContactPairs[index]! > 0;
+      }
     }
 
     if (
@@ -674,6 +706,10 @@ async function simulateProductionRingPickup(
     ) {
       returningReached = true;
       liftAtReturningStartMeters = lift;
+      for (let index = 0; index < currentContactPairs.length; index += 1) {
+        contactAtReturningStart[index] =
+          currentContactPairs[index]! > 0;
+      }
       returnStartRingPosition = {
         x: ringPosition.x,
         z: ringPosition.z,
@@ -695,13 +731,9 @@ async function simulateProductionRingPickup(
     }
 
     hadMeaningfulLift ||= lift > 0.015;
-    const anyContact = fingerContactTicks.some((count, index) => {
-      const pairs = physics.countBodyContactPairs(
-        fingers[index]!,
-        target.prize.body,
-      );
-      return count > 0 && pairs > 0;
-    });
+    const anyContact = currentContactPairs.some(
+      (pairs) => pairs > 0,
+    );
     if (
       escapedPhase === null &&
       hadMeaningfulLift &&
@@ -752,6 +784,9 @@ async function simulateProductionRingPickup(
     fingerContactTicks,
     peakFingerContactPairs,
     firstFingerContactPhase,
+    contactAtRetainingStart,
+    contactAtReturningStart,
+    returningContactTicks,
     closePlanarDisplacementMeters,
     displacementAtClosedAtDepthMeters,
     displacementAtPickupStartMeters,
@@ -770,6 +805,9 @@ async function simulateProductionRingPickup(
     escapedPhase,
     poseCollapsePhase,
     supportCaseLabel: supportCase.label,
+    gripDiagnosticLabel: gripDiagnostic.label ?? "production",
+    closedAngleRadians,
+    retainingTorque,
     success,
   };
 }
@@ -903,5 +941,69 @@ describe("M09 production-claw ring pickup", () => {
         result.peakLiftMeters > 0.015,
     );
     expect(stable.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("separates closed-angle capture from retaining-torque backdrive", async () => {
+    const approach: ApproachCase = {
+      label: "finger-1 deeper-high-side",
+      fingerIndex: 1,
+      highSideFraction: 0.52,
+      tangentOffsetMeters: 0,
+    };
+    const supportCase: SupportCase = {
+      label: "single-20mm-closer",
+      primaryZOffsetMeters: 0.020,
+    };
+    const diagnostics: GripDiagnostic[] = [
+      { label: "production" },
+      {
+        label: "closed-minus-0p50",
+        closedAngleRadians: -0.50,
+      },
+      {
+        label: "closed-minus-0p40",
+        closedAngleRadians: -0.40,
+      },
+      {
+        label: "closed-minus-0p30",
+        closedAngleRadians: -0.30,
+      },
+      {
+        label: "retain-0p03",
+        retainingTorque: 0.03,
+      },
+      {
+        label: "retain-0p06",
+        retainingTorque: 0.06,
+      },
+      {
+        label: "retain-0p12",
+        retainingTorque: 0.12,
+      },
+    ];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const diagnostic of diagnostics) {
+      metrics.push(
+        await simulateProductionRingPickup(
+          approach,
+          supportCase,
+          diagnostic,
+        ),
+      );
+    }
+
+    console.log(
+      "M09 ring capture diagnostic metrics",
+      JSON.stringify(metrics),
+    );
+
+    expect(
+      metrics.some(
+        (result) =>
+          result.ringReturnTravelMeters > 0.08 &&
+          result.minimumLiftDuringReturningMeters > 0.015,
+      ),
+    ).toBe(true);
   });
 });
