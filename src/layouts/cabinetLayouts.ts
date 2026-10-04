@@ -7,6 +7,7 @@ export const CABINET_LAYOUT_IDS = [
   "bridge",
   "edge",
   "ring",
+  "chute",
 ] as const;
 
 export type CabinetLayoutId =
@@ -18,6 +19,7 @@ export type CabinetLayoutRole =
   | "edge_target"
   | "ring_target"
   | "ring_support"
+  | "chute_target"
   | "filler";
 
 export interface CabinetLayoutPlacement {
@@ -294,6 +296,37 @@ const RING_BASE: readonly PlacementBase[] = [
   },
 ];
 
+const CHUTE_BASE: readonly PlacementBase[] = [
+  {
+    prizeId: "prize/sphere_ball",
+    role: "chute_target",
+    x: -0.068,
+    z: 0.20,
+    rotationYRadians: 0,
+  },
+  {
+    prizeId: "prize/cube_small",
+    role: "chute_target",
+    x: -0.24,
+    z: 0.030,
+    rotationYRadians: 0.08,
+  },
+  {
+    prizeId: "prize/pillow_small",
+    role: "filler",
+    x: 0.05,
+    z: -0.10,
+    rotationYRadians: -0.12,
+  },
+  {
+    prizeId: "prize/animal_simple",
+    role: "filler",
+    x: 0.20,
+    z: 0.10,
+    rotationYRadians: 0.10,
+  },
+];
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -340,7 +373,14 @@ function materializePlacements(
                   verticalJitterMin: 0,
                   verticalJitterMax: 0,
                 }
-              : {
+              : layoutId === "chute"
+                ? {
+                    positionJitter: 0.001,
+                    rotationJitter: 0.010,
+                    verticalJitterMin: 0,
+                    verticalJitterMax: 0,
+                  }
+                : {
             positionJitter: 0.006,
             rotationJitter: 0.055,
             verticalJitterMin: 0,
@@ -355,7 +395,14 @@ function materializePlacements(
           minZ: -0.315,
           maxZ: 0.315,
         }
-      : {
+      : layoutId === "chute"
+        ? {
+            minX: -0.42,
+            maxX: 0.265,
+            minZ: -0.195,
+            maxZ: 0.315,
+          }
+        : {
           minX: -0.265,
           maxX: 0.265,
           minZ: -0.195,
@@ -421,7 +468,9 @@ export function createCabinetLayout(
             ? EDGE_BASE
             : id === "ring"
               ? RING_BASE
-              : LOOSE_BASE;
+              : id === "chute"
+                ? CHUTE_BASE
+                : LOOSE_BASE;
   return {
     id,
     seed,
