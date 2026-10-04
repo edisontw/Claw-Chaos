@@ -259,14 +259,14 @@ const RING_BASE: readonly PlacementBase[] = [
     x: -0.16,
     z: -0.025,
     yOffsetMeters: 0.030,
-    rotationXRadians: 0.50,
+    rotationXRadians: 0.52,
     rotationYRadians: 0.04,
   },
   {
     prizeId: "prize/box_standard",
     role: "ring_support",
     x: -0.16,
-    z: -0.145,
+    z: -0.135,
     rotationYRadians: 0.02,
   },
   {
@@ -275,14 +275,14 @@ const RING_BASE: readonly PlacementBase[] = [
     x: 0.16,
     z: 0.025,
     yOffsetMeters: 0.030,
-    rotationXRadians: -0.50,
+    rotationXRadians: -0.52,
     rotationYRadians: -0.05,
   },
   {
     prizeId: "prize/box_standard",
     role: "ring_support",
     x: 0.16,
-    z: 0.145,
+    z: 0.135,
     rotationYRadians: -0.02,
   },
   {
