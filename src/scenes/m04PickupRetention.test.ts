@@ -1081,5 +1081,88 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(results).toHaveLength(candidates.length);
   }, 20000);
 
+
+  it("scans deeper production finger-tip hook geometry for ring retention", async () => {
+    const baseNodes = CLAW_LAB_CONFIG.fingerNodes;
+    const candidates = [
+      { label: "baseline-50", penultimate: 0.075, tip: 0.050 },
+      { label: "hook-40", penultimate: 0.075, tip: 0.040 },
+      { label: "hook-30", penultimate: 0.075, tip: 0.030 },
+      { label: "hook-20", penultimate: 0.075, tip: 0.020 },
+      { label: "deep-85-25", penultimate: 0.085, tip: 0.025 },
+      { label: "deep-90-20", penultimate: 0.090, tip: 0.020 },
+    ] as const;
+    const theta = Math.PI * 4 / 3;
+    const results = [];
+
+    for (const candidate of candidates) {
+      const fingerNodes = [
+        baseNodes[0]!,
+        baseNodes[1]!,
+        {
+          radial: candidate.penultimate,
+          down: baseNodes[2]!.down,
+        },
+        {
+          radial: candidate.tip,
+          down: baseNodes[3]!.down,
+        },
+      ] as const;
+      const tipNode = fingerNodes[3];
+      const openTipRadius =
+        CLAW_LAB_CONFIG.fingerPivotRadius +
+        tipNode.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+        tipNode.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+      const prizeOffsetX = Math.cos(theta) * openTipRadius;
+      const prizeOffsetZ = Math.sin(theta) * openTipRadius;
+
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerNodes,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        ...candidate,
+        openTipRadius,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+      });
+    }
+
+    console.log(
+      "M09 ring finger-hook geometry sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 20000);
+
 });
 
