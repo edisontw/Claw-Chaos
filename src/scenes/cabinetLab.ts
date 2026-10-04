@@ -295,6 +295,8 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.closedAngleRadians,
         fingerLowerPadRadiusMeters:
           CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerLowerPadLengthMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
       milestone: "M09 / Ring layout",
@@ -448,7 +450,11 @@ export function createCabinetLabScene(
           Math.round(
             CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters * 1000,
           ) +
-          " mm",
+          " mm x " +
+          Math.round(
+            CABINET_PLAY_TUNING.fingerLowerPadLengthMeters * 1000,
+          ) +
+          " mm terminal pad",
         "Depth cues        woven deck + fixed cabinet-light shadows",
         "Chute opening     " +
           Math.round(M06_CABINET_CONFIG.chuteOpeningHalfX * 2000) +
