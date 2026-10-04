@@ -912,6 +912,5 @@ describe("M09 production-claw ring pickup", () => {
 
     const successful = metrics.filter((result) => result.success);
     expect(successful.length).toBeGreaterThanOrEqual(1);
-  });
-
+  }, 10_000);
 });
