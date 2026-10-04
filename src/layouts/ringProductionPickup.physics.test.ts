@@ -616,7 +616,7 @@ async function simulateProductionRingPickup(
     selfContactGuardActive = updateFingerSelfContactGuard(
       selfContactGuardActive,
       closing,
-      selfContactGuardActive,
+      siblingFingerContact,
     );
     fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
@@ -626,7 +626,7 @@ async function simulateProductionRingPickup(
       claw.motorSpeedRadiansPerSecond,
       dt,
       closing,
-      siblingFingerContact,
+      selfContactGuardActive,
     );
 
     play = advanceM04PlayState(
