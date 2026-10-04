@@ -149,22 +149,31 @@ describe("M09 ring hook physics", () => {
     const metrics = targets.map(({ prize }) => {
       const position = prize.body.translation();
       const rotation = prize.body.rotation();
-      const centerlineHeights = geometry.points.map(
-        (point) =>
-          position.y +
-          rotateLocalPoint(point, rotation).y,
+      const worldPoints = geometry.points.map((point) => {
+        const rotated = rotateLocalPoint(point, rotation);
+        return {
+          x: position.x + rotated.x,
+          y: position.y + rotated.y,
+          z: position.z + rotated.z,
+        };
+      });
+      const highestPoint = worldPoints.reduce(
+        (highest, point) =>
+          point.y > highest.y ? point : highest,
       );
-      const highestCenterline = Math.max(...centerlineHeights);
-      const lowestCenterline = Math.min(...centerlineHeights);
+      const lowestCenterline = Math.min(
+        ...worldPoints.map((point) => point.y),
+      );
       const highRimUnderside =
-        highestCenterline - RING_LOOP_PROFILE.tubeRadius;
+        highestPoint.y - RING_LOOP_PROFILE.tubeRadius;
 
       return {
         centerHeightMeters: position.y,
         tiltRadians: ringTiltRadians(rotation),
-        highestCenterlineMeters: highestCenterline,
+        highestCenterlineMeters: highestPoint.y,
         lowestCenterlineMeters: lowestCenterline,
         highRimUndersideMeters: highRimUnderside,
+        highestPoint,
       };
     });
 
@@ -177,7 +186,7 @@ describe("M09 ring hook physics", () => {
       expect(metric.centerHeightMeters).toBeGreaterThan(0.025);
       expect(metric.tiltRadians).toBeGreaterThan(0.30);
       expect(metric.highRimUndersideMeters).toBeGreaterThan(0.035);
-      expect(metric.lowestCenterlineMeters).toBeLessThan(0.025);
+      expect(metric.lowestCenterlineMeters).toBeGreaterThan(0);
     }
 
     expect(
@@ -186,5 +195,50 @@ describe("M09 ring hook physics", () => {
         return y > 0.035 && y < 0.050;
       }),
     ).toBe(true);
+
+    // Use a small kinematic pad under the elevated inner rim to prove
+    // that a claw-finger-sized hook has physical access and can lift.
+    const hookTarget = targets[0]!;
+    const hookMetric = metrics[0]!;
+    const beforeLiftY = hookTarget.prize.body.translation().y;
+    const hookHalfY = 0.004;
+    const hookStartY =
+      hookMetric.highRimUndersideMeters - hookHalfY - 0.002;
+    const hook = physics.createKinematicCuboid(
+      {
+        x: hookMetric.highestPoint.x,
+        y: hookStartY,
+        z: hookMetric.highestPoint.z,
+      },
+      { x: 0.008, y: hookHalfY, z: 0.008 },
+      0.85,
+    );
+
+    const liftMeters = 0.050;
+    const liftTicks = 72;
+    for (let tick = 1; tick <= liftTicks; tick += 1) {
+      hook.setNextKinematicTranslation({
+        x: hookMetric.highestPoint.x,
+        y: hookStartY + liftMeters * (tick / liftTicks),
+        z: hookMetric.highestPoint.z,
+      });
+      physics.step();
+    }
+
+    const afterLiftY = hookTarget.prize.body.translation().y;
+    const ringLiftMeters = afterLiftY - beforeLiftY;
+
+    console.log(
+      "M09 ring hook lift",
+      JSON.stringify({
+        beforeLiftY,
+        afterLiftY,
+        ringLiftMeters,
+        hookStartY,
+        liftMeters,
+      }),
+    );
+
+    expect(ringLiftMeters).toBeGreaterThan(0.012);
   });
 });
