@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { CABINET_PLAY_TUNING } from "../cabinet/cabinetPlayTuning";
 import { PHYSICS_HZ } from "../config/simulation";
 import type {
+  Quaternion,
   RevoluteJointHandle,
   RigidBodyHandle,
 } from "../physics/PhysicsRuntime";
@@ -13,12 +14,47 @@ import {
   createFingerSegments,
 } from "./clawLab";
 
+function multiply(a: Quaternion, b: Quaternion): Quaternion {
+  return {
+    x: a.w * b.x + a.x * b.w + a.y * b.z - a.z * b.y,
+    y: a.w * b.y - a.x * b.z + a.y * b.w + a.z * b.x,
+    z: a.w * b.z + a.x * b.y - a.y * b.x + a.z * b.w,
+    w: a.w * b.w - a.x * b.x - a.y * b.y - a.z * b.z,
+  };
+}
+
+function inverseUnit(q: Quaternion): Quaternion {
+  return { x: -q.x, y: -q.y, z: -q.z, w: q.w };
+}
+
+function relativeRotation(
+  parent: Quaternion,
+  child: Quaternion,
+): Quaternion {
+  return multiply(inverseUnit(parent), child);
+}
+
+function angularDistance(a: Quaternion, b: Quaternion): number {
+  const dot = Math.min(
+    1,
+    Math.abs(
+      a.x * b.x +
+        a.y * b.y +
+        a.z * b.z +
+        a.w * b.w,
+    ),
+  );
+  return 2 * Math.acos(dot);
+}
+
 interface EmptyCloseMetrics {
   closedAngleRadians: number;
   peakPairContacts: number[];
   contactTicks: number[];
   finalPairContacts: number[];
   commandRadians: number;
+  fingerTravelRadians: number[];
+  travelSpreadRadians: number;
 }
 
 function createTangentialTipOffsetPoints(
@@ -132,6 +168,11 @@ async function simulateEmptyClose(
     physics.step();
   }
 
+  const openHubRotation = hub.rotation();
+  const openFingerRotations = fingers.map((finger) =>
+    relativeRotation(openHubRotation, finger.rotation()),
+  );
+
   const pairs: Array<[number, number]> = [
     [0, 1],
     [1, 2],
@@ -180,6 +221,16 @@ async function simulateEmptyClose(
   const finalPairContacts = pairs.map(([a, b]) =>
     physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
   );
+  const finalHubRotation = hub.rotation();
+  const fingerTravelRadians = fingers.map((finger, index) =>
+    angularDistance(
+      openFingerRotations[index]!,
+      relativeRotation(finalHubRotation, finger.rotation()),
+    ),
+  );
+  const travelSpreadRadians =
+    Math.max(...fingerTravelRadians) -
+    Math.min(...fingerTravelRadians);
 
   return {
     closedAngleRadians,
@@ -187,38 +238,35 @@ async function simulateEmptyClose(
     contactTicks,
     finalPairContacts,
     commandRadians: command,
+    fingerTravelRadians,
+    travelSpreadRadians,
     tipTangentialOffsetMeters,
   };
 }
 
 describe("M09 production claw empty-close self contact", () => {
-  it("diagnoses a tangential tip offset that prevents sibling binding", async () => {
-    const angles = [-0.63, -0.45];
-    const offsetsMeters = [0.005, 0.010, 0.015, 0.020, 0.025];
+  it("measures symmetric mechanical closure before sibling-finger binding", async () => {
+    const angles = [
+      -0.63,
+      -0.55,
+      -0.50,
+      -0.45,
+      -0.42,
+      -0.40,
+      -0.38,
+      -0.36,
+    ];
     const metrics = [];
 
-    for (const tipTangentialOffsetMeters of offsetsMeters) {
-      for (const angle of angles) {
-        metrics.push(
-          await simulateEmptyClose(
-            angle,
-            tipTangentialOffsetMeters,
-          ),
-        );
-      }
+    for (const angle of angles) {
+      metrics.push(await simulateEmptyClose(angle, 0));
     }
 
-    const clean = metrics.filter((result) =>
-      result.finalPairContacts.every((value) => value === 0),
-    );
-
     console.log(
-      "M09 empty-close tangential-tip sweep",
-      JSON.stringify({ metrics, clean }),
+      "M09 empty-close symmetry sweep",
+      JSON.stringify(metrics),
     );
 
-    expect(metrics).toHaveLength(
-      angles.length * offsetsMeters.length,
-    );
+    expect(metrics).toHaveLength(angles.length);
   }, 20_000);
 });
