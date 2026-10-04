@@ -108,5 +108,8 @@ describe("Cabinet play tuning", () => {
       { radial: 0.09, down: 0.205 },
       { radial: 0.082, down: 0.183 },
     ]);
+    expect(
+      CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
+    ).toEqual([2, 4]);
   });
 });
