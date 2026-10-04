@@ -909,7 +909,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   }, 15000);
 
-  it("diagnoses production one-prong Ring retention across retaining torque levels", async () => {
+  it("sweeps minimal distal-pad and retaining-torque combinations for Ring retention", async () => {
     const layout = createCabinetLayout(
       "ring",
       "retention-regression",
@@ -929,8 +929,6 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque:
         CABINET_PLAY_TUNING.closePickupTorque,
-      retainingTorque:
-        CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
         CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       closedAngleRadians:
@@ -959,43 +957,67 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       ],
     };
 
-    const smoothTip = await simulateM04PickupRetention({
-      ...common,
-      fingerTipPadRadiusMeters:
-        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-    });
-    const paddedTip = await simulateM04PickupRetention({
-      ...common,
-      fingerTipPadRadiusMeters:
-        CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
-    });
-    const paddedTipHighRetention =
-      await simulateM04PickupRetention({
+    const candidates = [
+      {
+        label: "baseline",
+        fingerTipPadRadiusMeters: 0.010,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "pad12_torque10",
+        fingerTipPadRadiusMeters: 0.012,
+        retainingTorque: 0.10,
+      },
+      {
+        label: "pad13_torque08",
+        fingerTipPadRadiusMeters: 0.013,
+        retainingTorque: 0.08,
+      },
+      {
+        label: "pad13_torque10",
+        fingerTipPadRadiusMeters: 0.013,
+        retainingTorque: 0.10,
+      },
+      {
+        label: "pad14_torque10",
+        fingerTipPadRadiusMeters: 0.014,
+        retainingTorque: 0.10,
+      },
+    ] as const;
+
+    const results = [];
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
         ...common,
         fingerTipPadRadiusMeters:
-          CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
-        retainingTorque: 0.08,
+          candidate.fingerTipPadRadiusMeters,
+        retainingTorque: candidate.retainingTorque,
       });
+      results.push({
+        ...candidate,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        liftAfterRetaining0p4sMeters:
+          metrics.liftAfterRetaining0p4sMeters,
+        liftAfterRetaining0p8sMeters:
+          metrics.liftAfterRetaining0p8sMeters,
+        liftAfterRetaining1p2sMeters:
+          metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        slipLossMeters: metrics.slipLossMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+        finiteAndBounded: metrics.finiteAndBounded,
+      });
+      expect(metrics.finiteAndBounded).toBe(true);
+    }
 
     console.log(
-      "M09 production Ring retention diagnostic",
-      JSON.stringify({
-        retainingTorque:
-          CABINET_PLAY_TUNING.retainingTorque,
-        smoothTipRadius:
-          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-        paddedTipRadius:
-          CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
-        smoothTip,
-        paddedTip,
-        paddedTipHighRetention,
-      }),
+      "M09 Ring retention candidate sweep",
+      JSON.stringify(results),
     );
-
-    expect(smoothTip.finiteAndBounded).toBe(true);
-    expect(paddedTip.finiteAndBounded).toBe(true);
-    expect(paddedTipHighRetention.finiteAndBounded).toBe(true);
-  }, 15000);
+  }, 30000);
 
 });
 
