@@ -7,7 +7,12 @@ import {
   M06_CABINET_CONFIG,
   createCabinetPhysics,
 } from "../cabinet/cabinetGeometry";
+import { ChuteSensor } from "../cabinet/chuteSensor";
 import { PHYSICS_HZ } from "../config/simulation";
+import type {
+  RevoluteJointHandle,
+  RigidBodyHandle,
+} from "../physics/PhysicsRuntime";
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { createPrize } from "../prizes/PrizeFactory";
 import { getPrizeDefinition } from "../prizes/catalog";
@@ -71,10 +76,11 @@ interface AttemptMetrics {
   finalY: number;
   finalZ: number;
   completedCycle: boolean;
+  chuteReached: boolean;
 }
 
 describe("M09 bridge production-claw manipulation", () => {
-  it("diagnoses repeated bridge manipulation using the real production claw", async () => {
+  it("solves the bridge through two sequential production-claw interactions", async () => {
     const physics = await PhysicsRuntime.create();
     createCabinetPhysics(physics);
 
@@ -183,8 +189,8 @@ describe("M09 bridge production-claw manipulation", () => {
       false,
     );
 
-    const fingers = [];
-    const joints = [];
+    const fingers: RigidBodyHandle[] = [];
+    const joints: RevoluteJointHandle[] = [];
     const fingerPivotLocalY =
       claw.fingerPivotY - claw.hubCenterY;
 
@@ -380,6 +386,7 @@ describe("M09 bridge production-claw manipulation", () => {
       position: gantry.homePositionTolerance,
       velocity: gantry.homeVelocityTolerance,
     };
+    const chuteSensor = new ChuteSensor();
 
     const moveOpenClawTo = (
       targetX: number,
@@ -451,6 +458,8 @@ describe("M09 bridge production-claw manipulation", () => {
         reel.payout,
       );
       let completedCycle = false;
+      const chuteRecordedBefore =
+        chuteSensor.hasRecordedPrize("bridge-beam");
 
       for (
         let tick = 0;
@@ -588,6 +597,11 @@ describe("M09 bridge production-claw manipulation", () => {
         hub.wakeUp();
         physics.step();
 
+        chuteSensor.pollPrize(
+          "bridge-beam",
+          beam!.prize.body,
+        );
+
         peakBeamY = Math.max(
           peakBeamY,
           beam!.prize.body.translation().y,
@@ -632,13 +646,15 @@ describe("M09 bridge production-claw manipulation", () => {
         finalY: finalPosition.y,
         finalZ: finalPosition.z,
         completedCycle,
+        chuteReached:
+          !chuteRecordedBefore &&
+          chuteSensor.hasRecordedPrize("bridge-beam"),
       };
     };
 
     const approaches = [
       { x: 0.10, z: -0.02 },
       { x: -0.10, z: -0.02 },
-      { x: 0.06, z: 0.07 },
     ];
     const attempts = approaches.map((approach) =>
       runPlay(approach.x, approach.z),
@@ -681,7 +697,30 @@ describe("M09 bridge production-claw manipulation", () => {
         (attempt) => attempt.completedCycle,
       ),
     ).toBe(true);
-    expect(Number.isFinite(cumulativeTravel)).toBe(true);
-    expect(Number.isFinite(cumulativeRotation)).toBe(true);
+
+    const setupAttempt = attempts[0]!;
+    const finishAttempt = attempts[1]!;
+
+    expect(setupAttempt.chuteReached).toBe(false);
+    expect(
+      setupAttempt.horizontalTravelMeters,
+    ).toBeGreaterThan(0.025);
+    expect(
+      setupAttempt.rotationTravelRadians,
+    ).toBeGreaterThan(0.010);
+    expect(setupAttempt.finalY).toBeGreaterThan(
+      M06_CABINET_CONFIG.playDeckY + 0.08,
+    );
+
+    expect(finishAttempt.chuteReached).toBe(true);
+    expect(
+      finishAttempt.horizontalTravelMeters,
+    ).toBeGreaterThan(0.20);
+    expect(
+      finishAttempt.rotationTravelRadians,
+    ).toBeGreaterThan(1.0);
+
+    expect(cumulativeTravel).toBeGreaterThan(0.30);
+    expect(cumulativeRotation).toBeGreaterThan(1.0);
   }, 30_000);
 });
