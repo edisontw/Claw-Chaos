@@ -57,6 +57,7 @@ interface ApproachCase {
 
 interface SupportCase {
   label: string;
+  supportPrizeId?: string;
   primaryXOffsetMeters?: number;
   primaryZOffsetMeters?: number;
   secondaryXOffsetMeters?: number;
@@ -163,6 +164,7 @@ async function simulateProductionRingPickup(
 
     const primary = {
       ...placement,
+      prizeId: supportCase.supportPrizeId ?? placement.prizeId,
       x:
         placement.x +
         (supportCase.primaryXOffsetMeters ?? 0),
@@ -178,6 +180,7 @@ async function simulateProductionRingPickup(
       primary,
       {
         ...placement,
+        prizeId: supportCase.supportPrizeId ?? placement.prizeId,
         x:
           placement.x +
           supportCase.secondaryXOffsetMeters,
@@ -995,6 +998,73 @@ describe("M09 production-claw ring pickup", () => {
 
     console.log(
       "M09 ring capture diagnostic metrics",
+      JSON.stringify(metrics),
+    );
+
+    expect(
+      metrics.some(
+        (result) =>
+          result.ringReturnTravelMeters > 0.08 &&
+          result.minimumLiftDuringReturningMeters > 0.015,
+      ),
+    ).toBe(true);
+  });
+
+  it("sweeps shorter support prizes while preserving the support-face location", async () => {
+    const approaches: ApproachCase[] = [
+      {
+        label: "finger-1 centered-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.35,
+        tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-1 deeper-high-side",
+        fingerIndex: 1,
+        highSideFraction: 0.52,
+        tangentOffsetMeters: 0,
+      },
+    ];
+    const supportCases: SupportCase[] = [
+      { label: "tall-production" },
+      {
+        label: "cube-same-front-face",
+        supportPrizeId: "prize/cube_small",
+        primaryZOffsetMeters: -0.0075,
+      },
+      {
+        label: "standard-same-front-face",
+        supportPrizeId: "prize/box_standard",
+        primaryZOffsetMeters: -0.0125,
+      },
+      {
+        label: "flat-same-front-face",
+        supportPrizeId: "prize/box_flat",
+        primaryZOffsetMeters: -0.020,
+      },
+      {
+        label: "standard-5mm-closer",
+        supportPrizeId: "prize/box_standard",
+        primaryZOffsetMeters: -0.0075,
+      },
+      {
+        label: "cube-5mm-closer",
+        supportPrizeId: "prize/cube_small",
+        primaryZOffsetMeters: -0.0025,
+      },
+    ];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const approach of approaches) {
+      for (const supportCase of supportCases) {
+        metrics.push(
+          await simulateProductionRingPickup(approach, supportCase),
+        );
+      }
+    }
+
+    console.log(
+      "M09 short support sweep metrics",
       JSON.stringify(metrics),
     );
 
