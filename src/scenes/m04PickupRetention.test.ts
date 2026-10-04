@@ -874,6 +874,62 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
   }, 15000);
 
+  it("maps nearby Teddy torso-grab offsets with the cabinet crook tip", async () => {
+    const candidates = [
+      { x: 0.00, z: -0.03 },
+      { x: 0.01, z: -0.03 },
+      { x: 0.02, z: -0.03 },
+      { x: 0.03, z: -0.03 },
+      { x: 0.04, z: -0.03 },
+      { x: 0.01, z: -0.02 },
+      { x: 0.02, z: -0.02 },
+      { x: 0.03, z: -0.02 },
+      { x: 0.01, z: -0.04 },
+      { x: 0.02, z: -0.04 },
+      { x: 0.03, z: -0.04 },
+    ] as const;
+    const results = [];
+
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
+        fingerLowerPadSegmentIndices:
+          CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/teddy_simple",
+        prizeRotationYRadians: -0.22,
+        prizeOffsetX: candidate.x,
+        prizeOffsetZ: candidate.z,
+      });
+
+      results.push({
+        ...candidate,
+        peak: metrics.peakLiftMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        final: metrics.finalLiftMeters,
+        topReached: metrics.topReached,
+      });
+    }
+
+    console.log(
+      "M09 Teddy crook-tip offset sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 30000);
+
+
   it("production cabinet crook tip mechanically retains a one-prong Loop Ring hook", async () => {
     const entry = CLAW_LAB_CONFIG.fingerNodes[3];
     const theta = Math.PI * 4 / 3;
