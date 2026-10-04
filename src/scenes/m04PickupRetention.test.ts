@@ -982,6 +982,108 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 30000);
 
 
+  it("sweeps smaller crook geometries against both Ring and Teddy retention", async () => {
+    const base = CLAW_LAB_CONFIG.fingerNodes;
+    const midpoint = {
+      radial: (base[2].radial + base[3].radial) * 0.5,
+      down: (base[2].down + base[3].down) * 0.5,
+    };
+    const candidates = [
+      { label: "c075-068", p4: { radial: 0.075, down: 0.205 }, p5: { radial: 0.068, down: 0.185 } },
+      { label: "c080-073", p4: { radial: 0.080, down: 0.205 }, p5: { radial: 0.073, down: 0.185 } },
+      { label: "c085-078", p4: { radial: 0.085, down: 0.205 }, p5: { radial: 0.078, down: 0.185 } },
+      { label: "c090-082", p4: { radial: 0.090, down: 0.205 }, p5: { radial: 0.082, down: 0.183 } },
+      { label: "c080-shallow", p4: { radial: 0.080, down: 0.210 }, p5: { radial: 0.073, down: 0.190 } },
+      { label: "c085-shallow", p4: { radial: 0.085, down: 0.210 }, p5: { radial: 0.078, down: 0.190 } },
+      { label: "c090-shallow", p4: { radial: 0.090, down: 0.210 }, p5: { radial: 0.082, down: 0.190 } },
+      { label: "c080-high", p4: { radial: 0.080, down: 0.200 }, p5: { radial: 0.073, down: 0.180 } },
+      { label: "c085-high", p4: { radial: 0.085, down: 0.200 }, p5: { radial: 0.078, down: 0.180 } },
+      { label: "c085-deep-return", p4: { radial: 0.085, down: 0.205 }, p5: { radial: 0.070, down: 0.188 } },
+      { label: "c080-deep-return", p4: { radial: 0.080, down: 0.205 }, p5: { radial: 0.065, down: 0.188 } },
+      { label: "c090-deep-return", p4: { radial: 0.090, down: 0.205 }, p5: { radial: 0.075, down: 0.188 } },
+    ] as const;
+
+    const entry = base[3];
+    const theta = Math.PI * 4 / 3;
+    const entryRadius =
+      CLAW_LAB_CONFIG.fingerPivotRadius +
+      entry.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+      entry.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+    const ringX = Math.cos(theta) * entryRadius;
+    const ringZ = Math.sin(theta) * entryRadius;
+    const results = [];
+
+    for (const candidate of candidates) {
+      const fingerNodes = [
+        base[0],
+        base[1],
+        base[2],
+        midpoint,
+        base[3],
+        candidate.p4,
+        candidate.p5,
+      ] as const;
+
+      const common = {
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerNodes,
+        fingerLowerPadSegmentIndices: [2, 5] as const,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck" as const,
+      };
+
+      const ring = await simulateM04PickupRetention({
+        ...common,
+        holdBoostTorque: 0,
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX: ringX,
+        prizeOffsetZ: ringZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: ringX,
+        supportOffsetZ: ringZ - 0.110,
+      });
+
+      const teddy = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: "prize/teddy_simple",
+        prizeRotationYRadians: -0.22,
+        prizeOffsetX: 0.02,
+        prizeOffsetZ: -0.03,
+      });
+
+      results.push({
+        label: candidate.label,
+        p4: candidate.p4,
+        p5: candidate.p5,
+        ringPeak: ring.peakLiftMeters,
+        ringRetain1p2: ring.liftAfterRetaining1p2sMeters,
+        ringFinal: ring.finalLiftMeters,
+        teddyPeak: teddy.peakLiftMeters,
+        teddyRetain1p2: teddy.liftAfterRetaining1p2sMeters,
+        teddyFinal: teddy.finalLiftMeters,
+      });
+    }
+
+    console.log(
+      "M09 Ring-Teddy crook Pareto sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 30000);
+
+
   it("production cabinet crook tip mechanically retains a one-prong Loop Ring hook", async () => {
     const entry = CLAW_LAB_CONFIG.fingerNodes[3];
     const theta = Math.PI * 4 / 3;
