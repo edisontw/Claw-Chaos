@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — production-claw ring entry correction after slice 5**
+**Status: IN PROGRESS — production-claw ring retention correction after slice 5**
 
 ## Goal
 
@@ -1676,6 +1676,48 @@ Calibrated production-layout physics result:
 This correction deliberately does **not** increase claw power. If manual play still cannot insert one production prong after deployment, the next investigation must use full production-claw approach/contact telemetry rather than adding more closing torque.
 
 No claw force, grip torque, friction, gantry, reel, cabinet, chute, camera or timestep tuning changed.
+
+## Production-claw ring retention correction — 2026-10-04
+
+Deployed-play feedback after entry clearance was fixed:
+- a production claw finger can now enter the Loop Ring
+- the ring can be initially lifted
+- but it slides off the smooth open-ended finger during RETAINING and cannot be carried back reliably
+
+Full production lifecycle diagnosis:
+- baseline production geometry can peak-lift the ring by about 80–100 mm, but the ring drops back to the deck within roughly 0.8–1.2 s
+- retaining torque sweep from 0.014 to 0.080 N·m does not prevent the drop
+- closed-angle sweep from −0.42 to −0.63 rad improves initial pickup depth but does not produce long retention
+- changing ring friction from plastic through cardboard/fabric/plush/rubber also fails to retain through 1.2 s
+- therefore this is a mechanical anti-slip geometry problem, not a motor-force or material-friction problem
+
+Mechanical crook sweep:
+- preserve the original four production finger nodes exactly
+- append only two terminal nodes, forming a small physical return lip:
+  - `{ radial: 0.090, down: 0.205 }`
+  - `{ radial: 0.082, down: 0.183 }`
+- diagnostic `crook-a` result with **zero retaining torque**:
+  - peak lift ≈157.7 mm
+  - retaining 0.4 s ≈156.2 mm
+  - retaining 0.8 s ≈155.9 mm
+  - retaining 1.2 s ≈154.6 mm
+  - final lift ≈150.9 mm
+- this shows the Ring is mechanically supported by the crook instead of being held by artificial motor force
+
+Production implementation strategy:
+- keep `CLAW_LAB_CONFIG.fingerNodes` unchanged, preserving the closed M01/M02/M03 baseline
+- add the crook only through the cabinet `GantryGripProfile`
+- cabinet visual and collision geometry use the same crook points
+- all existing force values remain unchanged:
+  - finger friction 1.94
+  - close pickup torque 10.0 N·m
+  - retaining torque 0.014 N·m
+  - HOLD BOOST 0.018 N·m
+  - closed angle −0.63 rad
+- production regression requires the existing Ball, Foam Cube, Pillow, Animal and Teddy grab paths to continue passing with the crook geometry
+- a new full lifecycle Ring regression requires >=120 mm lift after 0.4, 0.8 and 1.2 s of retaining and at the final hold state
+
+No ring-specific magnet, joint, weld, parenting, hidden attachment, force boost or material override is used.
 
 ## Deliverables
 
