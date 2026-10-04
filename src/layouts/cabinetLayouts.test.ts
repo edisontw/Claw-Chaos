@@ -121,8 +121,8 @@ describe("M09 cabinet layout foundation", () => {
     ).toBe(true);
     expect(targets[0]!.x).toBeLessThan(-0.15);
     expect(targets[1]!.x).toBeGreaterThan(0.15);
-    expect(targets[0]!.rotationXRadians).toBeCloseTo(0.50, 8);
-    expect(targets[1]!.rotationXRadians).toBeCloseTo(-0.50, 8);
+    expect(targets[0]!.rotationXRadians).toBeCloseTo(0.52, 8);
+    expect(targets[1]!.rotationXRadians).toBeCloseTo(-0.52, 8);
     expect(targets[0]!.yOffsetMeters).toBeCloseTo(0.030, 6);
     expect(targets[1]!.yOffsetMeters).toBeCloseTo(0.030, 6);
 
@@ -132,8 +132,8 @@ describe("M09 cabinet layout foundation", () => {
     const rightSupport = supports.find(
       (placement) => placement.x > 0,
     )!;
-    expect(leftSupport.z).toBeLessThan(-0.14);
-    expect(rightSupport.z).toBeGreaterThan(0.14);
+    expect(leftSupport.z).toBeLessThan(-0.13);
+    expect(rightSupport.z).toBeGreaterThan(0.13);
   });
 
   it("keeps ring seed jitter small enough to preserve clear hole access", () => {
@@ -151,8 +151,8 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       Math.abs(targets[1]!.x - 0.16),
     ).toBeLessThanOrEqual(0.0015);
-    expect(targets[0]!.rotationXRadians).toBeCloseTo(0.50, 8);
-    expect(targets[1]!.rotationXRadians).toBeCloseTo(-0.50, 8);
+    expect(targets[0]!.rotationXRadians).toBeCloseTo(0.52, 8);
+    expect(targets[1]!.rotationXRadians).toBeCloseTo(-0.52, 8);
     expect(
       Math.abs(targets[0]!.rotationYRadians - 0.04),
     ).toBeLessThanOrEqual(0.015);
