@@ -956,5 +956,68 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     ).toBe(true);
   }, 20000);
 
+
+  it("scans the minimum retaining torque needed for a one-prong ring hook", async () => {
+    const openTipRadius =
+      computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5;
+    const theta = Math.PI * 4 / 3;
+    const prizeOffsetX = Math.cos(theta) * openTipRadius;
+    const prizeOffsetZ = Math.sin(theta) * openTipRadius;
+    const candidates = [
+      0.014,
+      0.020,
+      0.030,
+      0.040,
+      0.060,
+      0.080,
+    ] as const;
+
+    const results = [];
+    for (const retainingTorque of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        retainingTorque,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        topReached: metrics.topReached,
+      });
+    }
+
+    console.log(
+      "M09 ring retaining torque sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results.every((result) => result.topReached)).toBe(true);
+  }, 20000);
+
 });
 
