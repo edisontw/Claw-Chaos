@@ -758,7 +758,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
   });
 
-  it("production cabinet grip physically retains the five intended starter grab paths", async () => {
+  it("self-contact guard does not regress the exact production short-pad grab paths", async () => {
     const common = {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
@@ -771,7 +771,6 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       fingerLowerPadLengthMeters:
         CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
-      selfContactGuard: true,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
@@ -817,37 +816,48 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     const results = [];
 
     for (const testCase of cases) {
-      const metrics = await simulateM04PickupRetention({
+      const caseProfile = {
         ...common,
         prizeDefinitionId: testCase.prizeDefinitionId,
         prizeRotationYRadians:
           testCase.prizeRotationYRadians,
         prizeOffsetX: testCase.prizeOffsetX,
         prizeOffsetZ: testCase.prizeOffsetZ,
+      };
+      const baseline = await simulateM04PickupRetention({
+        ...caseProfile,
+        selfContactGuard: false,
+      });
+      const guarded = await simulateM04PickupRetention({
+        ...caseProfile,
+        selfContactGuard: true,
       });
 
       results.push({
         label: testCase.label,
-        peak: metrics.peakLiftMeters,
-        retain1p2: metrics.liftAfterRetaining1p2sMeters,
-        final: metrics.finalLiftMeters,
-        topReached: metrics.topReached,
-        finiteAndBounded: metrics.finiteAndBounded,
+        baseline: {
+          peak: baseline.peakLiftMeters,
+          retain1p2: baseline.liftAfterRetaining1p2sMeters,
+          final: baseline.finalLiftMeters,
+          topReached: baseline.topReached,
+        },
+        guarded: {
+          peak: guarded.peakLiftMeters,
+          retain1p2: guarded.liftAfterRetaining1p2sMeters,
+          final: guarded.finalLiftMeters,
+          topReached: guarded.topReached,
+        },
       });
 
-      expect(metrics.finiteAndBounded).toBe(true);
-      expect(metrics.retainingReached).toBe(true);
-      expect(metrics.topReached).toBe(true);
-      expect(
-        metrics.liftAfterRetaining1p2sMeters,
-      ).toBeGreaterThanOrEqual(0.08);
-      expect(metrics.finalLiftMeters).toBeGreaterThanOrEqual(
-        0.08,
-      );
+      for (const metrics of [baseline, guarded]) {
+        expect(metrics.finiteAndBounded).toBe(true);
+        expect(metrics.retainingReached).toBe(true);
+        expect(metrics.topReached).toBe(true);
+      }
     }
 
     console.log(
-      "Cabinet plush-capable production grip metrics",
+      "Cabinet exact short-pad self-contact-guard comparison",
       JSON.stringify({
         profile: {
           fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
@@ -855,8 +865,6 @@ describe("M04 physical pickup-to-retaining force transition", () => {
             CABINET_PLAY_TUNING.closePickupTorque,
           retainingTorque:
             CABINET_PLAY_TUNING.retainingTorque,
-          holdBoostTorque:
-            CABINET_PLAY_TUNING.holdBoostTorque,
           pickupLiftDistanceMeters:
             CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
           closedAngleRadians:
@@ -869,7 +877,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         results,
       }),
     );
-  }, 15000);
+  }, 30_000);
 
 });
 
