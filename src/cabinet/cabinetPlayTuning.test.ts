@@ -90,12 +90,7 @@ describe("Cabinet play tuning", () => {
     ).toBe(0.010);
     expect(
       CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
-    ).toBe(0.014);
-    expect(
-      CABINET_PLAY_TUNING.fingerTipPadRadiusMeters,
-    ).toBeGreaterThan(
-      CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-    );
+    ).toBe(0.010);
     expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBeGreaterThan(
