@@ -369,6 +369,7 @@ export function createFingerVisual(
   tipMaterial: THREE.Material,
   tipRadius: number = CLAW_LAB_CONFIG.fingerTipVisualRadius,
   lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
+  lowerPadSegmentIndices?: readonly number[],
 ): THREE.Group {
   const group = new THREE.Group();
   const yAxis = new THREE.Vector3(0, 1, 0);
@@ -381,10 +382,14 @@ export function createFingerVisual(
     const direction = endVector.clone().sub(startVector);
     const length = direction.length();
 
-    const segmentRadius =
-      index === points.length - 1
-        ? lowerPadRadius
-        : CLAW_LAB_CONFIG.fingerRodRadius;
+    const segmentIndex = index - 1;
+    const paddedSegmentIndices =
+      lowerPadSegmentIndices ?? [points.length - 2];
+    const segmentRadius = paddedSegmentIndices.includes(
+      segmentIndex,
+    )
+      ? lowerPadRadius
+      : CLAW_LAB_CONFIG.fingerRodRadius;
     const rod = new THREE.Mesh(
       new THREE.CylinderGeometry(
         segmentRadius,
@@ -401,13 +406,16 @@ export function createFingerVisual(
     group.add(rod);
 
     if (index < points.length - 1) {
-      const nodeRadius =
-        index === points.length - 2
-          ? Math.max(
-              CLAW_LAB_CONFIG.fingerRodRadius,
-              lowerPadRadius,
-            )
-          : CLAW_LAB_CONFIG.fingerRodRadius;
+      const previousSegmentIndex = index - 1;
+      const nextSegmentIndex = index;
+      const nodeRadius = Math.max(
+        paddedSegmentIndices.includes(previousSegmentIndex)
+          ? lowerPadRadius
+          : CLAW_LAB_CONFIG.fingerRodRadius,
+        paddedSegmentIndices.includes(nextSegmentIndex)
+          ? lowerPadRadius
+          : CLAW_LAB_CONFIG.fingerRodRadius,
+      );
       const node = new THREE.Mesh(
         new THREE.SphereGeometry(nodeRadius, 12, 8),
         metalMaterial,
@@ -433,17 +441,20 @@ export function createFingerVisual(
 export function createFingerSegments(
   points: readonly Vec3[],
   lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
+  lowerPadSegmentIndices?: readonly number[],
 ): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
+  const paddedSegmentIndices =
+    lowerPadSegmentIndices ?? [points.length - 2];
 
   for (let index = 1; index < points.length; index += 1) {
+    const segmentIndex = index - 1;
     segments.push({
       start: points[index - 1]!,
       end: points[index]!,
-      radius:
-        index === points.length - 1
-          ? lowerPadRadius
-          : CLAW_LAB_CONFIG.fingerRodRadius,
+      radius: paddedSegmentIndices.includes(segmentIndex)
+        ? lowerPadRadius
+        : CLAW_LAB_CONFIG.fingerRodRadius,
     });
   }
 
