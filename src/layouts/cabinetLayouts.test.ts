@@ -35,6 +35,13 @@ describe("M09 cabinet layout foundation", () => {
     });
 
     expect(
+      parseCabinetLayoutSelection("?layout=ring"),
+    ).toEqual({
+      id: "ring",
+      usedFallback: false,
+    });
+
+    expect(
       parseCabinetLayoutSelection("?layout=unknown"),
     ).toEqual({
       id: "loose",
@@ -49,6 +56,7 @@ describe("M09 cabinet layout foundation", () => {
       "showcase",
       "bridge",
       "edge",
+      "ring",
     ] as const) {
       const first = createCabinetLayout(id, "fixed-seed");
       const second = createCabinetLayout(id, "fixed-seed");
@@ -63,7 +71,7 @@ describe("M09 cabinet layout foundation", () => {
     expect(second.placements).not.toEqual(first.placements);
   });
 
-  it("keeps loose, dense, showcase, bridge, and edge content contracts", () => {
+  it("keeps all implemented layout content contracts", () => {
     expect(
       createCabinetLayout("loose", "count").placements,
     ).toHaveLength(5);
@@ -79,6 +87,51 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       createCabinetLayout("edge", "count").placements,
     ).toHaveLength(5);
+    expect(
+      createCabinetLayout("ring", "count").placements,
+    ).toHaveLength(4);
+  });
+
+  it("creates two true hollow ring targets with separated approach angles", () => {
+    const layout = createCabinetLayout(
+      "ring",
+      "ring-structure",
+    );
+    const targets = layout.placements.filter(
+      (placement) => placement.role === "ring_target",
+    );
+
+    expect(targets).toHaveLength(2);
+    expect(
+      targets.every(
+        (placement) =>
+          placement.prizeId === "prize/ring_loop",
+      ),
+    ).toBe(true);
+    expect(targets[0]!.x).toBeLessThan(-0.12);
+    expect(targets[1]!.x).toBeGreaterThan(0.12);
+    expect(targets[0]!.rotationYRadians)
+      .not.toBeCloseTo(targets[1]!.rotationYRadians, 3);
+  });
+
+  it("keeps ring seed jitter small enough to preserve clear hole access", () => {
+    const layout = createCabinetLayout(
+      "ring",
+      "ring-jitter",
+    );
+    const targets = layout.placements.filter(
+      (placement) => placement.role === "ring_target",
+    );
+
+    expect(
+      Math.abs(targets[0]!.x + 0.13),
+    ).toBeLessThanOrEqual(0.0015);
+    expect(
+      Math.abs(targets[1]!.x - 0.13),
+    ).toBeLessThanOrEqual(0.0015);
+    expect(
+      Math.abs(targets[0]!.rotationYRadians - 0.08),
+    ).toBeLessThanOrEqual(0.015);
   });
 
   it("builds bridge from two dynamic supports and one elevated flat-box beam", () => {
@@ -248,6 +301,15 @@ describe("M09 cabinet layout foundation", () => {
     ).placements) {
       expect(Math.abs(placement.x)).toBeLessThanOrEqual(0.40);
       expect(Math.abs(placement.z)).toBeLessThanOrEqual(0.315);
+      expect(placement.yOffsetMeters).toBeGreaterThanOrEqual(0.002);
+    }
+
+    for (const placement of createCabinetLayout(
+      "ring",
+      "bounds",
+    ).placements) {
+      expect(Math.abs(placement.x)).toBeLessThanOrEqual(0.265);
+      expect(Math.abs(placement.z)).toBeLessThanOrEqual(0.195);
       expect(placement.yOffsetMeters).toBeGreaterThanOrEqual(0.002);
     }
   });
