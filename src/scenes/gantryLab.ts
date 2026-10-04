@@ -1118,6 +1118,7 @@ export function createGantryLabScene(
         {
           reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
+          fingerClosedByContact: selfContactGuardActive,
           reelAtTop,
           homeReached: m04HomeReached,
           holdBoostRequested,
@@ -1227,6 +1228,7 @@ export function createGantryLabScene(
         {
           reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
+          fingerClosedByContact: selfContactGuardActive,
           reelAtTop,
           homeReached: m04HomeReached,
           holdBoostRequested,
