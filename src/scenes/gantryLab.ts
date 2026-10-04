@@ -197,6 +197,42 @@ export interface GantryLabOptions {
   };
 }
 
+export function updateFingerSelfContactGuard(
+  currentActive: boolean,
+  closing: boolean,
+  siblingFingerContact: boolean,
+): boolean {
+  if (!closing) {
+    return false;
+  }
+
+  return currentActive || siblingFingerContact;
+}
+
+export function advanceFingerCommandWithSelfContactGuard(
+  current: number,
+  target: number,
+  speedRadiansPerSecond: number,
+  stepSeconds: number,
+  closing: boolean,
+  siblingFingerContact: boolean,
+): number {
+  if (
+    closing &&
+    siblingFingerContact &&
+    target < current
+  ) {
+    return current;
+  }
+
+  return advanceMotorCommand(
+    current,
+    target,
+    speedRadiansPerSecond,
+    stepSeconds,
+  );
+}
+
 export function resolveGantryInitialPosition(
   requested?: { x: number; z: number },
 ): { x: number; z: number } {
@@ -648,6 +684,7 @@ export function createGantryLabScene(
   let playCycle = createM04PlayState();
   let fingerCommand = 0;
   let holdBoostActive = false;
+  let selfContactGuardActive = false;
 
   let pt006Phase: Pt006Phase = "READY";
   let pt006Seconds = 0;
@@ -1081,6 +1118,7 @@ export function createGantryLabScene(
         {
           reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
+          fingerClosedByContact: selfContactGuardActive,
           reelAtTop,
           homeReached: m04HomeReached,
           holdBoostRequested,
@@ -1156,17 +1194,41 @@ export function createGantryLabScene(
       const fingerTarget = closingFinger
         ? closedAngleRadians
         : claw.openAngle;
-      fingerCommand = advanceMotorCommand(
+      const siblingFingerContact =
+        closingFinger &&
+        (
+          physics.countBodyContactPairs(
+            fingerBodies[0]!,
+            fingerBodies[1]!,
+          ) > 0 ||
+          physics.countBodyContactPairs(
+            fingerBodies[1]!,
+            fingerBodies[2]!,
+          ) > 0 ||
+          physics.countBodyContactPairs(
+            fingerBodies[2]!,
+            fingerBodies[0]!,
+          ) > 0
+        );
+      selfContactGuardActive = updateFingerSelfContactGuard(
+        selfContactGuardActive,
+        closingFinger,
+        siblingFingerContact,
+      );
+      fingerCommand = advanceFingerCommandWithSelfContactGuard(
         fingerCommand,
         fingerTarget,
         claw.motorSpeedRadiansPerSecond,
         stepSeconds,
+        closingFinger,
+        selfContactGuardActive,
       );
       playCycle = advanceM04PlayState(
         playCycle,
         {
           reelPayoutMeters: reel.payout,
           fingerCommandRadians: fingerCommand,
+          fingerClosedByContact: selfContactGuardActive,
           reelAtTop,
           homeReached: m04HomeReached,
           holdBoostRequested,
@@ -1265,6 +1327,8 @@ export function createGantryLabScene(
           M04_PLAY_CONFIG.holdBoostDurationSeconds.toFixed(2) +
           " s",
         "Finger command   " + fingerCommand.toFixed(3) + " rad",
+        "Self-contact     " +
+          (selfContactGuardActive ? "GUARD" : "clear"),
         "PT-006 phase     " + pt006Phase,
         "PT-006 result    " + pt006Result,
         "PT-008 phase     " + pt008Phase,

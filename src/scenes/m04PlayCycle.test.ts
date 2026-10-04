@@ -172,6 +172,38 @@ describe("M04 DROP / close / lift state machine", () => {
     );
   });
 
+  it("treats sibling-finger contact as a completed mechanical close", () => {
+    let state = applyM04Action(createM04PlayState(), 0);
+    state = applyM04Action(state, 0.12);
+
+    expect(state.phase).toBe("CLOSING");
+
+    const blockedCommand = -0.15;
+    const withoutContact = advanceM04PlayState(
+      state,
+      {
+        reelPayoutMeters: 0.12,
+        fingerCommandRadians: blockedCommand,
+        fingerClosedByContact: false,
+      },
+      playConfig,
+      dt,
+    );
+    expect(withoutContact.phase).toBe("CLOSING");
+
+    const withContact = advanceM04PlayState(
+      state,
+      {
+        reelPayoutMeters: 0.12,
+        fingerCommandRadians: blockedCommand,
+        fingerClosedByContact: true,
+      },
+      playConfig,
+      dt,
+    );
+    expect(withContact.phase).toBe("CLOSED_AT_DEPTH");
+  });
+
   it("uses the configured travel threshold for AUTO CLOSE when no second action is pressed", () => {
     let state = applyM04Action(createM04PlayState(), 0);
     let reel: ReelState = { payout: 0, velocity: 0 };

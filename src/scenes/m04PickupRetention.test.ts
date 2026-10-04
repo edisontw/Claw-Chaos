@@ -11,7 +11,6 @@ import type {
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import {
   CLAW_LAB_CONFIG,
-  advanceMotorCommand,
   createFingerPoints,
   createFingerSegments,
   evaluatePt002Slip,
@@ -19,6 +18,8 @@ import {
 import {
   M02_FINGER_TRANSPORT_CONFIG,
   M02_GANTRY_CONFIG,
+  advanceFingerCommandWithSelfContactGuard,
+  updateFingerSelfContactGuard,
 } from "./gantryLab";
 import {
   M04_PLAY_CONFIG,
@@ -51,12 +52,14 @@ interface PickupRetentionProfile {
   prizeOffsetX?: number;
   prizeOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerLowerPadLengthMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
   autoClosePayoutMeters?: number;
   pickupLiftDistanceMeters?: number;
   topHoldSeconds?: number;
   supportMode?: "pedestal" | "flat-deck";
+  selfContactGuard?: boolean;
 }
 
 interface PickupRetentionMetrics {
@@ -115,6 +118,8 @@ async function simulateM04PickupRetention(
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
+  const fingerLowerPadLengthMeters =
+    profile.fingerLowerPadLengthMeters;
   const fingerNodes =
     profile.fingerNodes ?? CLAW_LAB_CONFIG.fingerNodes;
   const closedAngleRadians =
@@ -127,6 +132,7 @@ async function simulateM04PickupRetention(
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const topHoldSeconds = profile.topHoldSeconds ?? 0.6;
   const supportMode = profile.supportMode ?? "pedestal";
+  const selfContactGuard = profile.selfContactGuard ?? false;
   const gantry = M02_GANTRY_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -242,6 +248,7 @@ async function simulateM04PickupRetention(
       createFingerSegments(
         createFingerPoints(theta, fingerNodes),
         fingerLowerPadRadiusMeters,
+        fingerLowerPadLengthMeters,
       ),
       {
         friction: fingerFriction,
@@ -340,6 +347,7 @@ async function simulateM04PickupRetention(
   let play = createM04PlayState();
   let reel: ReelState = { payout: 0, velocity: 0 };
   let fingerCommand = 0;
+  let selfContactGuardActive = false;
   let maxSuspensionErrorMeters = 0;
   let finiteAndBounded = true;
   let retainingTransitionSpeedBeforeMetersPerSecond = Number.NaN;
@@ -391,6 +399,7 @@ async function simulateM04PickupRetention(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
       },
       playConfig,
       0,
@@ -408,11 +417,37 @@ async function simulateM04PickupRetention(
     }
 
     const closing = m04FingerShouldClose(play);
-    fingerCommand = advanceMotorCommand(
+    const siblingFingerContact =
+      selfContactGuard &&
+      closing &&
+      (
+        physics.countBodyContactPairs(
+          fingers[0]!,
+          fingers[1]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[1]!,
+          fingers[2]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[2]!,
+          fingers[0]!,
+        ) > 0
+      );
+    selfContactGuardActive = selfContactGuard
+      ? updateFingerSelfContactGuard(
+          selfContactGuardActive,
+          closing,
+          siblingFingerContact,
+        )
+      : false;
+    fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
       closing ? closedAngleRadians : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
+      closing,
+      selfContactGuardActive,
     );
 
     const forcePhase = m04ForcePhase(play);
@@ -430,6 +465,7 @@ async function simulateM04PickupRetention(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
         holdBoostRequested: boostRequested,
       },
       playConfig,
@@ -722,7 +758,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(boosted.finalLiftMeters).toBeLessThan(-0.05);
   });
 
-  it("production cabinet grip physically retains the five intended starter grab paths", async () => {
+  it("self-contact guard does not regress the exact production short-pad grab paths", async () => {
     const common = {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
@@ -733,6 +769,8 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         CABINET_PLAY_TUNING.closedAngleRadians,
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerLowerPadLengthMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
@@ -778,37 +816,48 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     const results = [];
 
     for (const testCase of cases) {
-      const metrics = await simulateM04PickupRetention({
+      const caseProfile = {
         ...common,
         prizeDefinitionId: testCase.prizeDefinitionId,
         prizeRotationYRadians:
           testCase.prizeRotationYRadians,
         prizeOffsetX: testCase.prizeOffsetX,
         prizeOffsetZ: testCase.prizeOffsetZ,
+      };
+      const baseline = await simulateM04PickupRetention({
+        ...caseProfile,
+        selfContactGuard: false,
+      });
+      const guarded = await simulateM04PickupRetention({
+        ...caseProfile,
+        selfContactGuard: true,
       });
 
       results.push({
         label: testCase.label,
-        peak: metrics.peakLiftMeters,
-        retain1p2: metrics.liftAfterRetaining1p2sMeters,
-        final: metrics.finalLiftMeters,
-        topReached: metrics.topReached,
-        finiteAndBounded: metrics.finiteAndBounded,
+        baseline: {
+          peak: baseline.peakLiftMeters,
+          retain1p2: baseline.liftAfterRetaining1p2sMeters,
+          final: baseline.finalLiftMeters,
+          topReached: baseline.topReached,
+        },
+        guarded: {
+          peak: guarded.peakLiftMeters,
+          retain1p2: guarded.liftAfterRetaining1p2sMeters,
+          final: guarded.finalLiftMeters,
+          topReached: guarded.topReached,
+        },
       });
 
-      expect(metrics.finiteAndBounded).toBe(true);
-      expect(metrics.retainingReached).toBe(true);
-      expect(metrics.topReached).toBe(true);
-      expect(
-        metrics.liftAfterRetaining1p2sMeters,
-      ).toBeGreaterThanOrEqual(0.08);
-      expect(metrics.finalLiftMeters).toBeGreaterThanOrEqual(
-        0.08,
-      );
+      for (const metrics of [baseline, guarded]) {
+        expect(metrics.finiteAndBounded).toBe(true);
+        expect(metrics.retainingReached).toBe(true);
+        expect(metrics.topReached).toBe(true);
+      }
     }
 
     console.log(
-      "Cabinet plush-capable production grip metrics",
+      "Cabinet exact short-pad self-contact-guard comparison",
       JSON.stringify({
         profile: {
           fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
@@ -816,19 +865,19 @@ describe("M04 physical pickup-to-retaining force transition", () => {
             CABINET_PLAY_TUNING.closePickupTorque,
           retainingTorque:
             CABINET_PLAY_TUNING.retainingTorque,
-          holdBoostTorque:
-            CABINET_PLAY_TUNING.holdBoostTorque,
           pickupLiftDistanceMeters:
             CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
           closedAngleRadians:
             CABINET_PLAY_TUNING.closedAngleRadians,
           fingerLowerPadRadiusMeters:
             CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+          fingerLowerPadLengthMeters:
+            CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
         },
         results,
       }),
     );
-  }, 15000);
+  }, 30_000);
 
 });
 

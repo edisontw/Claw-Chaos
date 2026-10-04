@@ -39,6 +39,7 @@ export interface M04PlayState {
 export interface M04PlayObservation {
   reelPayoutMeters: number;
   fingerCommandRadians: number;
+  fingerClosedByContact?: boolean;
   reelAtTop?: boolean;
   homeReached?: boolean;
   holdBoostRequested?: boolean;
@@ -124,8 +125,12 @@ export function advanceM04PlayState(
 
   if (
     state.phase === "CLOSING" &&
-    observation.fingerCommandRadians <=
-      config.closedAngleRadians + config.closeCompletionToleranceRadians
+    (
+      observation.fingerClosedByContact === true ||
+      observation.fingerCommandRadians <=
+        config.closedAngleRadians +
+          config.closeCompletionToleranceRadians
+    )
   ) {
     return {
       ...state,

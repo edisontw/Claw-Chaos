@@ -23,6 +23,8 @@ import {
 import {
   M02_FINGER_TRANSPORT_CONFIG,
   M02_GANTRY_CONFIG,
+  advanceFingerCommandWithSelfContactGuard,
+  updateFingerSelfContactGuard,
 } from "../scenes/gantryLab";
 import {
   advanceGantryMotionTowardPosition,
@@ -435,6 +437,7 @@ async function simulateProductionRingPickup(
   };
   let reel: ReelState = { payout: 0, velocity: 0 };
   let fingerCommand = 0;
+  let selfContactGuardActive = false;
 
   const applyStabilizer = (): void => {
     const hubPosition = hub.translation();
@@ -572,6 +575,7 @@ async function simulateProductionRingPickup(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
         reelAtTop,
         homeReached,
         holdBoostRequested: false,
@@ -594,13 +598,36 @@ async function simulateProductionRingPickup(
     applyStabilizer();
 
     const closing = m04FingerShouldClose(play);
-    fingerCommand = advanceMotorCommand(
+    const siblingFingerContact =
+      closing &&
+      (
+        physics.countBodyContactPairs(
+          fingers[0]!,
+          fingers[1]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[1]!,
+          fingers[2]!,
+        ) > 0 ||
+        physics.countBodyContactPairs(
+          fingers[2]!,
+          fingers[0]!,
+        ) > 0
+      );
+    selfContactGuardActive = updateFingerSelfContactGuard(
+      selfContactGuardActive,
+      closing,
+      siblingFingerContact,
+    );
+    fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
       closing
         ? closedAngleRadians
         : claw.openAngle,
       claw.motorSpeedRadiansPerSecond,
       dt,
+      closing,
+      selfContactGuardActive,
     );
 
     play = advanceM04PlayState(
@@ -608,6 +635,7 @@ async function simulateProductionRingPickup(
       {
         reelPayoutMeters: reel.payout,
         fingerCommandRadians: fingerCommand,
+        fingerClosedByContact: selfContactGuardActive,
         reelAtTop,
         homeReached,
         holdBoostRequested: false,
@@ -954,7 +982,7 @@ describe("M09 production-claw ring pickup", () => {
     );
 
     expect(coreToleranceSuccesses).toHaveLength(4);
-  }, 10_000);
+  }, 20_000);
 
 
 });
