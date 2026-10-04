@@ -362,8 +362,6 @@ describe("M09 production claw empty-close self contact", () => {
       metrics.push(
         await simulateEmptyClose(
           CABINET_PLAY_TUNING.closedAngleRadians,
-          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-          CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
           terminalTangentialOffsetMeters,
         ),
       );
