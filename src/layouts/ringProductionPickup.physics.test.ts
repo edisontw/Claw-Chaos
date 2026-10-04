@@ -1076,4 +1076,47 @@ describe("M09 production-claw ring pickup", () => {
       ),
     ).toBe(true);
   });
+
+  it("fine-sweeps Cube support depth for full physical return", async () => {
+    const approach: ApproachCase = {
+      label: "finger-1 centered-high-side",
+      fingerIndex: 1,
+      highSideFraction: 0.35,
+      tangentOffsetMeters: 0,
+    };
+    const offsets = [
+      -0.0075,
+      -0.0065,
+      -0.0055,
+      -0.0045,
+      -0.0035,
+      -0.0025,
+    ];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const primaryZOffsetMeters of offsets) {
+      metrics.push(
+        await simulateProductionRingPickup(approach, {
+          label:
+            "cube-z-" +
+            primaryZOffsetMeters.toFixed(4),
+          supportPrizeId: "prize/cube_small",
+          primaryZOffsetMeters,
+        }),
+      );
+    }
+
+    console.log(
+      "M09 Cube support fine sweep metrics",
+      JSON.stringify(metrics),
+    );
+
+    expect(
+      metrics.some(
+        (result) =>
+          result.ringReturnTravelMeters > 0.35 &&
+          result.minimumLiftDuringReturningMeters > 0.015,
+      ),
+    ).toBe(true);
+  });
 });
