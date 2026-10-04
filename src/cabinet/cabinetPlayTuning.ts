@@ -14,7 +14,7 @@ export const CABINET_PLAY_TUNING = {
   pickupLiftDistanceMeters: 0.18,
   closedAngleRadians: -0.63,
   fingerLowerPadRadiusMeters: 0.010,
-  fingerTipPadRadiusMeters: 0.014,
+  fingerTipPadRadiusMeters: 0.010,
   chuteTrimHalfWidth: 0.012,
   chuteTrimHalfHeight: 0.004,
 } as const;
