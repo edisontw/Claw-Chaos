@@ -1645,6 +1645,119 @@ describe("M04 physical pickup-to-retaining force transition", () => {
   }, 20000);
 
 
+  it("sweeps two-segment crook tips for mechanical ring retention", async () => {
+    const base = CLAW_LAB_CONFIG.fingerNodes;
+    const candidates = [
+      {
+        label: "crook-a",
+        nodes: [
+          ...base,
+          { radial: 0.090, down: 0.205 },
+          { radial: 0.082, down: 0.183 },
+        ],
+      },
+      {
+        label: "crook-b",
+        nodes: [
+          ...base,
+          { radial: 0.100, down: 0.205 },
+          { radial: 0.090, down: 0.180 },
+        ],
+      },
+      {
+        label: "crook-c",
+        nodes: [
+          ...base,
+          { radial: 0.100, down: 0.205 },
+          { radial: 0.082, down: 0.180 },
+        ],
+      },
+      {
+        label: "crook-d",
+        nodes: [
+          ...base,
+          { radial: 0.095, down: 0.200 },
+          { radial: 0.082, down: 0.172 },
+        ],
+      },
+      {
+        label: "crook-e",
+        nodes: [
+          ...base,
+          { radial: 0.090, down: 0.202 },
+          { radial: 0.090, down: 0.176 },
+        ],
+      },
+      {
+        label: "crook-f",
+        nodes: [
+          ...base,
+          { radial: 0.095, down: 0.205 },
+          { radial: 0.088, down: 0.175 },
+        ],
+      },
+    ] as const;
+
+    const entry = base[3]!;
+    const entryRadius =
+      CLAW_LAB_CONFIG.fingerPivotRadius +
+      entry.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+      entry.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+    const theta = Math.PI * 4 / 3;
+    const prizeOffsetX = Math.cos(theta) * entryRadius;
+    const prizeOffsetZ = Math.sin(theta) * entryRadius;
+    const results = [];
+
+    for (const candidate of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: 0,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerNodes: candidate.nodes,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        label: candidate.label,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+        topReached: metrics.topReached,
+      });
+    }
+
+    console.log(
+      "M09 ring crook-tip sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 20000);
+
+
   it("sweeps ring surface friction with the unchanged production claw", async () => {
     const openTipRadius =
       computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5;
