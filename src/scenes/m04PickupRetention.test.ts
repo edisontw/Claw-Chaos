@@ -1019,5 +1019,67 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     expect(results.every((result) => result.topReached)).toBe(true);
   }, 20000);
 
+
+  it("scans production closed angle for stable one-prong ring retention", async () => {
+    const openTipRadius =
+      computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5;
+    const theta = Math.PI * 4 / 3;
+    const prizeOffsetX = Math.cos(theta) * openTipRadius;
+    const prizeOffsetZ = Math.sin(theta) * openTipRadius;
+    const candidates = [
+      -0.42,
+      -0.48,
+      -0.54,
+      -0.58,
+      -0.63,
+    ] as const;
+
+    const results = [];
+    for (const closedAngleRadians of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: 0.03,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        closedAngleRadians,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+      });
+    }
+
+    console.log(
+      "M09 ring closed-angle sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 20000);
+
 });
 
