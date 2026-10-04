@@ -287,14 +287,7 @@ canvas {
   display: flex;
   flex-direction: row;
   gap: 5px;
-  opacity: 0.54;
   pointer-events: auto;
-  transition: opacity 120ms ease;
-}
-
-.mobile-view-height:hover,
-.mobile-view-height:focus-within {
-  opacity: 0.90;
 }
 
 .mobile-view-height-button {
@@ -308,6 +301,7 @@ canvas {
   font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.02em;
   box-shadow: 0 2px 7px rgb(0 0 0 / 20%);
+  opacity: 0.54;
   backdrop-filter: blur(3px);
   touch-action: manipulation;
   transition:
@@ -317,8 +311,9 @@ canvas {
   -webkit-tap-highlight-color: transparent;
 }
 
-.mobile-view-height-button:active {
-  opacity: 1;
+.mobile-view-height-button:active,
+.mobile-view-height-button:focus-visible {
+  opacity: 0.96;
   transform: translateY(1px);
   background: rgb(44 56 72 / 76%);
 }
