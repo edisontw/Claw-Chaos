@@ -841,6 +841,36 @@ export function createGantryLabScene(
     manualReelCommand = 0;
   };
 
+  const isSafeForService = (): boolean => {
+    const reelAtTop =
+      reel.payout <= gantry.reelMinPayout + 1e-5 &&
+      Math.abs(reel.velocity) < 1e-4;
+    const gantryStopped =
+      Math.abs(motion.x.velocity) <=
+        gantry.homeVelocityTolerance &&
+      Math.abs(motion.z.velocity) <=
+        gantry.homeVelocityTolerance;
+    const fingersOpen =
+      Math.abs(fingerCommand - claw.openAngle) <=
+      playConfig.releaseCompletionToleranceRadians;
+    const testMotionActive =
+      pt006Phase === "ACCELERATING" ||
+      pt006Phase === "BRAKING" ||
+      pt008Phase === "ACCELERATING" ||
+      pt008Phase === "BRAKING" ||
+      pt008Phase === "DROPPING";
+
+    return (
+      playCycle.phase === "READY" &&
+      reelAtTop &&
+      gantryStopped &&
+      fingersOpen &&
+      !testMotionActive &&
+      homeReturnPhase !== "LIFTING" &&
+      homeReturnPhase !== "RETURNING_HOME"
+    );
+  };
+
   const triggerPrimaryAction = (): boolean => {
     if (!controlsEnabled()) {
       return false;
@@ -914,6 +944,7 @@ export function createGantryLabScene(
       target: [0, 0.72, 0],
     },
     primaryAction: triggerPrimaryAction,
+    isSafeForService,
     getMachineAudioState() {
       return {
         gantrySpeedMetersPerSecond: Math.hypot(

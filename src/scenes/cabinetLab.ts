@@ -288,7 +288,7 @@ export function createCabinetLabScene(
       initialPosition: CABINET_CLAW_PARK_POSITION,
       controlsEnabled: () =>
         layoutSettle.ready &&
-        !inventoryService.machinePaused,
+        !inventoryService.playerInputLocked,
       gripProfile: {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque:
@@ -378,6 +378,42 @@ export function createCabinetLabScene(
       layoutSettle.ready
         ? gantryScene.primaryAction?.() ?? false
         : false,
+    requestStaff(): boolean {
+      return inventoryService.requestStaff();
+    },
+    getStaffCallState() {
+      if (inventoryService.serviceState === "service_paused") {
+        return {
+          mode: "paused",
+          label: "SERVICE PAUSED",
+          detail: "Machine secured for staff service.",
+        };
+      }
+      if (inventoryService.serviceState === "staff_requested") {
+        return {
+          mode: "waiting",
+          label: "STAFF CALLED",
+          detail: "Finishing current machine motion safely.",
+        };
+      }
+      if (inventoryService.canCallStaff) {
+        return {
+          mode: "available",
+          label: "CALL STAFF",
+          detail: "Restock threshold reached · press S or tap.",
+        };
+      }
+      return {
+        mode: "locked",
+        label: "CALL STAFF",
+        detail:
+          "Available at " +
+          inventoryService.restockThresholdCount +
+          " prize remaining · " +
+          inventoryService.remainingInventoryCount +
+          " now.",
+      };
+    },
     getMachineAudioState: gantryScene.getMachineAudioState,
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
@@ -407,6 +443,12 @@ export function createCabinetLabScene(
 
       gantryScene.beforePhysicsStep?.(stepSeconds);
 
+      if (inventoryService.serviceState === "staff_requested") {
+        inventoryService.advanceServiceHandoff(
+          gantryScene.isSafeForService?.() ?? false,
+        );
+      }
+
       for (const prize of tracked) {
         const event = sensor.pollPrize(prize.id, prize.body);
         if (event) {
@@ -435,6 +477,7 @@ export function createCabinetLabScene(
         `Stock remaining   ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
         `Restock threshold ${inventoryService.restockThresholdCount}`,
         `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
+        `Service safe      ${gantryScene.isSafeForService?.() ? "yes" : "no"} / input ${inventoryService.playerInputLocked ? "LOCKED" : "open"}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",
