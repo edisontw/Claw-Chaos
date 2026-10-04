@@ -21,13 +21,24 @@ interface EmptyCloseMetrics {
   commandRadians: number;
 }
 
+function createTangentialTipOffsetPoints(
+  theta: number,
+  offsetMeters: number,
+) {
+  const points = createFingerPoints(theta).map((point) => ({ ...point }));
+  const tip = points.at(-1);
+  if (tip) {
+    tip.x += -Math.sin(theta) * offsetMeters;
+    tip.z += Math.cos(theta) * offsetMeters;
+  }
+  return points;
+}
+
 async function simulateEmptyClose(
   closedAngleRadians: number,
-  padRadiusMeters: number,
-  padLengthMeters: number,
+  tipTangentialOffsetMeters: number,
 ): Promise<EmptyCloseMetrics & {
-  padRadiusMeters: number;
-  padLengthMeters: number;
+  tipTangentialOffsetMeters: number;
 }> {
   const claw = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
@@ -67,9 +78,12 @@ async function simulateEmptyClose(
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
       createFingerSegments(
-        createFingerPoints(theta),
-        padRadiusMeters,
-        padLengthMeters,
+        createTangentialTipOffsetPoints(
+          theta,
+          tipTangentialOffsetMeters,
+        ),
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       ),
       {
         friction: CABINET_PLAY_TUNING.fingerFriction,
@@ -173,26 +187,22 @@ async function simulateEmptyClose(
     contactTicks,
     finalPairContacts,
     commandRadians: command,
-    padRadiusMeters,
-    padLengthMeters,
+    tipTangentialOffsetMeters,
   };
 }
 
 describe("M09 production claw empty-close self contact", () => {
-  it("diagnoses pad-radius and closed-angle combinations without sibling binding", async () => {
-    const angles = [-0.45, -0.42, -0.40, -0.38];
-    const padRadiiMeters = [0.007, 0.008, 0.009, 0.010];
-    const padLengthMeters =
-      CABINET_PLAY_TUNING.fingerLowerPadLengthMeters;
+  it("diagnoses a tangential tip offset that prevents sibling binding", async () => {
+    const angles = [-0.63, -0.45];
+    const offsetsMeters = [0.005, 0.010, 0.015, 0.020, 0.025];
     const metrics = [];
 
-    for (const padRadiusMeters of padRadiiMeters) {
+    for (const tipTangentialOffsetMeters of offsetsMeters) {
       for (const angle of angles) {
         metrics.push(
           await simulateEmptyClose(
             angle,
-            padRadiusMeters,
-            padLengthMeters,
+            tipTangentialOffsetMeters,
           ),
         );
       }
@@ -203,12 +213,12 @@ describe("M09 production claw empty-close self contact", () => {
     );
 
     console.log(
-      "M09 empty-close geometry matrix",
+      "M09 empty-close tangential-tip sweep",
       JSON.stringify({ metrics, clean }),
     );
 
     expect(metrics).toHaveLength(
-      angles.length * padRadiiMeters.length,
+      angles.length * offsetsMeters.length,
     );
   }, 20_000);
 });
