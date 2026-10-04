@@ -177,7 +177,9 @@ jobs:
                grep -q 'data-machine-audio="armed"' "$DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$DOM_FILE" &&
-               grep -q 'data-layout-id="dense"' "$DOM_FILE"; then
+               grep -q 'data-layout-id="dense"' "$DOM_FILE" &&
+               grep -q 'data-staff-call-control="ready"' "$DOM_FILE" &&
+               grep -q 'data-staff-state="locked"' "$DOM_FILE"; then
               CABINET_READY=1
               break
             fi
@@ -448,7 +450,9 @@ jobs:
                grep -q 'data-machine-audio="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$ROOT_DOM_FILE" &&
-               grep -q 'data-layout-id="loose"' "$ROOT_DOM_FILE"; then
+               grep -q 'data-layout-id="loose"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-call-control="ready"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-state="locked"' "$ROOT_DOM_FILE"; then
               ROOT_READY=1
               break
             fi

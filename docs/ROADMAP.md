@@ -1804,7 +1804,7 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
-**Status: IN PROGRESS — slice 1 inventory/staff-policy foundation**
+**Status: IN PROGRESS — slice 2 CALL STAFF + safe service handoff**
 
 ## Goal
 
@@ -1837,7 +1837,7 @@ Implemented:
 - staff requests are rejected while stock is above threshold, preventing arbitrary requests for an ideal placement
 - reaching the threshold makes CALL STAFF policy-eligible
 - requesting staff transitions service state from `operating` to `staff_requested`
-- `staff_requested` latches a machine-pause gate for player controls
+- `staff_requested` latches a player-input lock; slice 2 below performs the actual pause only after a safe handoff
 - current scene debug exposes stock remaining, threshold, staff-call eligibility and service state
 
 Deliberately deferred to later M10 slices:
@@ -1849,6 +1849,35 @@ Deliberately deferred to later M10 slices:
 - reopening the machine after service
 
 No prize force, claw force, collision, ChuteSensor logic or payout shortcut was changed.
+
+## Slice 2 — CALL STAFF + safe service handoff
+
+Implemented:
+- add a player-facing CALL STAFF control for desktop and mobile cabinet play
+- desktop shortcut: `S`
+- control remains visible but disabled while store policy does not permit service
+- once the restock threshold is reached, CALL STAFF becomes actionable
+- accepted call transitions `operating -> staff_requested`
+- `staff_requested` immediately locks new player gantry/drop input but does **not** freeze or abort an active M04 play cycle
+- the existing DROP/CLOSE/PICKUP/RETAINING/RETURN/RELEASE sequence is allowed to finish normally
+- service pauses only after the gantry reports a safe idle condition:
+  - M04 play phase is `READY`
+  - reel is fully retracted and stopped
+  - gantry X/Z motion is below the existing home velocity tolerance
+  - fingers have returned to the open target
+  - no PT/home-return motion is active
+- only then does state transition `staff_requested -> service_paused`
+- physics continues running; this is a machine/input service pause, not a world freeze
+- debug telemetry exposes service-safety and input-lock state
+- browser smoke requires the CALL STAFF control to exist on cabinet/root play
+
+Deferred to the next M10 slice:
+- staff approach / service-door open sequence
+- deterministic reposition/restock placement
+- settle validation
+- close/reopen and return to `operating`
+
+No claw/prize force, Ring geometry, collision, ChuteSensor, teleport, parenting, magnet, weld, hidden pickup force or kinematic prize carry was added.
 
 ### Carry-forward UX backlog
 
