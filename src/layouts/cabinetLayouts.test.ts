@@ -42,6 +42,13 @@ describe("M09 cabinet layout foundation", () => {
     });
 
     expect(
+      parseCabinetLayoutSelection("?layout=chute"),
+    ).toEqual({
+      id: "chute",
+      usedFallback: false,
+    });
+
+    expect(
       parseCabinetLayoutSelection("?layout=unknown"),
     ).toEqual({
       id: "loose",
@@ -57,6 +64,7 @@ describe("M09 cabinet layout foundation", () => {
       "bridge",
       "edge",
       "ring",
+      "chute",
     ] as const) {
       const first = createCabinetLayout(id, "fixed-seed");
       const second = createCabinetLayout(id, "fixed-seed");
@@ -90,6 +98,9 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       createCabinetLayout("ring", "count").placements,
     ).toHaveLength(5);
+    expect(
+      createCabinetLayout("chute", "count").placements,
+    ).toHaveLength(4);
   });
 
   it("creates two tilted hollow ring targets with dedicated dynamic supports", () => {
@@ -263,6 +274,70 @@ describe("M09 cabinet layout foundation", () => {
     ).toBeLessThanOrEqual(0.010);
   });
 
+  it("creates two chute-adjacent targets just outside the opening", () => {
+    const layout = createCabinetLayout(
+      "chute",
+      "chute-structure",
+    );
+    const targets = layout.placements.filter(
+      (placement) => placement.role === "chute_target",
+    );
+
+    expect(targets).toHaveLength(2);
+
+    const ball = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/sphere_ball",
+    );
+    const cube = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/cube_small",
+    );
+
+    expect(ball).toBeDefined();
+    expect(cube).toBeDefined();
+
+    expect(ball!.x).toBeGreaterThan(-0.071);
+    expect(ball!.x).toBeLessThan(-0.065);
+    expect(Math.abs(ball!.z - 0.20)).toBeLessThanOrEqual(0.001);
+
+    expect(Math.abs(cube!.x + 0.24)).toBeLessThanOrEqual(0.001);
+    expect(cube!.z).toBeGreaterThan(0.027);
+    expect(cube!.z).toBeLessThan(0.033);
+  });
+
+  it("keeps chute-adjacent seed jitter tight enough to preserve the lip challenge", () => {
+    const layout = createCabinetLayout(
+      "chute",
+      "chute-jitter",
+    );
+    const targets = layout.placements.filter(
+      (placement) => placement.role === "chute_target",
+    );
+
+    const ball = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/sphere_ball",
+    )!;
+    const cube = targets.find(
+      (placement) =>
+        placement.prizeId === "prize/cube_small",
+    )!;
+
+    expect(Math.abs(ball.x + 0.068)).toBeLessThanOrEqual(
+      0.001,
+    );
+    expect(Math.abs(ball.z - 0.20)).toBeLessThanOrEqual(
+      0.001,
+    );
+    expect(Math.abs(cube.x + 0.24)).toBeLessThanOrEqual(
+      0.001,
+    );
+    expect(Math.abs(cube.z - 0.030)).toBeLessThanOrEqual(
+      0.001,
+    );
+  });
+
   it("showcase exposes representative rigid and soft prize families", () => {
     const prizeIds = createCabinetLayout(
       "showcase",
@@ -334,6 +409,17 @@ describe("M09 cabinet layout foundation", () => {
     ).placements) {
       expect(Math.abs(placement.x)).toBeLessThanOrEqual(0.265);
       expect(Math.abs(placement.z)).toBeLessThanOrEqual(0.195);
+      expect(placement.yOffsetMeters).toBeGreaterThanOrEqual(0.002);
+    }
+
+    for (const placement of createCabinetLayout(
+      "chute",
+      "bounds",
+    ).placements) {
+      expect(placement.x).toBeGreaterThanOrEqual(-0.42);
+      expect(placement.x).toBeLessThanOrEqual(0.265);
+      expect(placement.z).toBeGreaterThanOrEqual(-0.195);
+      expect(placement.z).toBeLessThanOrEqual(0.315);
       expect(placement.yOffsetMeters).toBeGreaterThanOrEqual(0.002);
     }
   });
