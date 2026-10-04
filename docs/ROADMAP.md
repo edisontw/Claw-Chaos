@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — ring grabbable-pose correction after slice 5**
+**Status: IN PROGRESS — production-claw ring entry correction after slice 5**
 
 ## Goal
 
@@ -1634,6 +1634,48 @@ Hook-and-lift geometry regression:
 The final M09 acceptance gate still requires manual pickup with the production three-finger claw through normal controls; this regression verifies that the layout no longer makes pickup geometrically impossible.
 
 No claw force, grip torque, friction, gantry, reel, material, cabinet, chute, camera or timestep tuning changed.
+
+## Production-claw ring entry correction — 2026-10-04
+
+Deployed-play feedback after the grabbable-pose correction showed that the remaining problem was **entry geometry, not claw force**:
+- the previous Loop Ring true opening was only about 110 × 90 mm
+- the cabinet lower finger pad radius is 10 mm
+- the open-claw tip radius is much larger than the loop itself, so the intended technique is one-prong hooking rather than centering all three fingers over the hole
+- the previous surrogate-hook regression proved that a thin hook could lift the ring, but did not prove that the production claw had a practical approach window
+
+Correction:
+- keep the production claw completely unchanged
+- enlarge Loop Ring outer footprint:
+  - 150 × 130 mm → 190 × 170 mm
+  - tube diameter remains 20 mm
+- resulting true inner opening:
+  - about 110 × 90 mm → about 150 × 130 mm
+- reduce the initial X tilt:
+  - ≈35° → ≈29.8°
+- replace the low Standard Box braces with existing dynamic Tall Box prizes
+- Tall Box side faces brace the enlarged rings without occupying the center opening
+- no static support, fixed joint, scripted pose lock or ring-specific pickup force is introduced
+
+Production-claw access regression:
+- uses the actual cabinet lower finger-pad radius = 10 mm
+- accounts for the reduced top-down minor-axis opening caused by ring tilt
+- requires at least 80 mm of usable projected finger-centerline corridor
+- uses the real open-claw tip radius from the production claw geometry
+- evaluates all three 120° prong approach positions
+- requires at least two valid one-prong approach carriage positions inside the real M02 X/Z travel envelope
+
+Calibrated production-layout physics result:
+- settled ring center height ≈41.9–42.1 mm
+- settled tilt ≈0.455–0.458 rad (≈26.1°)
+- low-side centerline ≈8.92–8.93 mm above the deck
+- elevated high-side inner-rim underside ≈64.8–65.2 mm above the deck
+- 50 mm surrogate hook rise lifts the ring center ≈23.07 mm
+- 140 automated tests PASS
+- ring browser smoke PASS
+
+This correction deliberately does **not** increase claw power. If manual play still cannot insert one production prong after deployment, the next investigation must use full production-claw approach/contact telemetry rather than adding more closing torque.
+
+No claw force, grip torque, friction, gantry, reel, cabinet, chute, camera or timestep tuning changed.
 
 ## Deliverables
 
