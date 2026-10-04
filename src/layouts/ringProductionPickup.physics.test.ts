@@ -69,6 +69,8 @@ interface GripDiagnostic {
   label?: string;
   closedAngleRadians?: number;
   retainingTorque?: number;
+  fingerLowerPadRadiusMeters?: number;
+  fingerLowerPadLengthMeters?: number;
 }
 
 interface RingPickupMetrics {
@@ -112,6 +114,8 @@ interface RingPickupMetrics {
   gripDiagnosticLabel: string;
   closedAngleRadians: number;
   retainingTorque: number;
+  fingerLowerPadRadiusMeters: number;
+  fingerLowerPadLengthMeters: number | null;
   success: boolean;
 }
 
@@ -278,6 +282,12 @@ async function simulateProductionRingPickup(
   const retainingTorque =
     gripDiagnostic.retainingTorque ??
     CABINET_PLAY_TUNING.retainingTorque;
+  const fingerLowerPadRadiusMeters =
+    gripDiagnostic.fingerLowerPadRadiusMeters ??
+    CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters;
+  const fingerLowerPadLengthMeters =
+    gripDiagnostic.fingerLowerPadLengthMeters ??
+    CABINET_PLAY_TUNING.fingerLowerPadLengthMeters;
   const verticalHomeOffset =
     CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
   const gantry = {
@@ -351,7 +361,8 @@ async function simulateProductionRingPickup(
       pivotWorld,
       createFingerSegments(
         createFingerPoints(fingerTheta),
-        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        fingerLowerPadRadiusMeters,
+        fingerLowerPadLengthMeters,
       ),
       {
         friction: CABINET_PLAY_TUNING.fingerFriction,
@@ -849,6 +860,9 @@ async function simulateProductionRingPickup(
     gripDiagnosticLabel: gripDiagnostic.label ?? "production",
     closedAngleRadians,
     retainingTorque,
+    fingerLowerPadRadiusMeters,
+    fingerLowerPadLengthMeters:
+      fingerLowerPadLengthMeters ?? null,
     success,
   };
 }
@@ -863,10 +877,28 @@ describe("M09 production-claw ring pickup", () => {
         tangentOffsetMeters: 0,
       },
       {
+        label: "finger-1 moderate-depth",
+        fingerIndex: 1,
+        highSideFraction: 0.44,
+        tangentOffsetMeters: 0,
+      },
+      {
         label: "finger-1 deeper-high-side",
         fingerIndex: 1,
         highSideFraction: 0.52,
         tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-1 tangent-plus-5mm",
+        fingerIndex: 1,
+        highSideFraction: 0.40,
+        tangentOffsetMeters: 0.005,
+      },
+      {
+        label: "finger-1 tangent-minus-5mm",
+        fingerIndex: 1,
+        highSideFraction: 0.40,
+        tangentOffsetMeters: -0.005,
       },
       {
         label: "finger-1 tangent-plus-10mm",
@@ -911,6 +943,18 @@ describe("M09 production-claw ring pickup", () => {
     }
 
     const successful = metrics.filter((result) => result.success);
-    expect(successful.length).toBeGreaterThanOrEqual(1);
+    const coreToleranceLabels = new Set([
+      "finger-1 centered-high-side",
+      "finger-1 moderate-depth",
+      "finger-1 tangent-plus-5mm",
+      "finger-1 tangent-minus-5mm",
+    ]);
+    const coreToleranceSuccesses = successful.filter((result) =>
+      coreToleranceLabels.has(result.label),
+    );
+
+    expect(coreToleranceSuccesses).toHaveLength(4);
   }, 10_000);
+
+
 });

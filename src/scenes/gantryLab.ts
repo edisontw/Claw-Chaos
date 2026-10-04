@@ -179,6 +179,7 @@ export interface GantryGripProfile {
   pickupLiftDistanceMeters?: number;
   closedAngleRadians?: number;
   fingerLowerPadRadiusMeters?: number;
+  fingerLowerPadLengthMeters?: number;
 }
 
 export interface GantryLabOptions {
@@ -235,6 +236,8 @@ export function createGantryLabScene(
   const fingerLowerPadRadiusMeters =
     options.gripProfile?.fingerLowerPadRadiusMeters ??
     claw.fingerRodRadius;
+  const fingerLowerPadLengthMeters =
+    options.gripProfile?.fingerLowerPadLengthMeters;
   const gantry =
     verticalHomeOffset === 0
       ? M02_GANTRY_CONFIG
@@ -560,6 +563,7 @@ export function createGantryLabScene(
         fingerLowerPadRadiusMeters,
       ),
       fingerLowerPadRadiusMeters,
+      fingerLowerPadLengthMeters,
     );
     scene.add(visual);
 
@@ -568,6 +572,7 @@ export function createGantryLabScene(
       createFingerSegments(
         points,
         fingerLowerPadRadiusMeters,
+        fingerLowerPadLengthMeters,
       ),
       {
         friction: activeFingerFriction,
