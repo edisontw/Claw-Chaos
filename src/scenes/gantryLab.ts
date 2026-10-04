@@ -172,6 +172,8 @@ function computeSwingAngle(
 }
 
 export interface GantryGripProfile {
+  fingerNodes?: readonly { radial: number; down: number }[];
+  fingerLowerPadSegmentIndices?: readonly number[];
   fingerFriction?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
@@ -218,6 +220,10 @@ export function createGantryLabScene(
 ): SimulationScene {
   const claw = CLAW_LAB_CONFIG;
   const verticalHomeOffset = options.verticalHomeOffset ?? 0;
+  const activeFingerNodes =
+    options.gripProfile?.fingerNodes ?? claw.fingerNodes;
+  const activeFingerLowerPadSegmentIndices =
+    options.gripProfile?.fingerLowerPadSegmentIndices;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
   const closePickupTorque =
@@ -550,7 +556,7 @@ export function createGantryLabScene(
       y: 0,
       z: Math.cos(theta),
     };
-    const points = createFingerPoints(theta);
+    const points = createFingerPoints(theta, activeFingerNodes);
     const visual = createFingerVisual(
       points,
       chrome,
@@ -560,6 +566,7 @@ export function createGantryLabScene(
         fingerLowerPadRadiusMeters,
       ),
       fingerLowerPadRadiusMeters,
+      activeFingerLowerPadSegmentIndices,
     );
     scene.add(visual);
 
@@ -568,6 +575,7 @@ export function createGantryLabScene(
       createFingerSegments(
         points,
         fingerLowerPadRadiusMeters,
+        activeFingerLowerPadSegmentIndices,
       ),
       {
         friction: activeFingerFriction,

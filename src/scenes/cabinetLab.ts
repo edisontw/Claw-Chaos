@@ -282,6 +282,9 @@ export function createCabinetLabScene(
       initialPosition: CABINET_CLAW_PARK_POSITION,
       controlsEnabled: () => layoutSettle.ready,
       gripProfile: {
+        fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
+        fingerLowerPadSegmentIndices:
+          CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque:
           CABINET_PLAY_TUNING.closePickupTorque,

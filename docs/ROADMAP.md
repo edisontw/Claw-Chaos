@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — production-claw ring entry correction after slice 5**
+**Status: IN PROGRESS — production-claw ring retention correction after slice 5**
 
 ## Goal
 
@@ -1676,6 +1676,47 @@ Calibrated production-layout physics result:
 This correction deliberately does **not** increase claw power. If manual play still cannot insert one production prong after deployment, the next investigation must use full production-claw approach/contact telemetry rather than adding more closing torque.
 
 No claw force, grip torque, friction, gantry, reel, cabinet, chute, camera or timestep tuning changed.
+
+## Production-claw ring retention correction — 2026-10-04
+
+Deployed-play feedback after entry clearance was fixed:
+- a production claw finger can now enter the Loop Ring
+- the ring can be initially lifted
+- but it slides off the smooth open-ended finger during RETAINING and cannot be carried back reliably
+
+Full production lifecycle diagnosis:
+- baseline production geometry can peak-lift the ring by about 80–100 mm, but the ring drops back to the deck within roughly 0.8–1.2 s
+- retaining torque sweep from 0.014 to 0.080 N·m does not prevent the drop
+- closed-angle sweep from −0.42 to −0.63 rad improves initial pickup depth but does not produce long retention
+- changing ring friction from plastic through cardboard/fabric/plush/rubber also fails to retain through 1.2 s
+- therefore this is a mechanical anti-slip geometry problem, not a motor-force or material-friction problem
+
+Mechanical crook sweep:
+- keep the closed M01/M02/M03 claw centerline unchanged
+- split only the original terminal segment at its midpoint so the normal 10 mm lower grip pad can remain on the proximal half without blocking the Ring entry path
+- append a small two-segment physical return lip:
+  - `{ radial: 0.075, down: 0.205 }`
+  - `{ radial: 0.068, down: 0.185 }`
+- cabinet lower-pad segments are `[2, 5]`: the original proximal lower grip surface plus the terminal crook surface, with thin rod around the actual Ring entry neck
+- a dual-objective production lifecycle sweep selected this as the smallest tested geometry that preserves both targets:
+  - Loop Ring: peak ≈158.0 mm, retaining 1.2 s ≈152.9 mm, final ≈147.4 mm
+  - existing Teddy +20 mm X / −30 mm Z torso grab: peak ≈186.9 mm, retaining 1.2 s ≈178.5 mm, final ≈178.8 mm
+- larger crooks also retained the Ring but blocked the Teddy path, so they were rejected
+
+Production implementation strategy:
+- keep `CLAW_LAB_CONFIG.fingerNodes` unchanged, preserving the closed M01/M02/M03 baseline
+- apply the split-pad crook only through the cabinet `GantryGripProfile`
+- cabinet visual and collision geometry use the same points and selected pad segments
+- all existing force values remain unchanged:
+  - finger friction 1.94
+  - close pickup torque 10.0 N·m
+  - retaining torque 0.014 N·m
+  - HOLD BOOST 0.018 N·m
+  - closed angle −0.63 rad
+- production regression requires Ball, Foam Cube, Pillow, Animal and the original Teddy torso grab path to continue passing
+- the full lifecycle Ring regression requires >=120 mm lift after 0.4, 0.8 and 1.2 s of retaining and at the final hold state
+
+No ring-specific magnet, joint, weld, parenting, hidden attachment, force boost or material override is used.
 
 ## Deliverables
 

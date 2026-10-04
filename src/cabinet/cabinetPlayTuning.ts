@@ -14,6 +14,16 @@ export const CABINET_PLAY_TUNING = {
   pickupLiftDistanceMeters: 0.18,
   closedAngleRadians: -0.63,
   fingerLowerPadRadiusMeters: 0.010,
+  fingerNodes: [
+    { radial: 0, down: 0 },
+    { radial: 0.03, down: 0.07 },
+    { radial: 0.075, down: 0.165 },
+    { radial: 0.0625, down: 0.195 },
+    { radial: 0.05, down: 0.225 },
+    { radial: 0.075, down: 0.205 },
+    { radial: 0.068, down: 0.185 },
+  ],
+  fingerLowerPadSegmentIndices: [2, 5],
   chuteTrimHalfWidth: 0.012,
   chuteTrimHalfHeight: 0.004,
 } as const;
