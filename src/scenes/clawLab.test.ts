@@ -4,6 +4,8 @@ import {
   advanceMotorCommand,
   computeFingerPathLength,
   computeFingerTipSpan,
+  createFingerPoints,
+  createFingerSegments,
   evaluatePt002Slip,
   evaluatePt003Rotation,
   evaluatePt004Hook,
@@ -47,6 +49,32 @@ describe("M01 realistic three-prong geometry", () => {
       CLAW_LAB_CONFIG.fingerNodes[3]!.radial,
     );
     expect(CLAW_LAB_CONFIG.fingerRodRadius * 2).toBeCloseTo(0.009, 6);
+  });
+
+  it("keeps a thin lower arm and limits an enlarged pad to the terminal length", () => {
+    const points = createFingerPoints(0);
+    const legacy = createFingerSegments(points, 0.010);
+    const shortPad = createFingerSegments(points, 0.010, 0.012);
+
+    expect(legacy).toHaveLength(3);
+    expect(legacy[2]!.radius).toBeCloseTo(0.010, 8);
+
+    expect(shortPad).toHaveLength(4);
+    expect(shortPad[2]!.radius).toBeCloseTo(
+      CLAW_LAB_CONFIG.fingerRodRadius,
+      8,
+    );
+    expect(shortPad[3]!.radius).toBeCloseTo(0.010, 8);
+    expect(shortPad[2]!.end).toEqual(shortPad[3]!.start);
+
+    const terminalPad = shortPad[3]!;
+    const terminalPadLength = Math.hypot(
+      terminalPad.end.x - terminalPad.start.x,
+      terminalPad.end.y - terminalPad.start.y,
+      terminalPad.end.z - terminalPad.start.z,
+    );
+    expect(terminalPadLength).toBeCloseTo(0.012, 8);
+    expect(terminalPad.end).toEqual(points.at(-1));
   });
 });
 
