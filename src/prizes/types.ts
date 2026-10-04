@@ -13,6 +13,7 @@ export type PrizeShapeFamily =
   | "ellipsoid"
   | "cylinder"
   | "capsule"
+  | "ring"
   | "pillow"
   | "plush_humanoid"
   | "plush_animal";

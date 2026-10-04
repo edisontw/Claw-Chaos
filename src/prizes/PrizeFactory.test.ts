@@ -17,8 +17,8 @@ import {
 
 describe("M05 PrizeFactory", () => {
   it("exposes a data-driven starter catalog with reusable profiles", () => {
-    expect(PRIZE_DEFINITIONS).toHaveLength(11);
-    expect(new Set(PRIZE_DEFINITIONS.map((entry) => entry.id)).size).toBe(11);
+    expect(PRIZE_DEFINITIONS).toHaveLength(12);
+    expect(new Set(PRIZE_DEFINITIONS.map((entry) => entry.id)).size).toBe(12);
     expect(Object.keys(PRIZE_COLOR_PALETTE)).toHaveLength(8);
     expect(Object.keys(PRIZE_MATERIAL_PROFILES).length).toBeGreaterThanOrEqual(5);
     expect(Object.keys(PRIZE_MASS_PROFILES)).toEqual(
@@ -44,6 +44,7 @@ describe("M05 PrizeFactory", () => {
         "ellipsoid",
         "cylinder",
         "capsule",
+        "ring",
         "pillow",
         "plush_humanoid",
         "plush_animal",
@@ -68,7 +69,7 @@ describe("M05 PrizeFactory", () => {
         `${variant.definitionId}|${variant.colorId}|${variant.finishId}`,
     );
 
-    expect(variants).toHaveLength(11 * 8 * 2);
+    expect(variants).toHaveLength(12 * 8 * 2);
     expect(new Set(keys).size).toBe(variants.length);
     expect(variants.length).toBeGreaterThanOrEqual(100);
   });
@@ -157,7 +158,11 @@ describe("M05 PrizeFactory", () => {
       expect(Number.isFinite(metric.position.x)).toBe(true);
       expect(Number.isFinite(metric.position.y)).toBe(true);
       expect(Number.isFinite(metric.position.z)).toBe(true);
-      expect(metric.position.y).toBeGreaterThan(0.015);
+      const minimumCenterHeightMeters =
+        metric.id === "prize/ring_loop" ? 0.008 : 0.015;
+      expect(metric.position.y).toBeGreaterThan(
+        minimumCenterHeightMeters,
+      );
       expect(metric.position.y).toBeLessThan(0.35);
       expect(metric.speed).toBeLessThan(0.20);
     }

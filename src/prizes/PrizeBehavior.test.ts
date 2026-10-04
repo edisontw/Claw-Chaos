@@ -218,10 +218,7 @@ describe("M05 dense pile stability", () => {
       0.75,
     );
 
-    const definitions = [
-      ...PRIZE_DEFINITIONS,
-      getPrizeDefinition("prize/box_standard"),
-    ];
+    const definitions = [...PRIZE_DEFINITIONS];
     const positions = [
       { x: -0.17, y: 0.13, z: -0.08 },
       { x: -0.06, y: 0.15, z: 0.07 },
