@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — chute-adjacent layout slice 6**
+**Status: IN PROGRESS — closure candidate; production-claw bridge gate automated PASS**
 
 ## Goal
 
@@ -1727,6 +1727,60 @@ Physics regression:
 - no prize teleport, sensor injection, scripted win, hidden force field, parenting, magnet, weld or kinematic conversion
 
 Browser CI boots `?scene=cabinet-lab&layout=chute&seed=ci-m09-chute` and requires `data-layout-id="chute"`.
+
+## Production-claw bridge closure regression — 2026-10-04
+
+The earlier bridge regression only proved that the fully dynamic structure could be moved by external physical impulses. The M09 exit gate requires the actual production claw to solve the bridge through repeated interactions.
+
+Final regression:
+- uses the exact cabinet production claw geometry and tuning:
+  - normal 4.5 mm lower arm
+  - 10 mm radius × 12 mm terminal pad
+  - finger friction 1.94
+  - CLOSE/PICKUP 10.0 N·m
+  - RETAINING 0.014 N·m
+  - cabinet closed angle −0.63 rad
+- uses the real suspended hub, spherical suspension, stabilizer, reel motion, gantry motion, self-contact guard and M04 DROP → AUTO CLOSE → PICKUP → RETAINING → RETURN → RELEASE lifecycle
+- starts from the production `bridge` layout after normal physics settle
+- uses two sequential plays against the **same evolving bridge state**
+- no direct impulse is applied to the bridge beam in this closure regression
+
+Two-step physical solve:
+1. setup play, carriage target ≈ X +0.10 / Z −0.02 m
+   - bridge beam horizontal travel ≈ **36.13 mm**
+   - rotation ≈ **0.0144 rad**
+   - peak lift ≈ **58.85 mm**
+   - beam remains elevated on the play field
+   - chute sensor remains **false**
+2. finish play, carriage target ≈ X −0.10 / Z −0.02 m
+   - acts on the already changed beam state from play 1
+   - horizontal travel during this play ≈ **428.10 mm**
+   - rotation ≈ **2.3386 rad**
+   - peak lift ≈ **272.29 mm**
+   - beam physically reaches the existing chute sensor — **PASS**
+
+Cumulative initial-to-final bridge change:
+- horizontal travel ≈ **395.39 mm**
+- rotation ≈ **2.3372 rad**
+
+Interpretation:
+- the first claw interaction is a genuine setup attempt that changes the physical state without scoring
+- the second production-claw interaction finishes the changed state and sends the bridge prize into the normal chute path
+- this satisfies the M09 bridge requirement through repeated real claw manipulation rather than a scripted result or test-only prize impulse
+
+Verification on PR candidate:
+- **48 test files / 148 tests PASS**
+- lint PASS
+- TypeScript/Vite build PASS
+- GitHub Pages base-path PASS
+- native Rapier WASM / startup bundle gates PASS
+- gantry, cabinet, showcase, bridge, edge, ring, chute and root browser smokes PASS
+
+M09 exit-gate status:
+- bridge can be solved by repeated physical rotation/translation — **automated PASS with production claw**
+- ring can be hooked through actual geometry — **automated + deployed manual PASS**
+- layout reset does not force identical final poses unless using a fixed seed — **PASS**
+- remaining closure action: deployed manual bridge play confirmation
 
 ## Deliverables
 
