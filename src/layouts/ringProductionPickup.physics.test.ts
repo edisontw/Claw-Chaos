@@ -1222,4 +1222,63 @@ describe("M09 production-claw ring pickup", () => {
     );
     expect(chuteWins.length).toBeGreaterThanOrEqual(2);
   });
+
+  it("maps Cube support depth against practical finger-1 entry depth", async () => {
+    const supportOffsets = [
+      -0.0065,
+      -0.0045,
+      -0.0025,
+      0,
+      0.0025,
+    ];
+    const entryFractions = [0.35, 0.42, 0.50];
+
+    const metrics: RingPickupMetrics[] = [];
+    for (const primaryZOffsetMeters of supportOffsets) {
+      for (const highSideFraction of entryFractions) {
+        metrics.push(
+          await simulateProductionRingPickup(
+            {
+              label:
+                "finger-1-depth-" +
+                highSideFraction.toFixed(2),
+              fingerIndex: 1,
+              highSideFraction,
+              tangentOffsetMeters: 0,
+            },
+            {
+              label:
+                "cube-z-" +
+                primaryZOffsetMeters.toFixed(4),
+              supportPrizeId: "prize/cube_small",
+              primaryZOffsetMeters,
+            },
+          ),
+        );
+      }
+    }
+
+    console.log(
+      "M09 Cube support-entry matrix metrics",
+      JSON.stringify(metrics),
+    );
+
+    const grouped = supportOffsets.map((offset) => ({
+      offset,
+      chuteWins: metrics.filter(
+        (result) =>
+          result.supportCaseLabel ===
+            "cube-z-" + offset.toFixed(4) &&
+          result.chuteReached,
+      ).length,
+    }));
+    console.log(
+      "M09 Cube support-entry win counts",
+      JSON.stringify(grouped),
+    );
+
+    expect(
+      Math.max(...grouped.map((entry) => entry.chuteWins)),
+    ).toBeGreaterThanOrEqual(2);
+  });
 });
