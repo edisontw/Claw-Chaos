@@ -141,7 +141,7 @@ async function simulateGuardedEmptyClose(): Promise<EmptyCloseMetrics> {
       physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
     );
 
-  let command = claw.openAngle;
+  let command: number = claw.openAngle;
   for (let tick = 0; tick < PHYSICS_HZ * 3; tick += 1) {
     for (const joint of joints) {
       joint.configureMotorPosition(
