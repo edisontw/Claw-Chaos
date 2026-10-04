@@ -937,6 +937,100 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   }, 15000);
 
+  it("24 mm inward-upturned toe preserves all five starter pickups", async () => {
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipToeInwardMeters: 0.024,
+      fingerTipToeRiseMeters: 0.008,
+      fingerTipToeRadiusMeters: 0.006,
+      topHoldSeconds: 1.3,
+      supportMode: "flat-deck" as const,
+    };
+
+    const cases = [
+      {
+        label: "Rubber Ball centered",
+        prizeDefinitionId: "prize/sphere_ball",
+        prizeRotationYRadians: 0,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "Foam Cube centered",
+        prizeDefinitionId: "prize/cube_small",
+        prizeRotationYRadians: 0.18,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "Small Pillow centered",
+        prizeDefinitionId: "prize/pillow_small",
+        prizeRotationYRadians: 0.28,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "Simple Animal centered",
+        prizeDefinitionId: "prize/animal_simple",
+        prizeRotationYRadians: -0.12,
+        prizeOffsetX: 0,
+        prizeOffsetZ: 0,
+      },
+      {
+        label: "Simple Teddy offset torso grab",
+        prizeDefinitionId: "prize/teddy_simple",
+        prizeRotationYRadians: -0.22,
+        prizeOffsetX: 0.02,
+        prizeOffsetZ: -0.03,
+      },
+    ] as const;
+
+    const results = [];
+    for (const testCase of cases) {
+      const metrics = await simulateM04PickupRetention({
+        ...common,
+        prizeDefinitionId: testCase.prizeDefinitionId,
+        prizeRotationYRadians:
+          testCase.prizeRotationYRadians,
+        prizeOffsetX: testCase.prizeOffsetX,
+        prizeOffsetZ: testCase.prizeOffsetZ,
+      });
+
+      results.push({
+        label: testCase.label,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        final: metrics.finalLiftMeters,
+        topReached: metrics.topReached,
+        finiteAndBounded: metrics.finiteAndBounded,
+      });
+
+      expect(metrics.finiteAndBounded).toBe(true);
+      expect(metrics.retainingReached).toBe(true);
+      expect(metrics.topReached).toBe(true);
+      expect(
+        metrics.liftAfterRetaining1p2sMeters,
+      ).toBeGreaterThanOrEqual(0.08);
+      expect(metrics.finalLiftMeters).toBeGreaterThanOrEqual(
+        0.08,
+      );
+    }
+
+    console.log(
+      "M09 toe24 starter pickup validation",
+      JSON.stringify(results),
+    );
+  }, 20000);
+
   it("sweeps small inward-upturned toe geometry for Ring retention", async () => {
     const layout = createCabinetLayout(
       "ring",
