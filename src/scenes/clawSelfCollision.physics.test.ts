@@ -16,6 +16,7 @@ import {
 import {
   M02_FINGER_TRANSPORT_CONFIG,
   advanceFingerCommandWithSelfContactGuard,
+  updateFingerSelfContactGuard,
 } from "./gantryLab";
 
 function multiply(a: Quaternion, b: Quaternion): Quaternion {
@@ -166,6 +167,7 @@ async function simulateGuardedEmptyClose(): Promise<EmptyCloseMetrics> {
   const peakPairContacts = [0, 0, 0];
   const contactTicks = [0, 0, 0];
   let firstContactCommandRadians = Number.NaN;
+  let selfContactGuardActive = false;
 
   for (let tick = 0; tick < PHYSICS_HZ * 2; tick += 1) {
     const beforeContacts = pairContacts();
@@ -178,6 +180,11 @@ async function simulateGuardedEmptyClose(): Promise<EmptyCloseMetrics> {
       firstContactCommandRadians = command;
     }
 
+    selfContactGuardActive = updateFingerSelfContactGuard(
+      selfContactGuardActive,
+      true,
+      selfContactGuardActive,
+    );
     command = advanceFingerCommandWithSelfContactGuard(
       command,
       CABINET_PLAY_TUNING.closedAngleRadians,
