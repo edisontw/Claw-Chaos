@@ -47,9 +47,14 @@ interface PickupRetentionProfile {
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
+  prizeRotationXRadians?: number;
   prizeRotationYRadians?: number;
+  prizeVerticalOffsetMeters?: number;
   prizeOffsetX?: number;
   prizeOffsetZ?: number;
+  supportPrizeDefinitionId?: string;
+  supportOffsetX?: number;
+  supportOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
@@ -108,10 +113,19 @@ async function simulateM04PickupRetention(
       y: ballRadiusMeters,
       z: ballRadiusMeters,
     };
+  const prizeRotationXRadians =
+    profile.prizeRotationXRadians ?? 0;
   const prizeRotationYRadians =
     profile.prizeRotationYRadians ?? 0;
+  const prizeVerticalOffsetMeters =
+    profile.prizeVerticalOffsetMeters ?? 0;
   const prizeOffsetX = profile.prizeOffsetX ?? 0;
   const prizeOffsetZ = profile.prizeOffsetZ ?? 0;
+  const supportDefinition = profile.supportPrizeDefinitionId
+    ? getPrizeDefinition(profile.supportPrizeDefinitionId)
+    : null;
+  const supportOffsetX = profile.supportOffsetX ?? prizeOffsetX;
+  const supportOffsetZ = profile.supportOffsetZ ?? prizeOffsetZ;
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
@@ -152,7 +166,8 @@ async function simulateM04PickupRetention(
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
         supportHalfHeight +
-        0.002
+        0.002 +
+        prizeVerticalOffsetMeters
       : bottomHubY -
         m01HubToBallCenter +
         M04_TEST_BALL_HEIGHT_OFFSET_METERS;
@@ -183,6 +198,24 @@ async function simulateM04PickupRetention(
       pedestalHalfHeight,
       claw.pt001PedestalRadius,
       0.75,
+    );
+  }
+
+  if (supportMode === "flat-deck" && supportDefinition) {
+    createPrize(
+      physics,
+      supportDefinition,
+      {
+        position: {
+          x: supportOffsetX,
+          y:
+            M06_CABINET_CONFIG.playDeckY +
+            supportDefinition.dimensions.y * 0.5 +
+            0.002,
+          z: supportOffsetZ,
+        },
+        variantSeed: "m09-ring-support-regression",
+      },
     );
   }
 
@@ -284,6 +317,7 @@ async function simulateM04PickupRetention(
             y: ballCenterY,
             z: prizeOffsetZ,
           },
+          rotationXRadians: prizeRotationXRadians,
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
         },
@@ -733,6 +767,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         CABINET_PLAY_TUNING.closedAngleRadians,
       fingerLowerPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
       topHoldSeconds: 1.3,
       supportMode: "flat-deck" as const,
     };
@@ -827,6 +862,78 @@ describe("M04 physical pickup-to-retaining force transition", () => {
         },
         results,
       }),
+    );
+  }, 15000);
+
+  it("production cabinet crook tip mechanically retains a one-prong Loop Ring hook", async () => {
+    const entry = CLAW_LAB_CONFIG.fingerNodes[3];
+    const theta = Math.PI * 4 / 3;
+    const entryRadius =
+      CLAW_LAB_CONFIG.fingerPivotRadius +
+      entry.radial * Math.cos(CLAW_LAB_CONFIG.openAngle) +
+      entry.down * Math.sin(CLAW_LAB_CONFIG.openAngle);
+    const prizeOffsetX = Math.cos(theta) * entryRadius;
+    const prizeOffsetZ = Math.sin(theta) * entryRadius;
+
+    const metrics = await simulateM04PickupRetention({
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      holdBoostTorque: 0,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerNodes: CABINET_PLAY_TUNING.fingerNodes,
+      topHoldSeconds: 1.3,
+      supportMode: "flat-deck",
+      prizeDefinitionId: "prize/ring_loop",
+      prizeRotationXRadians: 0.52,
+      prizeRotationYRadians: 0.04,
+      prizeVerticalOffsetMeters: 0.030,
+      prizeOffsetX,
+      prizeOffsetZ,
+      supportPrizeDefinitionId: "prize/box_tall",
+      supportOffsetX: prizeOffsetX,
+      supportOffsetZ: prizeOffsetZ - 0.110,
+    });
+
+    console.log(
+      "M09 production crook-tip ring retention",
+      JSON.stringify({
+        entryRadius,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4:
+          metrics.liftAfterRetaining0p4sMeters,
+        retain0p8:
+          metrics.liftAfterRetaining0p8sMeters,
+        retain1p2:
+          metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+      }),
+    );
+
+    expect(metrics.finiteAndBounded).toBe(true);
+    expect(metrics.retainingReached).toBe(true);
+    expect(metrics.topReached).toBe(true);
+    expect(metrics.peakLiftMeters).toBeGreaterThanOrEqual(0.13);
+    expect(
+      metrics.liftAfterRetaining0p4sMeters,
+    ).toBeGreaterThanOrEqual(0.12);
+    expect(
+      metrics.liftAfterRetaining0p8sMeters,
+    ).toBeGreaterThanOrEqual(0.12);
+    expect(
+      metrics.liftAfterRetaining1p2sMeters,
+    ).toBeGreaterThanOrEqual(0.12);
+    expect(metrics.finalLiftMeters).toBeGreaterThanOrEqual(
+      0.12,
     );
   }, 15000);
 
