@@ -48,6 +48,24 @@ function angularDistance(a: Quaternion, b: Quaternion): number {
   return 2 * Math.acos(dot);
 }
 
+function signedAngleAroundAxis(
+  rotation: Quaternion,
+  axis: { x: number; y: number; z: number },
+): number {
+  const projected =
+    rotation.x * axis.x +
+    rotation.y * axis.y +
+    rotation.z * axis.z;
+  let angle = 2 * Math.atan2(projected, rotation.w);
+  while (angle > Math.PI) {
+    angle -= Math.PI * 2;
+  }
+  while (angle < -Math.PI) {
+    angle += Math.PI * 2;
+  }
+  return angle;
+}
+
 interface EmptyCloseMetrics {
   closedAngleRadians: number;
   peakPairContacts: number[];
@@ -96,6 +114,7 @@ async function simulateEmptyClose(
 
   const fingers: RigidBodyHandle[] = [];
   const joints: RevoluteJointHandle[] = [];
+  const fingerAxes: Array<{ x: number; y: number; z: number }> = [];
   const fingerPivotLocalY =
     claw.fingerPivotY - claw.hubCenterY;
 
@@ -149,6 +168,7 @@ async function simulateEmptyClose(
 
     fingers.push(finger);
     joints.push(joint);
+    fingerAxes.push(tangent);
   }
 
   let command = 0;
@@ -179,15 +199,14 @@ async function simulateEmptyClose(
   const openFingerRotations = fingers.map((finger) =>
     relativeRotation(openHubRotation, finger.rotation()),
   );
-  const jointAngles = (): number[] =>
-    joints.map((joint) =>
-      (
-        joint as unknown as {
-          angle(): number;
-        }
-      ).angle(),
+  const physicalFingerAngles = (): number[] =>
+    fingers.map((finger, index) =>
+      signedAngleAroundAxis(
+        finger.rotation(),
+        fingerAxes[index]!,
+      ),
     );
-  const openJointAngles = jointAngles();
+  const openJointAngles = physicalFingerAngles();
 
   const pairs: Array<[number, number]> = [
     [0, 1],
@@ -237,7 +256,7 @@ async function simulateEmptyClose(
   const finalPairContacts = pairs.map(([a, b]) =>
     physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
   );
-  const closedJointAngles = jointAngles();
+  const closedJointAngles = physicalFingerAngles();
   const finalHubRotation = hub.rotation();
   const fingerTravelRadians = fingers.map((finger, index) =>
     angularDistance(
@@ -275,7 +294,7 @@ async function simulateEmptyClose(
   const reopenedPairContacts = pairs.map(([a, b]) =>
     physics.countBodyContactPairs(fingers[a]!, fingers[b]!),
   );
-  const reopenedJointAngles = jointAngles();
+  const reopenedJointAngles = physicalFingerAngles();
   const reopenedHubRotation = hub.rotation();
   const reopenErrorRadians = fingers.map((finger, index) =>
     angularDistance(
