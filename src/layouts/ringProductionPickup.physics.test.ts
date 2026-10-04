@@ -24,6 +24,7 @@ import {
   M02_FINGER_TRANSPORT_CONFIG,
   M02_GANTRY_CONFIG,
   advanceFingerCommandWithSelfContactGuard,
+  updateFingerSelfContactGuard,
 } from "../scenes/gantryLab";
 import {
   advanceGantryMotionTowardPosition,
@@ -436,6 +437,7 @@ async function simulateProductionRingPickup(
   };
   let reel: ReelState = { payout: 0, velocity: 0 };
   let fingerCommand = 0;
+  let selfContactGuardActive = false;
 
   const applyStabilizer = (): void => {
     const hubPosition = hub.translation();
@@ -611,6 +613,11 @@ async function simulateProductionRingPickup(
           fingers[0]!,
         ) > 0
       );
+    selfContactGuardActive = updateFingerSelfContactGuard(
+      selfContactGuardActive,
+      closing,
+      selfContactGuardActive,
+    );
     fingerCommand = advanceFingerCommandWithSelfContactGuard(
       fingerCommand,
       closing
