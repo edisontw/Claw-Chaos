@@ -197,6 +197,18 @@ export interface GantryLabOptions {
   };
 }
 
+export function updateFingerSelfContactGuard(
+  currentActive: boolean,
+  closing: boolean,
+  siblingFingerContact: boolean,
+): boolean {
+  if (!closing) {
+    return false;
+  }
+
+  return currentActive || siblingFingerContact;
+}
+
 export function advanceFingerCommandWithSelfContactGuard(
   current: number,
   target: number,
@@ -1181,7 +1193,7 @@ export function createGantryLabScene(
       const fingerTarget = closingFinger
         ? closedAngleRadians
         : claw.openAngle;
-      selfContactGuardActive =
+      const siblingFingerContact =
         closingFinger &&
         (
           physics.countBodyContactPairs(
@@ -1197,6 +1209,11 @@ export function createGantryLabScene(
             fingerBodies[0]!,
           ) > 0
         );
+      selfContactGuardActive = updateFingerSelfContactGuard(
+        selfContactGuardActive,
+        closingFinger,
+        siblingFingerContact,
+      );
       fingerCommand = advanceFingerCommandWithSelfContactGuard(
         fingerCommand,
         fingerTarget,
