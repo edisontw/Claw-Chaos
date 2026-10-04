@@ -98,18 +98,31 @@ describe("Cabinet play tuning", () => {
     ).toBe(0.18);
   });
 
-  it("keeps the original claw entry path and adds only a terminal crook", () => {
-    expect(
-      CABINET_PLAY_TUNING.fingerNodes.slice(0, 4),
-    ).toEqual([...CLAW_LAB_CONFIG.fingerNodes]);
-    expect(
-      CABINET_PLAY_TUNING.fingerNodes.slice(4),
-    ).toEqual([
+  it("preserves the original finger centerline while splitting its lower pad before the crook", () => {
+    const nodes = CABINET_PLAY_TUNING.fingerNodes;
+    expect(nodes.slice(0, 3)).toEqual(
+      CLAW_LAB_CONFIG.fingerNodes.slice(0, 3),
+    );
+
+    const originalTerminalStart = CLAW_LAB_CONFIG.fingerNodes[2];
+    const originalTerminalEnd = CLAW_LAB_CONFIG.fingerNodes[3];
+    expect(nodes[3]).toEqual({
+      radial:
+        (originalTerminalStart.radial +
+          originalTerminalEnd.radial) *
+        0.5,
+      down:
+        (originalTerminalStart.down +
+          originalTerminalEnd.down) *
+        0.5,
+    });
+    expect(nodes[4]).toEqual(originalTerminalEnd);
+    expect(nodes.slice(5)).toEqual([
       { radial: 0.09, down: 0.205 },
       { radial: 0.082, down: 0.183 },
     ]);
     expect(
       CABINET_PLAY_TUNING.fingerLowerPadSegmentIndices,
-    ).toEqual([2, 4]);
+    ).toEqual([2, 5]);
   });
 });
