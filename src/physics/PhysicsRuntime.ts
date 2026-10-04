@@ -184,8 +184,10 @@ export class PhysicsRuntime {
       const colliderA = bodyA.collider(indexA);
       for (let indexB = 0; indexB < bodyB.numColliders(); indexB += 1) {
         const colliderB = bodyB.collider(indexB);
-        this.world.contactPair(colliderA, colliderB, () => {
-          contactPairs += 1;
+        this.world.contactPair(colliderA, colliderB, (manifold) => {
+          if (manifold.numSolverContacts() > 0) {
+            contactPairs += 1;
+          }
         });
       }
     }
