@@ -909,7 +909,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     );
   }, 15000);
 
-  it("sweeps minimal distal-pad and retaining-torque combinations for Ring retention", async () => {
+  it("sweeps inward-curved production finger tips for Ring retention", async () => {
     const layout = createCabinetLayout(
       "ring",
       "retention-regression",
@@ -929,11 +929,15 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
       closePickupTorque:
         CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque:
+        CABINET_PLAY_TUNING.retainingTorque,
       pickupLiftDistanceMeters:
         CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
       closedAngleRadians:
         CABINET_PLAY_TUNING.closedAngleRadians,
       fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      fingerTipPadRadiusMeters:
         CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
       topHoldSeconds: 1.3,
       initialSettleSeconds: 4,
@@ -957,40 +961,47 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       ],
     };
 
+    const baseNodes = CLAW_LAB_CONFIG.fingerNodes;
     const candidates = [
       {
-        label: "baseline",
-        fingerTipPadRadiusMeters: 0.010,
+        label: "baseline_50mm",
+        tipRadialMeters: 0.050,
         retainingTorque: 0.014,
       },
       {
-        label: "pad12_torque10",
-        fingerTipPadRadiusMeters: 0.012,
-        retainingTorque: 0.10,
+        label: "hook_40mm",
+        tipRadialMeters: 0.040,
+        retainingTorque: 0.014,
       },
       {
-        label: "pad13_torque08",
-        fingerTipPadRadiusMeters: 0.013,
+        label: "hook_35mm",
+        tipRadialMeters: 0.035,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "hook_30mm",
+        tipRadialMeters: 0.030,
+        retainingTorque: 0.014,
+      },
+      {
+        label: "hook_35mm_ret08",
+        tipRadialMeters: 0.035,
         retainingTorque: 0.08,
-      },
-      {
-        label: "pad13_torque10",
-        fingerTipPadRadiusMeters: 0.013,
-        retainingTorque: 0.10,
-      },
-      {
-        label: "pad14_torque10",
-        fingerTipPadRadiusMeters: 0.014,
-        retainingTorque: 0.10,
       },
     ] as const;
 
     const results = [];
     for (const candidate of candidates) {
+      const fingerNodes = [
+        ...baseNodes.slice(0, -1),
+        {
+          radial: candidate.tipRadialMeters,
+          down: baseNodes[baseNodes.length - 1]!.down,
+        },
+      ];
       const metrics = await simulateM04PickupRetention({
         ...common,
-        fingerTipPadRadiusMeters:
-          candidate.fingerTipPadRadiusMeters,
+        fingerNodes,
         retainingTorque: candidate.retainingTorque,
       });
       results.push({
@@ -1014,7 +1025,7 @@ describe("M04 physical pickup-to-retaining force transition", () => {
     }
 
     console.log(
-      "M09 Ring retention candidate sweep",
+      "M09 Ring curved-tip candidate sweep",
       JSON.stringify(results),
     );
   }, 30000);
