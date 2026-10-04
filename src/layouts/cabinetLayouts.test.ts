@@ -125,6 +125,15 @@ describe("M09 cabinet layout foundation", () => {
     expect(targets[1]!.rotationXRadians).toBeLessThan(-0.60);
     expect(targets[0]!.yOffsetMeters).toBeCloseTo(0.034, 6);
     expect(targets[1]!.yOffsetMeters).toBeCloseTo(0.034, 6);
+
+    const leftSupport = supports.find(
+      (placement) => placement.x < 0,
+    )!;
+    const rightSupport = supports.find(
+      (placement) => placement.x > 0,
+    )!;
+    expect(leftSupport.z).toBeLessThan(-0.12);
+    expect(rightSupport.z).toBeGreaterThan(0.12);
   });
 
   it("keeps ring seed jitter small enough to preserve clear hole access", () => {
