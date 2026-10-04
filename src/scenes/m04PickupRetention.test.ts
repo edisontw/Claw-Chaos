@@ -47,6 +47,7 @@ interface PickupRetentionProfile {
   ballRadiusMeters?: number;
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
+  prizeMaterialId?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
   prizeRotationXRadians?: number;
   prizeRotationYRadians?: number;
@@ -324,6 +325,7 @@ async function simulateM04PickupRetention(
           },
           rotationXRadians: prizeRotationXRadians,
           rotationYRadians: prizeRotationYRadians,
+          materialId: profile.prizeMaterialId,
           variantSeed: "m04-flat-deck-regression",
         },
       ).body
@@ -1636,6 +1638,72 @@ describe("M04 physical pickup-to-retaining force transition", () => {
 
     console.log(
       "M09 lip50 passive-retention sweep",
+      JSON.stringify({ results }),
+    );
+
+    expect(results).toHaveLength(candidates.length);
+  }, 20000);
+
+
+  it("sweeps ring surface friction with the unchanged production claw", async () => {
+    const openTipRadius =
+      computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5;
+    const theta = Math.PI * 4 / 3;
+    const radialX = Math.cos(theta);
+    const radialZ = Math.sin(theta);
+    const prizeOffsetX =
+      radialX * (openTipRadius + 0.012);
+    const prizeOffsetZ =
+      radialZ * (openTipRadius + 0.012);
+    const candidates = [
+      "material/plastic",
+      "material/cardboard_matte",
+      "material/fabric",
+      "material/plush",
+      "material/rubber",
+    ] as const;
+    const results = [];
+
+    for (const prizeMaterialId of candidates) {
+      const metrics = await simulateM04PickupRetention({
+        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+        retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+        holdBoostTorque: 0,
+        pickupLiftDistanceMeters:
+          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        closedAngleRadians:
+          CABINET_PLAY_TUNING.closedAngleRadians,
+        fingerLowerPadRadiusMeters:
+          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+        topHoldSeconds: 1.3,
+        supportMode: "flat-deck",
+        prizeDefinitionId: "prize/ring_loop",
+        prizeMaterialId,
+        prizeRotationXRadians: 0.52,
+        prizeRotationYRadians: 0.04,
+        prizeVerticalOffsetMeters: 0.030,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportPrizeDefinitionId: "prize/box_tall",
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        prizeMaterialId,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+      });
+    }
+
+    console.log(
+      "M09 ring material friction sweep",
       JSON.stringify({ results }),
     );
 
