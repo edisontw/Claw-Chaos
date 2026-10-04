@@ -266,7 +266,7 @@ const RING_BASE: readonly PlacementBase[] = [
     prizeId: "prize/cube_small",
     role: "ring_support",
     x: -0.16,
-    z: -0.1415,
+    z: -0.1375,
     rotationYRadians: 0.02,
   },
   {
@@ -282,7 +282,7 @@ const RING_BASE: readonly PlacementBase[] = [
     prizeId: "prize/cube_small",
     role: "ring_support",
     x: 0.16,
-    z: 0.1415,
+    z: 0.1375,
     rotationYRadians: -0.02,
   },
   {
