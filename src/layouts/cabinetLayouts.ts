@@ -263,7 +263,7 @@ const RING_BASE: readonly PlacementBase[] = [
     rotationYRadians: 0.04,
   },
   {
-    prizeId: "prize/box_standard",
+    prizeId: "prize/box_tall",
     role: "ring_support",
     x: -0.16,
     z: -0.135,
@@ -279,7 +279,7 @@ const RING_BASE: readonly PlacementBase[] = [
     rotationYRadians: -0.05,
   },
   {
-    prizeId: "prize/box_standard",
+    prizeId: "prize/box_tall",
     role: "ring_support",
     x: 0.16,
     z: 0.135,
