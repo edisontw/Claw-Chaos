@@ -6,6 +6,7 @@ export const CABINET_LAYOUT_IDS = [
   "showcase",
   "bridge",
   "edge",
+  "ring",
 ] as const;
 
 export type CabinetLayoutId =
@@ -15,6 +16,7 @@ export type CabinetLayoutRole =
   | "support"
   | "bridge"
   | "edge_target"
+  | "ring_target"
   | "filler";
 
 export interface CabinetLayoutPlacement {
@@ -247,6 +249,37 @@ const EDGE_BASE: readonly PlacementBase[] = [
   },
 ];
 
+const RING_BASE: readonly PlacementBase[] = [
+  {
+    prizeId: "prize/ring_loop",
+    role: "ring_target",
+    x: -0.13,
+    z: -0.06,
+    rotationYRadians: 0.08,
+  },
+  {
+    prizeId: "prize/ring_loop",
+    role: "ring_target",
+    x: 0.13,
+    z: 0.06,
+    rotationYRadians: -0.12,
+  },
+  {
+    prizeId: "prize/sphere_ball",
+    role: "filler",
+    x: 0,
+    z: -0.16,
+    rotationYRadians: 0,
+  },
+  {
+    prizeId: "prize/cube_small",
+    role: "filler",
+    x: -0.02,
+    z: 0.16,
+    rotationYRadians: 0.10,
+  },
+];
+
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
 }
@@ -286,7 +319,14 @@ function materializePlacements(
                 verticalJitterMin: 0,
                 verticalJitterMax: 0,
               }
-            : {
+            : layoutId === "ring"
+              ? {
+                  positionJitter: 0.0015,
+                  rotationJitter: 0.015,
+                  verticalJitterMin: 0,
+                  verticalJitterMax: 0,
+                }
+              : {
             positionJitter: 0.006,
             rotationJitter: 0.055,
             verticalJitterMin: 0,
@@ -364,7 +404,9 @@ export function createCabinetLayout(
           ? BRIDGE_BASE
           : id === "edge"
             ? EDGE_BASE
-            : LOOSE_BASE;
+            : id === "ring"
+              ? RING_BASE
+              : LOOSE_BASE;
   return {
     id,
     seed,
