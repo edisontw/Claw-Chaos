@@ -155,52 +155,6 @@ function horizontalUnit(vector: {
   };
 }
 
-function createShortPadFingerSegments(
-  points: ReturnType<typeof createFingerPoints>,
-  padRadiusMeters: number,
-  padLengthMeters?: number,
-): ReturnType<typeof createFingerSegments> {
-  if (padLengthMeters === undefined) {
-    return createFingerSegments(points, padRadiusMeters);
-  }
-
-  const segments = createFingerSegments(
-    points,
-    CLAW_LAB_CONFIG.fingerRodRadius,
-  );
-  const last = segments.pop();
-  if (!last) {
-    return segments;
-  }
-
-  const dx = last.end.x - last.start.x;
-  const dy = last.end.y - last.start.y;
-  const dz = last.end.z - last.start.z;
-  const length = Math.hypot(dx, dy, dz);
-  const padLength = Math.min(Math.max(0, padLengthMeters), length);
-  const stemFraction =
-    length <= Number.EPSILON ? 0 : (length - padLength) / length;
-  const padStart = {
-    x: last.start.x + dx * stemFraction,
-    y: last.start.y + dy * stemFraction,
-    z: last.start.z + dz * stemFraction,
-  };
-
-  if (padLength < length - 1e-6) {
-    segments.push({
-      start: last.start,
-      end: padStart,
-      radius: CLAW_LAB_CONFIG.fingerRodRadius,
-    });
-  }
-  segments.push({
-    start: padStart,
-    end: last.end,
-    radius: padRadiusMeters,
-  });
-  return segments;
-}
-
 async function simulateProductionRingPickup(
   approach: ApproachCase,
   supportCase: SupportCase = { label: "production" },
@@ -332,7 +286,8 @@ async function simulateProductionRingPickup(
     gripDiagnostic.fingerLowerPadRadiusMeters ??
     CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters;
   const fingerLowerPadLengthMeters =
-    gripDiagnostic.fingerLowerPadLengthMeters;
+    gripDiagnostic.fingerLowerPadLengthMeters ??
+    CABINET_PLAY_TUNING.fingerLowerPadLengthMeters;
   const verticalHomeOffset =
     CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
   const gantry = {
@@ -404,7 +359,7 @@ async function simulateProductionRingPickup(
     };
     const finger = physics.createDynamicCapsuleChain(
       pivotWorld,
-      createShortPadFingerSegments(
+      createFingerSegments(
         createFingerPoints(fingerTheta),
         fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters,
@@ -998,67 +953,8 @@ describe("M09 production-claw ring pickup", () => {
       coreToleranceLabels.has(result.label),
     );
 
-    expect(coreToleranceSuccesses.length).toBeGreaterThanOrEqual(3);
+    expect(coreToleranceSuccesses).toHaveLength(4);
   }, 10_000);
 
-  it("diagnoses short lower-pad geometry before production tuning", async () => {
-    const approaches: ApproachCase[] = [
-      {
-        label: "center",
-        fingerIndex: 1,
-        highSideFraction: 0.35,
-        tangentOffsetMeters: 0,
-      },
-      {
-        label: "moderate-depth",
-        fingerIndex: 1,
-        highSideFraction: 0.44,
-        tangentOffsetMeters: 0,
-      },
-      {
-        label: "plus-5mm",
-        fingerIndex: 1,
-        highSideFraction: 0.40,
-        tangentOffsetMeters: 0.005,
-      },
-      {
-        label: "minus-5mm",
-        fingerIndex: 1,
-        highSideFraction: 0.40,
-        tangentOffsetMeters: -0.005,
-      },
-    ];
-    const padLengthsMeters = [0.012, 0.018, 0.024, 0.030];
-    const sweep: Array<{
-      padLengthMeters: number;
-      successes: number;
-      results: RingPickupMetrics[];
-    }> = [];
 
-    for (const padLengthMeters of padLengthsMeters) {
-      const results: RingPickupMetrics[] = [];
-      for (const approach of approaches) {
-        results.push(
-          await simulateProductionRingPickup(
-            approach,
-            { label: "production" },
-            {
-              label: `short-pad-${Math.round(padLengthMeters * 1000)}mm`,
-              fingerLowerPadRadiusMeters:
-                CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-              fingerLowerPadLengthMeters: padLengthMeters,
-            },
-          ),
-        );
-      }
-      sweep.push({
-        padLengthMeters,
-        successes: results.filter((result) => result.success).length,
-        results,
-      });
-    }
-
-    console.log("M09 Ring short-pad sweep", JSON.stringify(sweep));
-    expect(sweep).toHaveLength(padLengthsMeters.length);
-  }, 30_000);
 });
