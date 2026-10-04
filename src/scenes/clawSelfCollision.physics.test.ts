@@ -23,7 +23,12 @@ interface EmptyCloseMetrics {
 
 async function simulateEmptyClose(
   closedAngleRadians: number,
-): Promise<EmptyCloseMetrics> {
+  padRadiusMeters: number,
+  padLengthMeters: number,
+): Promise<EmptyCloseMetrics & {
+  padRadiusMeters: number;
+  padLengthMeters: number;
+}> {
   const claw = CLAW_LAB_CONFIG;
   const physics = await PhysicsRuntime.create();
   const dt = 1 / PHYSICS_HZ;
@@ -63,8 +68,8 @@ async function simulateEmptyClose(
       pivotWorld,
       createFingerSegments(
         createFingerPoints(theta),
-        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-        CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
+        padRadiusMeters,
+        padLengthMeters,
       ),
       {
         friction: CABINET_PLAY_TUNING.fingerFriction,
@@ -168,22 +173,42 @@ async function simulateEmptyClose(
     contactTicks,
     finalPairContacts,
     commandRadians: command,
+    padRadiusMeters,
+    padLengthMeters,
   };
 }
 
 describe("M09 production claw empty-close self contact", () => {
-  it("diagnoses the closed-angle range where sibling fingers stop binding", async () => {
-    const angles = [-0.63, -0.45, -0.42, -0.40, -0.38, -0.36];
+  it("diagnoses pad-radius and closed-angle combinations without sibling binding", async () => {
+    const angles = [-0.45, -0.42, -0.40, -0.38];
+    const padRadiiMeters = [0.007, 0.008, 0.009, 0.010];
+    const padLengthMeters =
+      CABINET_PLAY_TUNING.fingerLowerPadLengthMeters;
     const metrics = [];
-    for (const angle of angles) {
-      metrics.push(await simulateEmptyClose(angle));
+
+    for (const padRadiusMeters of padRadiiMeters) {
+      for (const angle of angles) {
+        metrics.push(
+          await simulateEmptyClose(
+            angle,
+            padRadiusMeters,
+            padLengthMeters,
+          ),
+        );
+      }
     }
 
-    console.log(
-      "M09 empty-close self-contact sweep",
-      JSON.stringify(metrics),
+    const clean = metrics.filter((result) =>
+      result.finalPairContacts.every((value) => value === 0),
     );
 
-    expect(metrics).toHaveLength(angles.length);
-  }, 15_000);
+    console.log(
+      "M09 empty-close geometry matrix",
+      JSON.stringify({ metrics, clean }),
+    );
+
+    expect(metrics).toHaveLength(
+      angles.length * padRadiiMeters.length,
+    );
+  }, 20_000);
 });
