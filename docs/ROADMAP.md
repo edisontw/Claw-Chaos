@@ -1373,7 +1373,7 @@ Closure rule:
 
 # M09 — Layout Gameplay
 
-**Status: IN PROGRESS — edge layout slice 4 candidate**
+**Status: IN PROGRESS — mobile-control visibility correction after edge slice 4**
 
 ## Goal
 
@@ -1524,6 +1524,32 @@ Purpose:
 This slice does not add any special edge-grab force, hidden aim assist, wall release rule or success shortcut.
 
 No claw, gantry, reel, grip, material, collider, cabinet, chute, camera or timestep tuning changed.
+
+## Mobile control visibility correction — 2026-10-04
+
+Deployed-play feedback identified the mobile overlay itself as obstructing the cabinet view.
+
+Implemented candidate:
+- keep the existing control mapping and gameplay callbacks unchanged
+- reduce joystick visual diameter:
+  - normal mobile: 96 px
+  - <=520 px viewport: 88 px
+  - landscape: 82 px
+- reduce DROP/CLOSE diameter:
+  - normal mobile: 82 px
+  - <=520 px viewport: 76 px
+  - landscape: 70 px
+- split the action label across two lines to remain legible at the smaller size
+- reduce idle joystick opacity to 0.54 and action opacity to 0.72
+- joystick becomes visually stronger only while actively dragged
+- DROP/CLOSE becomes visually stronger only during press/accepted feedback
+- move VIEW+/− away from the lower-right action stack to the upper-right safe-area
+- change VIEW+/− to a horizontal pair with low idle opacity and stronger active/focus feedback
+- reduce borders, shadows and backdrop blur so controls read as overlays rather than opaque game UI
+- preserve safe-area insets in portrait and landscape
+- expose `data-mobile-control-style="compact-translucent"` for deployed browser diagnostics
+
+No joystick dead zone, analog remapping, action debounce, haptics, view-height step, camera envelope, claw input, physics or gameplay parameter changed.
 
 ## Deliverables
 
