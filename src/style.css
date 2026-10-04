@@ -77,10 +77,10 @@ canvas {
 
 .mobile-joystick-wrap {
   position: absolute;
-  left: max(18px, env(safe-area-inset-left));
-  bottom: max(18px, env(safe-area-inset-bottom));
-  width: 132px;
-  height: 132px;
+  left: max(14px, env(safe-area-inset-left));
+  bottom: max(12px, env(safe-area-inset-bottom));
+  width: 108px;
+  height: 108px;
   display: grid;
   place-items: center;
   pointer-events: auto;
@@ -88,16 +88,27 @@ canvas {
 
 .mobile-joystick {
   position: relative;
-  width: 124px;
-  height: 124px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  border: 2px solid rgb(255 255 255 / 34%);
-  background: rgb(10 15 22 / 44%);
+  border: 1px solid rgb(255 255 255 / 24%);
+  background: rgb(10 15 22 / 24%);
   box-shadow:
-    inset 0 0 0 1px rgb(0 0 0 / 38%),
-    0 4px 18px rgb(0 0 0 / 35%);
-  backdrop-filter: blur(4px);
+    inset 0 0 0 1px rgb(0 0 0 / 24%),
+    0 3px 12px rgb(0 0 0 / 20%);
+  opacity: 0.54;
+  backdrop-filter: blur(3px);
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease;
   touch-action: none;
+}
+
+.mobile-joystick[data-active="true"] {
+  opacity: 0.92;
+  border-color: rgb(255 255 255 / 48%);
+  background: rgb(10 15 22 / 42%);
 }
 
 .mobile-joystick::before,
@@ -106,61 +117,75 @@ canvas {
   position: absolute;
   left: 50%;
   top: 50%;
-  background: rgb(255 255 255 / 18%);
+  background: rgb(255 255 255 / 12%);
   transform: translate(-50%, -50%);
   pointer-events: none;
 }
 
 .mobile-joystick::before {
-  width: 2px;
-  height: 82%;
+  width: 1px;
+  height: 78%;
 }
 
 .mobile-joystick::after {
-  width: 82%;
-  height: 2px;
+  width: 78%;
+  height: 1px;
 }
 
 .mobile-joystick-thumb {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 54px;
-  height: 54px;
+  width: 42px;
+  height: 42px;
   border-radius: 50%;
   transform: translate(-50%, -50%);
-  background: rgb(238 244 255 / 82%);
-  border: 2px solid rgb(255 255 255 / 76%);
-  box-shadow: 0 3px 12px rgb(0 0 0 / 45%);
+  background: rgb(238 244 255 / 58%);
+  border: 1px solid rgb(255 255 255 / 54%);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 28%);
   pointer-events: none;
+}
+
+.mobile-joystick[data-active="true"] .mobile-joystick-thumb {
+  background: rgb(238 244 255 / 82%);
+  border-color: rgb(255 255 255 / 78%);
 }
 
 .mobile-claw-action {
   position: absolute;
-  right: max(22px, env(safe-area-inset-right));
-  bottom: max(26px, env(safe-area-inset-bottom));
-  width: 108px;
-  height: 108px;
-  border: 2px solid rgb(255 255 255 / 62%);
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(14px, env(safe-area-inset-bottom));
+  width: 82px;
+  height: 82px;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 42%);
   border-radius: 50%;
-  background: rgb(185 41 41 / 88%);
-  color: white;
-  font: 800 14px/1.15 ui-sans-serif, system-ui, sans-serif;
+  background: rgb(185 41 41 / 58%);
+  color: rgb(255 255 255 / 92%);
+  font: 800 11px/1.05 ui-sans-serif, system-ui, sans-serif;
   letter-spacing: 0.04em;
+  white-space: pre-line;
   box-shadow:
-    inset 0 -7px 0 rgb(83 12 12 / 45%),
-    0 5px 18px rgb(0 0 0 / 42%);
+    inset 0 -4px 0 rgb(83 12 12 / 28%),
+    0 3px 12px rgb(0 0 0 / 24%);
+  opacity: 0.72;
   pointer-events: auto;
   touch-action: manipulation;
+  transition:
+    opacity 120ms ease,
+    transform 80ms ease,
+    background-color 120ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 
 .mobile-claw-action:active,
 .mobile-claw-action[data-result="accepted"] {
-  transform: translateY(3px);
+  opacity: 0.98;
+  background: rgb(190 43 43 / 86%);
+  transform: translateY(2px);
   box-shadow:
-    inset 0 -3px 0 rgb(83 12 12 / 42%),
-    0 2px 9px rgb(0 0 0 / 38%);
+    inset 0 -2px 0 rgb(83 12 12 / 34%),
+    0 2px 8px rgb(0 0 0 / 30%);
 }
 
 @media (hover: none), (pointer: coarse) {
@@ -174,79 +199,78 @@ canvas {
 
   .player-interaction-prompt {
     top: 18px;
-    max-width: min(72vw, 360px);
+    max-width: min(66vw, 320px);
     text-align: center;
   }
 }
 
 @media (max-width: 520px) {
   .mobile-joystick-wrap {
-    left: max(10px, env(safe-area-inset-left));
-    bottom: max(10px, env(safe-area-inset-bottom));
-    width: 112px;
-    height: 112px;
+    left: max(8px, env(safe-area-inset-left));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: 98px;
+    height: 98px;
   }
 
   .mobile-joystick {
-    width: 104px;
-    height: 104px;
+    width: 88px;
+    height: 88px;
   }
 
   .mobile-joystick-thumb {
-    width: 46px;
-    height: 46px;
+    width: 38px;
+    height: 38px;
   }
 
   .mobile-claw-action {
-    right: max(14px, env(safe-area-inset-right));
-    bottom: max(18px, env(safe-area-inset-bottom));
-    width: 92px;
-    height: 92px;
-    font-size: 12px;
+    right: max(10px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: 76px;
+    height: 76px;
+    font-size: 10px;
   }
 }
 
-
 @media (hover: none) and (pointer: coarse) and (orientation: portrait) {
   .mobile-joystick-wrap {
-    left: max(12px, env(safe-area-inset-left));
-    bottom: max(16px, env(safe-area-inset-bottom));
+    left: max(10px, env(safe-area-inset-left));
+    bottom: max(10px, env(safe-area-inset-bottom));
   }
 
   .mobile-claw-action {
-    right: max(16px, env(safe-area-inset-right));
-    bottom: max(22px, env(safe-area-inset-bottom));
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
   }
 }
 
 @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
   .mobile-joystick-wrap {
-    left: max(18px, env(safe-area-inset-left));
-    bottom: max(12px, env(safe-area-inset-bottom));
-    width: 108px;
-    height: 108px;
+    left: max(12px, env(safe-area-inset-left));
+    bottom: max(8px, env(safe-area-inset-bottom));
+    width: 92px;
+    height: 92px;
   }
 
   .mobile-joystick {
-    width: 100px;
-    height: 100px;
+    width: 82px;
+    height: 82px;
   }
 
   .mobile-joystick-thumb {
-    width: 44px;
-    height: 44px;
+    width: 36px;
+    height: 36px;
   }
 
   .mobile-claw-action {
-    right: max(20px, env(safe-area-inset-right));
-    bottom: max(16px, env(safe-area-inset-bottom));
-    width: 90px;
-    height: 90px;
-    font-size: 12px;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: 70px;
+    height: 70px;
+    font-size: 9.5px;
   }
 
   .player-interaction-prompt {
-    top: max(10px, env(safe-area-inset-top));
+    top: max(8px, env(safe-area-inset-top));
   }
 }
 
@@ -258,43 +282,54 @@ canvas {
 
 .mobile-view-height {
   position: absolute;
-  right: max(26px, env(safe-area-inset-right));
-  bottom: max(148px, calc(env(safe-area-inset-bottom) + 126px));
+  top: max(12px, calc(env(safe-area-inset-top) + 8px));
+  right: max(10px, env(safe-area-inset-right));
   display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-direction: row;
+  gap: 5px;
   pointer-events: auto;
 }
 
 .mobile-view-height-button {
-  min-width: 70px;
-  height: 34px;
-  border: 1px solid rgb(255 255 255 / 46%);
-  border-radius: 10px;
-  background: rgb(20 26 34 / 68%);
-  color: white;
-  font: 700 11px/1 ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: 0.03em;
-  box-shadow: 0 2px 8px rgb(0 0 0 / 32%);
-  backdrop-filter: blur(4px);
+  min-width: 52px;
+  height: 38px;
+  padding: 0 7px;
+  border: 1px solid rgb(255 255 255 / 28%);
+  border-radius: 9px;
+  background: rgb(20 26 34 / 38%);
+  color: rgb(255 255 255 / 86%);
+  font: 700 9.5px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  box-shadow: 0 2px 7px rgb(0 0 0 / 20%);
+  opacity: 0.54;
+  backdrop-filter: blur(3px);
   touch-action: manipulation;
+  transition:
+    opacity 120ms ease,
+    background-color 120ms ease,
+    transform 80ms ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.mobile-view-height-button:active {
+.mobile-view-height-button:active,
+.mobile-view-height-button:focus-visible {
+  opacity: 0.96;
   transform: translateY(1px);
-  background: rgb(44 56 72 / 82%);
+  background: rgb(44 56 72 / 76%);
 }
 
 @media (hover: none) and (pointer: coarse) and (orientation: landscape) {
   .mobile-view-height {
-    right: max(22px, env(safe-area-inset-right));
-    bottom: max(116px, calc(env(safe-area-inset-bottom) + 100px));
+    top: max(8px, calc(env(safe-area-inset-top) + 5px));
+    right: max(10px, env(safe-area-inset-right));
+    gap: 4px;
   }
 
   .mobile-view-height-button {
-    min-width: 64px;
-    height: 30px;
-    font-size: 10px;
+    min-width: 48px;
+    height: 34px;
+    padding: 0 6px;
+    font-size: 9px;
   }
 }
+
