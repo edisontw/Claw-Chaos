@@ -14,6 +14,7 @@ import {
   advanceMotorCommand,
   createFingerPoints,
   createFingerSegments,
+  computeFingerTipSpan,
   evaluatePt002Slip,
 } from "./clawLab";
 import {
@@ -47,9 +48,14 @@ interface PickupRetentionProfile {
   prizeShape?: "sphere" | "cuboid";
   prizeDefinitionId?: string;
   prizeHalfExtents?: { x: number; y: number; z: number };
+  prizeRotationXRadians?: number;
   prizeRotationYRadians?: number;
+  prizeVerticalOffsetMeters?: number;
   prizeOffsetX?: number;
   prizeOffsetZ?: number;
+  supportPrizeDefinitionId?: string;
+  supportOffsetX?: number;
+  supportOffsetZ?: number;
   fingerLowerPadRadiusMeters?: number;
   fingerNodes?: readonly { radial: number; down: number }[];
   closedAngleRadians?: number;
@@ -108,10 +114,19 @@ async function simulateM04PickupRetention(
       y: ballRadiusMeters,
       z: ballRadiusMeters,
     };
+  const prizeRotationXRadians =
+    profile.prizeRotationXRadians ?? 0;
   const prizeRotationYRadians =
     profile.prizeRotationYRadians ?? 0;
+  const prizeVerticalOffsetMeters =
+    profile.prizeVerticalOffsetMeters ?? 0;
   const prizeOffsetX = profile.prizeOffsetX ?? 0;
   const prizeOffsetZ = profile.prizeOffsetZ ?? 0;
+  const supportDefinition = profile.supportPrizeDefinitionId
+    ? getPrizeDefinition(profile.supportPrizeDefinitionId)
+    : null;
+  const supportOffsetX = profile.supportOffsetX ?? prizeOffsetX;
+  const supportOffsetZ = profile.supportOffsetZ ?? prizeOffsetZ;
   const fingerLowerPadRadiusMeters =
     profile.fingerLowerPadRadiusMeters ??
     CLAW_LAB_CONFIG.fingerRodRadius;
@@ -152,7 +167,8 @@ async function simulateM04PickupRetention(
     supportMode === "flat-deck"
       ? M06_CABINET_CONFIG.playDeckY +
         supportHalfHeight +
-        0.002
+        0.002 +
+        prizeVerticalOffsetMeters
       : bottomHubY -
         m01HubToBallCenter +
         M04_TEST_BALL_HEIGHT_OFFSET_METERS;
@@ -183,6 +199,24 @@ async function simulateM04PickupRetention(
       pedestalHalfHeight,
       claw.pt001PedestalRadius,
       0.75,
+    );
+  }
+
+  if (supportMode === "flat-deck" && supportDefinition) {
+    createPrize(
+      physics,
+      supportDefinition,
+      {
+        position: {
+          x: supportOffsetX,
+          y:
+            M06_CABINET_CONFIG.playDeckY +
+            supportDefinition.dimensions.y * 0.5 +
+            0.002,
+          z: supportOffsetZ,
+        },
+        variantSeed: "m04-ring-support-regression",
+      },
     );
   }
 
@@ -284,6 +318,7 @@ async function simulateM04PickupRetention(
             y: ballCenterY,
             z: prizeOffsetZ,
           },
+          rotationXRadians: prizeRotationXRadians,
           rotationYRadians: prizeRotationYRadians,
           variantSeed: "m04-flat-deck-regression",
         },
@@ -829,6 +864,97 @@ describe("M04 physical pickup-to-retaining force transition", () => {
       }),
     );
   }, 15000);
+
+
+  it("measures full production one-prong ring close and retention behavior", async () => {
+    const openTipRadius =
+      computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5;
+    const theta = Math.PI * 4 / 3;
+    const radialX = Math.cos(theta);
+    const radialZ = Math.sin(theta);
+    const tangentX = -radialZ;
+    const tangentZ = radialX;
+
+    const common = {
+      fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+      closePickupTorque: CABINET_PLAY_TUNING.closePickupTorque,
+      retainingTorque: CABINET_PLAY_TUNING.retainingTorque,
+      holdBoostTorque: CABINET_PLAY_TUNING.holdBoostTorque,
+      pickupLiftDistanceMeters:
+        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+      closedAngleRadians:
+        CABINET_PLAY_TUNING.closedAngleRadians,
+      fingerLowerPadRadiusMeters:
+        CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+      topHoldSeconds: 1.3,
+      supportMode: "flat-deck" as const,
+      prizeDefinitionId: "prize/ring_loop",
+      prizeRotationXRadians: 0.52,
+      prizeRotationYRadians: 0.04,
+      prizeVerticalOffsetMeters: 0.030,
+      supportPrizeDefinitionId: "prize/box_tall",
+    };
+
+    const approaches = [
+      { radial: -0.012, tangent: 0 },
+      { radial: 0, tangent: 0 },
+      { radial: 0.012, tangent: 0 },
+      { radial: 0, tangent: -0.012 },
+      { radial: 0, tangent: 0.012 },
+    ] as const;
+
+    const results = [];
+
+    for (const approach of approaches) {
+      const prizeOffsetX =
+        radialX * (openTipRadius + approach.radial) +
+        tangentX * approach.tangent;
+      const prizeOffsetZ =
+        radialZ * (openTipRadius + approach.radial) +
+        tangentZ * approach.tangent;
+
+      const metrics = await simulateM04PickupRetention({
+        ...common,
+        prizeOffsetX,
+        prizeOffsetZ,
+        supportOffsetX: prizeOffsetX,
+        supportOffsetZ: prizeOffsetZ - 0.110,
+      });
+
+      results.push({
+        ...approach,
+        prizeOffsetX,
+        prizeOffsetZ,
+        peakLiftMeters: metrics.peakLiftMeters,
+        liftAtRetainingStartMeters:
+          metrics.liftAtRetainingStartMeters,
+        retain0p4: metrics.liftAfterRetaining0p4sMeters,
+        retain0p8: metrics.liftAfterRetaining0p8sMeters,
+        retain1p2: metrics.liftAfterRetaining1p2sMeters,
+        finalLiftMeters: metrics.finalLiftMeters,
+        planarDisplacementMeters:
+          metrics.maxPlanarDisplacementMeters,
+        retainingReached: metrics.retainingReached,
+        topReached: metrics.topReached,
+      });
+    }
+
+    console.log(
+      "M09 production ring pickup scan",
+      JSON.stringify({
+        openTipRadius,
+        retainingTorque:
+          CABINET_PLAY_TUNING.retainingTorque,
+        holdBoostTorque:
+          CABINET_PLAY_TUNING.holdBoostTorque,
+        results,
+      }),
+    );
+
+    expect(
+      results.every((result) => result.retainingReached),
+    ).toBe(true);
+  }, 20000);
 
 });
 
