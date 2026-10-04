@@ -299,7 +299,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M09 / Ring layout",
+      milestone: "M09 / Layout gameplay",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -363,7 +363,7 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M09 / Ring layout",
+    milestone: "M09 / Layout gameplay",
     layoutId: layout.id,
     camera: gantryScene.camera,
     primaryAction: () =>
@@ -472,7 +472,9 @@ export function createCabinetLabScene(
                 ? "Bridge layout     two supports + movable elevated flat-box span"
                 : layout.id === "edge"
                   ? "Edge layout       side/back wall targets beyond direct carriage center"
-                  : "Ring layout       tilted hollow loops propped for real hook-and-lift play",
+                  : layout.id === "ring"
+                    ? "Ring layout       tilted hollow loops propped for real hook-and-lift play"
+                    : "Chute layout      lip-adjacent targets for push/roll/flip scoring",
       ];
     },
   };
