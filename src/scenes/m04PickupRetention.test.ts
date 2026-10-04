@@ -11,7 +11,6 @@ import type {
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import {
   CLAW_LAB_CONFIG,
-  advanceMotorCommand,
   createFingerPoints,
   createFingerSegments,
   evaluatePt002Slip,
