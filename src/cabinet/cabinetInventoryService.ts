@@ -2,7 +2,8 @@ import type { CabinetWinResult } from "./cabinetResultState";
 
 export type CabinetServiceState =
   | "operating"
-  | "staff_requested";
+  | "staff_requested"
+  | "service_paused";
 
 export interface CabinetStaffPolicy {
   restockThresholdCount: number;
@@ -81,6 +82,18 @@ export class CabinetInventoryServiceState {
     return true;
   }
 
+  advanceServiceHandoff(canPauseSafely: boolean): boolean {
+    if (
+      this.state !== "staff_requested" ||
+      !canPauseSafely
+    ) {
+      return false;
+    }
+
+    this.state = "service_paused";
+    return true;
+  }
+
   get awardedInventoryCount(): number {
     return this.awardedPrizeIds.size;
   }
@@ -110,8 +123,12 @@ export class CabinetInventoryServiceState {
     return this.state;
   }
 
-  get machinePaused(): boolean {
+  get playerInputLocked(): boolean {
     return this.state !== "operating";
+  }
+
+  get machinePaused(): boolean {
+    return this.state === "service_paused";
   }
 
   snapshot(): CabinetInventoryServiceSnapshot {

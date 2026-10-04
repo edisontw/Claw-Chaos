@@ -44,7 +44,7 @@ describe("M10 cabinet inventory and staff-policy foundation", () => {
     expect(state.canCallStaff).toBe(true);
   });
 
-  it("blocks arbitrary staff requests until the restock threshold is reached", () => {
+  it("queues service without interrupting the active machine until handoff is safe", () => {
     const state = new CabinetInventoryServiceState(
       3,
       { restockThresholdCount: 1 },
@@ -68,9 +68,29 @@ describe("M10 cabinet inventory and staff-policy foundation", () => {
     expect(state.serviceState).toBe(
       "staff_requested",
     );
-    expect(state.machinePaused).toBe(true);
+    expect(state.playerInputLocked).toBe(true);
+    expect(state.machinePaused).toBe(false);
     expect(state.canCallStaff).toBe(false);
     expect(state.requestStaff()).toBe(false);
+
+    expect(
+      state.advanceServiceHandoff(false),
+    ).toBe(false);
+    expect(state.serviceState).toBe(
+      "staff_requested",
+    );
+    expect(state.machinePaused).toBe(false);
+
+    expect(
+      state.advanceServiceHandoff(true),
+    ).toBe(true);
+    expect(state.serviceState).toBe(
+      "service_paused",
+    );
+    expect(state.machinePaused).toBe(true);
+    expect(
+      state.advanceServiceHandoff(true),
+    ).toBe(false);
   });
 
   it("never decrements inventory below zero", () => {
