@@ -863,10 +863,28 @@ describe("M09 production-claw ring pickup", () => {
         tangentOffsetMeters: 0,
       },
       {
+        label: "finger-1 moderate-depth",
+        fingerIndex: 1,
+        highSideFraction: 0.44,
+        tangentOffsetMeters: 0,
+      },
+      {
         label: "finger-1 deeper-high-side",
         fingerIndex: 1,
         highSideFraction: 0.52,
         tangentOffsetMeters: 0,
+      },
+      {
+        label: "finger-1 tangent-plus-5mm",
+        fingerIndex: 1,
+        highSideFraction: 0.40,
+        tangentOffsetMeters: 0.005,
+      },
+      {
+        label: "finger-1 tangent-minus-5mm",
+        fingerIndex: 1,
+        highSideFraction: 0.40,
+        tangentOffsetMeters: -0.005,
       },
       {
         label: "finger-1 tangent-plus-10mm",
@@ -911,6 +929,16 @@ describe("M09 production-claw ring pickup", () => {
     }
 
     const successful = metrics.filter((result) => result.success);
-    expect(successful.length).toBeGreaterThanOrEqual(1);
+    const coreToleranceLabels = new Set([
+      "finger-1 centered-high-side",
+      "finger-1 moderate-depth",
+      "finger-1 tangent-plus-5mm",
+      "finger-1 tangent-minus-5mm",
+    ]);
+    const coreToleranceSuccesses = successful.filter((result) =>
+      coreToleranceLabels.has(result.label),
+    );
+
+    expect(coreToleranceSuccesses.length).toBeGreaterThanOrEqual(3);
   }, 10_000);
 });
