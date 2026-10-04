@@ -1,8 +1,8 @@
 import type { PrimitiveColliderSpec, Vec3 } from "../physics/PhysicsRuntime";
 
 export const RING_LOOP_PROFILE = {
-  outerHalfX: 0.075,
-  outerHalfZ: 0.065,
+  outerHalfX: 0.095,
+  outerHalfZ: 0.085,
   tubeRadius: 0.010,
   segmentCount: 12,
 } as const;
