@@ -433,15 +433,20 @@ export function createFingerVisual(
 export function createFingerSegments(
   points: readonly Vec3[],
   lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
+  lowerPadSegmentCount = 1,
 ): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
+  const paddedFromIndex = Math.max(
+    1,
+    points.length - Math.max(1, lowerPadSegmentCount),
+  );
 
   for (let index = 1; index < points.length; index += 1) {
     segments.push({
       start: points[index - 1]!,
       end: points[index]!,
       radius:
-        index === points.length - 1
+        index >= paddedFromIndex
           ? lowerPadRadius
           : CLAW_LAB_CONFIG.fingerRodRadius,
     });
