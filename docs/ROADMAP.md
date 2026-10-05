@@ -2002,6 +2002,68 @@ A physical chute win is already detected correctly by the existing ChuteSensor, 
 
 ---
 
+# Major Visual / Art Uplift
+
+**Status: IN PROGRESS — Art Slice 1 candidate on dedicated feature branch**
+
+Primary direction:
+- Theme A — Modern Japanese Arcade
+- clean white production cabinet
+- restrained pastel pink + cyan illumination
+- metal trim and controlled glass
+- original CLAW CHAOS branding
+- professional Japanese prize-center presentation
+
+Theme architecture:
+- visual identity is centralized in a reusable theme object instead of scattering cabinet/environment/staff color values through scene code
+- planned IDs are reserved for:
+  - Modern Japanese Arcade
+  - Cute Pastel Prize Shop
+  - Futuristic Neon Arcade
+  - Premium Retro-Modern
+- Theme A is the first implemented preset
+- machine, environment and staff palettes are separate theme groups
+- runtime URL/theme selection is routed through the theme resolver so later implemented skins do not require gameplay rewrites
+
+## Art Slice 1 — theme architecture + cabinet exterior foundation
+
+Implemented candidate:
+- production-style lower cabinet shell and front fascia
+- enlarged upper header/marquee structure
+- original CLAW CHAOS / PRIZE STATION marquee
+- white body with restrained chrome/metal trim
+- pastel pink + cyan exterior accent LEDs
+- upgraded control deck with visible joystick and action button
+- dedicated payment/card/coin panel
+- prize retrieval door treatment
+- access-panel seam, fasteners and ventilation detail
+- existing cabinet frame/glass/chute/deck colors now source from Theme A tokens
+- global scene background, hemisphere light and key light source from the environment theme
+- existing staff visual now receives a staff-theme palette while preserving the M10 service state machine
+- browser smoke exposes and verifies the active visual-theme ID
+
+Physics/gameplay contract:
+- all new exterior geometry is visual-only
+- no new Rapier collider was added
+- M06 cabinet physics geometry is unchanged
+- ChuteSensor remains authoritative
+- no prize parenting, magnet, weld, teleport carry, kinematic prize carry or hidden pickup force
+- Ring, Bridge, chute-adjacent and staff/restocking logic are unchanged
+
+Hard-coded visual audit carried forward:
+- gantry/bridge/winch/claw material literals remain in `gantryLab` for Art Slice 2 migration
+- full arcade-room geometry and floor/wall/signage tokens are reserved for Art Slice 3
+- staff geometry/detail uplift is reserved for Art Slice 4
+- holistic reflection/shadow/performance balancing is reserved for Art Slice 5
+
+Next planned slices:
+1. cabinet interior / gantry / lighting
+2. surrounding Japanese arcade environment
+3. staff model uplift
+4. holistic polish / balance / mobile performance
+
+---
+
 # M11 — Second Machine Family
 
 ## Preferred order
