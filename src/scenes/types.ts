@@ -34,6 +34,7 @@ export interface SimulationScene {
   camera: CameraPreset;
   milestone: string;
   layoutId?: string;
+  environmentId?: string;
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
