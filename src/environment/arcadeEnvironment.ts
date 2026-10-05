@@ -4,6 +4,7 @@ import type {
   SurfaceMaterialToken,
   VisualTheme,
 } from "../theme/visualTheme";
+import type { ArcadeBackgroundDetail } from "../player/mobileRenderProfile";
 
 export const ARCADE_ENVIRONMENT_VISUAL_ONLY = true;
 export const ARCADE_ENVIRONMENT_VARIANT =
@@ -389,6 +390,7 @@ function addNeighborMachine(
 function addNeighborMachines(
   root: THREE.Group,
   theme: VisualTheme,
+  detail: ArcadeBackgroundDetail,
 ): void {
   const windowToken =
     theme.machine.exterior.paymentPanel;
@@ -424,7 +426,14 @@ function addNeighborMachines(
     prizeGeometry: new THREE.SphereGeometry(0.09, 12, 9),
   };
 
-  for (const placement of ARCADE_NEIGHBOR_MACHINE_PLACEMENTS) {
+  const placements =
+    detail === "reduced"
+      ? ARCADE_NEIGHBOR_MACHINE_PLACEMENTS.filter(
+          (placement) => placement.id.includes("near"),
+        )
+      : ARCADE_NEIGHBOR_MACHINE_PLACEMENTS;
+
+  for (const placement of placements) {
     addNeighborMachine(root, placement, shared);
   }
 }
@@ -498,16 +507,20 @@ function addPrizeDisplay(
 export function addArcadeEnvironment(
   scene: THREE.Scene,
   theme: VisualTheme,
+  detail: ArcadeBackgroundDetail = "full",
 ): THREE.Group {
   const root = new THREE.Group();
   root.name = arcadeEnvironmentId(theme);
   root.userData.visualOnly = true;
+  root.userData.backgroundDetail = detail;
 
   addWallAndFloor(root, theme);
   addBackWallSign(root, theme);
   addCeilingFixtures(root, theme);
-  addNeighborMachines(root, theme);
-  addPrizeDisplay(root, theme);
+  addNeighborMachines(root, theme, detail);
+  if (detail === "full") {
+    addPrizeDisplay(root, theme);
+  }
 
   scene.add(root);
   return root;
