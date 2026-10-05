@@ -96,8 +96,13 @@ describe("visual theme architecture", () => {
       theme.machine.interior.clawTip.color,
     );
 
-    expect(backdrop - claw).toBeGreaterThan(80);
-    expect(backdrop - tip).toBeGreaterThan(120);
+    const band = brightness(
+      theme.machine.interior.clawBand.color,
+    );
+
+    expect(backdrop - claw).toBeGreaterThan(35);
+    expect(claw - band).toBeGreaterThan(100);
+    expect(claw - tip).toBeGreaterThan(90);
   });
 
   it("keeps the named Theme A preset stable", () => {
