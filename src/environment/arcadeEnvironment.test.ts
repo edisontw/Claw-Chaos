@@ -1,16 +1,24 @@
 import { describe, expect, it } from "vitest";
 import {
   ARCADE_CEILING_FIXTURES,
-  ARCADE_ENVIRONMENT_ID,
+  ARCADE_CEILING_HEIGHT_METERS,
+  ARCADE_ENVIRONMENT_VARIANT,
   ARCADE_ENVIRONMENT_VISUAL_ONLY,
   ARCADE_NEIGHBOR_MACHINE_PLACEMENTS,
+  arcadeEnvironmentId,
 } from "./arcadeEnvironment";
+import { DEFAULT_VISUAL_THEME } from "../theme/visualTheme";
 
 describe("Art Slice 3 arcade environment", () => {
   it("is explicitly visual-only", () => {
     expect(ARCADE_ENVIRONMENT_VISUAL_ONLY).toBe(true);
-    expect(ARCADE_ENVIRONMENT_ID).toBe(
-      "theme-a-modern-japanese-arcade-room",
+    expect(ARCADE_ENVIRONMENT_VARIANT).toBe(
+      "prize-center-room-v1",
+    );
+    expect(
+      arcadeEnvironmentId(DEFAULT_VISUAL_THEME),
+    ).toBe(
+      "modern-japanese-arcade:prize-center-room-v1",
     );
   });
 
@@ -27,6 +35,7 @@ describe("Art Slice 3 arcade environment", () => {
   });
 
   it("keeps ceiling fixtures above the adjustable player eye height", () => {
+    expect(ARCADE_CEILING_HEIGHT_METERS).toBeGreaterThan(1.10);
     expect(ARCADE_CEILING_FIXTURES.length).toBeGreaterThanOrEqual(6);
     for (const fixture of ARCADE_CEILING_FIXTURES) {
       expect(Math.abs(fixture.x)).toBeLessThanOrEqual(1.5);
