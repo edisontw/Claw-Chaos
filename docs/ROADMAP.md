@@ -1804,7 +1804,7 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
-**Status: IN PROGRESS — slice 2 CALL STAFF + safe service handoff**
+**Status: IN PROGRESS — slice 3 staff approach + service-door opening**
 
 ## Goal
 
@@ -1878,6 +1878,44 @@ Deferred to the next M10 slice:
 - close/reopen and return to `operating`
 
 No claw/prize force, Ring geometry, collision, ChuteSensor, teleport, parenting, magnet, weld, hidden pickup force or kinematic prize carry was added.
+
+## Slice 3 — adult staff approach + service-door opening
+
+Implemented:
+- add a visible adult female arcade staff NPC as a lightweight Three.js character:
+  - adult proportions
+  - dark ponytail / hair silhouette
+  - navy staff uniform + light blouse panel
+  - name badge
+  - skirt + dark leggings + shoes
+  - simple facial features
+- presentation goal is a clean, attractive Japanese-arcade-style staff silhouette without changing gameplay outcomes
+- character is intentionally built as replaceable visual content; service logic is independent so a later GLB/skinned model can replace it without rewriting M10 state flow
+- staff does not appear until the machine has completed the slice-2 safe handoff and entered `service_paused`
+- deterministic service sequence:
+  - `hidden`
+  - `approaching` for about 2.6 s
+  - `opening_door` for about 0.9 s
+  - `door_open`
+- approach includes simple procedural walk bob + alternating arm swing
+- at the cabinet, the staff turns toward the right-side service panel and raises an arm while opening it
+- CALL STAFF status text now reports STAFF APPROACHING / OPENING MACHINE / SERVICE DOOR OPEN
+- service sequence timing and final outside-cabinet position are regression-tested
+- the visible right-side glass/service panel is hinged visually for this slice
+
+Important approximation:
+- the existing cabinet physics collider remains closed while the service door is only visually open
+- this is intentional because slice 3 does not yet move prizes through the opening
+- the next restock slice must create a legitimate service-access physics state before any prize is repositioned/restocked; do not move prizes through the still-closed collider
+
+Deferred:
+- physical service-door aperture/collider handling
+- staff hand/reach interaction with prizes
+- seeded restock/reposition placement
+- settle validation
+- close-door / staff departure / machine reopen
+
+No win forcing or ideal-placement request path was introduced.
 
 ### Carry-forward UX backlog
 
