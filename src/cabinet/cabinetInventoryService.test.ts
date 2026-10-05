@@ -12,6 +12,7 @@ describe("M10 cabinet inventory and staff-policy foundation", () => {
       initialInventoryCount: 5,
       remainingInventoryCount: 5,
       awardedInventoryCount: 0,
+      restockedInventoryCount: 0,
       restockThresholdCount: 1,
       restockNeeded: false,
       canCallStaff: false,
@@ -91,6 +92,42 @@ describe("M10 cabinet inventory and staff-policy foundation", () => {
     expect(
       state.advanceServiceHandoff(true),
     ).toBe(false);
+  });
+
+  it("records only the physical restock deficit while service is paused", () => {
+    const state = new CabinetInventoryServiceState(
+      4,
+      { restockThresholdCount: 1 },
+    );
+
+    expect(
+      state.consumeWin({ prizeId: "prize-a" }),
+    ).toBe(true);
+    expect(
+      state.consumeWin({ prizeId: "prize-b" }),
+    ).toBe(true);
+    expect(
+      state.consumeWin({ prizeId: "prize-c" }),
+    ).toBe(true);
+    expect(state.remainingInventoryCount).toBe(1);
+    expect(state.restockDeficitCount).toBe(3);
+
+    expect(state.recordRestock(3)).toBe(0);
+    expect(state.requestStaff()).toBe(true);
+    expect(
+      state.advanceServiceHandoff(true),
+    ).toBe(true);
+
+    expect(state.recordRestock(99)).toBe(3);
+    expect(state.remainingInventoryCount).toBe(4);
+    expect(state.restockedInventoryCount).toBe(3);
+    expect(state.restockDeficitCount).toBe(0);
+    expect(state.recordRestock(1)).toBe(0);
+
+    expect(
+      state.consumeWin({ prizeId: "restock-prize" }),
+    ).toBe(true);
+    expect(state.remainingInventoryCount).toBe(3);
   });
 
   it("never decrements inventory below zero", () => {

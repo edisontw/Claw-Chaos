@@ -13,6 +13,7 @@ export interface CabinetInventoryServiceSnapshot {
   initialInventoryCount: number;
   remainingInventoryCount: number;
   awardedInventoryCount: number;
+  restockedInventoryCount: number;
   restockThresholdCount: number;
   restockNeeded: boolean;
   canCallStaff: boolean;
@@ -22,6 +23,7 @@ export interface CabinetInventoryServiceSnapshot {
 
 export class CabinetInventoryServiceState {
   private readonly awardedPrizeIds = new Set<string>();
+  private restockedInventoryCountValue = 0;
   private state: CabinetServiceState = "operating";
 
   readonly initialInventoryCount: number;
@@ -62,10 +64,7 @@ export class CabinetInventoryServiceState {
     if (this.awardedPrizeIds.has(result.prizeId)) {
       return false;
     }
-    if (
-      this.awardedPrizeIds.size >=
-      this.initialInventoryCount
-    ) {
+    if (this.remainingInventoryCount <= 0) {
       return false;
     }
 
@@ -94,14 +93,45 @@ export class CabinetInventoryServiceState {
     return true;
   }
 
+  recordRestock(count: number): number {
+    if (
+      this.state !== "service_paused" ||
+      !Number.isInteger(count) ||
+      count <= 0
+    ) {
+      return 0;
+    }
+
+    const accepted = Math.min(
+      count,
+      this.restockDeficitCount,
+    );
+    this.restockedInventoryCountValue += accepted;
+    return accepted;
+  }
+
   get awardedInventoryCount(): number {
     return this.awardedPrizeIds.size;
   }
 
+  get restockedInventoryCount(): number {
+    return this.restockedInventoryCountValue;
+  }
+
   get remainingInventoryCount(): number {
-    return (
+    return Math.max(
+      0,
+      this.initialInventoryCount +
+        this.restockedInventoryCountValue -
+        this.awardedPrizeIds.size,
+    );
+  }
+
+  get restockDeficitCount(): number {
+    return Math.max(
+      0,
       this.initialInventoryCount -
-      this.awardedPrizeIds.size
+        this.remainingInventoryCount,
     );
   }
 
@@ -138,6 +168,8 @@ export class CabinetInventoryServiceState {
         this.remainingInventoryCount,
       awardedInventoryCount:
         this.awardedInventoryCount,
+      restockedInventoryCount:
+        this.restockedInventoryCount,
       restockThresholdCount:
         this.restockThresholdCount,
       restockNeeded: this.restockNeeded,
