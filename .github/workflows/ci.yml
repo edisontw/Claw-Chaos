@@ -170,7 +170,8 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' "$DOM_FILE" &&
                grep -q 'data-visual-theme="modern-japanese-arcade"' "$DOM_FILE" &&
                grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' "$DOM_FILE" &&
-               grep -q 'data-staff-character="adult-female-arcade-attendant-v2-realistic"' "$DOM_FILE" &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-v3-skinned"' "$DOM_FILE" &&
+               grep -q 'data-staff-visual="skinned"' "$DOM_FILE" &&
                grep -q 'data-tone-mapping="aces-filmic"' "$DOM_FILE" &&
                grep -q 'data-player-view="active"' "$DOM_FILE" &&
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
@@ -447,7 +448,8 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" &&
                grep -q 'data-visual-theme="modern-japanese-arcade"' "$ROOT_DOM_FILE" &&
                grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' "$ROOT_DOM_FILE" &&
-               grep -q 'data-staff-character="adult-female-arcade-attendant-v2-realistic"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-v3-skinned"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-visual="skinned"' "$ROOT_DOM_FILE" &&
                grep -q 'data-tone-mapping="aces-filmic"' "$ROOT_DOM_FILE" &&
                grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" &&
                ! grep -q 'player-reticle' "$ROOT_DOM_FILE" &&
