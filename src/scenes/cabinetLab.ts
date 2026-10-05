@@ -455,6 +455,8 @@ export function createCabinetLabScene(
     milestone: "M10 / Staff & restocking",
     layoutId: layout.id,
     environmentId: arcadeEnvironmentId(visualTheme),
+    staffCharacterVariant:
+      staffServiceVisual.characterVariant,
     camera: gantryScene.camera,
     primaryAction: () =>
       layoutSettle.ready
