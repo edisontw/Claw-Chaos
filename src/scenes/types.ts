@@ -35,6 +35,7 @@ export interface SimulationScene {
   milestone: string;
   layoutId?: string;
   environmentId?: string;
+  staffCharacterVariant?: string;
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
