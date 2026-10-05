@@ -16,7 +16,7 @@ Original asset:
 Claw Chaos modifications:
 - textures resized to max 1024 px
 - textures converted to WebP
-- glTF optimized with Draco geometry compression
+- glTF optimized with Meshopt geometry/animation compression
 - original skeleton and animation data retained by the glTF optimization pipeline
 
 Attribution is retained here because CC-BY-4.0 requires credit.
