@@ -2004,7 +2004,7 @@ A physical chute win is already detected correctly by the existing ChuteSensor, 
 
 # Major Visual / Art Uplift
 
-**Status: IN PROGRESS — Art Slice 1 candidate on dedicated feature branch**
+**Status: IN PROGRESS — Art Slices 1–2 candidate on dedicated feature branch**
 
 Primary direction:
 - Theme A — Modern Japanese Arcade
@@ -2050,17 +2050,45 @@ Physics/gameplay contract:
 - no prize parenting, magnet, weld, teleport carry, kinematic prize carry or hidden pickup force
 - Ring, Bridge, chute-adjacent and staff/restocking logic are unchanged
 
-Hard-coded visual audit carried forward:
-- gantry/bridge/winch/claw material literals remain in `gantryLab` for Art Slice 2 migration
+Hard-coded visual audit after Slice 1:
+- gantry/bridge/winch/claw material literals were identified for Art Slice 2 migration
 - full arcade-room geometry and floor/wall/signage tokens are reserved for Art Slice 3
 - staff geometry/detail uplift is reserved for Art Slice 4
 - holistic reflection/shadow/performance balancing is reserved for Art Slice 5
 
+## Art Slice 2 — cabinet interior / gantry / lighting
+
+Implemented candidate:
+- visual-only interior backdrop inset over the existing physical back wall
+- metal interior frame accents around the backdrop
+- restrained pink/cyan vertical interior accent lighting
+- paired shallow ceiling light diffusers kept inside the existing cabinet envelope
+- gantry lab now resolves a visual theme explicitly while retaining a safe default
+- gantry rail, moving bridge, carriage, winch drum/flanges, pulley, cable and service-wire colors now come from theme tokens
+- claw housing chrome/brushed/band/tip materials now come from theme tokens
+- thin pink/cyan decorative claw-housing bands add machine identity without changing claw geometry
+- subtle carriage status strips move with the existing carriage visual
+- cabinet passes the active Theme A into the generic gantry visual path
+- no direct hard-coded metal/material colors remain in the gantry visual construction path
+
+Regression coverage:
+- new cabinet-interior visual-only contract test
+- interior dressing is required to remain inside the existing cabinet envelope
+- no decorative chute part is introduced
+- ceiling diffusers remain shallow for aiming clearance
+- theme regression now asserts gantry/bridge/carriage/winch/claw/lighting tokens
+- existing physics and browser regression suites remain authoritative for gameplay behavior
+
+Physics/gameplay contract:
+- no Rapier shape, body, joint, friction, force, torque, movement, reel, timing or chute geometry changed
+- new interior parts and decorative accent bands are render-only
+- physical claw finger meshes remain bound to the same existing rigid bodies
+- ChuteSensor, Ring, Bridge, chute-adjacent gameplay and M10 service/restocking logic are unchanged
+
 Next planned slices:
-1. cabinet interior / gantry / lighting
-2. surrounding Japanese arcade environment
-3. staff model uplift
-4. holistic polish / balance / mobile performance
+1. surrounding Japanese arcade environment
+2. staff model uplift
+3. holistic polish / balance / mobile performance
 
 ---
 
