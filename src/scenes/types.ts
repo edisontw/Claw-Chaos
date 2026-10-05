@@ -41,6 +41,7 @@ export interface SimulationScene {
   primaryAction?(): boolean;
   requestStaff?(): boolean;
   getStaffCallState?(): StaffCallUiState;
+  getStaffVisualStatus?(): string;
   isSafeForService?(): boolean;
   setManualGantryInput?(x: number, z: number): void;
   getMachineAudioState?(): MachineAudioState;
