@@ -194,7 +194,7 @@ function addWallAndFloor(
         ? "theme-a-arcade-column-left"
         : "theme-a-arcade-column-right";
     column.position.set(x, 1.12, -0.45);
-    column.castShadow = true;
+    column.castShadow = false;
     column.receiveShadow = true;
     column.userData.visualOnly = true;
     root.add(column);
@@ -320,7 +320,7 @@ function addNeighborMachine(
     shared.body,
   );
   lower.position.set(0, 0.26, 0);
-  lower.castShadow = true;
+  lower.castShadow = false;
   lower.receiveShadow = true;
   group.add(lower);
 
@@ -330,7 +330,7 @@ function addNeighborMachine(
       shared.trim,
     );
     post.position.set(x, 1.03, 0.245);
-    post.castShadow = true;
+    post.castShadow = false;
     group.add(post);
   }
 
@@ -357,7 +357,7 @@ function addNeighborMachine(
     shared.trim,
   );
   shelf.position.set(0, 0.63, 0.17);
-  shelf.castShadow = true;
+  shelf.castShadow = false;
   group.add(shelf);
 
   const accentMaterials = [
