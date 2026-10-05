@@ -2,7 +2,9 @@ export type StaffServicePhase =
   | "hidden"
   | "approaching"
   | "opening_door"
-  | "door_open";
+  | "door_open"
+  | "closing_door"
+  | "departing";
 
 export interface StaffServiceState {
   phase: StaffServicePhase;
@@ -12,6 +14,8 @@ export interface StaffServiceState {
 export const M10_STAFF_SERVICE_CONFIG = {
   approachSeconds: 2.6,
   doorOpeningSeconds: 0.9,
+  doorClosingSeconds: 0.8,
+  departureSeconds: 2.2,
   startX: 0.98,
   startZ: 0.92,
   serviceX: 0.70,
@@ -29,6 +33,7 @@ export function createStaffServiceState(): StaffServiceState {
 export function advanceStaffServiceState(
   state: StaffServiceState,
   servicePaused: boolean,
+  closeRequested: boolean,
   stepSeconds: number,
 ): StaffServiceState {
   const dt = Math.max(0, stepSeconds);
@@ -44,7 +49,18 @@ export function advanceStaffServiceState(
     };
   }
 
+  if (
+    state.phase === "door_open" &&
+    closeRequested
+  ) {
+    return {
+      phase: "closing_door",
+      elapsedSeconds: 0,
+    };
+  }
+
   const elapsedSeconds = state.elapsedSeconds + dt;
+
   if (
     state.phase === "approaching" &&
     elapsedSeconds >=
@@ -70,6 +86,27 @@ export function advanceStaffServiceState(
     };
   }
 
+  if (
+    state.phase === "closing_door" &&
+    elapsedSeconds >=
+      M10_STAFF_SERVICE_CONFIG.doorClosingSeconds
+  ) {
+    return {
+      phase: "departing",
+      elapsedSeconds:
+        elapsedSeconds -
+        M10_STAFF_SERVICE_CONFIG.doorClosingSeconds,
+    };
+  }
+
+  if (
+    state.phase === "departing" &&
+    elapsedSeconds >=
+      M10_STAFF_SERVICE_CONFIG.departureSeconds
+  ) {
+    return createStaffServiceState();
+  }
+
   if (state.phase === "door_open") {
     return state;
   }
@@ -82,6 +119,11 @@ export function advanceStaffServiceState(
 
 function clamp01(value: number): number {
   return Math.max(0, Math.min(1, value));
+}
+
+function smoothstep(value: number): number {
+  const clamped = clamp01(value);
+  return clamped * clamped * (3 - 2 * clamped);
 }
 
 export interface StaffServicePose {
@@ -111,20 +153,43 @@ export function staffServicePose(
 
   const approachProgress =
     state.phase === "approaching"
-      ? clamp01(state.elapsedSeconds / c.approachSeconds)
+      ? smoothstep(
+          state.elapsedSeconds / c.approachSeconds,
+        )
       : 1;
-  const smoothApproach =
-    approachProgress *
-    approachProgress *
-    (3 - 2 * approachProgress);
+  const departureProgress =
+    state.phase === "departing"
+      ? smoothstep(
+          state.elapsedSeconds / c.departureSeconds,
+        )
+      : 0;
+
   const x =
-    c.startX + (c.serviceX - c.startX) * smoothApproach;
+    state.phase === "departing"
+      ? c.serviceX +
+        (c.startX - c.serviceX) *
+          departureProgress
+      : c.startX +
+        (c.serviceX - c.startX) *
+          approachProgress;
   const z =
-    c.startZ + (c.serviceZ - c.startZ) * smoothApproach;
+    state.phase === "departing"
+      ? c.serviceZ +
+        (c.startZ - c.serviceZ) *
+          departureProgress
+      : c.startZ +
+        (c.serviceZ - c.startZ) *
+          approachProgress;
+
   const approachYaw = Math.atan2(
     c.serviceX - c.startX,
     c.serviceZ - c.startZ,
   );
+  const departureYaw = Math.atan2(
+    c.startX - c.serviceX,
+    c.startZ - c.serviceZ,
+  );
+
   const doorOpenFraction =
     state.phase === "opening_door"
       ? clamp01(
@@ -132,7 +197,17 @@ export function staffServicePose(
         )
       : state.phase === "door_open"
         ? 1
-        : 0;
+        : state.phase === "closing_door"
+          ? 1 -
+            clamp01(
+              state.elapsedSeconds /
+                c.doorClosingSeconds,
+            )
+          : 0;
+
+  const walking =
+    state.phase === "approaching" ||
+    state.phase === "departing";
 
   return {
     visible: true,
@@ -141,11 +216,12 @@ export function staffServicePose(
     yawRadians:
       state.phase === "approaching"
         ? approachYaw
-        : -Math.PI * 0.5,
-    walkCycleRadians:
-      state.phase === "approaching"
-        ? state.elapsedSeconds * Math.PI * 3.2
-        : 0,
+        : state.phase === "departing"
+          ? departureYaw
+          : -Math.PI * 0.5,
+    walkCycleRadians: walking
+      ? state.elapsedSeconds * Math.PI * 3.2
+      : 0,
     doorOpenFraction,
   };
 }

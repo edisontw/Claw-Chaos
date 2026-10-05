@@ -13,6 +13,7 @@ describe("M10 cabinet inventory and staff-policy foundation", () => {
       remainingInventoryCount: 5,
       awardedInventoryCount: 0,
       restockedInventoryCount: 0,
+      completedServiceCount: 0,
       restockThresholdCount: 1,
       restockNeeded: false,
       canCallStaff: false,
@@ -128,6 +129,45 @@ describe("M10 cabinet inventory and staff-policy foundation", () => {
       state.consumeWin({ prizeId: "restock-prize" }),
     ).toBe(true);
     expect(state.remainingInventoryCount).toBe(3);
+  });
+
+  it("reopens only after restock and supports independent repeated service cycles", () => {
+    const state = new CabinetInventoryServiceState(
+      4,
+      { restockThresholdCount: 1 },
+    );
+
+    for (const prizeId of ["a", "b", "c"]) {
+      expect(
+        state.consumeWin({ prizeId }),
+      ).toBe(true);
+    }
+    expect(state.requestStaff()).toBe(true);
+    expect(
+      state.advanceServiceHandoff(true),
+    ).toBe(true);
+    expect(state.completeService()).toBe(false);
+    expect(state.recordRestock(3)).toBe(3);
+    expect(state.completeService()).toBe(true);
+    expect(state.serviceState).toBe("operating");
+    expect(state.machinePaused).toBe(false);
+    expect(state.completedServiceCount).toBe(1);
+    expect(state.remainingInventoryCount).toBe(4);
+
+    for (const prizeId of ["d", "e", "f"]) {
+      expect(
+        state.consumeWin({ prizeId }),
+      ).toBe(true);
+    }
+    expect(state.remainingInventoryCount).toBe(1);
+    expect(state.requestStaff()).toBe(true);
+    expect(
+      state.advanceServiceHandoff(true),
+    ).toBe(true);
+    expect(state.recordRestock(3)).toBe(3);
+    expect(state.completeService()).toBe(true);
+    expect(state.completedServiceCount).toBe(2);
+    expect(state.remainingInventoryCount).toBe(4);
   });
 
   it("never decrements inventory below zero", () => {

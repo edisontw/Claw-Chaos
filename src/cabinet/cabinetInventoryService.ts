@@ -14,6 +14,7 @@ export interface CabinetInventoryServiceSnapshot {
   remainingInventoryCount: number;
   awardedInventoryCount: number;
   restockedInventoryCount: number;
+  completedServiceCount: number;
   restockThresholdCount: number;
   restockNeeded: boolean;
   canCallStaff: boolean;
@@ -24,6 +25,7 @@ export interface CabinetInventoryServiceSnapshot {
 export class CabinetInventoryServiceState {
   private readonly awardedPrizeIds = new Set<string>();
   private restockedInventoryCountValue = 0;
+  private completedServiceCountValue = 0;
   private state: CabinetServiceState = "operating";
 
   readonly initialInventoryCount: number;
@@ -110,12 +112,29 @@ export class CabinetInventoryServiceState {
     return accepted;
   }
 
+  completeService(): boolean {
+    if (
+      this.state !== "service_paused" ||
+      this.restockNeeded
+    ) {
+      return false;
+    }
+
+    this.state = "operating";
+    this.completedServiceCountValue += 1;
+    return true;
+  }
+
   get awardedInventoryCount(): number {
     return this.awardedPrizeIds.size;
   }
 
   get restockedInventoryCount(): number {
     return this.restockedInventoryCountValue;
+  }
+
+  get completedServiceCount(): number {
+    return this.completedServiceCountValue;
   }
 
   get remainingInventoryCount(): number {
@@ -170,6 +189,8 @@ export class CabinetInventoryServiceState {
         this.awardedInventoryCount,
       restockedInventoryCount:
         this.restockedInventoryCount,
+      completedServiceCount:
+        this.completedServiceCount,
       restockThresholdCount:
         this.restockThresholdCount,
       restockNeeded: this.restockNeeded,
