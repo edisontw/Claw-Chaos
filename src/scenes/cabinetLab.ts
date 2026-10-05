@@ -729,30 +729,32 @@ export function createCabinetLabScene(
         }
       }
 
-      if (!inventoryService.machinePaused) {
-        for (const prize of tracked) {
-          if (
-            isPrizeBelowChuteOpening(
-              prize.body.worldCom(),
-            )
-          ) {
-            inventoryService.markPrizeUnavailable(
-              prize.id,
-            );
-          }
-
-          const event = sensor.pollPrize(
+      for (const prize of tracked) {
+        if (
+          isPrizeBelowChuteOpening(
+            prize.body.worldCom(),
+          )
+        ) {
+          inventoryService.markPrizeUnavailable(
             prize.id,
-            prize.body,
           );
-          if (event) {
-            const result =
-              resultInventory.consume(event);
-            if (result) {
-              inventoryService.consumeWin(
-                result,
-              );
-            }
+        }
+
+        if (inventoryService.machinePaused) {
+          continue;
+        }
+
+        const event = sensor.pollPrize(
+          prize.id,
+          prize.body,
+        );
+        if (event) {
+          const result =
+            resultInventory.consume(event);
+          if (result) {
+            inventoryService.consumeWin(
+              result,
+            );
           }
         }
       }
