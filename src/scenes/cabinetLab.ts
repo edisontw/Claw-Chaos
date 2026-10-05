@@ -8,7 +8,6 @@ import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
 import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
 import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
 import {
-  M08_CABINET_VISUAL_STYLE,
   createCabinetFrameTrimSpecs,
   createCabinetLedStripSpecs,
   type VisualBoxSpec,
