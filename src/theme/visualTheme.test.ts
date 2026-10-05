@@ -73,6 +73,33 @@ describe("visual theme architecture", () => {
     );
   });
 
+  it("keeps the claw visibly darker than the bright interior backdrop", () => {
+    const theme = getVisualTheme();
+    const brightness = (color: number): number => {
+      const r = (color >> 16) & 0xff;
+      const g = (color >> 8) & 0xff;
+      const b = color & 0xff;
+      return (
+        0.2126 * r +
+        0.7152 * g +
+        0.0722 * b
+      );
+    };
+
+    const backdrop = brightness(
+      theme.machine.interior.backdrop.color,
+    );
+    const claw = brightness(
+      theme.machine.interior.clawChrome.color,
+    );
+    const tip = brightness(
+      theme.machine.interior.clawTip.color,
+    );
+
+    expect(backdrop - claw).toBeGreaterThan(80);
+    expect(backdrop - tip).toBeGreaterThan(120);
+  });
+
   it("keeps the named Theme A preset stable", () => {
     expect(THEME_A_MODERN_JAPANESE_ARCADE.label).toBe(
       "Modern Japanese Arcade",
