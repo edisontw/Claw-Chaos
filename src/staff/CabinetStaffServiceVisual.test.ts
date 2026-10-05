@@ -32,6 +32,15 @@ describe("M10 physical service door", () => {
       },
     );
 
+    expect(visual.characterVariant).toBe(
+      "adult-female-arcade-attendant-v1",
+    );
+    expect(
+      scene.getObjectByName(
+        "adult-female-arcade-attendant-v1",
+      ),
+    ).toBeDefined();
+
     for (
       let tick = 0;
       tick < PHYSICS_HZ * 4;
