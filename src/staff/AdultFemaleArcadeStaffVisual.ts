@@ -6,7 +6,7 @@ import {
 
 export const STAFF_CHARACTER_VISUAL_ONLY = true;
 export const STAFF_CHARACTER_VARIANT =
-  "adult-female-arcade-attendant-v1";
+  "adult-female-arcade-attendant-v2-realistic";
 export const STAFF_CHARACTER_HEIGHT_METERS = 1.64;
 
 export interface StaffCharacterRig {
@@ -116,76 +116,92 @@ function createFace(
   headRoot: THREE.Group,
   theme: StaffVisualTheme,
 ): void {
-  const skin = standardMaterial(theme.skinColor, 0.82);
-  const hair = standardMaterial(theme.hairColor, 0.78);
-  const eyeWhite = standardMaterial(theme.blouseColor, 0.92);
-  const iris = standardMaterial(theme.hairColor, 0.48);
-  const lip = standardMaterial(theme.trimColor, 0.76);
+  const skin = physicalMaterial(
+    theme.skinColor,
+    0.78,
+    0.00,
+    0.015,
+  );
+  const hair = standardMaterial(theme.hairColor, 0.74);
+  const eyeWhite = standardMaterial(theme.blouseColor, 0.94);
+  const iris = standardMaterial(theme.hairColor, 0.44);
+  const lip = standardMaterial(theme.trimColor, 0.78);
 
   const face = mesh(
-    new THREE.SphereGeometry(0.112, 24, 18),
+    new THREE.SphereGeometry(0.111, 28, 20),
     skin,
     "staff-face",
   );
-  face.scale.set(0.91, 1.05, 0.95);
+  face.scale.set(0.88, 1.10, 0.92);
   headRoot.add(face);
 
+  for (const x of [-0.101, 0.101]) {
+    const ear = mesh(
+      new THREE.SphereGeometry(0.021, 12, 9),
+      skin,
+      x < 0 ? "staff-ear-left" : "staff-ear-right",
+    );
+    ear.position.set(x, -0.004, -0.004);
+    ear.scale.set(0.62, 1.05, 0.45);
+    headRoot.add(ear);
+  }
+
   const nose = mesh(
-    new THREE.SphereGeometry(0.017, 12, 8),
+    new THREE.ConeGeometry(0.010, 0.025, 12),
     skin,
     "staff-nose",
   );
-  nose.position.set(0, -0.010, 0.109);
-  nose.scale.set(0.75, 1.05, 0.75);
+  nose.position.set(0, -0.010, 0.103);
+  nose.rotation.x = Math.PI * 0.5;
   headRoot.add(nose);
 
-  for (const x of [-0.038, 0.038]) {
+  for (const x of [-0.034, 0.034]) {
     const eye = mesh(
-      new THREE.SphereGeometry(0.012, 12, 8),
+      new THREE.SphereGeometry(0.0095, 12, 8),
       eyeWhite,
       x < 0 ? "staff-eye-left" : "staff-eye-right",
     );
-    eye.position.set(x, 0.022, 0.103);
-    eye.scale.set(1.05, 0.72, 0.45);
+    eye.position.set(x, 0.021, 0.100);
+    eye.scale.set(1.0, 0.48, 0.28);
     headRoot.add(eye);
 
     const pupil = mesh(
-      new THREE.SphereGeometry(0.0062, 10, 7),
+      new THREE.SphereGeometry(0.0048, 10, 7),
       iris,
       x < 0
         ? "staff-pupil-left"
         : "staff-pupil-right",
     );
-    pupil.position.set(x, 0.021, 0.111);
-    pupil.scale.set(0.88, 1, 0.42);
+    pupil.position.set(x, 0.020, 0.107);
+    pupil.scale.set(0.82, 1.0, 0.34);
     headRoot.add(pupil);
 
     const brow = mesh(
-      new THREE.BoxGeometry(0.033, 0.005, 0.006),
+      new THREE.BoxGeometry(0.030, 0.0035, 0.004),
       hair,
       x < 0
         ? "staff-brow-left"
         : "staff-brow-right",
     );
-    brow.position.set(x, 0.051, 0.104);
-    brow.rotation.z = x < 0 ? -0.08 : 0.08;
+    brow.position.set(x, 0.050, 0.098);
+    brow.rotation.z = x < 0 ? -0.07 : 0.07;
     headRoot.add(brow);
   }
 
   const mouth = mesh(
-    new THREE.BoxGeometry(0.038, 0.006, 0.005),
+    new THREE.BoxGeometry(0.027, 0.0035, 0.004),
     lip,
     "staff-mouth",
   );
-  mouth.position.set(0, -0.058, 0.104);
-  mouth.rotation.x = -0.08;
+  mouth.position.set(0, -0.055, 0.101);
+  mouth.rotation.x = -0.05;
   headRoot.add(mouth);
 
   const hairCap = mesh(
     new THREE.SphereGeometry(
       0.121,
-      24,
-      16,
+      26,
+      18,
       0,
       Math.PI * 2,
       0,
@@ -194,41 +210,80 @@ function createFace(
     hair,
     "staff-hair-cap",
   );
-  hairCap.position.set(0, 0.035, -0.010);
-  hairCap.rotation.x = -0.10;
+  hairCap.position.set(0, 0.037, -0.013);
+  hairCap.rotation.x = -0.08;
   headRoot.add(hairCap);
+
+  for (const [index, x] of [-0.055, 0, 0.055].entries()) {
+    const bang = mesh(
+      new THREE.CapsuleGeometry(0.011, 0.060, 4, 9),
+      hair,
+      "staff-bang-" + index,
+    );
+    bang.position.set(x, 0.054 - Math.abs(x) * 0.2, 0.087);
+    bang.rotation.z = -x * 1.4;
+    bang.rotation.x = 0.10;
+    headRoot.add(bang);
+  }
 
   for (const x of [-0.091, 0.091]) {
     const sideLock = mesh(
-      new THREE.CapsuleGeometry(0.018, 0.105, 4, 10),
+      new THREE.CapsuleGeometry(0.015, 0.112, 4, 10),
       hair,
       x < 0
         ? "staff-hair-side-left"
         : "staff-hair-side-right",
     );
-    sideLock.position.set(x, -0.015, -0.005);
+    sideLock.position.set(x, -0.020, -0.006);
     sideLock.rotation.z = x < 0 ? -0.08 : 0.08;
     headRoot.add(sideLock);
   }
 
   const ponytail = mesh(
-    new THREE.CapsuleGeometry(0.042, 0.145, 5, 12),
+    new THREE.CapsuleGeometry(0.038, 0.165, 5, 12),
     hair,
     "staff-ponytail",
   );
-  ponytail.position.set(0, -0.020, -0.145);
-  ponytail.rotation.x = -0.30;
-  ponytail.scale.set(0.88, 1.15, 0.82);
+  ponytail.position.set(0, -0.018, -0.145);
+  ponytail.rotation.x = -0.28;
+  ponytail.scale.set(0.84, 1.16, 0.78);
   headRoot.add(ponytail);
 
   const hairTie = mesh(
-    new THREE.TorusGeometry(0.026, 0.008, 8, 18),
+    new THREE.TorusGeometry(0.023, 0.006, 8, 18),
     standardMaterial(theme.hairAccessoryColor, 0.58),
     "staff-hair-tie",
   );
-  hairTie.position.set(0, 0.035, -0.105);
+  hairTie.position.set(0, 0.038, -0.106);
   hairTie.rotation.x = Math.PI * 0.5;
   headRoot.add(hairTie);
+
+  const earpiece = mesh(
+    new THREE.SphereGeometry(0.015, 12, 9),
+    standardMaterial(theme.uniformSecondaryColor, 0.46),
+    "staff-headset-earpiece",
+  );
+  earpiece.position.set(0.108, 0.002, 0.002);
+  earpiece.scale.set(0.65, 1.0, 0.45);
+  headRoot.add(earpiece);
+
+  const boom = mesh(
+    new THREE.CylinderGeometry(0.0022, 0.0022, 0.090, 8),
+    standardMaterial(theme.uniformSecondaryColor, 0.42),
+    "staff-headset-boom",
+  );
+  boom.position.set(0.086, -0.028, 0.055);
+  boom.rotation.z = -0.80;
+  boom.rotation.x = Math.PI * 0.5;
+  headRoot.add(boom);
+
+  const mic = mesh(
+    new THREE.SphereGeometry(0.006, 10, 7),
+    standardMaterial(theme.uniformSecondaryColor, 0.42),
+    "staff-headset-mic",
+  );
+  mic.position.set(0.055, -0.051, 0.090);
+  headRoot.add(mic);
 }
 
 function createArm(
@@ -342,6 +397,18 @@ function createLeg(
   return legRoot;
 }
 
+function createUniformTorsoGeometry(): THREE.LatheGeometry {
+  const profile = [
+    new THREE.Vector2(0.126, -0.205),
+    new THREE.Vector2(0.136, -0.145),
+    new THREE.Vector2(0.145, -0.055),
+    new THREE.Vector2(0.151, 0.045),
+    new THREE.Vector2(0.158, 0.125),
+    new THREE.Vector2(0.150, 0.202),
+  ];
+  return new THREE.LatheGeometry(profile, 28);
+}
+
 export function createAdultFemaleArcadeStaffVisual(
   theme: StaffVisualTheme = DEFAULT_VISUAL_THEME.staff,
 ): StaffCharacterRig {
@@ -399,13 +466,10 @@ export function createAdultFemaleArcadeStaffVisual(
   waistBand.position.y = 0.982;
   root.add(waistBand);
 
-  const torso = cylinder(
-    0.128,
-    0.160,
-    0.405,
+  const torso = mesh(
+    createUniformTorsoGeometry(),
     uniform,
     "staff-uniform-torso",
-    24,
   );
   torso.position.y = 1.15;
   root.add(torso);
@@ -445,14 +509,30 @@ export function createAdultFemaleArcadeStaffVisual(
   apronTopTrim.position.set(0, 1.025, 0.164);
   root.add(apronTopTrim);
 
-  const neckRibbon = mesh(
-    new THREE.BoxGeometry(0.070, 0.052, 0.018),
+  const collarAccent = mesh(
+    new THREE.BoxGeometry(0.086, 0.018, 0.016),
     trim,
-    "staff-neck-ribbon",
+    "staff-collar-accent",
   );
-  neckRibbon.position.set(0, 1.325, 0.157);
-  neckRibbon.rotation.z = Math.PI * 0.25;
-  root.add(neckRibbon);
+  collarAccent.position.set(0, 1.322, 0.158);
+  root.add(collarAccent);
+
+  const lanyardMaterial = standardMaterial(
+    theme.trimColor,
+    0.64,
+  );
+  for (const x of [-0.032, 0.032]) {
+    const strap = mesh(
+      new THREE.BoxGeometry(0.010, 0.175, 0.006),
+      lanyardMaterial,
+      x < 0
+        ? "staff-lanyard-left"
+        : "staff-lanyard-right",
+    );
+    strap.position.set(x, 1.205, 0.164);
+    strap.rotation.z = x < 0 ? -0.17 : 0.17;
+    root.add(strap);
+  }
 
   const badgeBack = mesh(
     new THREE.BoxGeometry(0.070, 0.040, 0.012),
