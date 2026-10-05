@@ -26,6 +26,11 @@ import { LayoutSettlePipeline } from "../layouts/layoutSettle";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
 import { CabinetStaffServiceVisual } from "../staff/CabinetStaffServiceVisual";
+import {
+  M10_RESTOCK_CONFIG,
+  createRestockPlan,
+  type RestockPlacement,
+} from "../staff/restockPlanner";
 import { createGantryLabScene } from "./gantryLab";
 import type { SimulationScene } from "./types";
 
@@ -355,6 +360,66 @@ export function createCabinetLabScene(
     id: string;
     body: ReturnType<typeof createPrize>["body"];
   }> = [];
+  const restockedTracked: Array<{
+    id: string;
+    body: ReturnType<typeof createPrize>["body"];
+  }> = [];
+  type RestockStatus =
+    | "idle"
+    | "inserting"
+    | "settling"
+    | "complete";
+  let restockStatus: RestockStatus = "idle";
+  let restockPlan: RestockPlacement[] = [];
+  let restockSpawnIndex = 0;
+  let restockInsertionElapsedSeconds = 0;
+  let restockSettle: LayoutSettlePipeline | null = null;
+
+  const spawnRestockPrize = (
+    placement: RestockPlacement,
+    index: number,
+  ): void => {
+    const definition =
+      getPrizeDefinition(placement.prizeId);
+    const prize = createPrize(
+      physics,
+      definition,
+      {
+        position: {
+          x: placement.x,
+          y: placement.y,
+          z: placement.z,
+        },
+        rotationXRadians:
+          placement.rotationXRadians,
+        rotationYRadians:
+          placement.rotationYRadians,
+        variantSeed: placement.variantSeed,
+        enableContactAudio: true,
+      },
+    );
+    const id =
+      "restock#" +
+      index +
+      ":" +
+      placement.prizeId;
+
+    scene.add(prize.renderObject);
+    bindings.push({
+      mesh: prize.renderObject,
+      body: prize.body,
+    });
+    massPropertiesDebugTargets.push({
+      body: prize.body,
+      label: id,
+    });
+    const trackedPrize = {
+      id,
+      body: prize.body,
+    };
+    tracked.push(trackedPrize);
+    restockedTracked.push(trackedPrize);
+  };
 
   const placements = layout.placements;
 
@@ -424,10 +489,37 @@ export function createCabinetLabScene(
           };
         }
         if (staffServiceVisual.phase === "door_open") {
+          if (restockStatus === "inserting") {
+            return {
+              mode: "paused",
+              label: "RESTOCKING",
+              detail:
+                restockSpawnIndex +
+                " / " +
+                restockPlan.length +
+                " new prizes inserted.",
+            };
+          }
+          if (restockStatus === "settling") {
+            return {
+              mode: "paused",
+              label: "SETTLING PRIZES",
+              detail:
+                "Waiting for the new pile to become physically stable.",
+            };
+          }
+          if (restockStatus === "complete") {
+            return {
+              mode: "paused",
+              label: "RESTOCK COMPLETE",
+              detail:
+                "New stock is stable. Door close/departure is next.",
+            };
+          }
           return {
             mode: "paused",
             label: "SERVICE DOOR OPEN",
-            detail: "Ready for the restock/reposition step.",
+            detail: "Preparing seeded restock.",
           };
         }
         return {
@@ -501,12 +593,111 @@ export function createCabinetLabScene(
         stepSeconds,
       );
 
-      for (const prize of tracked) {
-        const event = sensor.pollPrize(prize.id, prize.body);
-        if (event) {
-          const result = resultInventory.consume(event);
-          if (result) {
-            inventoryService.consumeWin(result);
+      if (
+        staffServiceVisual.phase === "door_open" &&
+        restockStatus === "idle"
+      ) {
+        const prizePool = Array.from(
+          new Set(
+            layout.placements.map(
+              (placement) => placement.prizeId,
+            ),
+          ),
+        );
+        restockPlan = createRestockPlan(
+          layout.seed + ":service-0",
+          inventoryService.restockDeficitCount,
+          prizePool,
+        );
+        restockStatus =
+          restockPlan.length > 0
+            ? "inserting"
+            : "complete";
+      }
+
+      if (restockStatus === "inserting") {
+        restockInsertionElapsedSeconds +=
+          stepSeconds;
+        const readyForNext =
+          restockSpawnIndex === 0 ||
+          restockInsertionElapsedSeconds >=
+            M10_RESTOCK_CONFIG
+              .insertionIntervalSeconds;
+
+        if (
+          readyForNext &&
+          restockSpawnIndex < restockPlan.length
+        ) {
+          const placement =
+            restockPlan[restockSpawnIndex];
+          if (placement) {
+            spawnRestockPrize(
+              placement,
+              restockSpawnIndex,
+            );
+          }
+          restockSpawnIndex += 1;
+          restockInsertionElapsedSeconds = 0;
+
+          if (
+            restockSpawnIndex >=
+            restockPlan.length
+          ) {
+            restockStatus = "settling";
+            restockSettle =
+              new LayoutSettlePipeline();
+          }
+        }
+      }
+
+      if (
+        restockStatus === "settling" &&
+        restockSettle
+      ) {
+        restockSettle.update(
+          stepSeconds,
+          restockedTracked.map((prize) => {
+            const linear = prize.body.linvel();
+            const angular = prize.body.angvel();
+            return {
+              linearSpeedMetersPerSecond:
+                Math.hypot(
+                  linear.x,
+                  linear.y,
+                  linear.z,
+                ),
+              angularSpeedRadiansPerSecond:
+                Math.hypot(
+                  angular.x,
+                  angular.y,
+                  angular.z,
+                ),
+            };
+          }),
+        );
+
+        if (restockSettle.ready) {
+          inventoryService.recordRestock(
+            restockPlan.length,
+          );
+          restockStatus = "complete";
+        }
+      }
+
+      if (!inventoryService.machinePaused) {
+        for (const prize of tracked) {
+          const event = sensor.pollPrize(
+            prize.id,
+            prize.body,
+          );
+          if (event) {
+            const result =
+              resultInventory.consume(event);
+            if (result) {
+              inventoryService.consumeWin(
+                result,
+              );
+            }
           }
         }
       }
@@ -531,6 +722,9 @@ export function createCabinetLabScene(
         `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
         `Service safe      ${gantryScene.isSafeForService?.() ? "yes" : "no"} / input ${inventoryService.playerInputLocked ? "LOCKED" : "open"}`,
         `Staff sequence    ${staffServiceVisual.phase}`,
+        `Restock status    ${restockStatus} / ${restockSpawnIndex} of ${restockPlan.length}`,
+        `Restock settle    ${restockSettle?.status ?? "-"}`,
+        `Restocked total   ${inventoryService.restockedInventoryCount}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",
