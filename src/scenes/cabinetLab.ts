@@ -272,6 +272,7 @@ export function createCabinetLabScene(
     new CabinetStaffServiceVisual(
       scene,
       serviceDoorObjects,
+      parts.serviceDoorBody,
       {
         x:
           M06_CABINET_CONFIG.interiorHalfX +
