@@ -2004,7 +2004,7 @@ A physical chute win is already detected correctly by the existing ChuteSensor, 
 
 # Major Visual / Art Uplift
 
-**Status: IN PROGRESS — Art Slices 1–2 candidate on dedicated feature branch**
+**Status: IN PROGRESS — Art Slices 1–3 candidate on dedicated feature branch**
 
 Primary direction:
 - Theme A — Modern Japanese Arcade
@@ -2085,10 +2085,52 @@ Physics/gameplay contract:
 - physical claw finger meshes remain bound to the same existing rigid bodies
 - ChuteSensor, Ring, Bridge, chute-adjacent gameplay and M10 service/restocking logic are unchanged
 
+## Art Slice 3 — surrounding Japanese arcade environment
+
+Implemented candidate:
+- large glossy visual-only arcade floor using the environment floor token
+- rear wall and side architectural columns establish a real room around the playable cabinet
+- original CLAW CHAOS ARCADE / PRIZE FLOOR back-wall sign
+- six lightweight ceiling fixtures with emissive diffusers
+- four simplified neighboring crane-machine silhouettes:
+  - two near side machines
+  - two slightly smaller/farther side machines
+  - alternating pink/cyan header accents
+  - shared low-cost geometry and materials
+- two distant prize-display shelves with simple pastel prize silhouettes
+- neighboring machines remain outside the player movement lane and primary cabinet footprint
+- environment geometry uses no Rapier bodies or colliders
+- environment floor/wall/signage/neighbor-machine/ceiling colors come from environment/theme tokens
+- no direct hard-coded hexadecimal material colors remain in the environment construction path
+- environment identity is composed from the active theme ID plus a reusable `prize-center-room-v1` variant so later B/C/D skins can reuse the room layout
+- cabinet runtime exposes the loaded environment ID for browser smoke validation
+
+Performance approach:
+- no environment shadow-casting lights are added
+- existing hemisphere/directional/cabinet lighting remains authoritative
+- emissive ceiling/signage elements are visual only
+- repeated neighboring-machine components reuse geometry/material instances
+- background prize meshes use low segment counts
+- only the primary playable cabinet keeps full physics fidelity
+
+Regression coverage:
+- arcade environment is explicitly marked visual-only
+- neighboring machine centers remain at least 1 m off the cabinet centerline
+- ceiling structure remains above maximum player eye height
+- balanced left/right placement and pink/cyan accent distribution are asserted
+- room graph instantiation is tested without physics dependencies
+- theme regression covers environment floor/wall/signage/neighbor/ceiling tokens
+- cabinet/root browser smoke requires the runtime arcade-environment ID
+
+Physics/gameplay contract:
+- no environment collider was introduced
+- no player/cabinet/prize/claw physics parameter changed
+- camera movement bounds are unchanged
+- ChuteSensor, Ring, Bridge, chute-adjacent gameplay and M10 staff/restocking remain unchanged
+
 Next planned slices:
-1. surrounding Japanese arcade environment
-2. staff model uplift
-3. holistic polish / balance / mobile performance
+1. staff model uplift
+2. holistic polish / balance / mobile performance
 
 ---
 
