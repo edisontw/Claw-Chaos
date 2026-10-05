@@ -24,6 +24,10 @@ import {
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import {
+  DESKTOP_RENDER_QUALITY,
+  type RenderQualityProfile,
+} from "../player/mobileRenderProfile";
+import {
   createCabinetLayout,
   type CabinetLayoutId,
 } from "../layouts/cabinetLayouts";
@@ -227,6 +231,7 @@ export interface CabinetLabOptions {
   layoutId?: CabinetLayoutId;
   layoutSeed?: string;
   themeId?: ImplementedVisualThemeId;
+  renderQuality?: RenderQualityProfile;
 }
 
 export function createCabinetLabScene(
@@ -235,7 +240,13 @@ export function createCabinetLabScene(
   options: CabinetLabOptions = {},
 ): SimulationScene {
   const visualTheme = getVisualTheme(options.themeId);
-  addArcadeEnvironment(scene, visualTheme);
+  const renderQuality =
+    options.renderQuality ?? DESKTOP_RENDER_QUALITY;
+  addArcadeEnvironment(
+    scene,
+    visualTheme,
+    renderQuality.arcadeBackgroundDetail,
+  );
   const parts = createCabinetPhysics(physics);
   for (const part of parts) {
     addCabinetVisual(scene, part, visualTheme);
@@ -288,8 +299,12 @@ export function createCabinetLabScene(
     interiorLight.decay,
   );
   cabinetLight.position.set(-0.08, 1.08, 0.10);
-  cabinetLight.castShadow = true;
-  cabinetLight.shadow.mapSize.set(1024, 1024);
+  cabinetLight.castShadow =
+    renderQuality.cabinetLightCastsShadow;
+  cabinetLight.shadow.mapSize.set(
+    renderQuality.cabinetLightShadowMapSize,
+    renderQuality.cabinetLightShadowMapSize,
+  );
   cabinetLight.shadow.bias = -0.00035;
   cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
@@ -737,6 +752,7 @@ export function createCabinetLabScene(
         ...(gantryScene.debugLines?.() ?? []),
         "Cabinet           physical deck / walls / glass / ceiling",
         `Visual theme      ${visualTheme.id} / ${visualTheme.label}`,
+        `Render profile    ${renderQuality.id} / background ${renderQuality.arcadeBackgroundDetail} / cabinet shadow ${renderQuality.cabinetLightCastsShadow ? "on" : "off"}`,
         `Staff character   ${staffServiceVisual.characterVariant}`,
         `Layout            ${layout.id} / seed ${layout.seed}`,
         `Layout settle     ${layoutSettle.status} / ${layoutSettle.elapsedSeconds.toFixed(2)} s`,
