@@ -7,6 +7,7 @@ import {
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
 import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
 import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
+import { addCabinetInteriorVisual } from "../cabinet/cabinetInteriorVisual";
 import {
   createCabinetFrameTrimSpecs,
   createCabinetLedStripSpecs,
@@ -236,6 +237,7 @@ export function createCabinetLabScene(
   }
 
   addCabinetExteriorVisual(scene, visualTheme);
+  addCabinetInteriorVisual(scene, visualTheme);
   addM08CabinetDetails(scene, visualTheme);
 
   const serviceDoorObjects = [
@@ -295,6 +297,7 @@ export function createCabinetLabScene(
       verticalHomeOffset:
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
+      visualTheme,
       initialPosition: CABINET_CLAW_PARK_POSITION,
       controlsEnabled: () =>
         layoutSettle.ready &&
@@ -748,7 +751,7 @@ export function createCabinetLabScene(
         `Service cycles    ${inventoryService.completedServiceCount} / seed index ${serviceCycleIndex}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
-        "M08 visuals       matte frame / subdued glass / gantry detail",
+        "Art visuals       themed shell / interior / gantry detail",
         "Claw park         starts and returns directly over chute",
         "Machine audio     procedural motors + action transients",
         "Prize audio       material-specific contact-force impacts",
