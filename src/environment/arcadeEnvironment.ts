@@ -6,8 +6,15 @@ import type {
 } from "../theme/visualTheme";
 
 export const ARCADE_ENVIRONMENT_VISUAL_ONLY = true;
-export const ARCADE_ENVIRONMENT_ID =
-  "theme-a-modern-japanese-arcade-room";
+export const ARCADE_ENVIRONMENT_VARIANT =
+  "prize-center-room-v1";
+export const ARCADE_CEILING_HEIGHT_METERS = 2.22;
+
+export function arcadeEnvironmentId(
+  theme: VisualTheme,
+): string {
+  return `${theme.id}:${ARCADE_ENVIRONMENT_VARIANT}`;
+}
 
 export interface NeighborMachinePlacement {
   id: string;
@@ -259,7 +266,11 @@ function addCeilingFixtures(
       shellMaterial,
     );
     shell.name = `theme-a-${fixture.id}-shell`;
-    shell.position.set(fixture.x, 2.22, fixture.z);
+    shell.position.set(
+      fixture.x,
+      ARCADE_CEILING_HEIGHT_METERS,
+      fixture.z,
+    );
     shell.castShadow = false;
     shell.userData.visualOnly = true;
     root.add(shell);
@@ -269,7 +280,11 @@ function addCeilingFixtures(
       lightMaterial,
     );
     diffuser.name = `theme-a-${fixture.id}-diffuser`;
-    diffuser.position.set(fixture.x, 2.195, fixture.z);
+    diffuser.position.set(
+      fixture.x,
+      ARCADE_CEILING_HEIGHT_METERS - 0.025,
+      fixture.z,
+    );
     diffuser.castShadow = false;
     diffuser.userData.visualOnly = true;
     root.add(diffuser);
@@ -486,7 +501,7 @@ export function addArcadeEnvironment(
   theme: VisualTheme,
 ): THREE.Group {
   const root = new THREE.Group();
-  root.name = ARCADE_ENVIRONMENT_ID;
+  root.name = arcadeEnvironmentId(theme);
   root.userData.visualOnly = true;
 
   addWallAndFloor(root, theme);
