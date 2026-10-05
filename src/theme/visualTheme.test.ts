@@ -57,6 +57,16 @@ describe("visual theme architecture", () => {
     expect(theme.machine.interior.clawTip.color).toBeTypeOf("number");
     expect(theme.machine.interior.lighting.intensity).toBeGreaterThan(0);
     expect(theme.environment.backgroundColor).toBeTypeOf("number");
+    expect(theme.environment.floor.color).toBeTypeOf("number");
+    expect(theme.environment.wall.color).toBeTypeOf("number");
+    expect(theme.environment.signage.emissiveIntensity)
+      .toBeLessThanOrEqual(1);
+    expect(theme.environment.neighboringMachineBody.color)
+      .toBeTypeOf("number");
+    expect(theme.environment.ceilingFixture.color)
+      .toBeTypeOf("number");
+    expect(theme.environment.backgroundEmissive.emissiveIntensity)
+      .toBeLessThanOrEqual(1);
     expect(theme.staff.uniformPrimaryColor).toBeTypeOf("number");
     expect(theme.staff.trimColor).not.toBe(
       theme.staff.uniformPrimaryColor,
