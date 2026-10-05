@@ -47,6 +47,42 @@ describe("Art Slice 3 arcade environment", () => {
     ).toBe(true);
   });
 
+  it("reduces distant dressing for the mobile background profile", () => {
+    const fullScene = new THREE.Scene();
+    const reducedScene = new THREE.Scene();
+    const full = addArcadeEnvironment(
+      fullScene,
+      DEFAULT_VISUAL_THEME,
+      "full",
+    );
+    const reduced = addArcadeEnvironment(
+      reducedScene,
+      DEFAULT_VISUAL_THEME,
+      "reduced",
+    );
+
+    expect(full.userData.backgroundDetail).toBe("full");
+    expect(reduced.userData.backgroundDetail).toBe("reduced");
+    expect(reduced.children.length).toBeLessThan(
+      full.children.length,
+    );
+    expect(
+      reduced.getObjectByName("theme-a-neighbor-left-near"),
+    ).toBeDefined();
+    expect(
+      reduced.getObjectByName("theme-a-neighbor-right-near"),
+    ).toBeDefined();
+    expect(
+      reduced.getObjectByName("theme-a-neighbor-left-far"),
+    ).toBeUndefined();
+    expect(
+      reduced.getObjectByName("theme-a-neighbor-right-far"),
+    ).toBeUndefined();
+    expect(
+      reduced.getObjectByName("theme-a-prize-display-left"),
+    ).toBeUndefined();
+  });
+
   it("keeps neighboring machines outside the player movement lane", () => {
     expect(
       ARCADE_NEIGHBOR_MACHINE_PLACEMENTS.length,
