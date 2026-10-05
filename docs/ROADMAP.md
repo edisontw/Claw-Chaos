@@ -1804,7 +1804,7 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
-**Status: IN PROGRESS — slice 3 staff approach + service-door opening**
+**Status: IN PROGRESS — slice 4 physical service access + seeded restock settle**
 
 ## Goal
 
@@ -1916,6 +1916,47 @@ Deferred:
 - close-door / staff departure / machine reopen
 
 No win forcing or ideal-placement request path was introduced.
+
+## Slice 4 — physical service access + seeded restock settle
+
+Implemented:
+- the right-side service door is now backed by the real cabinet collider as a kinematic body
+- during normal gameplay the door remains in the same closed pose and preserves cabinet containment
+- after the slice-2 safe service pause and slice-3 staff approach, the physical door collider rotates around the same hinge as the visible glass panel
+- service access therefore becomes a real open boundary instead of visual-only animation
+- newly restocked prizes are not teleported from old awarded bodies:
+  - awarded/won bodies remain where physics put them
+  - replacement stock is created only as genuinely new inventory
+  - new stock is inserted from the opened right-side service area
+- the restock plan is deterministic for a fixed seed and differs across seeds
+- replacement prize types are drawn only from the current layout's existing prize pool
+- insertion poses stay on the right side, away from the chute
+- prizes are inserted sequentially at 0.55 s intervals rather than overlapping all at once
+- after insertion, normal gravity/contact physics is the only mechanism that forms the new pile
+- a fresh settle gate checks linear and angular motion of the replacement stock
+- inventory is credited back only after that settle gate reaches READY/TIMEOUT_READY
+- ChuteSensor payout polling is suspended while the machine is in `service_paused`, so staff handling cannot be miscounted as a player win
+- debug telemetry exposes restock phase, inserted count, settle state and lifetime restocked count
+
+Regression coverage:
+- closed service-door cabinet containment remains covered by the existing M06 wall test
+- new physical-door regression verifies the real right-side collider moves out of the service opening
+- fixed-seed restock plans are identical
+- different seeds produce non-identical restock poses
+- a multi-prize restock physics regression verifies replacement prizes remain in cabinet bounds and settle below the configured motion thresholds
+
+Important contract:
+- no existing prize is teleported or kinematically carried
+- no staff action applies a hidden winning impulse
+- no restock placement targets the chute
+- no restock placement is selected from a “best win” policy
+- the physical pile is allowed to rearrange only through gravity and collisions
+
+Deferred to the next M10 slice:
+- close the service door after stable settle
+- staff departure animation
+- return service state to `operating`
+- allow subsequent independent service cycles
 
 ### Carry-forward UX backlog
 
