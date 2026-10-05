@@ -322,6 +322,7 @@ export function createCabinetLabScene(
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
       visualTheme,
+      clawCastsShadow: false,
       initialPosition: CABINET_CLAW_PARK_POSITION,
       controlsEnabled: () =>
         layoutSettle.ready &&
