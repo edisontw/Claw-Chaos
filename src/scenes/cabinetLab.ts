@@ -576,6 +576,9 @@ export function createCabinetLabScene(
       };
     },
     getMachineAudioState: gantryScene.getMachineAudioState,
+    getStaffVisualStatus(): string {
+      return staffServiceVisual.visualStatus;
+    },
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
     },
