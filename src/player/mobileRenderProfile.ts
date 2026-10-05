@@ -9,6 +9,7 @@ export interface RenderQualityProfile {
   cabinetLightCastsShadow: boolean;
   cabinetLightShadowMapSize: number;
   arcadeBackgroundDetail: ArcadeBackgroundDetail;
+  toneMappingExposure: number;
 }
 
 export const DESKTOP_RENDER_QUALITY: RenderQualityProfile = {
@@ -18,6 +19,7 @@ export const DESKTOP_RENDER_QUALITY: RenderQualityProfile = {
   cabinetLightCastsShadow: true,
   cabinetLightShadowMapSize: 512,
   arcadeBackgroundDetail: "full",
+  toneMappingExposure: 1.04,
 };
 
 export const MOBILE_RENDER_QUALITY: RenderQualityProfile = {
@@ -27,6 +29,7 @@ export const MOBILE_RENDER_QUALITY: RenderQualityProfile = {
   cabinetLightCastsShadow: false,
   cabinetLightShadowMapSize: 256,
   arcadeBackgroundDetail: "reduced",
+  toneMappingExposure: 1.02,
 };
 
 export function chooseRenderQualityProfile(
