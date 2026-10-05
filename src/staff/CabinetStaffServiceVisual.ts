@@ -228,11 +228,13 @@ export class CabinetStaffServiceVisual {
 
   update(
     servicePaused: boolean,
+    closeRequested: boolean,
     stepSeconds: number,
   ): void {
     this.state = advanceStaffServiceState(
       this.state,
       servicePaused,
+      closeRequested,
       stepSeconds,
     );
     const pose = staffServicePose(this.state);
@@ -250,12 +252,14 @@ export class CabinetStaffServiceVisual {
 
     if (
       this.state.phase === "opening_door" ||
-      this.state.phase === "door_open"
+      this.state.phase === "door_open" ||
+      this.state.phase === "closing_door"
     ) {
       this.rightArm.rotation.z = -0.72;
       this.rightArm.rotation.x = -0.42;
     } else {
       this.rightArm.rotation.z = 0;
+      this.rightArm.rotation.x = -walkSwing;
     }
 
     const smoothDoor =
