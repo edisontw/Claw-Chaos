@@ -33,11 +33,11 @@ describe("M10 physical service door", () => {
     );
 
     expect(visual.characterVariant).toBe(
-      "adult-female-arcade-attendant-v1",
+      "adult-female-arcade-attendant-v2-realistic",
     );
     expect(
       scene.getObjectByName(
-        "adult-female-arcade-attendant-v1",
+        "adult-female-arcade-attendant-v2-realistic",
       ),
     ).toBeDefined();
 
