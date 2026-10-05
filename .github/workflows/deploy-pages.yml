@@ -1,8 +1,8 @@
-name: Deploy Claw Chaos to GitHub Pages
+name: Deploy PR 70 visual preview to GitHub Pages
 
 on:
   push:
-    branches: ["main"]
+    branches: ["preview/pr-70-theme-a"]
   workflow_dispatch:
 
 permissions:
@@ -17,40 +17,64 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout production main
         uses: actions/checkout@v7
+        with:
+          ref: main
+          path: main
+
+      - name: Checkout Theme A preview
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ github.sha }}
+          path: preview
 
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
           node-version: "22"
-          cache: "npm"
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Build production root from main
+        working-directory: main
+        run: |
+          npm ci
+          npm run build
 
-      - name: Lint
-        run: npm run lint
+      - name: Build PR 70 preview subpath
+        working-directory: preview
+        env:
+          CLAW_CHAOS_BASE_PATH: /Claw-Chaos/preview/pr-70/
+        run: |
+          npm ci
+          npm run lint
+          npm run test
+          npm run build
 
-      - name: Test
-        run: npm run test
+      - name: Compose production root plus isolated preview
+        shell: bash
+        run: |
+          rm -rf _site
+          mkdir -p _site/preview/pr-70
+          cp -a main/dist/. _site/
+          cp -a preview/dist/. _site/preview/pr-70/
+
+          grep -Eq '(src|href)="/Claw-Chaos/assets/' _site/index.html
+          grep -Eq '(src|href)="/Claw-Chaos/preview/pr-70/assets/' _site/preview/pr-70/index.html
+
+          printf '%s\n' \
+            "Preview source: ${{ github.sha }}" \
+            "Production source: main" \
+            > _site/preview/pr-70/BUILD.txt
 
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
-      - name: Build
-        run: npm run build
-
-      - name: Upload Pages artifact
+      - name: Upload composed Pages artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: "./dist"
+          path: "./_site"
 
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     permissions:
       pages: write
       id-token: write
@@ -59,6 +83,77 @@ jobs:
     needs: build
 
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy production root plus PR 70 preview
         id: deployment
         uses: actions/deploy-pages@v5
+
+  verify-live:
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Verify public production root and PR 70 preview
+        shell: bash
+        run: |
+          PROD_URL="https://edisontw.github.io/Claw-Chaos/"
+          PREVIEW_URL="https://edisontw.github.io/Claw-Chaos/preview/pr-70/"
+
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error --location "$PROD_URL" -o /tmp/prod-index.html &&
+               curl --fail --silent --show-error --location "$PREVIEW_URL" -o /tmp/preview-index.html; then
+              break
+            fi
+            sleep 5
+          done
+
+          grep -Eq '(src|href)="/Claw-Chaos/assets/' /tmp/prod-index.html
+          grep -Eq '(src|href)="/Claw-Chaos/preview/pr-70/assets/' /tmp/preview-index.html
+
+          PREVIEW_ASSET=$(grep -oE '/Claw-Chaos/preview/pr-70/assets/[^"]+\.js' /tmp/preview-index.html | head -n 1)
+          test -n "$PREVIEW_ASSET"
+          curl --fail --silent --show-error --location "https://edisontw.github.io$PREVIEW_ASSET" -o /dev/null
+
+          curl --fail --silent --show-error --location "${PREVIEW_URL}BUILD.txt" -o /tmp/preview-build.txt
+          grep -q 'Preview source:' /tmp/preview-build.txt
+          grep -q 'Production source: main' /tmp/preview-build.txt
+
+          BROWSER=$(command -v google-chrome || command -v chromium || true)
+          test -n "$BROWSER"
+
+          LIVE_READY=0
+          for attempt in 1 2 3; do
+            timeout 35s "$BROWSER" \
+              --headless=new \
+              --no-sandbox \
+              --disable-dev-shm-usage \
+              --use-gl=angle \
+              --use-angle=swiftshader \
+              --enable-webgl \
+              --enable-unsafe-swiftshader \
+              --virtual-time-budget=12000 \
+              --dump-dom \
+              "${PREVIEW_URL}?scene=cabinet-lab&layout=loose&seed=pr70-live" \
+              > /tmp/live-preview-dom.html \
+              2> /tmp/live-preview-browser.log || true
+
+            if grep -q 'data-simulation-ready="true"' /tmp/live-preview-dom.html &&
+               grep -q 'data-scene-id="cabinet-lab"' /tmp/live-preview-dom.html &&
+               grep -q 'data-visual-theme="modern-japanese-arcade"' /tmp/live-preview-dom.html &&
+               grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' /tmp/live-preview-dom.html &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-v4-realistic-rigged"' /tmp/live-preview-dom.html &&
+               grep -q 'data-staff-visual="realistic"' /tmp/live-preview-dom.html &&
+               grep -q 'data-tone-mapping="aces-filmic"' /tmp/live-preview-dom.html &&
+               grep -q 'data-layout-id="loose"' /tmp/live-preview-dom.html &&
+               grep -q 'data-staff-state="available"' /tmp/live-preview-dom.html; then
+              LIVE_READY=1
+              break
+            fi
+            sleep 2
+          done
+
+          if [ "$LIVE_READY" -ne 1 ]; then
+            cat /tmp/live-preview-browser.log
+            exit 1
+          fi
+
+          echo "Public production root and PR 70 live preview passed."
