@@ -305,6 +305,9 @@ export function createCabinetLabScene(
     renderQuality.cabinetLightShadowMapSize,
     renderQuality.cabinetLightShadowMapSize,
   );
+  cabinetLight.shadow.camera.near = 0.08;
+  cabinetLight.shadow.camera.far =
+    Math.min(interiorLight.distance, 2.4);
   cabinetLight.shadow.bias = -0.00035;
   cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
