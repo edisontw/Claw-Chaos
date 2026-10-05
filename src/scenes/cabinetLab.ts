@@ -9,6 +9,10 @@ import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService
 import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
 import { addCabinetInteriorVisual } from "../cabinet/cabinetInteriorVisual";
 import {
+  ARCADE_ENVIRONMENT_ID,
+  addArcadeEnvironment,
+} from "../environment/arcadeEnvironment";
+import {
   createCabinetFrameTrimSpecs,
   createCabinetLedStripSpecs,
   type VisualBoxSpec,
@@ -231,6 +235,7 @@ export function createCabinetLabScene(
   options: CabinetLabOptions = {},
 ): SimulationScene {
   const visualTheme = getVisualTheme(options.themeId);
+  addArcadeEnvironment(scene, visualTheme);
   const parts = createCabinetPhysics(physics);
   for (const part of parts) {
     addCabinetVisual(scene, part, visualTheme);
@@ -449,6 +454,7 @@ export function createCabinetLabScene(
     massPropertiesDebugTargets,
     milestone: "M10 / Staff & restocking",
     layoutId: layout.id,
+    environmentId: ARCADE_ENVIRONMENT_ID,
     camera: gantryScene.camera,
     primaryAction: () =>
       layoutSettle.ready
@@ -751,7 +757,7 @@ export function createCabinetLabScene(
         `Service cycles    ${inventoryService.completedServiceCount} / seed index ${serviceCycleIndex}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
-        "Art visuals       themed shell / interior / gantry detail",
+        "Art visuals       themed shell / interior / gantry / arcade room",
         "Claw park         starts and returns directly over chute",
         "Machine audio     procedural motors + action transients",
         "Prize audio       material-specific contact-force impacts",
