@@ -49,6 +49,13 @@ describe("visual theme architecture", () => {
       .toBeLessThanOrEqual(1);
     expect(theme.machine.glass.opacity).toBeLessThanOrEqual(0.10);
     expect(theme.machine.glass.roughness).toBeGreaterThanOrEqual(0.8);
+    expect(theme.machine.interior.gantryRail.color).toBeTypeOf("number");
+    expect(theme.machine.interior.gantryBridge.color).toBeTypeOf("number");
+    expect(theme.machine.interior.gantryCarriage.color).toBeTypeOf("number");
+    expect(theme.machine.interior.winchMetal.color).toBeTypeOf("number");
+    expect(theme.machine.interior.clawChrome.color).toBeTypeOf("number");
+    expect(theme.machine.interior.clawTip.color).toBeTypeOf("number");
+    expect(theme.machine.interior.lighting.intensity).toBeGreaterThan(0);
     expect(theme.environment.backgroundColor).toBeTypeOf("number");
     expect(theme.staff.uniformPrimaryColor).toBeTypeOf("number");
     expect(theme.staff.trimColor).not.toBe(
