@@ -372,6 +372,7 @@ export function createCabinetLabScene(
   let restockStatus: RestockStatus = "idle";
   let restockPlan: RestockPlacement[] = [];
   let restockSpawnIndex = 0;
+  let serviceCycleIndex = 0;
   let restockInsertionElapsedSeconds = 0;
   let restockSettle: LayoutSettlePipeline | null = null;
 
@@ -400,6 +401,8 @@ export function createCabinetLabScene(
     );
     const id =
       "restock#" +
+      serviceCycleIndex +
+      "#" +
       index +
       ":" +
       placement.prizeId;
@@ -486,6 +489,20 @@ export function createCabinetLabScene(
             mode: "paused",
             label: "OPENING MACHINE",
             detail: "Staff member is opening the service door.",
+          };
+        }
+        if (staffServiceVisual.phase === "closing_door") {
+          return {
+            mode: "paused",
+            label: "CLOSING MACHINE",
+            detail: "Staff member is securing the service door.",
+          };
+        }
+        if (staffServiceVisual.phase === "departing") {
+          return {
+            mode: "paused",
+            label: "STAFF DEPARTING",
+            detail: "Machine remains locked until staff clears the cabinet.",
           };
         }
         if (staffServiceVisual.phase === "door_open") {
@@ -590,6 +607,7 @@ export function createCabinetLabScene(
 
       staffServiceVisual.update(
         inventoryService.machinePaused,
+        restockStatus === "complete",
         stepSeconds,
       );
 
@@ -604,8 +622,11 @@ export function createCabinetLabScene(
             ),
           ),
         );
+        restockedTracked.length = 0;
         restockPlan = createRestockPlan(
-          layout.seed + ":service-0",
+          layout.seed +
+            ":service-" +
+            serviceCycleIndex,
           inventoryService.restockDeficitCount,
           prizePool,
         );
@@ -684,6 +705,25 @@ export function createCabinetLabScene(
         }
       }
 
+      if (
+        restockStatus === "complete" &&
+        staffServiceVisual.phase === "hidden" &&
+        inventoryService.serviceState ===
+          "service_paused"
+      ) {
+        const reopened =
+          inventoryService.completeService();
+        if (reopened) {
+          serviceCycleIndex += 1;
+          restockStatus = "idle";
+          restockPlan = [];
+          restockSpawnIndex = 0;
+          restockInsertionElapsedSeconds = 0;
+          restockSettle = null;
+          restockedTracked.length = 0;
+        }
+      }
+
       if (!inventoryService.machinePaused) {
         for (const prize of tracked) {
           const event = sensor.pollPrize(
@@ -725,6 +765,7 @@ export function createCabinetLabScene(
         `Restock status    ${restockStatus} / ${restockSpawnIndex} of ${restockPlan.length}`,
         `Restock settle    ${restockSettle?.status ?? "-"}`,
         `Restocked total   ${inventoryService.restockedInventoryCount}`,
+        `Service cycles    ${inventoryService.completedServiceCount} / seed index ${serviceCycleIndex}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",
