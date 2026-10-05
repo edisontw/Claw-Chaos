@@ -294,7 +294,6 @@ function addCeilingFixtures(
 function addNeighborMachine(
   root: THREE.Group,
   placement: NeighborMachinePlacement,
-  theme: VisualTheme,
   shared: {
     body: THREE.Material;
     trim: THREE.Material;
@@ -426,7 +425,7 @@ function addNeighborMachines(
   };
 
   for (const placement of ARCADE_NEIGHBOR_MACHINE_PLACEMENTS) {
-    addNeighborMachine(root, placement, theme, shared);
+    addNeighborMachine(root, placement, shared);
   }
 }
 
