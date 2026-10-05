@@ -5,10 +5,14 @@ import {
   type StaffVisualTheme,
 } from "../theme/visualTheme";
 import {
-  STAFF_CHARACTER_VARIANT,
   createAdultFemaleArcadeStaffVisual,
   type StaffCharacterRig,
 } from "./AdultFemaleArcadeStaffVisual";
+import {
+  SKINNED_STAFF_CHARACTER_VARIANT,
+  SkinnedArcadeStaffVisual,
+  type SkinnedStaffAssetStatus,
+} from "./SkinnedArcadeStaffVisual";
 import {
   M10_STAFF_SERVICE_CONFIG,
   advanceStaffServiceState,
@@ -22,7 +26,9 @@ export class CabinetStaffServiceVisual {
   private state: StaffServiceState =
     createStaffServiceState();
   private readonly rig: StaffCharacterRig;
-  private readonly actor: THREE.Group;
+  private readonly skinned =
+    new SkinnedArcadeStaffVisual();
+  private readonly actor = new THREE.Group();
   private readonly doorPivot = new THREE.Group();
   private readonly closedDoorCenter: THREE.Vector3;
   private readonly doorCenterOffset: THREE.Vector3;
@@ -41,7 +47,17 @@ export class CabinetStaffServiceVisual {
   ) {
     this.rig =
       createAdultFemaleArcadeStaffVisual(staffTheme);
-    this.actor = this.rig.root;
+    this.actor.name =
+      "m10-staff-character-visual-root";
+    this.actor.visible = false;
+    this.actor.userData.visualOnly = true;
+
+    this.rig.root.visible = true;
+    this.skinned.root.visible = false;
+    this.actor.add(
+      this.rig.root,
+      this.skinned.root,
+    );
     scene.add(this.actor);
 
     const bodyCenter = serviceDoorBody.translation();
@@ -170,10 +186,27 @@ export class CabinetStaffServiceVisual {
     this.actor.position.set(pose.x, 0, pose.z);
     this.actor.rotation.y = pose.yawRadians;
 
-    this.updateCharacterPose(pose.walkCycleRadians);
-    this.actor.position.y =
-      Math.abs(Math.sin(pose.walkCycleRadians)) *
-      0.006;
+    const useSkinned =
+      this.skinned.status === "skinned";
+    this.skinned.root.visible = useSkinned;
+    this.rig.root.visible = !useSkinned;
+
+    this.skinned.update(
+      this.state.phase,
+      stepSeconds,
+    );
+
+    if (useSkinned) {
+      this.actor.position.y = 0;
+    } else {
+      this.updateCharacterPose(
+        pose.walkCycleRadians,
+      );
+      this.actor.position.y =
+        Math.abs(
+          Math.sin(pose.walkCycleRadians),
+        ) * 0.006;
+    }
 
     const smoothDoor =
       pose.doorOpenFraction *
@@ -211,6 +244,10 @@ export class CabinetStaffServiceVisual {
   }
 
   get characterVariant(): string {
-    return STAFF_CHARACTER_VARIANT;
+    return SKINNED_STAFF_CHARACTER_VARIANT;
+  }
+
+  get visualStatus(): SkinnedStaffAssetStatus {
+    return this.skinned.status;
   }
 }
