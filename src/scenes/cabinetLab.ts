@@ -279,6 +279,7 @@ export function createCabinetLabScene(
           M06_CABINET_CONFIG.wallHalfThickness * 2,
       },
       visualTheme.staff,
+      renderQuality.id === "desktop",
     );
 
   const layout = createCabinetLayout(
