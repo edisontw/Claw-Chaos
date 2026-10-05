@@ -1,0 +1,87 @@
+name: Vendor optimized realistic staff asset
+
+on:
+  push:
+    branches: ["art/theme-a-modern-japanese-arcade"]
+    paths:
+      - ".github/workflows/vendor-realistic-staff.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v7
+        with:
+          ref: art/theme-a-modern-japanese-arcade
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Download reviewed CC-BY rigged source
+        shell: bash
+        run: |
+          mkdir -p .asset-work public/assets/staff
+          curl --fail --location --retry 3             "https://raw.githubusercontent.com/Breyner-Parada/threejsexamples/88c20e25e98dcf40690cee3b498112ea6fef08be/public/indian_office_woman.glb"             -o .asset-work/source.glb
+          test "$(stat -c%s .asset-work/source.glb)" -gt 1000000
+
+      - name: Optimize for web runtime
+        shell: bash
+        run: |
+          npx --yes @gltf-transform/cli@4.5.0             resize .asset-work/source.glb .asset-work/resized.glb             --width 1024 --height 1024
+          npx --yes @gltf-transform/cli@4.5.0             optimize .asset-work/resized.glb             public/assets/staff/arcade-attendant-realistic.glb             --compress draco             --texture-compress webp
+          npx --yes @gltf-transform/cli@4.5.0             validate public/assets/staff/arcade-attendant-realistic.glb
+
+      - name: Write attribution record
+        shell: bash
+        run: |
+          cat > public/assets/staff/REALISTIC_STAFF_NOTICE.md <<'EOF'
+          # Realistic arcade attendant candidate
+
+          File:
+          - `arcade-attendant-realistic.glb`
+
+          Original asset:
+          - Title: Indian Office Woman
+          - Author: Pixel_Monster
+          - Source: https://sketchfab.com/3d-models/indian-office-woman-e6c60cafd33c4d54b0b840c4146ed244
+          - License: CC-BY-4.0
+          - Public mirror used for reproducible build:
+            https://github.com/Breyner-Parada/threejsexamples
+          - Pinned mirror commit:
+            88c20e25e98dcf40690cee3b498112ea6fef08be
+
+          Claw Chaos modifications:
+          - textures resized to max 1024 px
+          - textures converted to WebP
+          - glTF optimized with Draco geometry compression
+          - original skeleton and animation data retained by the glTF optimization pipeline
+
+          Attribution is retained here because CC-BY-4.0 requires credit.
+          EOF
+
+      - name: Report optimized size
+        shell: bash
+        run: |
+          echo "Original bytes: $(stat -c%s .asset-work/source.glb)"
+          echo "Optimized bytes: $(stat -c%s public/assets/staff/arcade-attendant-realistic.glb)"
+
+      - name: Commit optimized candidate
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/assets/staff/arcade-attendant-realistic.glb                   public/assets/staff/REALISTIC_STAFF_NOTICE.md
+          if git diff --cached --quiet; then
+            echo "No asset changes."
+            exit 0
+          fi
+          git commit -m "art: add optimized realistic staff candidate"
+          git push origin HEAD:art/theme-a-modern-japanese-arcade
