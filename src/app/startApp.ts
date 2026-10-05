@@ -203,6 +203,10 @@ export async function startApp(
     root.dataset.arcadeEnvironment =
       testScene.environmentId;
   }
+  if (testScene.staffCharacterVariant) {
+    root.dataset.staffCharacter =
+      testScene.staffCharacterVariant;
+  }
 
   type MachineAudioController = InstanceType<
     typeof import("../audio/CabinetMachineAudio").CabinetMachineAudio
