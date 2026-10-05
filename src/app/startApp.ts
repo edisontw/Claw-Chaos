@@ -17,6 +17,7 @@ import {
   M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
 } from "../player/firstPersonPlayerView";
 import { MobileCabinetControls } from "../player/mobileCabinetControls";
+import { StaffCallControl } from "../player/staffCallControl";
 import {
   chooseRenderQualityProfile,
   isTouchLikeEnvironment,
@@ -279,6 +280,22 @@ export async function startApp(
         )
       : null;
 
+  let staffCallControl: StaffCallControl | null = null;
+
+  if (
+    selection.id === "cabinet-lab" &&
+    testScene.requestStaff &&
+    testScene.getStaffCallState
+  ) {
+    staffCallControl = new StaffCallControl(
+      root,
+      () => testScene.requestStaff?.() ?? false,
+    );
+    staffCallControl.update(
+      testScene.getStaffCallState(),
+    );
+  }
+
   if (selection.id === "cabinet-lab") {
     new MobileCabinetControls(
       root,
@@ -337,6 +354,12 @@ export async function startApp(
       physicsDebugRenderer.toggle();
     } else if (event.code === "KeyM") {
       massPropertiesDebugRenderer.toggle();
+    } else if (
+      event.code === "KeyS" &&
+      selection.id === "cabinet-lab"
+    ) {
+      event.preventDefault();
+      testScene.requestStaff?.();
     }
   };
   window.addEventListener("keydown", onKeyDown);
@@ -392,6 +415,10 @@ export async function startApp(
     if (machineAudioState) {
       machineAudio?.update(machineAudioState);
       cabinetHaptics?.updateMachineState(machineAudioState);
+    }
+    const staffCallState = testScene.getStaffCallState?.();
+    if (staffCallState) {
+      staffCallControl?.update(staffCallState);
     }
     playerViewController?.update(frameDeltaSeconds);
     if (physicsDebugRenderer.visible) {

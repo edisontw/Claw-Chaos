@@ -1804,6 +1804,8 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
+**Status: IN PROGRESS — slice 5 service closure implemented; manual validation pending**
+
 ## Goal
 
 Simulate cabinet maintenance and prize depletion.
@@ -1824,6 +1826,171 @@ Simulate cabinet maintenance and prize depletion.
 - depleted machine can be restocked
 - post-restock pile is physically stable and non-identical across seeds
 - machine pauses safely during service
+
+## Slice 1 — inventory / staff-policy foundation
+
+Implemented:
+- cabinet stock now has an explicit initial count, awarded count and remaining count
+- only accepted ChuteSensor-derived win results decrement remaining stock
+- duplicate prize awards cannot decrement inventory twice
+- restock threshold is explicit; current cabinet policy uses 1 remaining prize
+- staff requests are rejected while stock is above threshold, preventing arbitrary requests for an ideal placement
+- reaching the threshold makes CALL STAFF policy-eligible
+- requesting staff transitions service state from `operating` to `staff_requested`
+- `staff_requested` latches a player-input lock; slice 2 below performs the actual pause only after a safe handoff
+- current scene debug exposes stock remaining, threshold, staff-call eligibility and service state
+
+Deliberately deferred to later M10 slices:
+- player-facing CALL STAFF control
+- safe idle/play-cycle handoff before service begins
+- staff approach / open / reposition / close sequence
+- seeded restock placement
+- post-restock settle validation
+- reopening the machine after service
+
+No prize force, claw force, collision, ChuteSensor logic or payout shortcut was changed.
+
+## Slice 2 — CALL STAFF + safe service handoff
+
+Implemented:
+- add a player-facing CALL STAFF control for desktop and mobile cabinet play
+- desktop shortcut: `S`
+- control remains visible but disabled while store policy does not permit service
+- once the restock threshold is reached, CALL STAFF becomes actionable
+- accepted call transitions `operating -> staff_requested`
+- `staff_requested` immediately locks new player gantry/drop input but does **not** freeze or abort an active M04 play cycle
+- the existing DROP/CLOSE/PICKUP/RETAINING/RETURN/RELEASE sequence is allowed to finish normally
+- service pauses only after the gantry reports a safe idle condition:
+  - M04 play phase is `READY`
+  - reel is fully retracted and stopped
+  - gantry X/Z motion is below the existing home velocity tolerance
+  - fingers have returned to the open target
+  - no PT/home-return motion is active
+- only then does state transition `staff_requested -> service_paused`
+- physics continues running; this is a machine/input service pause, not a world freeze
+- debug telemetry exposes service-safety and input-lock state
+- browser smoke requires the CALL STAFF control to exist on cabinet/root play
+
+Deferred to the next M10 slice:
+- staff approach / service-door open sequence
+- deterministic reposition/restock placement
+- settle validation
+- close/reopen and return to `operating`
+
+No claw/prize force, Ring geometry, collision, ChuteSensor, teleport, parenting, magnet, weld, hidden pickup force or kinematic prize carry was added.
+
+## Slice 3 — adult staff approach + service-door opening
+
+Implemented:
+- add a visible adult female arcade staff NPC as a lightweight Three.js character:
+  - adult proportions
+  - dark ponytail / hair silhouette
+  - navy staff uniform + light blouse panel
+  - name badge
+  - skirt + dark leggings + shoes
+  - simple facial features
+- presentation goal is a clean, attractive Japanese-arcade-style staff silhouette without changing gameplay outcomes
+- character is intentionally built as replaceable visual content; service logic is independent so a later GLB/skinned model can replace it without rewriting M10 state flow
+- staff does not appear until the machine has completed the slice-2 safe handoff and entered `service_paused`
+- deterministic service sequence:
+  - `hidden`
+  - `approaching` for about 2.6 s
+  - `opening_door` for about 0.9 s
+  - `door_open`
+- approach includes simple procedural walk bob + alternating arm swing
+- at the cabinet, the staff turns toward the right-side service panel and raises an arm while opening it
+- CALL STAFF status text now reports STAFF APPROACHING / OPENING MACHINE / SERVICE DOOR OPEN
+- service sequence timing and final outside-cabinet position are regression-tested
+- the visible right-side glass/service panel is hinged visually for this slice
+
+Important approximation:
+- the existing cabinet physics collider remains closed while the service door is only visually open
+- this is intentional because slice 3 does not yet move prizes through the opening
+- the next restock slice must create a legitimate service-access physics state before any prize is repositioned/restocked; do not move prizes through the still-closed collider
+
+Deferred:
+- physical service-door aperture/collider handling
+- staff hand/reach interaction with prizes
+- seeded restock/reposition placement
+- settle validation
+- close-door / staff departure / machine reopen
+
+No win forcing or ideal-placement request path was introduced.
+
+## Slice 4 — physical service access + seeded restock settle
+
+Implemented:
+- the right-side service door is now backed by the real cabinet collider as a kinematic body
+- during normal gameplay the door remains in the same closed pose and preserves cabinet containment
+- after the slice-2 safe service pause and slice-3 staff approach, the physical door collider rotates around the same hinge as the visible glass panel
+- service access therefore becomes a real open boundary instead of visual-only animation
+- newly restocked prizes are not teleported from old awarded bodies:
+  - awarded/won bodies remain where physics put them
+  - replacement stock is created only as genuinely new inventory
+  - new stock is inserted from the opened right-side service area
+- the restock plan is deterministic for a fixed seed and differs across seeds
+- replacement prize types are drawn only from the current layout's existing prize pool
+- insertion poses stay on the right side, away from the chute
+- prizes are inserted sequentially at 0.55 s intervals rather than overlapping all at once
+- after insertion, normal gravity/contact physics is the only mechanism that forms the new pile
+- a fresh settle gate checks linear and angular motion of the replacement stock
+- inventory is credited back only after that settle gate reaches READY/TIMEOUT_READY
+- ChuteSensor payout polling is suspended while the machine is in `service_paused`, so staff handling cannot be miscounted as a player win
+- debug telemetry exposes restock phase, inserted count, settle state and lifetime restocked count
+
+Regression coverage:
+- closed service-door cabinet containment remains covered by the existing M06 wall test
+- new physical-door regression verifies the real right-side collider moves out of the service opening
+- fixed-seed restock plans are identical
+- different seeds produce non-identical restock poses
+- a multi-prize restock physics regression verifies replacement prizes remain in cabinet bounds and settle below the configured motion thresholds
+
+Important contract:
+- no existing prize is teleported or kinematically carried
+- no staff action applies a hidden winning impulse
+- no restock placement targets the chute
+- no restock placement is selected from a “best win” policy
+- the physical pile is allowed to rearrange only through gravity and collisions
+
+## Slice 5 — close / depart / reopen / repeat
+
+Implemented:
+- restock completion is the only trigger that authorizes door closing
+- staff transitions deterministically:
+  - `door_open`
+  - `closing_door`
+  - `departing`
+  - `hidden`
+- the visible service panel and real kinematic service-door collider close together
+- the machine remains service-paused throughout door closing and staff departure
+- controls do not unlock while the physical service opening is still exposed
+- after the staff reaches `hidden`, cabinet service calls `completeService()`
+- `completeService()` refuses to reopen if the cabinet is still at/below the restock threshold
+- successful completion returns `service_paused -> operating`
+- normal ChuteSensor payout polling and player controls resume only after reopen
+- completed service cycles are counted explicitly
+- each service cycle uses a distinct `serviceCycleIndex` in:
+  - restock RNG seed
+  - replacement prize runtime IDs
+- replacement prize IDs therefore remain unique across multiple restocks and cannot collide with ChuteSensor/inventory one-shot accounting
+- per-cycle restock tracking is reset after reopen while all physical prize bodies remain in the world
+- the next depletion can independently trigger CALL STAFF again
+
+Regression coverage:
+- inventory service test completes two independent depletion/restock/reopen cycles
+- staff sequence test covers approach -> open -> close -> depart -> hidden
+- physical service-door test verifies:
+  - collider genuinely opens
+  - collider returns to its original closed translation
+  - collider returns to its original closed rotation
+  - staff is hidden after departure
+- existing M06 cabinet containment continues to cover the normal closed-door machine
+
+M10 technical exit criteria are now represented in code/tests. Remaining closure gate is deployed/manual confirmation of the full visible flow and a second CALL STAFF cycle.
+
+### Carry-forward UX backlog
+
+A physical chute win is already detected correctly by the existing ChuteSensor, but normal play still needs an unmistakable player-facing win/output indication. Add visual + text + sound feedback later while keeping ChuteSensor as the sole authoritative win source. This is a UX backlog item, not a physics defect.
 
 ---
 

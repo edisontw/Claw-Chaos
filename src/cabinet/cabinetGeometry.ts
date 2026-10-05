@@ -1,5 +1,6 @@
 import type {
   PhysicsRuntime,
+  RigidBodyHandle,
   Vec3,
 } from "../physics/PhysicsRuntime";
 
@@ -277,12 +278,28 @@ export function createCabinetPartDefinitions(): CabinetPartDefinition[] {
   ];
 }
 
+export type CabinetPhysicsParts =
+  CabinetPartDefinition[] & {
+    serviceDoorBody: RigidBodyHandle;
+  };
+
 export function createCabinetPhysics(
   physics: PhysicsRuntime,
-): CabinetPartDefinition[] {
-  const parts = createCabinetPartDefinitions();
+): CabinetPhysicsParts {
+  const parts =
+    createCabinetPartDefinitions() as CabinetPhysicsParts;
+  let serviceDoorBody: RigidBodyHandle | null = null;
 
   for (const part of parts) {
+    if (part.id === "glass-right") {
+      serviceDoorBody = physics.createKinematicCuboid(
+        part.center,
+        part.halfExtents,
+        part.friction,
+      );
+      continue;
+    }
+
     physics.createStaticCuboid(
       part.center,
       part.halfExtents,
@@ -290,5 +307,10 @@ export function createCabinetPhysics(
     );
   }
 
+  if (!serviceDoorBody) {
+    throw new Error("Cabinet service door body was not created");
+  }
+
+  parts.serviceDoorBody = serviceDoorBody;
   return parts;
 }

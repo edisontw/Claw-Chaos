@@ -5,6 +5,7 @@ import {
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
+import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
 import {
   M08_CABINET_VISUAL_STYLE,
   createCabinetFrameTrimSpecs,
@@ -24,6 +25,12 @@ import {
 import { LayoutSettlePipeline } from "../layouts/layoutSettle";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
+import { CabinetStaffServiceVisual } from "../staff/CabinetStaffServiceVisual";
+import {
+  M10_RESTOCK_CONFIG,
+  createRestockPlan,
+  type RestockPlacement,
+} from "../staff/restockPlanner";
 import { createGantryLabScene } from "./gantryLab";
 import type { SimulationScene } from "./types";
 
@@ -132,6 +139,7 @@ function addCabinetVisual(
     geometry,
     createPartMaterial(part),
   );
+  mesh.name = part.id;
   mesh.position.set(part.center.x, part.center.y, part.center.z);
   mesh.castShadow = part.role !== "glass";
   mesh.receiveShadow = part.role !== "glass";
@@ -146,6 +154,7 @@ function addCabinetVisual(
         opacity: M08_CABINET_VISUAL_STYLE.glass.edgeOpacity,
       }),
     );
+    outline.name = part.id + "-outline";
     outline.position.copy(mesh.position);
     scene.add(outline);
   }
@@ -257,11 +266,39 @@ export function createCabinetLabScene(
   addControlPanel(scene);
   addM08CabinetDetails(scene);
 
+  const serviceDoorObjects = [
+    scene.getObjectByName("glass-right"),
+    scene.getObjectByName("glass-right-outline"),
+  ].filter(
+    (object): object is THREE.Object3D =>
+      object !== undefined,
+  );
+  const staffServiceVisual =
+    new CabinetStaffServiceVisual(
+      scene,
+      serviceDoorObjects,
+      parts.serviceDoorBody,
+      {
+        x:
+          M06_CABINET_CONFIG.interiorHalfX +
+          M06_CABINET_CONFIG.wallHalfThickness,
+        y: 0,
+        z:
+          -M06_CABINET_CONFIG.interiorHalfZ -
+          M06_CABINET_CONFIG.wallHalfThickness * 2,
+      },
+    );
+
   const layout = createCabinetLayout(
     options.layoutId ?? "loose",
     options.layoutSeed ?? "m09-default",
   );
   const layoutSettle = new LayoutSettlePipeline();
+  const inventoryService =
+    new CabinetInventoryServiceState(
+      layout.placements.length,
+      { restockThresholdCount: 1 },
+    );
 
   const cabinetLight = new THREE.PointLight(0xf4f7ff, 4.2, 2.2, 1.7);
   cabinetLight.position.set(-0.08, 1.08, 0.10);
@@ -280,7 +317,9 @@ export function createCabinetLabScene(
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
       initialPosition: CABINET_CLAW_PARK_POSITION,
-      controlsEnabled: () => layoutSettle.ready,
+      controlsEnabled: () =>
+        layoutSettle.ready &&
+        !inventoryService.playerInputLocked,
       gripProfile: {
         fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
         closePickupTorque:
@@ -299,7 +338,7 @@ export function createCabinetLabScene(
           CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
-      milestone: "M09 / Layout gameplay",
+      milestone: "M10 / Staff & restocking",
       camera: {
         position: [1.08, 1.00, 1.30],
         target: [0, 0.66, 0.02],
@@ -321,6 +360,69 @@ export function createCabinetLabScene(
     id: string;
     body: ReturnType<typeof createPrize>["body"];
   }> = [];
+  const restockedTracked: Array<{
+    id: string;
+    body: ReturnType<typeof createPrize>["body"];
+  }> = [];
+  type RestockStatus =
+    | "idle"
+    | "inserting"
+    | "settling"
+    | "complete";
+  let restockStatus: RestockStatus = "idle";
+  let restockPlan: RestockPlacement[] = [];
+  let restockSpawnIndex = 0;
+  let serviceCycleIndex = 0;
+  let restockInsertionElapsedSeconds = 0;
+  let restockSettle: LayoutSettlePipeline | null = null;
+
+  const spawnRestockPrize = (
+    placement: RestockPlacement,
+    index: number,
+  ): void => {
+    const definition =
+      getPrizeDefinition(placement.prizeId);
+    const prize = createPrize(
+      physics,
+      definition,
+      {
+        position: {
+          x: placement.x,
+          y: placement.y,
+          z: placement.z,
+        },
+        rotationXRadians:
+          placement.rotationXRadians,
+        rotationYRadians:
+          placement.rotationYRadians,
+        variantSeed: placement.variantSeed,
+        enableContactAudio: true,
+      },
+    );
+    const id =
+      "restock#" +
+      serviceCycleIndex +
+      "#" +
+      index +
+      ":" +
+      placement.prizeId;
+
+    scene.add(prize.renderObject);
+    bindings.push({
+      mesh: prize.renderObject,
+      body: prize.body,
+    });
+    massPropertiesDebugTargets.push({
+      body: prize.body,
+      label: id,
+    });
+    const trackedPrize = {
+      id,
+      body: prize.body,
+    };
+    tracked.push(trackedPrize);
+    restockedTracked.push(trackedPrize);
+  };
 
   const placements = layout.placements;
 
@@ -363,13 +465,111 @@ export function createCabinetLabScene(
   return {
     bindings,
     massPropertiesDebugTargets,
-    milestone: "M09 / Layout gameplay",
+    milestone: "M10 / Staff & restocking",
     layoutId: layout.id,
     camera: gantryScene.camera,
     primaryAction: () =>
       layoutSettle.ready
         ? gantryScene.primaryAction?.() ?? false
         : false,
+    requestStaff(): boolean {
+      return inventoryService.requestStaff();
+    },
+    getStaffCallState() {
+      if (inventoryService.serviceState === "service_paused") {
+        if (staffServiceVisual.phase === "approaching") {
+          return {
+            mode: "paused",
+            label: "STAFF APPROACHING",
+            detail: "Staff member is walking to the machine.",
+          };
+        }
+        if (staffServiceVisual.phase === "opening_door") {
+          return {
+            mode: "paused",
+            label: "OPENING MACHINE",
+            detail: "Staff member is opening the service door.",
+          };
+        }
+        if (staffServiceVisual.phase === "closing_door") {
+          return {
+            mode: "paused",
+            label: "CLOSING MACHINE",
+            detail: "Staff member is securing the service door.",
+          };
+        }
+        if (staffServiceVisual.phase === "departing") {
+          return {
+            mode: "paused",
+            label: "STAFF DEPARTING",
+            detail: "Machine remains locked until staff clears the cabinet.",
+          };
+        }
+        if (staffServiceVisual.phase === "door_open") {
+          if (restockStatus === "inserting") {
+            return {
+              mode: "paused",
+              label: "RESTOCKING",
+              detail:
+                restockSpawnIndex +
+                " / " +
+                restockPlan.length +
+                " new prizes inserted.",
+            };
+          }
+          if (restockStatus === "settling") {
+            return {
+              mode: "paused",
+              label: "SETTLING PRIZES",
+              detail:
+                "Waiting for the new pile to become physically stable.",
+            };
+          }
+          if (restockStatus === "complete") {
+            return {
+              mode: "paused",
+              label: "RESTOCK COMPLETE",
+              detail:
+                "New stock is stable. Door close/departure is next.",
+            };
+          }
+          return {
+            mode: "paused",
+            label: "SERVICE DOOR OPEN",
+            detail: "Preparing seeded restock.",
+          };
+        }
+        return {
+          mode: "paused",
+          label: "SERVICE PAUSED",
+          detail: "Machine secured for staff service.",
+        };
+      }
+      if (inventoryService.serviceState === "staff_requested") {
+        return {
+          mode: "waiting",
+          label: "STAFF CALLED",
+          detail: "Finishing current machine motion safely.",
+        };
+      }
+      if (inventoryService.canCallStaff) {
+        return {
+          mode: "available",
+          label: "CALL STAFF",
+          detail: "Restock threshold reached · press S or tap.",
+        };
+      }
+      return {
+        mode: "locked",
+        label: "CALL STAFF",
+        detail:
+          "Available at " +
+          inventoryService.restockThresholdCount +
+          " prize remaining · " +
+          inventoryService.remainingInventoryCount +
+          " now.",
+      };
+    },
     getMachineAudioState: gantryScene.getMachineAudioState,
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
@@ -399,10 +599,146 @@ export function createCabinetLabScene(
 
       gantryScene.beforePhysicsStep?.(stepSeconds);
 
-      for (const prize of tracked) {
-        const event = sensor.pollPrize(prize.id, prize.body);
-        if (event) {
-          resultInventory.consume(event);
+      if (inventoryService.serviceState === "staff_requested") {
+        inventoryService.advanceServiceHandoff(
+          gantryScene.isSafeForService?.() ?? false,
+        );
+      }
+
+      staffServiceVisual.update(
+        inventoryService.machinePaused,
+        restockStatus === "complete",
+        stepSeconds,
+      );
+
+      if (
+        staffServiceVisual.phase === "door_open" &&
+        restockStatus === "idle"
+      ) {
+        const prizePool = Array.from(
+          new Set(
+            layout.placements.map(
+              (placement) => placement.prizeId,
+            ),
+          ),
+        );
+        restockedTracked.length = 0;
+        restockPlan = createRestockPlan(
+          layout.seed +
+            ":service-" +
+            serviceCycleIndex,
+          inventoryService.restockDeficitCount,
+          prizePool,
+        );
+        restockStatus =
+          restockPlan.length > 0
+            ? "inserting"
+            : "complete";
+      }
+
+      if (restockStatus === "inserting") {
+        restockInsertionElapsedSeconds +=
+          stepSeconds;
+        const readyForNext =
+          restockSpawnIndex === 0 ||
+          restockInsertionElapsedSeconds >=
+            M10_RESTOCK_CONFIG
+              .insertionIntervalSeconds;
+
+        if (
+          readyForNext &&
+          restockSpawnIndex < restockPlan.length
+        ) {
+          const placement =
+            restockPlan[restockSpawnIndex];
+          if (placement) {
+            spawnRestockPrize(
+              placement,
+              restockSpawnIndex,
+            );
+          }
+          restockSpawnIndex += 1;
+          restockInsertionElapsedSeconds = 0;
+
+          if (
+            restockSpawnIndex >=
+            restockPlan.length
+          ) {
+            restockStatus = "settling";
+            restockSettle =
+              new LayoutSettlePipeline();
+          }
+        }
+      }
+
+      if (
+        restockStatus === "settling" &&
+        restockSettle
+      ) {
+        restockSettle.update(
+          stepSeconds,
+          restockedTracked.map((prize) => {
+            const linear = prize.body.linvel();
+            const angular = prize.body.angvel();
+            return {
+              linearSpeedMetersPerSecond:
+                Math.hypot(
+                  linear.x,
+                  linear.y,
+                  linear.z,
+                ),
+              angularSpeedRadiansPerSecond:
+                Math.hypot(
+                  angular.x,
+                  angular.y,
+                  angular.z,
+                ),
+            };
+          }),
+        );
+
+        if (restockSettle.ready) {
+          inventoryService.recordRestock(
+            restockPlan.length,
+          );
+          restockStatus = "complete";
+        }
+      }
+
+      if (
+        restockStatus === "complete" &&
+        staffServiceVisual.phase === "hidden" &&
+        inventoryService.serviceState ===
+          "service_paused"
+      ) {
+        const reopened =
+          inventoryService.completeService();
+        if (reopened) {
+          serviceCycleIndex += 1;
+          restockStatus = "idle";
+          restockPlan = [];
+          restockSpawnIndex = 0;
+          restockInsertionElapsedSeconds = 0;
+          restockSettle = null;
+          restockedTracked.length = 0;
+        }
+      }
+
+      if (!inventoryService.machinePaused) {
+        for (const prize of tracked) {
+          const event = sensor.pollPrize(
+            prize.id,
+            prize.body,
+          );
+          if (event) {
+            const result =
+              resultInventory.consume(event);
+            if (result) {
+              inventoryService.consumeWin(
+                result,
+              );
+            }
+          }
         }
       }
     },
@@ -420,7 +756,16 @@ export function createCabinetLabScene(
           " m",
         `Sensor wins       ${sensor.winCount}`,
         `Results accepted  ${resultInventory.resultCount}`,
-        `Inventory prizes  ${resultInventory.inventoryCount}`,
+        `Awarded prizes    ${resultInventory.inventoryCount}`,
+        `Stock remaining   ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
+        `Restock threshold ${inventoryService.restockThresholdCount}`,
+        `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
+        `Service safe      ${gantryScene.isSafeForService?.() ? "yes" : "no"} / input ${inventoryService.playerInputLocked ? "LOCKED" : "open"}`,
+        `Staff sequence    ${staffServiceVisual.phase}`,
+        `Restock status    ${restockStatus} / ${restockSpawnIndex} of ${restockPlan.length}`,
+        `Restock settle    ${restockSettle?.status ?? "-"}`,
+        `Restocked total   ${inventoryService.restockedInventoryCount}`,
+        `Service cycles    ${inventoryService.completedServiceCount} / seed index ${serviceCycleIndex}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",

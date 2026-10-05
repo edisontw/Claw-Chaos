@@ -17,6 +17,18 @@ export interface MassPropertiesDebugTarget {
   label?: string;
 }
 
+export type StaffCallUiMode =
+  | "locked"
+  | "available"
+  | "waiting"
+  | "paused";
+
+export interface StaffCallUiState {
+  mode: StaffCallUiMode;
+  label: string;
+  detail: string;
+}
+
 export interface SimulationScene {
   bindings: RenderBinding[];
   camera: CameraPreset;
@@ -25,6 +37,9 @@ export interface SimulationScene {
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
+  requestStaff?(): boolean;
+  getStaffCallState?(): StaffCallUiState;
+  isSafeForService?(): boolean;
   setManualGantryInput?(x: number, z: number): void;
   getMachineAudioState?(): MachineAudioState;
   debugLines?(): string[];
