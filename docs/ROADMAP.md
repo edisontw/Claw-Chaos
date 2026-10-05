@@ -2004,7 +2004,7 @@ A physical chute win is already detected correctly by the existing ChuteSensor, 
 
 # Major Visual / Art Uplift
 
-**Status: IN PROGRESS — Art Slices 1–4 candidate on dedicated feature branch**
+**Status: IMPLEMENTATION COMPLETE CANDIDATE — Art Slices 1–5 on dedicated feature branch; deployed manual visual validation pending**
 
 Primary direction:
 - Theme A — Modern Japanese Arcade
@@ -2180,8 +2180,50 @@ Physics/service contract:
 - staff character has no Rapier body/collider and cannot interfere with prizes or the player
 - ChuteSensor, Ring, Bridge and chute-adjacent gameplay are unchanged
 
-Next planned slice:
-1. holistic polish / balance / mobile performance
+## Art Slice 5 — holistic polish / balance / mobile performance
+
+Implemented candidate:
+- desktop/mobile render profiles now control art cost in addition to pixel ratio and key-shadow resolution
+- desktop retains the full arcade-room dressing and cabinet PointLight shadows
+- mobile uses reduced arcade background dressing:
+  - keeps both near neighboring machines
+  - omits the two farther neighboring machines
+  - omits distant prize-display shelves
+- mobile disables the cabinet PointLight cube-shadow pass, avoiding six shadow renders from the local point light
+- desktop cabinet PointLight shadow map is reduced from the previous fixed 1024 to a profile-controlled 512
+- cabinet PointLight shadow near/far range is constrained to the actual cabinet-light volume
+- background arcade architecture and neighboring machines no longer cast directional shadows; the playable cabinet/prizes remain the visual and shadow focus
+- ACES Filmic tone mapping is enabled globally with restrained profile-controlled exposure
+- directional key-light shadow camera is tightened around the playable machine / near environment instead of spending resolution on empty space
+- existing Theme A glass remains intentionally subtle to protect aiming readability
+- browser smoke now asserts the final ACES art pipeline in addition to theme/environment/staff identity
+
+Mobile/performance contract:
+- physics timestep, Rapier bodies, colliders, joints, grip forces and game state are identical across render profiles
+- mobile reductions affect render-only background detail and shadow work
+- renderer pixel-ratio cap remains 1.5 on mobile and 2.0 on desktop
+- primary cabinet remains full-detail on both profiles
+- near environment remains present on mobile so the scene still reads as an arcade rather than an empty lab
+
+Regression coverage:
+- render-profile tests lock desktop/mobile background and cabinet-shadow budgets
+- reduced arcade-room tests verify far machines/displays are omitted while both near machines remain
+- existing full environment, staff, cabinet, physics and layout tests remain authoritative
+- cabinet/root browser smoke requires Theme A + arcade room + staff variant + ACES tone mapping
+
+Art uplift exit criteria before merge:
+- full CI green
+- no physics/gameplay regression
+- feature branch remains cleanly based on current `main`
+- deployed/manual desktop visual validation
+- deployed/manual mobile visual validation
+- verify glass does not obstruct aim
+- verify background does not compete with prizes/claw
+- verify staff scale/service pose reads naturally
+- verify acceptable mobile frame pacing during normal play and CALL STAFF
+
+Next action:
+1. deploy or otherwise expose this feature branch for manual desktop/mobile visual validation before merging PR #70
 
 ---
 
