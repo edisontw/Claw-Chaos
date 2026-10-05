@@ -67,9 +67,8 @@ describe("M10 staff approach and service-door sequence", () => {
   });
 
   it("ends beside the cabinet rather than inside it", () => {
-    let state = createStaffServiceState();
-    state = {
-      phase: "door_open",
+    const state = {
+      phase: "door_open" as const,
       elapsedSeconds:
         M10_STAFF_SERVICE_CONFIG.doorOpeningSeconds,
     };
