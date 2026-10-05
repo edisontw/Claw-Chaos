@@ -737,6 +737,7 @@ export function createCabinetLabScene(
         ...(gantryScene.debugLines?.() ?? []),
         "Cabinet           physical deck / walls / glass / ceiling",
         `Visual theme      ${visualTheme.id} / ${visualTheme.label}`,
+        `Staff character   ${staffServiceVisual.characterVariant}`,
         `Layout            ${layout.id} / seed ${layout.seed}`,
         `Layout settle     ${layoutSettle.status} / ${layoutSettle.elapsedSeconds.toFixed(2)} s`,
         `Layout prizes     ${layout.placements.length}`,
