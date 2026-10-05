@@ -21,6 +21,9 @@ describe("mobile render quality profile", () => {
     expect(
       DESKTOP_RENDER_QUALITY.arcadeBackgroundDetail,
     ).toBe("full");
+    expect(
+      DESKTOP_RENDER_QUALITY.toneMappingExposure,
+    ).toBeGreaterThanOrEqual(1);
   });
 
   it("uses a lower mobile GPU budget without changing physics", () => {
@@ -38,5 +41,10 @@ describe("mobile render quality profile", () => {
     expect(
       MOBILE_RENDER_QUALITY.arcadeBackgroundDetail,
     ).toBe("reduced");
+    expect(
+      MOBILE_RENDER_QUALITY.toneMappingExposure,
+    ).toBeLessThanOrEqual(
+      DESKTOP_RENDER_QUALITY.toneMappingExposure,
+    );
   });
 });
