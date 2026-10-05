@@ -5,6 +5,11 @@ import {
   type StaffVisualTheme,
 } from "../theme/visualTheme";
 import {
+  STAFF_CHARACTER_VARIANT,
+  createAdultFemaleArcadeStaffVisual,
+  type StaffCharacterRig,
+} from "./AdultFemaleArcadeStaffVisual";
+import {
   M10_STAFF_SERVICE_CONFIG,
   advanceStaffServiceState,
   createStaffServiceState,
@@ -13,200 +18,11 @@ import {
   type StaffServiceState,
 } from "./staffServiceSequence";
 
-function material(
-  color: number,
-  roughness = 0.72,
-): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({
-    color,
-    roughness,
-    metalness: 0.02,
-  });
-}
-
-function cylinder(
-  radiusTop: number,
-  radiusBottom: number,
-  height: number,
-  mat: THREE.Material,
-): THREE.Mesh {
-  const mesh = new THREE.Mesh(
-    new THREE.CylinderGeometry(
-      radiusTop,
-      radiusBottom,
-      height,
-      16,
-    ),
-    mat,
-  );
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
-}
-
-function createAdultFemaleStaffModel(
-  theme: StaffVisualTheme,
-): {
-  root: THREE.Group;
-  leftArm: THREE.Group;
-  rightArm: THREE.Group;
-} {
-  const root = new THREE.Group();
-  root.name = "m10-adult-female-staff";
-  root.visible = false;
-
-  const skin = material(theme.skinColor, 0.82);
-  const hair = material(theme.hairColor, 0.78);
-  const uniform = material(
-    theme.uniformPrimaryColor,
-    0.62,
-  );
-  const uniformSecondary = material(
-    theme.uniformSecondaryColor,
-    0.64,
-  );
-  const blouse = material(theme.blouseColor, 0.88);
-  const skirt = material(theme.skirtColor, 0.72);
-  const stocking = material(theme.stockingColor, 0.82);
-  const shoe = material(theme.shoeColor, 0.50);
-  const badge = material(theme.badgeColor, 0.45);
-  const trim = material(theme.trimColor, 0.58);
-
-  for (const x of [-0.065, 0.065]) {
-    const leg = cylinder(0.043, 0.050, 0.66, stocking);
-    leg.position.set(x, 0.39, 0);
-    root.add(leg);
-
-    const foot = new THREE.Mesh(
-      new THREE.BoxGeometry(0.095, 0.055, 0.18),
-      shoe,
-    );
-    foot.position.set(x, 0.055, 0.035);
-    foot.castShadow = true;
-    root.add(foot);
-  }
-
-  const skirtMesh = cylinder(0.125, 0.18, 0.31, skirt);
-  skirtMesh.position.y = 0.82;
-  root.add(skirtMesh);
-
-  const waistTrim = cylinder(0.151, 0.158, 0.025, trim);
-  waistTrim.position.y = 0.975;
-  root.add(waistTrim);
-
-  const torso = cylinder(0.135, 0.165, 0.42, uniform);
-  torso.position.y = 1.11;
-  root.add(torso);
-
-  const blousePanel = new THREE.Mesh(
-    new THREE.BoxGeometry(0.15, 0.23, 0.018),
-    blouse,
-  );
-  blousePanel.position.set(0, 1.14, 0.145);
-  blousePanel.castShadow = true;
-  root.add(blousePanel);
-
-  const badgeMesh = new THREE.Mesh(
-    new THREE.BoxGeometry(0.055, 0.032, 0.010),
-    badge,
-  );
-  badgeMesh.position.set(0.055, 1.22, 0.158);
-  root.add(badgeMesh);
-
-  const makeArm = (x: number): THREE.Group => {
-    const armRoot = new THREE.Group();
-    armRoot.position.set(x, 1.25, 0);
-    const upper = cylinder(
-      0.041,
-      0.046,
-      0.38,
-      uniformSecondary,
-    );
-    upper.position.y = -0.18;
-    armRoot.add(upper);
-    const hand = new THREE.Mesh(
-      new THREE.SphereGeometry(0.048, 14, 10),
-      skin,
-    );
-    hand.position.y = -0.40;
-    hand.castShadow = true;
-    armRoot.add(hand);
-    root.add(armRoot);
-    return armRoot;
-  };
-
-  const leftArm = makeArm(-0.18);
-  const rightArm = makeArm(0.18);
-
-  const neck = cylinder(0.045, 0.048, 0.09, skin);
-  neck.position.y = 1.37;
-  root.add(neck);
-
-  const head = new THREE.Mesh(
-    new THREE.SphereGeometry(0.115, 22, 16),
-    skin,
-  );
-  head.position.y = 1.51;
-  head.scale.set(0.92, 1.06, 0.96);
-  head.castShadow = true;
-  root.add(head);
-
-  const hairCap = new THREE.Mesh(
-    new THREE.SphereGeometry(
-      0.122,
-      22,
-      14,
-      0,
-      Math.PI * 2,
-      0,
-      Math.PI * 0.62,
-    ),
-    hair,
-  );
-  hairCap.position.set(0, 1.545, -0.012);
-  hairCap.rotation.x = -0.10;
-  hairCap.castShadow = true;
-  root.add(hairCap);
-
-  const ponytail = new THREE.Mesh(
-    new THREE.SphereGeometry(0.072, 16, 12),
-    hair,
-  );
-  ponytail.position.set(0, 1.49, -0.125);
-  ponytail.scale.set(0.78, 1.75, 0.72);
-  ponytail.rotation.x = -0.35;
-  ponytail.castShadow = true;
-  root.add(ponytail);
-
-  const hairTie = new THREE.Mesh(
-    new THREE.SphereGeometry(0.025, 12, 8),
-    material(theme.hairAccessoryColor, 0.58),
-  );
-  hairTie.position.set(0, 1.525, -0.095);
-  root.add(hairTie);
-
-  for (const x of [-0.038, 0.038]) {
-    const eye = new THREE.Mesh(
-      new THREE.SphereGeometry(0.009, 10, 8),
-      material(0x221b1b, 0.55),
-    );
-    eye.position.set(x, 1.53, 0.105);
-    root.add(eye);
-  }
-
-  return {
-    root,
-    leftArm,
-    rightArm,
-  };
-}
-
 export class CabinetStaffServiceVisual {
   private state: StaffServiceState =
     createStaffServiceState();
+  private readonly rig: StaffCharacterRig;
   private readonly actor: THREE.Group;
-  private readonly leftArm: THREE.Group;
-  private readonly rightArm: THREE.Group;
   private readonly doorPivot = new THREE.Group();
   private readonly closedDoorCenter: THREE.Vector3;
   private readonly doorCenterOffset: THREE.Vector3;
@@ -223,10 +39,9 @@ export class CabinetStaffServiceVisual {
     staffTheme: StaffVisualTheme =
       DEFAULT_VISUAL_THEME.staff,
   ) {
-    const model = createAdultFemaleStaffModel(staffTheme);
-    this.actor = model.root;
-    this.leftArm = model.leftArm;
-    this.rightArm = model.rightArm;
+    this.rig =
+      createAdultFemaleArcadeStaffVisual(staffTheme);
+    this.actor = this.rig.root;
     scene.add(this.actor);
 
     const bodyCenter = serviceDoorBody.translation();
@@ -258,6 +73,86 @@ export class CabinetStaffServiceVisual {
     }
   }
 
+  private updateCharacterPose(
+    walkCycleRadians: number,
+  ): void {
+    const walkSin = Math.sin(walkCycleRadians);
+    const walkCos = Math.cos(walkCycleRadians);
+    const shoulderSwing = walkSin * 0.30;
+    const legSwing = walkSin * 0.22;
+
+    this.rig.leftShoulder.rotation.set(
+      shoulderSwing,
+      0,
+      0,
+    );
+    this.rig.rightShoulder.rotation.set(
+      -shoulderSwing,
+      0,
+      0,
+    );
+    this.rig.leftForearm.rotation.set(
+      -0.06 + Math.max(0, -walkCos) * 0.05,
+      0,
+      0,
+    );
+    this.rig.rightForearm.rotation.set(
+      -0.06 + Math.max(0, walkCos) * 0.05,
+      0,
+      0,
+    );
+    this.rig.leftLeg.rotation.set(
+      -legSwing,
+      0,
+      0,
+    );
+    this.rig.rightLeg.rotation.set(
+      legSwing,
+      0,
+      0,
+    );
+    this.rig.head.rotation.set(
+      Math.sin(walkCycleRadians * 0.5) * 0.012,
+      0,
+      Math.cos(walkCycleRadians * 0.5) * 0.008,
+    );
+
+    const servicing =
+      this.state.phase === "opening_door" ||
+      this.state.phase === "door_open" ||
+      this.state.phase === "closing_door";
+
+    if (servicing) {
+      this.rig.leftShoulder.rotation.set(
+        -0.12,
+        0,
+        0.08,
+      );
+      this.rig.leftForearm.rotation.set(
+        -0.18,
+        0,
+        0,
+      );
+      this.rig.rightShoulder.rotation.set(
+        -0.52,
+        0,
+        -0.66,
+      );
+      this.rig.rightForearm.rotation.set(
+        -0.82,
+        0.08,
+        -0.08,
+      );
+      this.rig.leftLeg.rotation.set(0, 0, 0);
+      this.rig.rightLeg.rotation.set(0, 0, 0);
+      this.rig.head.rotation.set(
+        -0.04,
+        -0.18,
+        0,
+      );
+    }
+  }
+
   update(
     servicePaused: boolean,
     closeRequested: boolean,
@@ -275,24 +170,10 @@ export class CabinetStaffServiceVisual {
     this.actor.position.set(pose.x, 0, pose.z);
     this.actor.rotation.y = pose.yawRadians;
 
-    const walkSwing =
-      Math.sin(pose.walkCycleRadians) * 0.34;
-    this.leftArm.rotation.x = walkSwing;
-    this.rightArm.rotation.x = -walkSwing;
+    this.updateCharacterPose(pose.walkCycleRadians);
     this.actor.position.y =
-      Math.abs(Math.sin(pose.walkCycleRadians)) * 0.008;
-
-    if (
-      this.state.phase === "opening_door" ||
-      this.state.phase === "door_open" ||
-      this.state.phase === "closing_door"
-    ) {
-      this.rightArm.rotation.z = -0.72;
-      this.rightArm.rotation.x = -0.42;
-    } else {
-      this.rightArm.rotation.z = 0;
-      this.rightArm.rotation.x = -walkSwing;
-    }
+      Math.abs(Math.sin(pose.walkCycleRadians)) *
+      0.006;
 
     const smoothDoor =
       pose.doorOpenFraction *
@@ -327,5 +208,9 @@ export class CabinetStaffServiceVisual {
 
   get phase(): StaffServicePhase {
     return this.state.phase;
+  }
+
+  get characterVariant(): string {
+    return STAFF_CHARACTER_VARIANT;
   }
 }
