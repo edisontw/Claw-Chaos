@@ -21,6 +21,7 @@ import { StaffCallControl } from "../player/staffCallControl";
 import {
   chooseRenderQualityProfile,
   isTouchLikeEnvironment,
+  type RenderQualityProfile,
 } from "../player/mobileRenderProfile";
 import { parseSceneSelection, type SceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
@@ -39,6 +40,7 @@ async function loadSelectedSceneFactory(
   selection: SceneSelection,
   search: string,
   themeId: ImplementedVisualThemeId,
+  renderQuality: RenderQualityProfile,
 ): Promise<SceneFactory> {
   switch (selection.id) {
     case "cabinet-lab": {
@@ -56,6 +58,7 @@ async function loadSelectedSceneFactory(
           layoutId: layoutSelection.id,
           layoutSeed: selection.seed,
           themeId,
+          renderQuality,
         });
     }
     case "gantry-lab": {
@@ -117,8 +120,13 @@ export async function startApp(
     window.location.search,
   );
   const visualTheme = getVisualTheme(visualThemeId);
+  const touchLike = isTouchLikeEnvironment();
+  const renderQuality = chooseRenderQualityProfile(
+    touchLike,
+  );
   root.dataset.sceneId = selection.id;
   root.dataset.visualTheme = visualTheme.id;
+  root.dataset.renderProfile = renderQuality.id;
   root.dataset.loading = "true";
 
   const physicsPromise =
@@ -133,6 +141,7 @@ export async function startApp(
       selection,
       window.location.search,
       visualThemeId,
+      renderQuality,
     ),
   ]);
   root.dataset.physicsBackend = "native-wasm";
@@ -142,7 +151,6 @@ export async function startApp(
     visualTheme.environment.backgroundColor,
   );
 
-  const touchLike = isTouchLikeEnvironment();
   const camera = new THREE.PerspectiveCamera(
     touchLike
       ? M07_MOBILE_CAMERA_FOV_DEGREES
@@ -151,11 +159,6 @@ export async function startApp(
     0.01,
     100,
   );
-
-  const renderQuality = chooseRenderQualityProfile(
-    touchLike,
-  );
-  root.dataset.renderProfile = renderQuality.id;
 
   const renderer = new THREE.WebGLRenderer({
     antialias: true,
