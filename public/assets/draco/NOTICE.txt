@@ -1,0 +1,2 @@
+Vendored from three@0.186.0 examples/jsm/libs/draco.
+Used only to decode local KHR_draco_mesh_compression staff assets.
