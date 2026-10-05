@@ -124,7 +124,13 @@ describe("M10 staff service sequence", () => {
     expect(pose.z).toBe(
       M10_STAFF_SERVICE_CONFIG.serviceZ,
     );
-    expect(pose.x).toBeGreaterThan(0.46);
-    expect(pose.z).toBeGreaterThan(0.36);
+    expect(pose.x).toBeGreaterThan(0.70);
+    expect(pose.z).toBeLessThanOrEqual(0);
+    expect(
+      Math.hypot(
+        pose.x - 1.08,
+        pose.z - 1.30,
+      ),
+    ).toBeGreaterThan(1.20);
   });
 });
