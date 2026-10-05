@@ -170,6 +170,7 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' "$DOM_FILE" &&
                grep -q 'data-visual-theme="modern-japanese-arcade"' "$DOM_FILE" &&
                grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' "$DOM_FILE" &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-v1"' "$DOM_FILE" &&
                grep -q 'data-player-view="active"' "$DOM_FILE" &&
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
                ! grep -q 'player-reticle' "$DOM_FILE" &&
@@ -445,6 +446,7 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" &&
                grep -q 'data-visual-theme="modern-japanese-arcade"' "$ROOT_DOM_FILE" &&
                grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-v1"' "$ROOT_DOM_FILE" &&
                grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" &&
                ! grep -q 'player-reticle' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
