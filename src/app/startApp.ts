@@ -222,6 +222,12 @@ export async function startApp(
     root.dataset.staffCharacter =
       testScene.staffCharacterVariant;
   }
+  const initialStaffVisualStatus =
+    testScene.getStaffVisualStatus?.();
+  if (initialStaffVisualStatus) {
+    root.dataset.staffVisual =
+      initialStaffVisualStatus;
+  }
 
   type MachineAudioController = InstanceType<
     typeof import("../audio/CabinetMachineAudio").CabinetMachineAudio
@@ -470,6 +476,12 @@ export async function startApp(
     const staffCallState = testScene.getStaffCallState?.();
     if (staffCallState) {
       staffCallControl?.update(staffCallState);
+    }
+    const staffVisualStatus =
+      testScene.getStaffVisualStatus?.();
+    if (staffVisualStatus) {
+      root.dataset.staffVisual =
+        staffVisualStatus;
     }
     playerViewController?.update(frameDeltaSeconds);
     if (physicsDebugRenderer.visible) {
