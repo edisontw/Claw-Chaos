@@ -2004,7 +2004,7 @@ A physical chute win is already detected correctly by the existing ChuteSensor, 
 
 # Major Visual / Art Uplift
 
-**Status: IN PROGRESS — Art Slices 1–3 candidate on dedicated feature branch**
+**Status: IN PROGRESS — Art Slices 1–4 candidate on dedicated feature branch**
 
 Primary direction:
 - Theme A — Modern Japanese Arcade
@@ -2128,9 +2128,60 @@ Physics/gameplay contract:
 - camera movement bounds are unchanged
 - ChuteSensor, Ring, Bridge, chute-adjacent gameplay and M10 staff/restocking remain unchanged
 
-Next planned slices:
-1. staff model uplift
-2. holistic polish / balance / mobile performance
+## Art Slice 4 — adult female arcade staff model uplift
+
+Implemented candidate:
+- staff rendering is split from M10 service logic into a replaceable visual-rig module
+- active character variant: `adult-female-arcade-attendant-v1`
+- adult proportions remain around 1.64 m and professional/non-sexualized
+- more detailed head and face:
+  - shaped face
+  - eyes + pupils
+  - brows
+  - nose
+  - mouth
+  - hair cap
+  - side locks
+  - ponytail + themed hair tie
+- upgraded Japanese arcade attendant uniform:
+  - blouse front
+  - structured uniform torso
+  - twin lapels
+  - waist trim
+  - front apron panel
+  - apron trim
+  - neck ribbon
+  - two-layer name badge
+  - skirt, stockings and shoes
+- articulated visual rig adds independent:
+  - left/right shoulders
+  - left/right forearms
+  - left/right legs
+  - head
+- walking now includes opposing shoulder/leg motion plus subtle head movement
+- service pose uses a bent right elbow/door-working posture and stationary legs
+- all staff material colors come from staff/theme tokens; no direct hexadecimal material colors remain in the character construction path
+- the service controller exposes the active character variant so a future GLB/skinned implementation can replace the procedural character without changing the service state machine
+
+Regression coverage:
+- staff model is explicitly marked visual-only
+- character variant and approximate adult height are asserted
+- articulated rig joint names are asserted
+- professional uniform and recognizable face/hair details are asserted
+- rendered descendants are required to remain visual-only
+- existing physical service-door regression still drives the real right-side collider through open/close/return
+- browser smoke requires the active staff-character variant in cabinet/root scenes
+
+Physics/service contract:
+- `staffServiceSequence` timing/state logic is unchanged
+- service approach/open/door-open/close/depart coordinates and timing are unchanged
+- physical service-door kinematic translation/rotation formula is preserved
+- restock planner, restock physics and inventory service logic are unchanged
+- staff character has no Rapier body/collider and cannot interfere with prizes or the player
+- ChuteSensor, Ring, Bridge and chute-adjacent gameplay are unchanged
+
+Next planned slice:
+1. holistic polish / balance / mobile performance
 
 ---
 
