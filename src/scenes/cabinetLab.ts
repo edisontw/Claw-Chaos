@@ -6,6 +6,7 @@ import {
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
 import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
+import { isPrizeBelowChuteOpening } from "../cabinet/cabinetPlayableStock";
 import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
 import { addCabinetInteriorVisual } from "../cabinet/cabinetInteriorVisual";
 import {
@@ -560,22 +561,17 @@ export function createCabinetLabScene(
           detail: "Finishing current machine motion safely.",
         };
       }
-      if (inventoryService.canCallStaff) {
-        return {
-          mode: "available",
-          label: "CALL STAFF",
-          detail: "Restock threshold reached · press S or tap.",
-        };
-      }
       return {
-        mode: "locked",
+        mode: "available",
         label: "CALL STAFF",
         detail:
-          "Available at " +
-          inventoryService.restockThresholdCount +
-          " prize remaining · " +
+          "Available anytime · " +
           inventoryService.remainingInventoryCount +
-          " now.",
+          " playable prize" +
+          (inventoryService.remainingInventoryCount === 1
+            ? ""
+            : "s") +
+          " remaining.",
       };
     },
     getMachineAudioState: gantryScene.getMachineAudioState,
@@ -734,6 +730,16 @@ export function createCabinetLabScene(
 
       if (!inventoryService.machinePaused) {
         for (const prize of tracked) {
+          if (
+            isPrizeBelowChuteOpening(
+              prize.body.worldCom(),
+            )
+          ) {
+            inventoryService.markPrizeUnavailable(
+              prize.id,
+            );
+          }
+
           const event = sensor.pollPrize(
             prize.id,
             prize.body,
@@ -768,9 +774,9 @@ export function createCabinetLabScene(
         `Sensor wins       ${sensor.winCount}`,
         `Results accepted  ${resultInventory.resultCount}`,
         `Awarded prizes    ${resultInventory.inventoryCount}`,
-        `Stock remaining   ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
-        `Restock threshold ${inventoryService.restockThresholdCount}`,
-        `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
+        `Playable stock    ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
+        `Out of play       ${inventoryService.unavailableInventoryCount} / awarded ${inventoryService.awardedInventoryCount}`,
+        `Staff call        ${inventoryService.canCallStaff ? "available" : "busy"} / ${inventoryService.serviceState}`,
         `Service safe      ${gantryScene.isSafeForService?.() ? "yes" : "no"} / input ${inventoryService.playerInputLocked ? "LOCKED" : "open"}`,
         `Staff sequence    ${staffServiceVisual.phase}`,
         `Restock status    ${restockStatus} / ${restockSpawnIndex} of ${restockPlan.length}`,
