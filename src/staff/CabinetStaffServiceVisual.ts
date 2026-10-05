@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import type { RigidBodyHandle } from "../physics/PhysicsRuntime";
 import {
   M10_STAFF_SERVICE_CONFIG,
   advanceStaffServiceState,
@@ -177,17 +178,40 @@ export class CabinetStaffServiceVisual {
   private readonly leftArm: THREE.Group;
   private readonly rightArm: THREE.Group;
   private readonly doorPivot = new THREE.Group();
+  private readonly closedDoorCenter: THREE.Vector3;
+  private readonly doorCenterOffset: THREE.Vector3;
 
   constructor(
     scene: THREE.Scene,
     serviceDoorObjects: readonly THREE.Object3D[],
-    doorHinge: { x: number; y: number; z: number },
+    private readonly serviceDoorBody: RigidBodyHandle,
+    private readonly doorHinge: {
+      x: number;
+      y: number;
+      z: number;
+    },
   ) {
     const model = createAdultFemaleStaffModel();
     this.actor = model.root;
     this.leftArm = model.leftArm;
     this.rightArm = model.rightArm;
     scene.add(this.actor);
+
+    const bodyCenter = serviceDoorBody.translation();
+    this.closedDoorCenter = new THREE.Vector3(
+      bodyCenter.x,
+      bodyCenter.y,
+      bodyCenter.z,
+    );
+    this.doorCenterOffset = this.closedDoorCenter
+      .clone()
+      .sub(
+        new THREE.Vector3(
+          doorHinge.x,
+          doorHinge.y,
+          doorHinge.z,
+        ),
+      );
 
     this.doorPivot.name = "m10-service-door-pivot";
     this.doorPivot.position.set(
@@ -238,9 +262,31 @@ export class CabinetStaffServiceVisual {
       pose.doorOpenFraction *
       pose.doorOpenFraction *
       (3 - 2 * pose.doorOpenFraction);
-    this.doorPivot.rotation.y =
+    const doorAngle =
       M10_STAFF_SERVICE_CONFIG.doorOpenRadians *
       smoothDoor;
+    this.doorPivot.rotation.y = doorAngle;
+
+    const cos = Math.cos(doorAngle);
+    const sin = Math.sin(doorAngle);
+    const offset = this.doorCenterOffset;
+    this.serviceDoorBody.setNextKinematicTranslation({
+      x:
+        this.doorHinge.x +
+        offset.x * cos +
+        offset.z * sin,
+      y: this.closedDoorCenter.y,
+      z:
+        this.doorHinge.z -
+        offset.x * sin +
+        offset.z * cos,
+    });
+    this.serviceDoorBody.setNextKinematicRotation({
+      x: 0,
+      y: Math.sin(doorAngle * 0.5),
+      z: 0,
+      w: Math.cos(doorAngle * 0.5),
+    });
   }
 
   get phase(): StaffServicePhase {
