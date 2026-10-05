@@ -1804,7 +1804,7 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
-**Status: IN PROGRESS — slice 4 physical service access + seeded restock settle**
+**Status: IN PROGRESS — slice 5 service closure implemented; manual validation pending**
 
 ## Goal
 
@@ -1952,11 +1952,41 @@ Important contract:
 - no restock placement is selected from a “best win” policy
 - the physical pile is allowed to rearrange only through gravity and collisions
 
-Deferred to the next M10 slice:
-- close the service door after stable settle
-- staff departure animation
-- return service state to `operating`
-- allow subsequent independent service cycles
+## Slice 5 — close / depart / reopen / repeat
+
+Implemented:
+- restock completion is the only trigger that authorizes door closing
+- staff transitions deterministically:
+  - `door_open`
+  - `closing_door`
+  - `departing`
+  - `hidden`
+- the visible service panel and real kinematic service-door collider close together
+- the machine remains service-paused throughout door closing and staff departure
+- controls do not unlock while the physical service opening is still exposed
+- after the staff reaches `hidden`, cabinet service calls `completeService()`
+- `completeService()` refuses to reopen if the cabinet is still at/below the restock threshold
+- successful completion returns `service_paused -> operating`
+- normal ChuteSensor payout polling and player controls resume only after reopen
+- completed service cycles are counted explicitly
+- each service cycle uses a distinct `serviceCycleIndex` in:
+  - restock RNG seed
+  - replacement prize runtime IDs
+- replacement prize IDs therefore remain unique across multiple restocks and cannot collide with ChuteSensor/inventory one-shot accounting
+- per-cycle restock tracking is reset after reopen while all physical prize bodies remain in the world
+- the next depletion can independently trigger CALL STAFF again
+
+Regression coverage:
+- inventory service test completes two independent depletion/restock/reopen cycles
+- staff sequence test covers approach -> open -> close -> depart -> hidden
+- physical service-door test verifies:
+  - collider genuinely opens
+  - collider returns to its original closed translation
+  - collider returns to its original closed rotation
+  - staff is hidden after departure
+- existing M06 cabinet containment continues to cover the normal closed-door machine
+
+M10 technical exit criteria are now represented in code/tests. Remaining closure gate is deployed/manual confirmation of the full visible flow and a second CALL STAFF cycle.
 
 ### Carry-forward UX backlog
 
