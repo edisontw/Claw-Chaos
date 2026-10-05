@@ -9,8 +9,8 @@ import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService
 import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
 import { addCabinetInteriorVisual } from "../cabinet/cabinetInteriorVisual";
 import {
-  ARCADE_ENVIRONMENT_ID,
   addArcadeEnvironment,
+  arcadeEnvironmentId,
 } from "../environment/arcadeEnvironment";
 import {
   createCabinetFrameTrimSpecs,
@@ -454,7 +454,7 @@ export function createCabinetLabScene(
     massPropertiesDebugTargets,
     milestone: "M10 / Staff & restocking",
     layoutId: layout.id,
-    environmentId: ARCADE_ENVIRONMENT_ID,
+    environmentId: arcadeEnvironmentId(visualTheme),
     camera: gantryScene.camera,
     primaryAction: () =>
       layoutSettle.ready
