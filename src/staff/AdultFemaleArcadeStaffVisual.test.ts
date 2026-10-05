@@ -12,7 +12,7 @@ describe("Art Slice 4 adult female arcade staff visual", () => {
   it("is explicitly visual-only and replaceable by variant", () => {
     expect(STAFF_CHARACTER_VISUAL_ONLY).toBe(true);
     expect(STAFF_CHARACTER_VARIANT).toBe(
-      "adult-female-arcade-attendant-v1",
+      "adult-female-arcade-attendant-v2-realistic",
     );
     expect(STAFF_CHARACTER_HEIGHT_METERS).toBeGreaterThan(1.5);
     expect(STAFF_CHARACTER_HEIGHT_METERS).toBeLessThan(1.8);
@@ -53,9 +53,17 @@ describe("Art Slice 4 adult female arcade staff visual", () => {
     expect(names).toContain("staff-blouse-front");
     expect(names).toContain("staff-apron-front");
     expect(names).toContain("staff-name-badge");
-    expect(names).toContain("staff-neck-ribbon");
+    expect(names).toContain("staff-collar-accent");
+    expect(names).toContain("staff-lanyard-left");
+    expect(names).toContain("staff-lanyard-right");
     expect(names).toContain("staff-hair-cap");
     expect(names).toContain("staff-ponytail");
+    expect(names).toContain("staff-bang-0");
+    expect(names).toContain("staff-ear-left");
+    expect(names).toContain("staff-ear-right");
+    expect(names).toContain("staff-headset-earpiece");
+    expect(names).toContain("staff-headset-boom");
+    expect(names).toContain("staff-headset-mic");
     expect(names).toContain("staff-eye-left");
     expect(names).toContain("staff-eye-right");
     expect(names).toContain("staff-left-hand");
