@@ -25,6 +25,7 @@ import {
 import { LayoutSettlePipeline } from "../layouts/layoutSettle";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
+import { CabinetStaffServiceVisual } from "../staff/CabinetStaffServiceVisual";
 import { createGantryLabScene } from "./gantryLab";
 import type { SimulationScene } from "./types";
 
@@ -133,6 +134,7 @@ function addCabinetVisual(
     geometry,
     createPartMaterial(part),
   );
+  mesh.name = part.id;
   mesh.position.set(part.center.x, part.center.y, part.center.z);
   mesh.castShadow = part.role !== "glass";
   mesh.receiveShadow = part.role !== "glass";
@@ -147,6 +149,7 @@ function addCabinetVisual(
         opacity: M08_CABINET_VISUAL_STYLE.glass.edgeOpacity,
       }),
     );
+    outline.name = part.id + "-outline";
     outline.position.copy(mesh.position);
     scene.add(outline);
   }
@@ -257,6 +260,28 @@ export function createCabinetLabScene(
 
   addControlPanel(scene);
   addM08CabinetDetails(scene);
+
+  const serviceDoorObjects = [
+    scene.getObjectByName("glass-right"),
+    scene.getObjectByName("glass-right-outline"),
+  ].filter(
+    (object): object is THREE.Object3D =>
+      object !== undefined,
+  );
+  const staffServiceVisual =
+    new CabinetStaffServiceVisual(
+      scene,
+      serviceDoorObjects,
+      {
+        x:
+          M06_CABINET_CONFIG.interiorHalfX +
+          M06_CABINET_CONFIG.wallHalfThickness,
+        y: 0,
+        z:
+          -M06_CABINET_CONFIG.interiorHalfZ -
+          M06_CABINET_CONFIG.wallHalfThickness * 2,
+      },
+    );
 
   const layout = createCabinetLayout(
     options.layoutId ?? "loose",
@@ -383,6 +408,27 @@ export function createCabinetLabScene(
     },
     getStaffCallState() {
       if (inventoryService.serviceState === "service_paused") {
+        if (staffServiceVisual.phase === "approaching") {
+          return {
+            mode: "paused",
+            label: "STAFF APPROACHING",
+            detail: "Staff member is walking to the machine.",
+          };
+        }
+        if (staffServiceVisual.phase === "opening_door") {
+          return {
+            mode: "paused",
+            label: "OPENING MACHINE",
+            detail: "Staff member is opening the service door.",
+          };
+        }
+        if (staffServiceVisual.phase === "door_open") {
+          return {
+            mode: "paused",
+            label: "SERVICE DOOR OPEN",
+            detail: "Ready for the restock/reposition step.",
+          };
+        }
         return {
           mode: "paused",
           label: "SERVICE PAUSED",
@@ -449,6 +495,11 @@ export function createCabinetLabScene(
         );
       }
 
+      staffServiceVisual.update(
+        inventoryService.machinePaused,
+        stepSeconds,
+      );
+
       for (const prize of tracked) {
         const event = sensor.pollPrize(prize.id, prize.body);
         if (event) {
@@ -478,6 +529,7 @@ export function createCabinetLabScene(
         `Restock threshold ${inventoryService.restockThresholdCount}`,
         `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
         `Service safe      ${gantryScene.isSafeForService?.() ? "yes" : "no"} / input ${inventoryService.playerInputLocked ? "LOCKED" : "open"}`,
+        `Staff sequence    ${staffServiceVisual.phase}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
         "M08 visuals       matte frame / subdued glass / gantry detail",
