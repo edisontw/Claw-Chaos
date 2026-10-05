@@ -2222,8 +2222,40 @@ Art uplift exit criteria before merge:
 - verify staff scale/service pose reads naturally
 - verify acceptable mobile frame pacing during normal play and CALL STAFF
 
+## Manual validation round 1 — gameplay/readability/staff fixes
+
+Implemented after deployed visual review:
+- playable-stock count now drops as soon as a prize physically falls below the chute opening
+- ChuteSensor remains the only win-authority path
+- CALL STAFF is available whenever the machine is operating, not only at low stock
+- no-deficit staff calls perform a valid service cycle without spawning unnecessary prizes
+- claw returned from near-black to silver/chrome with dark structural accents for contrast against the bright interior
+- cabinet-play claw visuals no longer cast the oversized play-area shadow
+- staff service route moved beside the cabinet and away from the player's front camera
+- staff visual stack now has three levels:
+  1. desktop/high-detail: `adult-female-arcade-attendant-v4-realistic-rigged`
+     - CC-BY-4.0 rigged office-woman source by Pixel_Monster
+     - original 16.36 MB source processed in CI, not committed
+     - optimized local asset ~2.08 MB
+     - local Three.js DRACO decoder; no external CDN runtime dependency
+  2. mobile/lightweight: `adult-female-arcade-attendant-v3-skinned`
+     - Quaternius CC0 skeletal character
+     - Idle / Walking / PickUp clips
+  3. final fallback: procedural `adult-female-arcade-attendant-v2-realistic`
+- desktop browser smoke must reach `data-staff-visual="realistic"`; a silent fallback does not pass CI
+- staff remains visual-only; service-door physics and restocking state machine are unchanged
+
+Latest automated gate at this stage:
+- 61 test files PASS
+- 195 tests PASS
+- desktop cabinet/root browser smoke loads the v4 realistic rigged staff
+- all prior layout/browser smokes remain required
+
 Next action:
-1. deploy or otherwise expose this feature branch for manual desktop/mobile visual validation before merging PR #70
+1. deploy the latest PR #70 preview
+2. manually validate desktop staff scale/orientation/animation and claw readability
+3. manually validate mobile remains on the lighter skinned staff
+4. keep PR #70 Draft until both visual checks pass
 
 ---
 
