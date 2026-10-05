@@ -1804,7 +1804,7 @@ M09 exit-gate status:
 
 # M10 — Staff & Restocking
 
-**Status: IN PROGRESS — slice 5 service closure implemented; manual validation pending**
+**Status: CLOSED — automated + deployed manual validation PASS (2026-10-05)**
 
 ## Goal
 
@@ -1986,7 +1986,15 @@ Regression coverage:
   - staff is hidden after departure
 - existing M06 cabinet containment continues to cover the normal closed-door machine
 
-M10 technical exit criteria are now represented in code/tests. Remaining closure gate is deployed/manual confirmation of the full visible flow and a second CALL STAFF cycle.
+M10 closure gate PASS:
+- automated verification: 53 test files / 163 tests PASS before merge
+- main CI PASS after merge
+- GitHub Pages deployment PASS
+- deployed manual validation PASS on 2026-10-05
+- full visible service flow accepted: CALL STAFF -> safe pause -> staff approach -> physical door open -> seeded restock -> settle -> physical door close -> staff depart -> operating
+- repeat service cycle accepted
+
+M10 is CLOSED.
 
 ### Carry-forward UX backlog
 
