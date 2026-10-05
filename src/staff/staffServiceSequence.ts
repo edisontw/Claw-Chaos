@@ -43,6 +43,9 @@ export function advanceStaffServiceState(
   }
 
   if (state.phase === "hidden") {
+    if (closeRequested) {
+      return state;
+    }
     return {
       phase: "approaching",
       elapsedSeconds: 0,
