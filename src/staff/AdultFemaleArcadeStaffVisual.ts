@@ -474,40 +474,43 @@ export function createAdultFemaleArcadeStaffVisual(
   torso.position.y = 1.15;
   root.add(torso);
 
-  const blousePanel = mesh(
-    new THREE.BoxGeometry(0.152, 0.255, 0.018),
+  const shirtPlacket = mesh(
+    new THREE.BoxGeometry(0.026, 0.220, 0.014),
     blouse,
-    "staff-blouse-front",
+    "staff-shirt-placket",
   );
-  blousePanel.position.set(0, 1.17, 0.145);
-  root.add(blousePanel);
+  shirtPlacket.position.set(0, 1.185, 0.154);
+  root.add(shirtPlacket);
 
-  for (const x of [-0.047, 0.047]) {
-    const lapel = mesh(
-      new THREE.BoxGeometry(0.056, 0.175, 0.014),
+  for (const x of [-0.045, 0.045]) {
+    const collar = mesh(
+      new THREE.BoxGeometry(0.058, 0.105, 0.014),
       uniformSecondary,
-      x < 0 ? "staff-lapel-left" : "staff-lapel-right",
+      x < 0 ? "staff-collar-left" : "staff-collar-right",
     );
-    lapel.position.set(x, 1.19, 0.158);
-    lapel.rotation.z = x < 0 ? -0.26 : 0.26;
-    root.add(lapel);
+    collar.position.set(x, 1.275, 0.157);
+    collar.rotation.z = x < 0 ? -0.34 : 0.34;
+    root.add(collar);
   }
 
-  const apronPanel = mesh(
-    new THREE.BoxGeometry(0.235, 0.235, 0.016),
-    uniformSecondary,
-    "staff-apron-front",
-  );
-  apronPanel.position.set(0, 0.91, 0.155);
-  root.add(apronPanel);
+  for (const y of [1.13, 1.19, 1.25]) {
+    const button = mesh(
+      new THREE.SphereGeometry(0.006, 10, 7),
+      badge,
+      "staff-shirt-button-" + y.toFixed(2),
+    );
+    button.position.set(0, y, 0.164);
+    button.scale.set(1, 1, 0.50);
+    root.add(button);
+  }
 
-  const apronTopTrim = mesh(
-    new THREE.BoxGeometry(0.238, 0.022, 0.019),
+  const waistPiping = mesh(
+    new THREE.BoxGeometry(0.230, 0.018, 0.016),
     trim,
-    "staff-apron-trim",
+    "staff-waist-piping",
   );
-  apronTopTrim.position.set(0, 1.025, 0.164);
-  root.add(apronTopTrim);
+  waistPiping.position.set(0, 1.010, 0.151);
+  root.add(waistPiping);
 
   const collarAccent = mesh(
     new THREE.BoxGeometry(0.086, 0.018, 0.016),
