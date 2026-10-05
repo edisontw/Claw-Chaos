@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import {
   ARCADE_CEILING_FIXTURES,
@@ -5,6 +6,7 @@ import {
   ARCADE_ENVIRONMENT_VARIANT,
   ARCADE_ENVIRONMENT_VISUAL_ONLY,
   ARCADE_NEIGHBOR_MACHINE_PLACEMENTS,
+  addArcadeEnvironment,
   arcadeEnvironmentId,
 } from "./arcadeEnvironment";
 import { DEFAULT_VISUAL_THEME } from "../theme/visualTheme";
@@ -20,6 +22,29 @@ describe("Art Slice 3 arcade environment", () => {
     ).toBe(
       "modern-japanese-arcade:prize-center-room-v1",
     );
+  });
+
+
+  it("builds a visual-only room graph without physics dependencies", () => {
+    const scene = new THREE.Scene();
+    const root = addArcadeEnvironment(
+      scene,
+      DEFAULT_VISUAL_THEME,
+    );
+
+    expect(root.name).toBe(
+      "modern-japanese-arcade:prize-center-room-v1",
+    );
+    expect(root.userData.visualOnly).toBe(true);
+    expect(scene.children).toContain(root);
+    expect(root.children.length).toBeGreaterThan(10);
+    expect(
+      root.children.every(
+        (child) =>
+          child.userData.visualOnly === true ||
+          child.type === "Group",
+      ),
+    ).toBe(true);
   });
 
   it("keeps neighboring machines outside the player movement lane", () => {
