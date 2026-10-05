@@ -204,6 +204,7 @@ export interface GantryLabOptions {
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
+  clawCastsShadow?: boolean;
   gripProfile?: GantryGripProfile;
   controlsEnabled?: () => boolean;
   milestone?: string;
@@ -273,6 +274,7 @@ export function createGantryLabScene(
   const visualTheme =
     options.visualTheme ?? DEFAULT_VISUAL_THEME;
   const machineInterior = visualTheme.machine.interior;
+  const clawCastsShadow = options.clawCastsShadow ?? true;
   const verticalHomeOffset = options.verticalHomeOffset ?? 0;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
@@ -548,13 +550,18 @@ export function createGantryLabScene(
     -0.050,
     secondaryAccentMaterial,
   );
+  hubVisual.traverse((object) => {
+    if (object instanceof THREE.Mesh) {
+      object.castShadow = clawCastsShadow;
+    }
+  });
   scene.add(hubVisual);
 
   const cable = new THREE.Mesh(
     new THREE.CylinderGeometry(0.0022, 0.0022, 1, 10),
     themedStandardMaterial(machineInterior.cable),
   );
-  cable.castShadow = true;
+  cable.castShadow = clawCastsShadow;
   scene.add(cable);
 
   const serviceWireAttributes: Array<{
@@ -654,6 +661,11 @@ export function createGantryLabScene(
       fingerLowerPadRadiusMeters,
       fingerLowerPadLengthMeters,
     );
+    visual.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        object.castShadow = clawCastsShadow;
+      }
+    });
     scene.add(visual);
 
     const body = physics.createDynamicCapsuleChain(
