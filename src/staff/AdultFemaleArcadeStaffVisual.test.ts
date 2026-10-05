@@ -50,12 +50,17 @@ describe("Art Slice 4 adult female arcade staff visual", () => {
     });
 
     expect(names).toContain("staff-uniform-torso");
-    expect(names).toContain("staff-blouse-front");
-    expect(names).toContain("staff-apron-front");
+    expect(names).toContain("staff-shirt-placket");
+    expect(names).toContain("staff-collar-left");
+    expect(names).toContain("staff-collar-right");
+    expect(names).toContain("staff-waist-piping");
     expect(names).toContain("staff-name-badge");
     expect(names).toContain("staff-collar-accent");
     expect(names).toContain("staff-lanyard-left");
     expect(names).toContain("staff-lanyard-right");
+    expect(names).toContain("staff-shirt-button-1.13");
+    expect(names).toContain("staff-shirt-button-1.19");
+    expect(names).toContain("staff-shirt-button-1.25");
     expect(names).toContain("staff-hair-cap");
     expect(names).toContain("staff-ponytail");
     expect(names).toContain("staff-bang-0");
