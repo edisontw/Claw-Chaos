@@ -31,7 +31,7 @@ describe("M10 physical restock settle", () => {
       typeof createPrize
     >["body"][] = [];
     let nextIndex = 0;
-    let sinceLastSpawn =
+    let sinceLastSpawn: number =
       M10_RESTOCK_CONFIG.insertionIntervalSeconds;
 
     for (
