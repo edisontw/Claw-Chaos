@@ -175,6 +175,10 @@ export async function startApp(
     ? THREE.PCFShadowMap
     : THREE.PCFSoftShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure =
+    renderQuality.toneMappingExposure;
+  root.dataset.toneMapping = "aces-filmic";
   root.append(renderer.domElement);
 
   const hemisphere = visualTheme.environment.hemisphere;
@@ -196,6 +200,14 @@ export async function startApp(
     renderQuality.shadowMapSize,
     renderQuality.shadowMapSize,
   );
+  keyLight.shadow.camera.left = -2.6;
+  keyLight.shadow.camera.right = 2.6;
+  keyLight.shadow.camera.top = 2.8;
+  keyLight.shadow.camera.bottom = -0.5;
+  keyLight.shadow.camera.near = 1.0;
+  keyLight.shadow.camera.far = 15;
+  keyLight.shadow.bias = -0.00018;
+  keyLight.shadow.normalBias = 0.018;
   scene.add(keyLight);
 
   const testScene = sceneFactory(scene, physics);
