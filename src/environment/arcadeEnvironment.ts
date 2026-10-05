@@ -109,10 +109,15 @@ function makeCanvasSign(
   context.clearRect(0, 0, canvas.width, canvas.height);
   context.textAlign = "center";
   context.textBaseline = "middle";
-  context.fillStyle = "#f7f9fb";
+  const cssHex = (color: number): string =>
+    `#${color.toString(16).padStart(6, "0")}`;
+
+  context.fillStyle = cssHex(theme.environment.signage.color);
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  context.fillStyle = "#263442";
+  context.fillStyle = cssHex(
+    theme.machine.exterior.paymentPanel.color,
+  );
   context.font = "800 92px Inter, Arial, sans-serif";
   context.fillText("CLAW CHAOS ARCADE", 512, 102);
 
@@ -127,7 +132,9 @@ function makeCanvasSign(
   context.fillStyle = `#${cyan}`;
   context.fillRect(539, 172, 225, 10);
 
-  context.fillStyle = "#667483";
+  context.fillStyle = cssHex(
+    theme.machine.exterior.vent.color,
+  );
   context.font = "600 28px Inter, Arial, sans-serif";
   context.fillText("PRIZE FLOOR", 512, 220);
 
@@ -369,10 +376,12 @@ function addNeighborMachines(
   root: THREE.Group,
   theme: VisualTheme,
 ): void {
+  const windowToken =
+    theme.machine.exterior.paymentPanel;
   const darkWindow = new THREE.MeshStandardMaterial({
-    color: 0x26323e,
-    roughness: 0.50,
-    metalness: 0.08,
+    color: windowToken.color,
+    roughness: windowToken.roughness,
+    metalness: windowToken.metalness,
     transparent: true,
     opacity: 0.82,
   });
