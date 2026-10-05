@@ -24,6 +24,11 @@ import {
 } from "../player/mobileRenderProfile";
 import { parseSceneSelection, type SceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
+import {
+  getVisualTheme,
+  parseVisualThemeId,
+  type ImplementedVisualThemeId,
+} from "../theme/visualTheme";
 
 type SceneFactory = (
   scene: THREE.Scene,
@@ -33,6 +38,7 @@ type SceneFactory = (
 async function loadSelectedSceneFactory(
   selection: SceneSelection,
   search: string,
+  themeId: ImplementedVisualThemeId,
 ): Promise<SceneFactory> {
   switch (selection.id) {
     case "cabinet-lab": {
@@ -49,6 +55,7 @@ async function loadSelectedSceneFactory(
         createCabinetLabScene(scene, physics, {
           layoutId: layoutSelection.id,
           layoutSeed: selection.seed,
+          themeId,
         });
     }
     case "gantry-lab": {
@@ -106,7 +113,12 @@ export async function startApp(
   bootstrapStartedAtMs = performance.now(),
 ): Promise<void> {
   const selection = parseSceneSelection(window.location.search);
+  const visualThemeId = parseVisualThemeId(
+    window.location.search,
+  );
+  const visualTheme = getVisualTheme(visualThemeId);
   root.dataset.sceneId = selection.id;
+  root.dataset.visualTheme = visualTheme.id;
   root.dataset.loading = "true";
 
   const physicsPromise =
@@ -117,12 +129,18 @@ export async function startApp(
 
   const [physics, sceneFactory] = await Promise.all([
     physicsPromise,
-    loadSelectedSceneFactory(selection, window.location.search),
+    loadSelectedSceneFactory(
+      selection,
+      window.location.search,
+      visualThemeId,
+    ),
   ]);
   root.dataset.physicsBackend = "native-wasm";
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x111722);
+  scene.background = new THREE.Color(
+    visualTheme.environment.backgroundColor,
+  );
 
   const touchLike = isTouchLikeEnvironment();
   const camera = new THREE.PerspectiveCamera(
@@ -156,9 +174,19 @@ export async function startApp(
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   root.append(renderer.domElement);
 
-  scene.add(new THREE.HemisphereLight(0xffffff, 0x233047, 1.4));
+  const hemisphere = visualTheme.environment.hemisphere;
+  scene.add(
+    new THREE.HemisphereLight(
+      hemisphere.skyColor,
+      hemisphere.groundColor,
+      hemisphere.intensity,
+    ),
+  );
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.8);
+  const keyLight = new THREE.DirectionalLight(
+    visualTheme.environment.keyLight.color,
+    visualTheme.environment.keyLight.intensity,
+  );
   keyLight.position.set(4, 8, 5);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(
