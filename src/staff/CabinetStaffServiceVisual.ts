@@ -1,6 +1,10 @@
 import * as THREE from "three";
 import type { RigidBodyHandle } from "../physics/PhysicsRuntime";
 import {
+  DEFAULT_VISUAL_THEME,
+  type StaffVisualTheme,
+} from "../theme/visualTheme";
+import {
   M10_STAFF_SERVICE_CONFIG,
   advanceStaffServiceState,
   createStaffServiceState,
@@ -40,7 +44,9 @@ function cylinder(
   return mesh;
 }
 
-function createAdultFemaleStaffModel(): {
+function createAdultFemaleStaffModel(
+  theme: StaffVisualTheme,
+): {
   root: THREE.Group;
   leftArm: THREE.Group;
   rightArm: THREE.Group;
@@ -49,14 +55,22 @@ function createAdultFemaleStaffModel(): {
   root.name = "m10-adult-female-staff";
   root.visible = false;
 
-  const skin = material(0xf1c7a8, 0.82);
-  const hair = material(0x2a1d1a, 0.78);
-  const uniform = material(0x243b5a, 0.62);
-  const blouse = material(0xf4f2ef, 0.88);
-  const skirt = material(0x233047, 0.72);
-  const stocking = material(0x292a30, 0.82);
-  const shoe = material(0x141519, 0.50);
-  const badge = material(0xe4c35a, 0.45);
+  const skin = material(theme.skinColor, 0.82);
+  const hair = material(theme.hairColor, 0.78);
+  const uniform = material(
+    theme.uniformPrimaryColor,
+    0.62,
+  );
+  const uniformSecondary = material(
+    theme.uniformSecondaryColor,
+    0.64,
+  );
+  const blouse = material(theme.blouseColor, 0.88);
+  const skirt = material(theme.skirtColor, 0.72);
+  const stocking = material(theme.stockingColor, 0.82);
+  const shoe = material(theme.shoeColor, 0.50);
+  const badge = material(theme.badgeColor, 0.45);
+  const trim = material(theme.trimColor, 0.58);
 
   for (const x of [-0.065, 0.065]) {
     const leg = cylinder(0.043, 0.050, 0.66, stocking);
@@ -75,6 +89,10 @@ function createAdultFemaleStaffModel(): {
   const skirtMesh = cylinder(0.125, 0.18, 0.31, skirt);
   skirtMesh.position.y = 0.82;
   root.add(skirtMesh);
+
+  const waistTrim = cylinder(0.151, 0.158, 0.025, trim);
+  waistTrim.position.y = 0.975;
+  root.add(waistTrim);
 
   const torso = cylinder(0.135, 0.165, 0.42, uniform);
   torso.position.y = 1.11;
@@ -98,7 +116,12 @@ function createAdultFemaleStaffModel(): {
   const makeArm = (x: number): THREE.Group => {
     const armRoot = new THREE.Group();
     armRoot.position.set(x, 1.25, 0);
-    const upper = cylinder(0.041, 0.046, 0.38, uniform);
+    const upper = cylinder(
+      0.041,
+      0.046,
+      0.38,
+      uniformSecondary,
+    );
     upper.position.y = -0.18;
     armRoot.add(upper);
     const hand = new THREE.Mesh(
@@ -155,6 +178,13 @@ function createAdultFemaleStaffModel(): {
   ponytail.castShadow = true;
   root.add(ponytail);
 
+  const hairTie = new THREE.Mesh(
+    new THREE.SphereGeometry(0.025, 12, 8),
+    material(theme.hairAccessoryColor, 0.58),
+  );
+  hairTie.position.set(0, 1.525, -0.095);
+  root.add(hairTie);
+
   for (const x of [-0.038, 0.038]) {
     const eye = new THREE.Mesh(
       new THREE.SphereGeometry(0.009, 10, 8),
@@ -190,8 +220,10 @@ export class CabinetStaffServiceVisual {
       y: number;
       z: number;
     },
+    staffTheme: StaffVisualTheme =
+      DEFAULT_VISUAL_THEME.staff,
   ) {
-    const model = createAdultFemaleStaffModel();
+    const model = createAdultFemaleStaffModel(staffTheme);
     this.actor = model.root;
     this.leftArm = model.leftArm;
     this.rightArm = model.rightArm;
