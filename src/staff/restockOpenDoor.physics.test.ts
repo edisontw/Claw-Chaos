@@ -78,9 +78,10 @@ describe("M10 restock with the real service door open", () => {
       prizePool,
     );
 
-    const bodies: ReturnType<
-      typeof createPrize
-    >["body"][] = [];
+    const bodies: Array<{
+      prizeId: string;
+      body: ReturnType<typeof createPrize>["body"];
+    }> = [];
     let nextIndex = 0;
     let sinceLastSpawn =
       M10_RESTOCK_CONFIG.insertionIntervalSeconds;
@@ -114,7 +115,10 @@ describe("M10 restock with the real service door open", () => {
             variantSeed: placement.variantSeed,
           },
         );
-        bodies.push(prize.body);
+        bodies.push({
+          prizeId: placement.prizeId,
+          body: prize.body,
+        });
         nextIndex += 1;
         sinceLastSpawn = 0;
       }
@@ -124,10 +128,17 @@ describe("M10 restock with the real service door open", () => {
 
     expect(bodies).toHaveLength(plan.length);
 
-    for (const body of bodies) {
+    for (const entry of bodies) {
+      const body = entry.body;
       const position = body.translation();
       const linear = body.linvel();
       const angular = body.angvel();
+
+      console.log(
+        "open-door restock final",
+        entry.prizeId,
+        position,
+      );
 
       expect(position.x).toBeGreaterThan(
         -M06_CABINET_CONFIG.interiorHalfX + 0.01,

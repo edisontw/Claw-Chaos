@@ -1,14 +1,14 @@
 import { createSeededRandom } from "../core/seededRng";
 
 export const M10_RESTOCK_CONFIG = {
-  insertionIntervalSeconds: 0.70,
-  insertionMinX: -0.10,
-  insertionMaxX: 0.22,
-  insertionMinY: 0.58,
-  insertionMaxY: 0.72,
+  insertionIntervalSeconds: 0.85,
+  insertionMinX: -0.14,
+  insertionMaxX: 0.08,
+  insertionMinY: 0.39,
+  insertionMaxY: 0.48,
   insertionMinZ: -0.18,
-  insertionMaxZ: 0.02,
-  maxTiltRadians: 0.18,
+  insertionMaxZ: -0.02,
+  maxTiltRadians: 0.10,
 } as const;
 
 export interface RestockPlacement {
