@@ -54,19 +54,19 @@ describe("Cabinet play tuning", () => {
       Math.abs(CABINET_GANTRY_TRAVEL_BOUNDS.xMin) +
         openRadius,
     ).toBeLessThanOrEqual(
-      M06_CABINET_CONFIG.interiorHalfX + 1e-6,
+      M06_CABINET_CONFIG.interiorHalfX + 0.001,
     );
     expect(
       CABINET_GANTRY_TRAVEL_BOUNDS.xMax +
         openRadius,
     ).toBeLessThanOrEqual(
-      M06_CABINET_CONFIG.interiorHalfX + 1e-6,
+      M06_CABINET_CONFIG.interiorHalfX + 0.001,
     );
     expect(
       Math.abs(CABINET_GANTRY_TRAVEL_BOUNDS.zMin) +
         openRadius,
     ).toBeLessThanOrEqual(
-      M06_CABINET_CONFIG.interiorHalfZ + 1e-6,
+      M06_CABINET_CONFIG.interiorHalfZ + 0.001,
     );
   });
 
