@@ -2627,7 +2627,7 @@ Implemented:
 - move the right-side neighboring machines farther outward/back to preserve a visible service corridor
 - restore normal scene depth testing for the photorealistic billboard while retaining depthWrite=false
 - keep only a modest transparent render order instead of forcing the staff above all cabinet/environment geometry
-- add regression coverage requiring the full staff path to remain >0.60 m from right-side neighboring-machine centers
+- add regression coverage requiring the full staff path to remain >0.60 m from right-side neighboring-machine centers, preserving a visible aisle rather than relying on draw order
 
 Invariant:
 - staff remains visual-only
