@@ -2588,3 +2588,8 @@ Gameplay contract:
 Validation refinement:
 - first open-door regression reproduced a real escape to x≈0.97 m
 - insertion was subsequently changed from a drop to a lower-energy staff-placement motion farther from the right-side opening
+
+
+Service sequencing refinement:
+- after the final replacement is inserted, the physical service door now begins closing immediately while prizes finish settling
+- this prevents round prizes from rolling out through a door that previously stayed open until settle completion
