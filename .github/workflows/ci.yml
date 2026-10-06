@@ -184,6 +184,9 @@ jobs:
                grep -q 'data-render-fps=' "$DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$DOM_FILE" &&
+               grep -q 'data-reward-audio="armed"' "$DOM_FILE" &&
+               grep -q 'data-reward-feedback="ready"' "$DOM_FILE" &&
+               grep -q 'cabinet-reward-feedback' "$DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$DOM_FILE" &&
                grep -q 'data-layout-id="dense"' "$DOM_FILE" &&
                grep -q 'data-staff-call-control="ready"' "$DOM_FILE" &&
@@ -465,6 +468,9 @@ jobs:
                grep -q 'data-render-fps=' "$ROOT_DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-reward-audio="armed"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-reward-feedback="ready"' "$ROOT_DOM_FILE" &&
+               grep -q 'cabinet-reward-feedback' "$ROOT_DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-layout-id="loose"' "$ROOT_DOM_FILE" &&
                grep -q 'data-staff-call-control="ready"' "$ROOT_DOM_FILE" &&

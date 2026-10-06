@@ -1,5 +1,6 @@
 import type * as THREE from "three";
 import type { MachineAudioState } from "../audio/machineAudioState";
+import type { CabinetRewardEvent } from "../cabinet/cabinetRewardFeedback";
 import type { RigidBodyHandle } from "../physics/PhysicsRuntime";
 import type { RenderQualityProfile } from "../player/mobileRenderProfile";
 
@@ -47,5 +48,6 @@ export interface SimulationScene {
   setManualGantryInput?(x: number, z: number): void;
   setRenderQuality?(profile: RenderQualityProfile): void;
   getMachineAudioState?(): MachineAudioState;
+  consumeRewardEvents?(): CabinetRewardEvent[];
   debugLines?(): string[];
 }

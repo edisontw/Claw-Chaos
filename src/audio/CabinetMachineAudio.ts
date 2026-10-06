@@ -1,4 +1,5 @@
 import type { ContactAudioImpact } from "../physics/PhysicsRuntime";
+import type { CabinetRewardKind } from "../cabinet/cabinetRewardFeedback";
 import { M08_ARCADE_AMBIENCE } from "./arcadeAmbience";
 import {
   deriveMachineAudioFrame,
@@ -44,6 +45,7 @@ export class CabinetMachineAudio {
   public constructor(private readonly root: HTMLElement) {
     this.root.dataset.machineAudio = "armed";
     this.root.dataset.arcadeAmbience = "armed";
+    this.root.dataset.rewardAudio = "armed";
   }
 
   public async unlock(): Promise<boolean> {
@@ -108,6 +110,44 @@ export class CabinetMachineAudio {
       );
       this.playPrizeImpactCue(cue);
     }
+  }
+
+  public playRewardCue(
+    kind: CabinetRewardKind,
+  ): void {
+    if (
+      !this.context ||
+      this.context.state !== "running" ||
+      !this.masterGain
+    ) {
+      return;
+    }
+
+    const now = this.context.currentTime + 0.015;
+    const notes =
+      kind === "clear"
+        ? [
+            { hz: 523.25, at: 0.00, duration: 0.16, gain: 0.050 },
+            { hz: 659.25, at: 0.14, duration: 0.16, gain: 0.052 },
+            { hz: 783.99, at: 0.28, duration: 0.17, gain: 0.054 },
+            { hz: 1046.50, at: 0.44, duration: 0.34, gain: 0.060 },
+          ]
+        : [
+            { hz: 659.25, at: 0.00, duration: 0.13, gain: 0.044 },
+            { hz: 783.99, at: 0.11, duration: 0.13, gain: 0.046 },
+            { hz: 987.77, at: 0.22, duration: 0.22, gain: 0.050 },
+          ];
+
+    for (const note of notes) {
+      this.playRewardTone(
+        note.hz,
+        now + note.at,
+        note.duration,
+        note.gain,
+      );
+    }
+
+    this.root.dataset.lastRewardAudio = kind;
   }
 
   public update(state: MachineAudioState): void {
@@ -375,6 +415,42 @@ export class CabinetMachineAudio {
     noiseGain.connect(this.masterGain);
     noise.start(now);
     noise.stop(end + 0.01);
+  }
+
+  private playRewardTone(
+    frequencyHz: number,
+    startSeconds: number,
+    durationSeconds: number,
+    peakGain: number,
+  ): void {
+    if (!this.context || !this.masterGain) {
+      return;
+    }
+
+    const oscillator = this.context.createOscillator();
+    oscillator.type = "triangle";
+    oscillator.frequency.setValueAtTime(
+      frequencyHz,
+      startSeconds,
+    );
+
+    const gain = this.context.createGain();
+    const endSeconds =
+      startSeconds + durationSeconds;
+    gain.gain.setValueAtTime(0.0001, startSeconds);
+    gain.gain.exponentialRampToValueAtTime(
+      peakGain,
+      startSeconds + 0.018,
+    );
+    gain.gain.exponentialRampToValueAtTime(
+      0.0001,
+      endSeconds,
+    );
+
+    oscillator.connect(gain);
+    gain.connect(this.masterGain);
+    oscillator.start(startSeconds);
+    oscillator.stop(endSeconds + 0.02);
   }
 
   private createContinuousMotor(

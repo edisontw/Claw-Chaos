@@ -2515,3 +2515,28 @@ Implemented before default-site rollout:
 - cabinet-only gantry travel bounds keep the fully-open claw inside the opaque side/back viewing envelope
 - front travel still reaches the existing chute park position
 - generic M02 gantry laboratory bounds and physics tuning remain unchanged
+
+
+### M11 Slice 2 — authoritative reward feedback
+
+**Status: IMPLEMENTED CANDIDATE**
+
+Implemented:
+- every accepted ChuteSensor win emits one reward-feedback event
+- ordinary authoritative wins display `PRIZE GET!`
+- machine clear displays `MACHINE CLEARED!` / `ALL PRIZES WON`
+- clear requires both playable stock = 0 and awarded count = total stocked count
+- prizes merely below the chute opening cannot trigger clear before their ChuteSensor award
+- restocked prizes are included in the total-stock clear requirement
+- procedural Web Audio success jingle integrates with `CabinetMachineAudio`
+- distinct longer fanfare for machine clear
+- DOM/CSS overlay keeps feedback outside the Three.js render budget
+- High/Medium use a short lightweight confetti burst
+- Low graphics and `prefers-reduced-motion` omit decorative particles
+- feedback never pauses or changes the fixed-step physics loop
+- browser smoke verifies reward UI and audio are armed at startup
+
+Physics/gameplay contract:
+- ChuteSensor remains the sole authoritative WIN source
+- no teleport, parenting, weld, magnet, hidden pickup force, or forced success logic
+- existing claw, gantry, grip, collision, stock, staff and restock behavior unchanged

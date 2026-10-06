@@ -18,6 +18,7 @@ import {
 } from "../player/firstPersonPlayerView";
 import { MobileCabinetControls } from "../player/mobileCabinetControls";
 import { StaffCallControl } from "../player/staffCallControl";
+import { CabinetRewardFeedback } from "../player/cabinetRewardFeedback";
 import {
   AdaptiveRenderQualityController,
   isTouchLikeEnvironment,
@@ -442,6 +443,18 @@ export async function startApp(
     );
   }
 
+  const rewardFeedback =
+    selection.id === "cabinet-lab" &&
+    testScene.consumeRewardEvents
+      ? new CabinetRewardFeedback(root)
+      : null;
+
+  const reducedRewardEffects = (): boolean =>
+    renderQuality.id === "low" ||
+    window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
   const debugRequested =
     new URLSearchParams(window.location.search).get("debug") === "1";
   const debugOverlay = new DebugOverlay(
@@ -641,6 +654,25 @@ export async function startApp(
       root.dataset.staffVisual =
         staffVisualStatus;
     }
+
+    const rewardEvents =
+      testScene.consumeRewardEvents?.() ?? [];
+    for (const rewardEvent of rewardEvents) {
+      rewardFeedback?.show(
+        rewardEvent,
+        reducedRewardEffects(),
+      );
+      if (machineAudio) {
+        machineAudio.playRewardCue(
+          rewardEvent.kind,
+        );
+      } else {
+        void ensureMachineAudio().then((audio) =>
+          audio?.playRewardCue(rewardEvent.kind),
+        );
+      }
+    }
+
     playerViewController?.update(frameDeltaSeconds);
     if (physicsDebugRenderer.visible) {
       physicsDebugRenderer.update(physics.debugRender());
