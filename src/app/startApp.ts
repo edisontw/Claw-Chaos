@@ -663,13 +663,17 @@ export async function startApp(
         reducedRewardEffects(),
       );
       if (machineAudio) {
-        machineAudio.playRewardCue(
+        void machineAudio.playRewardCue(
           rewardEvent.kind,
         );
       } else {
-        void ensureMachineAudio().then((audio) =>
-          audio?.playRewardCue(rewardEvent.kind),
-        );
+        void ensureMachineAudio().then((audio) => {
+          if (audio) {
+            void audio.playRewardCue(
+              rewardEvent.kind,
+            );
+          }
+        });
       }
     }
 
