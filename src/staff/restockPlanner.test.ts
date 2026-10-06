@@ -19,6 +19,18 @@ describe("M10 seeded restock planning", () => {
     );
   });
 
+  it("uses every pool prize before repeating a type", () => {
+    const plan = createRestockPlan(
+      "variety",
+      pool.length,
+      pool,
+    );
+
+    expect(
+      new Set(plan.map((entry) => entry.prizeId)).size,
+    ).toBe(pool.length);
+  });
+
   it("changes physical insertion poses across seeds", () => {
     const a = createRestockPlan("seed-a", 6, pool);
     const b = createRestockPlan("seed-b", 6, pool);
@@ -34,7 +46,7 @@ describe("M10 seeded restock planning", () => {
     ).toBe(true);
   });
 
-  it("keeps insertion at the right-side service area and away from the chute", () => {
+  it("keeps insertion inside a low-energy interior staging zone away from the open service door and chute", () => {
     const plan = createRestockPlan(
       "bounds",
       20,
@@ -42,10 +54,8 @@ describe("M10 seeded restock planning", () => {
     );
 
     for (const entry of plan) {
-      expect(entry.x).toBe(
-        M10_RESTOCK_CONFIG.insertionX,
-      );
-      expect(entry.x).toBeGreaterThan(0.25);
+      expect(entry.x).toBeGreaterThanOrEqual(-0.24);
+      expect(entry.x).toBeLessThan(0.25);
       expect(entry.y).toBeGreaterThanOrEqual(
         M10_RESTOCK_CONFIG.insertionMinY,
       );

@@ -648,7 +648,8 @@ export function createCabinetLabScene(
 
       staffServiceVisual.update(
         inventoryService.machinePaused,
-        restockStatus === "complete",
+        restockStatus === "settling" ||
+          restockStatus === "complete",
         stepSeconds,
       );
 
