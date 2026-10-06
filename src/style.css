@@ -337,40 +337,45 @@ canvas {
 
 .staff-call-control {
   position: fixed;
-  top: max(14px, calc(env(safe-area-inset-top) + 8px));
-  right: max(14px, env(safe-area-inset-right));
+  top: max(10px, calc(env(safe-area-inset-top) + 6px));
+  left: max(10px, env(safe-area-inset-left));
+  right: auto;
   z-index: 21;
-  width: min(230px, calc(100vw - 28px));
-  padding: 8px;
-  border: 1px solid rgb(255 255 255 / 18%);
-  border-radius: 10px;
-  background: rgb(8 12 18 / 66%);
-  box-shadow: 0 3px 12px rgb(0 0 0 / 24%);
-  backdrop-filter: blur(4px);
+  width: min(150px, calc(100vw - 20px));
+  padding: 5px;
+  border: 1px solid rgb(255 255 255 / 16%);
+  border-radius: 8px;
+  background: rgb(8 12 18 / 54%);
+  box-shadow: 0 2px 9px rgb(0 0 0 / 20%);
+  backdrop-filter: blur(3px);
 }
 
 .staff-call-button {
   width: 100%;
-  min-height: 34px;
-  padding: 0 10px;
-  border: 1px solid rgb(255 255 255 / 28%);
-  border-radius: 8px;
-  background: rgb(38 48 61 / 74%);
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgb(255 255 255 / 26%);
+  border-radius: 7px;
+  background: rgb(38 48 61 / 68%);
   color: rgb(255 255 255 / 94%);
-  font: 800 11px/1 ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: 0.04em;
+  font: 800 9.5px/1 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: 0.035em;
   touch-action: manipulation;
 }
 
 .staff-call-control[data-staff-state="available"] .staff-call-button {
-  background: rgb(130 91 24 / 86%);
-  border-color: rgb(255 219 143 / 62%);
+  background: rgb(130 91 24 / 82%);
+  border-color: rgb(255 219 143 / 58%);
   cursor: pointer;
+}
+
+.staff-call-control[data-staff-state="available"] .staff-call-detail {
+  display: none;
 }
 
 .staff-call-control[data-staff-state="waiting"] .staff-call-button,
 .staff-call-control[data-staff-state="paused"] .staff-call-button {
-  background: rgb(36 66 92 / 82%);
+  background: rgb(36 66 92 / 78%);
 }
 
 .staff-call-button:disabled {
@@ -383,27 +388,27 @@ canvas {
 }
 
 .staff-call-detail {
-  margin-top: 5px;
-  color: rgb(220 229 241 / 78%);
-  font: 500 10px/1.3 ui-sans-serif, system-ui, sans-serif;
+  margin-top: 4px;
+  color: rgb(220 229 241 / 76%);
+  font: 500 8.5px/1.25 ui-sans-serif, system-ui, sans-serif;
 }
 
 @media (hover: none), (pointer: coarse) {
   .staff-call-control {
-    top: max(8px, calc(env(safe-area-inset-top) + 5px));
-    left: max(8px, env(safe-area-inset-left));
-    right: auto;
-    width: min(190px, 46vw);
-    padding: 6px;
+    top: max(7px, calc(env(safe-area-inset-top) + 4px));
+    left: max(7px, env(safe-area-inset-left));
+    width: min(132px, 38vw);
+    padding: 4px;
   }
 
   .staff-call-button {
-    min-height: 32px;
-    font-size: 9.5px;
+    min-height: 27px;
+    padding: 0 6px;
+    font-size: 8.5px;
   }
 
   .staff-call-detail {
-    font-size: 9px;
+    font-size: 8px;
   }
 }
 

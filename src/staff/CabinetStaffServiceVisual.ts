@@ -174,12 +174,19 @@ export class CabinetStaffServiceVisual {
     closeRequested: boolean,
     stepSeconds: number,
   ): void {
+    const previousPhase = this.state.phase;
     this.state = advanceStaffServiceState(
       this.state,
       servicePaused,
       closeRequested,
       stepSeconds,
     );
+    if (
+      previousPhase !== "hidden" &&
+      this.state.phase === "hidden"
+    ) {
+      this.generated.selectRandomStaff();
+    }
     const pose = staffServicePose(this.state);
 
     this.actor.visible = pose.visible;
