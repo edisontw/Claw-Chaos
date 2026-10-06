@@ -766,6 +766,12 @@ export function createCabinetLabScene(
       }
 
       for (const prize of tracked) {
+        // Initial prize settling is setup, not gameplay. Do not let a
+        // transient spawn/settle motion decrement stock or produce a WIN.
+        if (!layoutSettle.ready) {
+          continue;
+        }
+
         if (
           isPrizeBelowChuteOpening(
             prize.body.worldCom(),

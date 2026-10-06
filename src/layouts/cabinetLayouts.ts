@@ -76,7 +76,7 @@ const LOOSE_BASE: readonly PlacementBase[] = [
   {
     prizeId: "prize/pillow_small",
     x: -0.18,
-    z: 0.13,
+    z: -0.02,
     rotationYRadians: 0.28,
   },
   {
