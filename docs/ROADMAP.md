@@ -2583,3 +2583,8 @@ Gameplay contract:
 - restocked prizes remain fully dynamic physical bodies
 - no teleport correction, parenting, magnets, welds, or hidden retention forces
 - claw/grip/gantry/chute physics remain unchanged
+
+
+Validation refinement:
+- first open-door regression reproduced a real escape to x≈0.97 m
+- insertion was subsequently changed from a drop to a lower-energy staff-placement motion farther from the right-side opening
