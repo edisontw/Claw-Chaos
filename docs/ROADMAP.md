@@ -2257,6 +2257,28 @@ Next action:
 3. manually validate mobile remains on the lighter skinned staff
 4. keep PR #70 Draft until both visual checks pass
 
+## Manual validation round 2 — generated staff cutout
+
+The next screenshot review showed the rendered attendant was still a low-poly
+character and faced away from the player. The character presentation is now
+replaced with a generated photorealistic transparent cutout, rendered as a
+camera-facing sprite at 1.64 m human scale. This keeps the attendant looking
+toward the player as the camera moves and removes the GLB/DRACO loading path
+from the active staff visual. A procedural visual remains only as an asset-load
+fallback. The portrait asset is 118 KB WebP with alpha transparency.
+
+The generated attendant wears a white blouse, pink trim and bow, charcoal
+waistcoat, knee-length skirt, dark tights and low-heel shoes. Her raised open
+hand presents toward the cabinet. The cutout remains visual-only; service
+route, service door, restocking, prize inventory and physics are unchanged.
+
+Browser smoke now requires:
+- `adult-female-arcade-attendant-image-billboard-v1`
+- `data-staff-visual="image"`
+
+Manual desktop/mobile appearance approval is still required before PR #70 can
+leave Draft.
+
 ---
 
 # M11 — Second Machine Family
