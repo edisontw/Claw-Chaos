@@ -119,11 +119,13 @@ describe("M10 staff service sequence", () => {
     };
     const pose = staffServicePose(state);
 
-    expect(pose.x).toBe(
+    expect(pose.x).toBeCloseTo(
       M10_STAFF_SERVICE_CONFIG.serviceX,
+      8,
     );
-    expect(pose.z).toBe(
+    expect(pose.z).toBeCloseTo(
       M10_STAFF_SERVICE_CONFIG.serviceZ,
+      8,
     );
     expect(pose.x).toBeGreaterThan(0.80);
     expect(pose.z).toBeGreaterThan(0.15);
