@@ -5,6 +5,10 @@ import {
   type CabinetPartDefinition,
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
+import {
+  createCabinetRewardEvent,
+  type CabinetRewardEvent,
+} from "../cabinet/cabinetRewardFeedback";
 import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
 import { isPrizeBelowChuteOpening } from "../cabinet/cabinetPlayableStock";
 import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
@@ -358,6 +362,7 @@ export function createCabinetLabScene(
 
   const sensor = new ChuteSensor();
   const resultInventory = new CabinetResultInventoryState();
+  const rewardEvents: CabinetRewardEvent[] = [];
   const bindings: SimulationScene["bindings"] = [
     ...gantryScene.bindings,
   ];
@@ -579,6 +584,9 @@ export function createCabinetLabScene(
       };
     },
     getMachineAudioState: gantryScene.getMachineAudioState,
+    consumeRewardEvents(): CabinetRewardEvent[] {
+      return rewardEvents.splice(0, rewardEvents.length);
+    },
     getStaffVisualStatus(): string {
       return staffServiceVisual.visualStatus;
     },
@@ -780,9 +788,27 @@ export function createCabinetLabScene(
           const result =
             resultInventory.consume(event);
           if (result) {
-            inventoryService.consumeWin(
-              result,
-            );
+            const accepted =
+              inventoryService.consumeWin(
+                result,
+              );
+            if (accepted) {
+              const totalStockCount =
+                inventoryService.initialInventoryCount +
+                inventoryService.restockedInventoryCount;
+              rewardEvents.push(
+                createCabinetRewardEvent(
+                  result,
+                  {
+                    remainingInventoryCount:
+                      inventoryService.remainingInventoryCount,
+                    awardedInventoryCount:
+                      inventoryService.awardedInventoryCount,
+                    totalStockCount,
+                  },
+                ),
+              );
+            }
           }
         }
       }
