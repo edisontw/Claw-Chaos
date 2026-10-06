@@ -168,18 +168,26 @@ jobs:
                grep -q 'data-physics-backend="native-wasm"' "$DOM_FILE" &&
                grep -q 'data-startup-ms=' "$DOM_FILE" &&
                grep -q 'data-scene-id="cabinet-lab"' "$DOM_FILE" &&
+               grep -q 'data-visual-theme="modern-japanese-arcade"' "$DOM_FILE" &&
+               grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' "$DOM_FILE" &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-image-billboard-v1"' "$DOM_FILE" &&
+               grep -q 'data-staff-visual="image"' "$DOM_FILE" &&
+               grep -q 'data-tone-mapping="aces-filmic"' "$DOM_FILE" &&
                grep -q 'data-player-view="active"' "$DOM_FILE" &&
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
                ! grep -q 'player-reticle' "$DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$DOM_FILE" &&
                grep -q 'mobile-view-height' "$DOM_FILE" &&
-               grep -q 'data-render-profile="desktop"' "$DOM_FILE" &&
+               grep -Eq 'data-render-profile="(high|medium|low)"' "$DOM_FILE" &&
+               grep -q 'data-render-mode="auto"' "$DOM_FILE" &&
+               grep -q 'data-render-adaptive="armed"' "$DOM_FILE" &&
+               grep -q 'data-render-fps=' "$DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$DOM_FILE" &&
                grep -q 'data-layout-id="dense"' "$DOM_FILE" &&
                grep -q 'data-staff-call-control="ready"' "$DOM_FILE" &&
-               grep -q 'data-staff-state="locked"' "$DOM_FILE"; then
+               grep -q 'data-staff-state="available"' "$DOM_FILE"; then
               CABINET_READY=1
               break
             fi
@@ -441,18 +449,26 @@ jobs:
                grep -q 'data-physics-backend="native-wasm"' "$ROOT_DOM_FILE" &&
                grep -q 'data-startup-ms=' "$ROOT_DOM_FILE" &&
                grep -q 'data-scene-id="cabinet-lab"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-visual-theme="modern-japanese-arcade"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-image-billboard-v1"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-staff-visual="image"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-tone-mapping="aces-filmic"' "$ROOT_DOM_FILE" &&
                grep -q 'data-player-view="active"' "$ROOT_DOM_FILE" &&
                ! grep -q 'player-reticle' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-control-style="compact-translucent"' "$ROOT_DOM_FILE" &&
                grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
-               grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE" &&
+               grep -Eq 'data-render-profile="(high|medium|low)"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-mode="auto"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-adaptive="armed"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-fps=' "$ROOT_DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-layout-id="loose"' "$ROOT_DOM_FILE" &&
                grep -q 'data-staff-call-control="ready"' "$ROOT_DOM_FILE" &&
-               grep -q 'data-staff-state="locked"' "$ROOT_DOM_FILE"; then
+               grep -q 'data-staff-state="available"' "$ROOT_DOM_FILE"; then
               ROOT_READY=1
               break
             fi

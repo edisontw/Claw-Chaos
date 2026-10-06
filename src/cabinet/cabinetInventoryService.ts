@@ -12,6 +12,7 @@ export interface CabinetStaffPolicy {
 export interface CabinetInventoryServiceSnapshot {
   initialInventoryCount: number;
   remainingInventoryCount: number;
+  unavailableInventoryCount: number;
   awardedInventoryCount: number;
   restockedInventoryCount: number;
   completedServiceCount: number;
@@ -23,6 +24,7 @@ export interface CabinetInventoryServiceSnapshot {
 }
 
 export class CabinetInventoryServiceState {
+  private readonly unavailablePrizeIds = new Set<string>();
   private readonly awardedPrizeIds = new Set<string>();
   private restockedInventoryCountValue = 0;
   private completedServiceCountValue = 0;
@@ -60,16 +62,30 @@ export class CabinetInventoryServiceState {
       policy.restockThresholdCount;
   }
 
+  markPrizeUnavailable(prizeId: string): boolean {
+    if (this.unavailablePrizeIds.has(prizeId)) {
+      return false;
+    }
+
+    if (this.remainingInventoryCount <= 0) {
+      return false;
+    }
+
+    this.unavailablePrizeIds.add(prizeId);
+    return true;
+  }
+
   consumeWin(
     result: Pick<CabinetWinResult, "prizeId">,
   ): boolean {
     if (this.awardedPrizeIds.has(result.prizeId)) {
       return false;
     }
-    if (this.remainingInventoryCount <= 0) {
-      return false;
-    }
 
+    // A win always means the prize is no longer playable, but the
+    // physical chute-exit tracker may have marked it unavailable
+    // slightly earlier. Keep those concepts separate and idempotent.
+    this.markPrizeUnavailable(result.prizeId);
     this.awardedPrizeIds.add(result.prizeId);
     return true;
   }
@@ -125,6 +141,10 @@ export class CabinetInventoryServiceState {
     return true;
   }
 
+  get unavailableInventoryCount(): number {
+    return this.unavailablePrizeIds.size;
+  }
+
   get awardedInventoryCount(): number {
     return this.awardedPrizeIds.size;
   }
@@ -142,7 +162,7 @@ export class CabinetInventoryServiceState {
       0,
       this.initialInventoryCount +
         this.restockedInventoryCountValue -
-        this.awardedPrizeIds.size,
+        this.unavailablePrizeIds.size,
     );
   }
 
@@ -155,17 +175,11 @@ export class CabinetInventoryServiceState {
   }
 
   get restockNeeded(): boolean {
-    return (
-      this.remainingInventoryCount <=
-      this.restockThresholdCount
-    );
+    return this.restockDeficitCount > 0;
   }
 
   get canCallStaff(): boolean {
-    return (
-      this.state === "operating" &&
-      this.restockNeeded
-    );
+    return this.state === "operating";
   }
 
   get serviceState(): CabinetServiceState {
@@ -185,6 +199,8 @@ export class CabinetInventoryServiceState {
       initialInventoryCount: this.initialInventoryCount,
       remainingInventoryCount:
         this.remainingInventoryCount,
+      unavailableInventoryCount:
+        this.unavailableInventoryCount,
       awardedInventoryCount:
         this.awardedInventoryCount,
       restockedInventoryCount:

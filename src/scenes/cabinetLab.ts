@@ -6,18 +6,30 @@ import {
 } from "../cabinet/cabinetGeometry";
 import { CabinetResultInventoryState } from "../cabinet/cabinetResultState";
 import { CabinetInventoryServiceState } from "../cabinet/cabinetInventoryService";
+import { isPrizeBelowChuteOpening } from "../cabinet/cabinetPlayableStock";
+import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
+import { addCabinetInteriorVisual } from "../cabinet/cabinetInteriorVisual";
 import {
-  M08_CABINET_VISUAL_STYLE,
+  addArcadeEnvironment,
+  applyArcadeEnvironmentDetail,
+  arcadeEnvironmentId,
+} from "../environment/arcadeEnvironment";
+import {
   createCabinetFrameTrimSpecs,
   createCabinetLedStripSpecs,
   type VisualBoxSpec,
 } from "../cabinet/cabinetVisualStyle";
 import {
   CABINET_CLAW_PARK_POSITION,
+  CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
+import {
+  DESKTOP_RENDER_QUALITY,
+  type RenderQualityProfile,
+} from "../player/mobileRenderProfile";
 import {
   createCabinetLayout,
   type CabinetLayoutId,
@@ -31,6 +43,11 @@ import {
   createRestockPlan,
   type RestockPlacement,
 } from "../staff/restockPlanner";
+import {
+  getVisualTheme,
+  type ImplementedVisualThemeId,
+  type VisualTheme,
+} from "../theme/visualTheme";
 import { createGantryLabScene } from "./gantryLab";
 import type { SimulationScene } from "./types";
 
@@ -71,9 +88,10 @@ const PLAY_DECK_WEAVE_TEXTURE = createPlayDeckWeaveTexture();
 
 function createPartMaterial(
   part: CabinetPartDefinition,
+  theme: VisualTheme,
 ): THREE.Material {
   if (part.role === "glass") {
-    const glass = M08_CABINET_VISUAL_STYLE.glass;
+    const glass = theme.machine.glass;
     return new THREE.MeshPhysicalMaterial({
       color: glass.color,
       transparent: true,
@@ -91,7 +109,7 @@ function createPartMaterial(
   }
 
   if (part.role === "chute_wall" || part.role === "chute_bottom") {
-    const chute = M08_CABINET_VISUAL_STYLE.chute;
+    const chute = theme.machine.interior.chute;
     return new THREE.MeshStandardMaterial({
       color: chute.color,
       roughness: chute.roughness,
@@ -100,23 +118,25 @@ function createPartMaterial(
   }
 
   if (part.role === "floor") {
+    const floor = theme.machine.interior.floor;
     return new THREE.MeshStandardMaterial({
-      color: 0x555d68,
-      roughness: 0.94,
-      metalness: 0.02,
+      color: floor.color,
+      roughness: floor.roughness,
+      metalness: floor.metalness,
     });
   }
 
   if (part.role === "play_deck") {
+    const deck = theme.machine.interior.playDeck;
     return new THREE.MeshStandardMaterial({
-      color: 0xffffff,
+      color: deck.color,
       map: PLAY_DECK_WEAVE_TEXTURE,
-      roughness: 0.90,
-      metalness: 0.01,
+      roughness: deck.roughness,
+      metalness: deck.metalness,
     });
   }
 
-  const frame = M08_CABINET_VISUAL_STYLE.frame;
+  const frame = theme.machine.exterior.frame;
   return new THREE.MeshPhysicalMaterial({
     color: frame.color,
     roughness: frame.roughness,
@@ -129,6 +149,7 @@ function createPartMaterial(
 function addCabinetVisual(
   scene: THREE.Scene,
   part: CabinetPartDefinition,
+  theme: VisualTheme,
 ): void {
   const geometry = new THREE.BoxGeometry(
     part.halfExtents.x * 2,
@@ -137,7 +158,7 @@ function addCabinetVisual(
   );
   const mesh = new THREE.Mesh(
     geometry,
-    createPartMaterial(part),
+    createPartMaterial(part, theme),
   );
   mesh.name = part.id;
   mesh.position.set(part.center.x, part.center.y, part.center.z);
@@ -149,9 +170,9 @@ function addCabinetVisual(
     const outline = new THREE.LineSegments(
       new THREE.EdgesGeometry(geometry),
       new THREE.LineBasicMaterial({
-        color: M08_CABINET_VISUAL_STYLE.glass.color,
+        color: theme.machine.glass.color,
         transparent: true,
-        opacity: M08_CABINET_VISUAL_STYLE.glass.edgeOpacity,
+        opacity: theme.machine.glass.edgeOpacity,
       }),
     );
     outline.name = part.id + "-outline";
@@ -159,7 +180,6 @@ function addCabinetVisual(
     scene.add(outline);
   }
 }
-
 
 function addVisualBox(
   scene: THREE.Scene,
@@ -181,8 +201,11 @@ function addVisualBox(
   scene.add(mesh);
 }
 
-function addM08CabinetDetails(scene: THREE.Scene): void {
-  const frameStyle = M08_CABINET_VISUAL_STYLE.frame;
+function addM08CabinetDetails(
+  scene: THREE.Scene,
+  theme: VisualTheme,
+): void {
+  const frameStyle = theme.machine.exterior.metalTrim;
   const trimMaterial = new THREE.MeshPhysicalMaterial({
     color: frameStyle.color,
     roughness: frameStyle.roughness,
@@ -194,63 +217,24 @@ function addM08CabinetDetails(scene: THREE.Scene): void {
     addVisualBox(scene, spec, trimMaterial);
   }
 
-  const ledStyle = M08_CABINET_VISUAL_STYLE.led;
+  const ledStyle = theme.machine.exterior.ledSecondary;
   const ledMaterial = new THREE.MeshStandardMaterial({
     color: ledStyle.color,
     emissive: ledStyle.emissive,
     emissiveIntensity: ledStyle.emissiveIntensity,
-    roughness: 0.24,
-    metalness: 0.05,
+    roughness: ledStyle.roughness,
+    metalness: ledStyle.metalness,
   });
   for (const spec of createCabinetLedStripSpecs()) {
     addVisualBox(scene, spec, ledMaterial);
   }
 }
 
-function addControlPanel(scene: THREE.Scene): void {
-  const panel = new THREE.Mesh(
-    new THREE.BoxGeometry(0.46, 0.11, 0.16),
-    new THREE.MeshPhysicalMaterial({
-      color: M08_CABINET_VISUAL_STYLE.controlPanel.color,
-      roughness: M08_CABINET_VISUAL_STYLE.controlPanel.roughness,
-      metalness: M08_CABINET_VISUAL_STYLE.controlPanel.metalness,
-      clearcoat: M08_CABINET_VISUAL_STYLE.controlPanel.clearcoat,
-      clearcoatRoughness: 0.18,
-    }),
-  );
-  panel.position.set(
-    0,
-    0.11,
-    M06_CABINET_CONFIG.interiorHalfZ + 0.12,
-  );
-  panel.rotation.x = -0.18;
-  panel.castShadow = true;
-  scene.add(panel);
-
-  const button = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.025, 0.025, 0.018, 24),
-    new THREE.MeshPhysicalMaterial({
-      color: 0xd94141,
-      emissive: 0x6b0b0b,
-      emissiveIntensity: 0.7,
-      roughness: 0.62,
-      metalness: 0.05,
-      clearcoat: 0,
-      clearcoatRoughness: 1,
-    }),
-  );
-  button.rotation.x = Math.PI * 0.5;
-  button.position.set(
-    0.11,
-    0.165,
-    M06_CABINET_CONFIG.interiorHalfZ + 0.105,
-  );
-  scene.add(button);
-}
-
 export interface CabinetLabOptions {
   layoutId?: CabinetLayoutId;
   layoutSeed?: string;
+  themeId?: ImplementedVisualThemeId;
+  renderQuality?: RenderQualityProfile;
 }
 
 export function createCabinetLabScene(
@@ -258,13 +242,22 @@ export function createCabinetLabScene(
   physics: PhysicsRuntime,
   options: CabinetLabOptions = {},
 ): SimulationScene {
+  const visualTheme = getVisualTheme(options.themeId);
+  const renderQuality =
+    options.renderQuality ?? DESKTOP_RENDER_QUALITY;
+  const arcadeEnvironment = addArcadeEnvironment(
+    scene,
+    visualTheme,
+    renderQuality.arcadeBackgroundDetail,
+  );
   const parts = createCabinetPhysics(physics);
   for (const part of parts) {
-    addCabinetVisual(scene, part);
+    addCabinetVisual(scene, part, visualTheme);
   }
 
-  addControlPanel(scene);
-  addM08CabinetDetails(scene);
+  addCabinetExteriorVisual(scene, visualTheme);
+  addCabinetInteriorVisual(scene, visualTheme);
+  addM08CabinetDetails(scene, visualTheme);
 
   const serviceDoorObjects = [
     scene.getObjectByName("glass-right"),
@@ -287,6 +280,7 @@ export function createCabinetLabScene(
           -M06_CABINET_CONFIG.interiorHalfZ -
           M06_CABINET_CONFIG.wallHalfThickness * 2,
       },
+      visualTheme.staff,
     );
 
   const layout = createCabinetLayout(
@@ -300,10 +294,23 @@ export function createCabinetLabScene(
       { restockThresholdCount: 1 },
     );
 
-  const cabinetLight = new THREE.PointLight(0xf4f7ff, 4.2, 2.2, 1.7);
+  const interiorLight = visualTheme.machine.interior.lighting;
+  const cabinetLight = new THREE.PointLight(
+    interiorLight.color,
+    interiorLight.intensity,
+    interiorLight.distance,
+    interiorLight.decay,
+  );
   cabinetLight.position.set(-0.08, 1.08, 0.10);
-  cabinetLight.castShadow = true;
-  cabinetLight.shadow.mapSize.set(1024, 1024);
+  cabinetLight.castShadow =
+    renderQuality.cabinetLightCastsShadow;
+  cabinetLight.shadow.mapSize.set(
+    renderQuality.cabinetLightShadowMapSize,
+    renderQuality.cabinetLightShadowMapSize,
+  );
+  cabinetLight.shadow.camera.near = 0.08;
+  cabinetLight.shadow.camera.far =
+    Math.min(interiorLight.distance, 2.4);
   cabinetLight.shadow.bias = -0.00035;
   cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
@@ -316,7 +323,10 @@ export function createCabinetLabScene(
       verticalHomeOffset:
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
       addServiceWires: true,
+      visualTheme,
+      clawCastsShadow: false,
       initialPosition: CABINET_CLAW_PARK_POSITION,
+      travelBounds: CABINET_GANTRY_TRAVEL_BOUNDS,
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
@@ -467,6 +477,9 @@ export function createCabinetLabScene(
     massPropertiesDebugTargets,
     milestone: "M10 / Staff & restocking",
     layoutId: layout.id,
+    environmentId: arcadeEnvironmentId(visualTheme),
+    staffCharacterVariant:
+      staffServiceVisual.characterVariant,
     camera: gantryScene.camera,
     primaryAction: () =>
       layoutSettle.ready
@@ -552,27 +565,47 @@ export function createCabinetLabScene(
           detail: "Finishing current machine motion safely.",
         };
       }
-      if (inventoryService.canCallStaff) {
-        return {
-          mode: "available",
-          label: "CALL STAFF",
-          detail: "Restock threshold reached · press S or tap.",
-        };
-      }
       return {
-        mode: "locked",
+        mode: "available",
         label: "CALL STAFF",
         detail:
-          "Available at " +
-          inventoryService.restockThresholdCount +
-          " prize remaining · " +
+          "Available anytime · " +
           inventoryService.remainingInventoryCount +
-          " now.",
+          " playable prize" +
+          (inventoryService.remainingInventoryCount === 1
+            ? ""
+            : "s") +
+          " remaining.",
       };
     },
     getMachineAudioState: gantryScene.getMachineAudioState,
+    getStaffVisualStatus(): string {
+      return staffServiceVisual.visualStatus;
+    },
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
+    },
+    setRenderQuality(profile): void {
+      applyArcadeEnvironmentDetail(
+        arcadeEnvironment,
+        profile.arcadeBackgroundDetail,
+      );
+      cabinetLight.castShadow =
+        profile.shadowsEnabled &&
+        profile.cabinetLightCastsShadow;
+      if (
+        cabinetLight.shadow.mapSize.width !==
+          profile.cabinetLightShadowMapSize ||
+        cabinetLight.shadow.mapSize.height !==
+          profile.cabinetLightShadowMapSize
+      ) {
+        cabinetLight.shadow.mapSize.set(
+          profile.cabinetLightShadowMapSize,
+          profile.cabinetLightShadowMapSize,
+        );
+        cabinetLight.shadow.map?.dispose();
+        cabinetLight.shadow.map = null;
+      }
     },
     beforePhysicsStep(stepSeconds: number): void {
       if (!layoutSettle.ready) {
@@ -724,20 +757,32 @@ export function createCabinetLabScene(
         }
       }
 
-      if (!inventoryService.machinePaused) {
-        for (const prize of tracked) {
-          const event = sensor.pollPrize(
+      for (const prize of tracked) {
+        if (
+          isPrizeBelowChuteOpening(
+            prize.body.worldCom(),
+          )
+        ) {
+          inventoryService.markPrizeUnavailable(
             prize.id,
-            prize.body,
           );
-          if (event) {
-            const result =
-              resultInventory.consume(event);
-            if (result) {
-              inventoryService.consumeWin(
-                result,
-              );
-            }
+        }
+
+        if (inventoryService.machinePaused) {
+          continue;
+        }
+
+        const event = sensor.pollPrize(
+          prize.id,
+          prize.body,
+        );
+        if (event) {
+          const result =
+            resultInventory.consume(event);
+          if (result) {
+            inventoryService.consumeWin(
+              result,
+            );
           }
         }
       }
@@ -746,6 +791,9 @@ export function createCabinetLabScene(
       return [
         ...(gantryScene.debugLines?.() ?? []),
         "Cabinet           physical deck / walls / glass / ceiling",
+        `Visual theme      ${visualTheme.id} / ${visualTheme.label}`,
+        `Render profile    ${renderQuality.id} / background ${renderQuality.arcadeBackgroundDetail} / cabinet shadow ${renderQuality.cabinetLightCastsShadow ? "on" : "off"}`,
+        `Staff character   ${staffServiceVisual.characterVariant}`,
         `Layout            ${layout.id} / seed ${layout.seed}`,
         `Layout settle     ${layoutSettle.status} / ${layoutSettle.elapsedSeconds.toFixed(2)} s`,
         `Layout prizes     ${layout.placements.length}`,
@@ -757,9 +805,9 @@ export function createCabinetLabScene(
         `Sensor wins       ${sensor.winCount}`,
         `Results accepted  ${resultInventory.resultCount}`,
         `Awarded prizes    ${resultInventory.inventoryCount}`,
-        `Stock remaining   ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
-        `Restock threshold ${inventoryService.restockThresholdCount}`,
-        `Staff call        ${inventoryService.canCallStaff ? "eligible" : "locked"} / ${inventoryService.serviceState}`,
+        `Playable stock    ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
+        `Out of play       ${inventoryService.unavailableInventoryCount} / awarded ${inventoryService.awardedInventoryCount}`,
+        `Staff call        ${inventoryService.canCallStaff ? "available" : "busy"} / ${inventoryService.serviceState}`,
         `Service safe      ${gantryScene.isSafeForService?.() ? "yes" : "no"} / input ${inventoryService.playerInputLocked ? "LOCKED" : "open"}`,
         `Staff sequence    ${staffServiceVisual.phase}`,
         `Restock status    ${restockStatus} / ${restockSpawnIndex} of ${restockPlan.length}`,
@@ -768,7 +816,7 @@ export function createCabinetLabScene(
         `Service cycles    ${inventoryService.completedServiceCount} / seed index ${serviceCycleIndex}`,
         `Last result prize ${resultInventory.lastResult?.prizeId ?? "none"}`,
         "Glass             subtle PBR pane + restrained edge reflection",
-        "M08 visuals       matte frame / subdued glass / gantry detail",
+        "Art visuals       themed shell / interior / gantry / arcade room",
         "Claw park         starts and returns directly over chute",
         "Machine audio     procedural motors + action transients",
         "Prize audio       material-specific contact-force impacts",

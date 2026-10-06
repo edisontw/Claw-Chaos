@@ -1,4 +1,5 @@
 import { M06_CABINET_CONFIG } from "./cabinetGeometry";
+import { DEFAULT_VISUAL_THEME } from "../theme/visualTheme";
 
 export interface VisualBoxSpec {
   id: string;
@@ -6,41 +7,16 @@ export interface VisualBoxSpec {
   halfExtents: { x: number; y: number; z: number };
 }
 
+const machineTheme = DEFAULT_VISUAL_THEME.machine;
+
 export const M08_CABINET_VISUAL_STYLE = {
-  frame: {
-    color: 0x26313d,
-    roughness: 0.68,
-    metalness: 0.30,
-    clearcoat: 0,
-    clearcoatRoughness: 1,
-  },
-  glass: {
-    color: 0xc6e8ff,
-    opacity: 0.045,
-    roughness: 0.82,
-    transmission: 0.02,
-    ior: 1.45,
-    thicknessMeters: 0.006,
-    clearcoat: 0,
-    clearcoatRoughness: 1,
-    edgeOpacity: 0.08,
-  },
-  chute: {
-    color: 0x4f5966,
-    roughness: 0.66,
-    metalness: 0.34,
-  },
-  controlPanel: {
-    color: 0x222a34,
-    roughness: 0.62,
-    metalness: 0.28,
-    clearcoat: 0,
-  },
-  led: {
-    color: 0xd9f3ff,
-    emissive: 0xa9e3ff,
-    emissiveIntensity: 0.9,
-  },
+  frame: machineTheme.exterior.frame,
+  glass: machineTheme.glass,
+  chute: machineTheme.interior.chute,
+  controlPanel: machineTheme.exterior.controlPanel,
+  led: machineTheme.exterior.ledSecondary,
+  floor: machineTheme.interior.floor,
+  playDeck: machineTheme.interior.playDeck,
 } as const;
 
 export const M08_GANTRY_VISUAL_STYLE = {
@@ -103,12 +79,20 @@ export function createCabinetFrameTrimSpecs(): VisualBoxSpec[] {
     {
       id: "frame-front-left-post",
       center: { x: -sideX, y: centerY, z: frontZ },
-      halfExtents: { x: 0.018, y: c.playAreaHeight * 0.5, z: 0.018 },
+      halfExtents: {
+        x: 0.018,
+        y: c.playAreaHeight * 0.5,
+        z: 0.018,
+      },
     },
     {
       id: "frame-front-right-post",
       center: { x: sideX, y: centerY, z: frontZ },
-      halfExtents: { x: 0.018, y: c.playAreaHeight * 0.5, z: 0.018 },
+      halfExtents: {
+        x: 0.018,
+        y: c.playAreaHeight * 0.5,
+        z: 0.018,
+      },
     },
     {
       id: "frame-front-header",
@@ -117,7 +101,11 @@ export function createCabinetFrameTrimSpecs(): VisualBoxSpec[] {
         y: c.floorY + c.playAreaHeight - 0.020,
         z: frontZ,
       },
-      halfExtents: { x: sideX, y: 0.020, z: 0.018 },
+      halfExtents: {
+        x: sideX,
+        y: 0.020,
+        z: 0.018,
+      },
     },
   ];
 }

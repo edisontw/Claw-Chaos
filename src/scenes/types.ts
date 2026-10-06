@@ -1,6 +1,7 @@
 import type * as THREE from "three";
 import type { MachineAudioState } from "../audio/machineAudioState";
 import type { RigidBodyHandle } from "../physics/PhysicsRuntime";
+import type { RenderQualityProfile } from "../player/mobileRenderProfile";
 
 export interface RenderBinding {
   mesh: THREE.Object3D;
@@ -34,13 +35,17 @@ export interface SimulationScene {
   camera: CameraPreset;
   milestone: string;
   layoutId?: string;
+  environmentId?: string;
+  staffCharacterVariant?: string;
   massPropertiesDebugTargets?: MassPropertiesDebugTarget[];
   beforePhysicsStep?(stepSeconds: number): void;
   primaryAction?(): boolean;
   requestStaff?(): boolean;
   getStaffCallState?(): StaffCallUiState;
+  getStaffVisualStatus?(): string;
   isSafeForService?(): boolean;
   setManualGantryInput?(x: number, z: number): void;
+  setRenderQuality?(profile: RenderQualityProfile): void;
   getMachineAudioState?(): MachineAudioState;
   debugLines?(): string[];
 }

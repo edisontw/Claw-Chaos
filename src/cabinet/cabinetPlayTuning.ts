@@ -5,6 +5,15 @@ export const CABINET_CLAW_PARK_POSITION = {
   z: M06_CABINET_CONFIG.chuteCenterZ,
 } as const;
 
+// Keep the fully-open claw inside the visible cabinet envelope at the
+// opaque side/back edges. The front limit still reaches the chute park.
+export const CABINET_GANTRY_TRAVEL_BOUNDS = {
+  xMin: -0.28,
+  xMax: 0.28,
+  zMin: -0.18,
+  zMax: M06_CABINET_CONFIG.chuteCenterZ,
+} as const;
+
 export const CABINET_PLAY_TUNING = {
   verticalHomeOffsetMeters: 0.085,
   fingerFriction: 1.94,

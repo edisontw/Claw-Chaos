@@ -6,6 +6,11 @@ import type {
 } from "../physics/PhysicsRuntime";
 import { M08_GANTRY_VISUAL_STYLE } from "../cabinet/cabinetVisualStyle";
 import {
+  DEFAULT_VISUAL_THEME,
+  type SurfaceMaterialToken,
+  type VisualTheme,
+} from "../theme/visualTheme";
+import {
   CLAW_LAB_CONFIG,
   advanceMotorCommand,
   createFingerPoints,
@@ -143,6 +148,16 @@ export function evaluatePt008Momentum(metrics: Pt008Metrics): boolean {
   );
 }
 
+function themedStandardMaterial(
+  token: SurfaceMaterialToken,
+): THREE.MeshStandardMaterial {
+  return new THREE.MeshStandardMaterial({
+    color: token.color,
+    roughness: token.roughness,
+    metalness: token.metalness,
+  });
+}
+
 function addCylinder(
   parent: THREE.Object3D,
   radius: number,
@@ -186,8 +201,16 @@ export interface GantryLabOptions {
   addLabFloor?: boolean;
   initialPosition?: { x: number; z: number };
   playReturnTarget?: { x: number; z: number };
+  travelBounds?: {
+    xMin: number;
+    xMax: number;
+    zMin: number;
+    zMax: number;
+  };
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
+  visualTheme?: VisualTheme;
+  clawCastsShadow?: boolean;
   gripProfile?: GantryGripProfile;
   controlsEnabled?: () => boolean;
   milestone?: string;
@@ -254,6 +277,10 @@ export function createGantryLabScene(
   options: GantryLabOptions = {},
 ): SimulationScene {
   const claw = CLAW_LAB_CONFIG;
+  const visualTheme =
+    options.visualTheme ?? DEFAULT_VISUAL_THEME;
+  const machineInterior = visualTheme.machine.interior;
+  const clawCastsShadow = options.clawCastsShadow ?? true;
   const verticalHomeOffset = options.verticalHomeOffset ?? 0;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
@@ -274,18 +301,32 @@ export function createGantryLabScene(
     claw.fingerRodRadius;
   const fingerLowerPadLengthMeters =
     options.gripProfile?.fingerLowerPadLengthMeters;
+  const boundedGantry = {
+    ...M02_GANTRY_CONFIG,
+    ...(options.travelBounds ?? {}),
+  };
   const gantry =
     verticalHomeOffset === 0
-      ? M02_GANTRY_CONFIG
+      ? boundedGantry
       : {
-          ...M02_GANTRY_CONFIG,
-          carriageY: M02_GANTRY_CONFIG.carriageY + verticalHomeOffset,
+          ...boundedGantry,
+          carriageY:
+            boundedGantry.carriageY + verticalHomeOffset,
           reelMaxPayout:
-            M02_GANTRY_CONFIG.reelMaxPayout + verticalHomeOffset,
+            boundedGantry.reelMaxPayout + verticalHomeOffset,
         };
-  const initialPosition = resolveGantryInitialPosition(
-    options.initialPosition,
-  );
+  const requestedInitial =
+    options.initialPosition ?? { x: 0, z: 0 };
+  const initialPosition = {
+    x: Math.max(
+      gantry.xMin,
+      Math.min(gantry.xMax, requestedInitial.x),
+    ),
+    z: Math.max(
+      gantry.zMin,
+      Math.min(gantry.zMax, requestedInitial.z),
+    ),
+  };
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const fingerJoints: RevoluteJointHandle[] = [];
@@ -293,11 +334,9 @@ export function createGantryLabScene(
   if (options.addLabFloor !== false) {
     const floor = new THREE.Mesh(
       new THREE.BoxGeometry(1.4, 0.04, 1.2),
-      new THREE.MeshStandardMaterial({
-        color: 0x626c78,
-        roughness: 0.92,
-        metalness: 0.02,
-      }),
+      themedStandardMaterial(
+        visualTheme.environment.floor,
+      ),
     );
     floor.position.y = -0.02;
     floor.receiveShadow = true;
@@ -308,11 +347,9 @@ export function createGantryLabScene(
     );
   }
 
-  const railMaterial = new THREE.MeshStandardMaterial({
-    color: 0x5d6876,
-    roughness: 0.64,
-    metalness: 0.42,
-  });
+  const railMaterial = themedStandardMaterial(
+    machineInterior.gantryRail,
+  );
   for (const z of [gantry.zMin - 0.04, gantry.zMax + 0.04]) {
     const rail = new THREE.Mesh(
       new THREE.BoxGeometry(
@@ -338,11 +375,9 @@ export function createGantryLabScene(
     0,
   );
 
-  const bridgeMaterial = new THREE.MeshStandardMaterial({
-    color: 0x727e8c,
-    roughness: 0.62,
-    metalness: 0.40,
-  });
+  const bridgeMaterial = themedStandardMaterial(
+    machineInterior.gantryBridge,
+  );
   const bridgeBeam = new THREE.Mesh(
     new THREE.BoxGeometry(
       M08_GANTRY_VISUAL_STYLE.bridgeBeamHalfX * 2,
@@ -375,24 +410,18 @@ export function createGantryLabScene(
       gantry.carriageHalfY * 2,
       gantry.carriageHalfZ * 2,
     ),
-    new THREE.MeshStandardMaterial({
-      color: 0xaeb8c3,
-      roughness: 0.60,
-      metalness: 0.42,
-    }),
+    themedStandardMaterial(
+      machineInterior.gantryCarriage,
+    ),
   );
   carriageVisual.castShadow = true;
 
-  const winchMetal = new THREE.MeshStandardMaterial({
-    color: 0xb7c0c9,
-    roughness: 0.60,
-    metalness: 0.46,
-  });
-  const winchDark = new THREE.MeshStandardMaterial({
-    color: 0x20262d,
-    roughness: 0.40,
-    metalness: 0.66,
-  });
+  const winchMetal = themedStandardMaterial(
+    machineInterior.winchMetal,
+  );
+  const winchDark = themedStandardMaterial(
+    machineInterior.winchDark,
+  );
   const drum = new THREE.Mesh(
     new THREE.CylinderGeometry(
       M08_GANTRY_VISUAL_STYLE.winchDrumRadius,
@@ -441,6 +470,50 @@ export function createGantryLabScene(
   pulley.castShadow = true;
   carriageVisual.add(pulley);
 
+  const primaryAccent =
+    visualTheme.machine.exterior.ledPrimary;
+  const secondaryAccent =
+    visualTheme.machine.exterior.ledSecondary;
+  const primaryAccentMaterial =
+    new THREE.MeshStandardMaterial({
+      color: primaryAccent.color,
+      emissive: primaryAccent.emissive,
+      emissiveIntensity:
+        primaryAccent.emissiveIntensity * 0.72,
+      roughness: primaryAccent.roughness,
+      metalness: primaryAccent.metalness,
+    });
+  const secondaryAccentMaterial =
+    new THREE.MeshStandardMaterial({
+      color: secondaryAccent.color,
+      emissive: secondaryAccent.emissive,
+      emissiveIntensity:
+        secondaryAccent.emissiveIntensity * 0.72,
+      roughness: secondaryAccent.roughness,
+      metalness: secondaryAccent.metalness,
+    });
+
+  for (const [z, material] of [
+    [-gantry.carriageHalfZ - 0.002, primaryAccentMaterial],
+    [gantry.carriageHalfZ + 0.002, secondaryAccentMaterial],
+  ] as const) {
+    const statusStrip = new THREE.Mesh(
+      new THREE.BoxGeometry(
+        gantry.carriageHalfX * 1.45,
+        0.006,
+        0.006,
+      ),
+      material,
+    );
+    statusStrip.position.set(
+      0,
+      gantry.carriageHalfY + 0.006,
+      z,
+    );
+    statusStrip.castShadow = false;
+    carriageVisual.add(statusStrip);
+  }
+
   scene.add(carriageVisual);
 
   const carriageBody = physics.createKinematicCuboid(
@@ -458,26 +531,18 @@ export function createGantryLabScene(
   );
   bindings.push({ mesh: carriageVisual, body: carriageBody });
 
-  const chrome = new THREE.MeshStandardMaterial({
-    color: 0xc9d0d8,
-    roughness: 0.58,
-    metalness: 0.52,
-  });
-  const brushedMetal = new THREE.MeshStandardMaterial({
-    color: 0x8d98a5,
-    roughness: 0.62,
-    metalness: 0.48,
-  });
-  const darkBand = new THREE.MeshStandardMaterial({
-    color: 0x252a31,
-    roughness: 0.70,
-    metalness: 0.26,
-  });
-  const tipMaterial = new THREE.MeshStandardMaterial({
-    color: 0x383d44,
-    roughness: 0.72,
-    metalness: 0.16,
-  });
+  const chrome = themedStandardMaterial(
+    machineInterior.clawChrome,
+  );
+  const brushedMetal = themedStandardMaterial(
+    machineInterior.clawBrushed,
+  );
+  const darkBand = themedStandardMaterial(
+    machineInterior.clawBand,
+  );
+  const tipMaterial = themedStandardMaterial(
+    machineInterior.clawTip,
+  );
 
   const hubVisual = new THREE.Group();
   addCylinder(hubVisual, 0.017, 0.045, 0.095, darkBand);
@@ -491,17 +556,32 @@ export function createGantryLabScene(
     claw.fingerPivotY + claw.collarHeight * 0.45 - claw.hubCenterY,
     chrome,
   );
+  addCylinder(
+    hubVisual,
+    claw.housingRadius + 0.0015,
+    0.010,
+    0.011,
+    primaryAccentMaterial,
+  );
+  addCylinder(
+    hubVisual,
+    claw.housingRadius + 0.0015,
+    0.008,
+    -0.050,
+    secondaryAccentMaterial,
+  );
+  hubVisual.traverse((object) => {
+    if (object instanceof THREE.Mesh) {
+      object.castShadow = clawCastsShadow;
+    }
+  });
   scene.add(hubVisual);
 
   const cable = new THREE.Mesh(
     new THREE.CylinderGeometry(0.0022, 0.0022, 1, 10),
-    new THREE.MeshStandardMaterial({
-      color: 0x30353c,
-      roughness: 0.72,
-      metalness: 0.38,
-    }),
+    themedStandardMaterial(machineInterior.cable),
   );
-  cable.castShadow = true;
+  cable.castShadow = clawCastsShadow;
   scene.add(cable);
 
   const serviceWireAttributes: Array<{
@@ -511,7 +591,7 @@ export function createGantryLabScene(
   }> = [];
   if (options.addServiceWires) {
     const wireMaterial = new THREE.LineBasicMaterial({
-      color: 0x1d2026,
+      color: machineInterior.serviceWireColor,
       transparent: true,
       opacity: 0.92,
     });
@@ -601,6 +681,11 @@ export function createGantryLabScene(
       fingerLowerPadRadiusMeters,
       fingerLowerPadLengthMeters,
     );
+    visual.traverse((object) => {
+      if (object instanceof THREE.Mesh) {
+        object.castShadow = clawCastsShadow;
+      }
+    });
     scene.add(visual);
 
     const body = physics.createDynamicCapsuleChain(

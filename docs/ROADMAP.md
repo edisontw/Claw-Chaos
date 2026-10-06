@@ -2002,6 +2002,285 @@ A physical chute win is already detected correctly by the existing ChuteSensor, 
 
 ---
 
+# Major Visual / Art Uplift
+
+**Status: IMPLEMENTATION COMPLETE CANDIDATE — Art Slices 1–5 on dedicated feature branch; deployed manual visual validation pending**
+
+Primary direction:
+- Theme A — Modern Japanese Arcade
+- clean white production cabinet
+- restrained pastel pink + cyan illumination
+- metal trim and controlled glass
+- original CLAW CHAOS branding
+- professional Japanese prize-center presentation
+
+Theme architecture:
+- visual identity is centralized in a reusable theme object instead of scattering cabinet/environment/staff color values through scene code
+- planned IDs are reserved for:
+  - Modern Japanese Arcade
+  - Cute Pastel Prize Shop
+  - Futuristic Neon Arcade
+  - Premium Retro-Modern
+- Theme A is the first implemented preset
+- machine, environment and staff palettes are separate theme groups
+- runtime URL/theme selection is routed through the theme resolver so later implemented skins do not require gameplay rewrites
+
+## Art Slice 1 — theme architecture + cabinet exterior foundation
+
+Implemented candidate:
+- production-style lower cabinet shell and front fascia
+- enlarged upper header/marquee structure
+- original CLAW CHAOS / PRIZE STATION marquee
+- white body with restrained chrome/metal trim
+- pastel pink + cyan exterior accent LEDs
+- upgraded control deck with visible joystick and action button
+- dedicated payment/card/coin panel
+- prize retrieval door treatment
+- access-panel seam, fasteners and ventilation detail
+- existing cabinet frame/glass/chute/deck colors now source from Theme A tokens
+- global scene background, hemisphere light and key light source from the environment theme
+- existing staff visual now receives a staff-theme palette while preserving the M10 service state machine
+- browser smoke exposes and verifies the active visual-theme ID
+
+Physics/gameplay contract:
+- all new exterior geometry is visual-only
+- no new Rapier collider was added
+- M06 cabinet physics geometry is unchanged
+- ChuteSensor remains authoritative
+- no prize parenting, magnet, weld, teleport carry, kinematic prize carry or hidden pickup force
+- Ring, Bridge, chute-adjacent and staff/restocking logic are unchanged
+
+Hard-coded visual audit after Slice 1:
+- gantry/bridge/winch/claw material literals were identified for Art Slice 2 migration
+- full arcade-room geometry and floor/wall/signage tokens are reserved for Art Slice 3
+- staff geometry/detail uplift is reserved for Art Slice 4
+- holistic reflection/shadow/performance balancing is reserved for Art Slice 5
+
+## Art Slice 2 — cabinet interior / gantry / lighting
+
+Implemented candidate:
+- visual-only interior backdrop inset over the existing physical back wall
+- metal interior frame accents around the backdrop
+- restrained pink/cyan vertical interior accent lighting
+- paired shallow ceiling light diffusers kept inside the existing cabinet envelope
+- gantry lab now resolves a visual theme explicitly while retaining a safe default
+- gantry rail, moving bridge, carriage, winch drum/flanges, pulley, cable and service-wire colors now come from theme tokens
+- claw housing chrome/brushed/band/tip materials now come from theme tokens
+- thin pink/cyan decorative claw-housing bands add machine identity without changing claw geometry
+- subtle carriage status strips move with the existing carriage visual
+- cabinet passes the active Theme A into the generic gantry visual path
+- no direct hard-coded metal/material colors remain in the gantry visual construction path
+
+Regression coverage:
+- new cabinet-interior visual-only contract test
+- interior dressing is required to remain inside the existing cabinet envelope
+- no decorative chute part is introduced
+- ceiling diffusers remain shallow for aiming clearance
+- theme regression now asserts gantry/bridge/carriage/winch/claw/lighting tokens
+- existing physics and browser regression suites remain authoritative for gameplay behavior
+
+Physics/gameplay contract:
+- no Rapier shape, body, joint, friction, force, torque, movement, reel, timing or chute geometry changed
+- new interior parts and decorative accent bands are render-only
+- physical claw finger meshes remain bound to the same existing rigid bodies
+- ChuteSensor, Ring, Bridge, chute-adjacent gameplay and M10 service/restocking logic are unchanged
+
+## Art Slice 3 — surrounding Japanese arcade environment
+
+Implemented candidate:
+- large glossy visual-only arcade floor using the environment floor token
+- rear wall and side architectural columns establish a real room around the playable cabinet
+- original CLAW CHAOS ARCADE / PRIZE FLOOR back-wall sign
+- six lightweight ceiling fixtures with emissive diffusers
+- four simplified neighboring crane-machine silhouettes:
+  - two near side machines
+  - two slightly smaller/farther side machines
+  - alternating pink/cyan header accents
+  - shared low-cost geometry and materials
+- two distant prize-display shelves with simple pastel prize silhouettes
+- neighboring machines remain outside the player movement lane and primary cabinet footprint
+- environment geometry uses no Rapier bodies or colliders
+- environment floor/wall/signage/neighbor-machine/ceiling colors come from environment/theme tokens
+- no direct hard-coded hexadecimal material colors remain in the environment construction path
+- environment identity is composed from the active theme ID plus a reusable `prize-center-room-v1` variant so later B/C/D skins can reuse the room layout
+- cabinet runtime exposes the loaded environment ID for browser smoke validation
+
+Performance approach:
+- no environment shadow-casting lights are added
+- existing hemisphere/directional/cabinet lighting remains authoritative
+- emissive ceiling/signage elements are visual only
+- repeated neighboring-machine components reuse geometry/material instances
+- background prize meshes use low segment counts
+- only the primary playable cabinet keeps full physics fidelity
+
+Regression coverage:
+- arcade environment is explicitly marked visual-only
+- neighboring machine centers remain at least 1 m off the cabinet centerline
+- ceiling structure remains above maximum player eye height
+- balanced left/right placement and pink/cyan accent distribution are asserted
+- room graph instantiation is tested without physics dependencies
+- theme regression covers environment floor/wall/signage/neighbor/ceiling tokens
+- cabinet/root browser smoke requires the runtime arcade-environment ID
+
+Physics/gameplay contract:
+- no environment collider was introduced
+- no player/cabinet/prize/claw physics parameter changed
+- camera movement bounds are unchanged
+- ChuteSensor, Ring, Bridge, chute-adjacent gameplay and M10 staff/restocking remain unchanged
+
+## Art Slice 4 — adult female arcade staff model uplift
+
+Implemented candidate:
+- staff rendering is split from M10 service logic into a replaceable visual-rig module
+- active character variant: `adult-female-arcade-attendant-v1`
+- adult proportions remain around 1.64 m and professional/non-sexualized
+- more detailed head and face:
+  - shaped face
+  - eyes + pupils
+  - brows
+  - nose
+  - mouth
+  - hair cap
+  - side locks
+  - ponytail + themed hair tie
+- upgraded Japanese arcade attendant uniform:
+  - blouse front
+  - structured uniform torso
+  - twin lapels
+  - waist trim
+  - front apron panel
+  - apron trim
+  - neck ribbon
+  - two-layer name badge
+  - skirt, stockings and shoes
+- articulated visual rig adds independent:
+  - left/right shoulders
+  - left/right forearms
+  - left/right legs
+  - head
+- walking now includes opposing shoulder/leg motion plus subtle head movement
+- service pose uses a bent right elbow/door-working posture and stationary legs
+- all staff material colors come from staff/theme tokens; no direct hexadecimal material colors remain in the character construction path
+- the service controller exposes the active character variant so a future GLB/skinned implementation can replace the procedural character without changing the service state machine
+
+Regression coverage:
+- staff model is explicitly marked visual-only
+- character variant and approximate adult height are asserted
+- articulated rig joint names are asserted
+- professional uniform and recognizable face/hair details are asserted
+- rendered descendants are required to remain visual-only
+- existing physical service-door regression still drives the real right-side collider through open/close/return
+- browser smoke requires the active staff-character variant in cabinet/root scenes
+
+Physics/service contract:
+- `staffServiceSequence` timing/state logic is unchanged
+- service approach/open/door-open/close/depart coordinates and timing are unchanged
+- physical service-door kinematic translation/rotation formula is preserved
+- restock planner, restock physics and inventory service logic are unchanged
+- staff character has no Rapier body/collider and cannot interfere with prizes or the player
+- ChuteSensor, Ring, Bridge and chute-adjacent gameplay are unchanged
+
+## Art Slice 5 — holistic polish / balance / mobile performance
+
+Implemented candidate:
+- desktop/mobile render profiles now control art cost in addition to pixel ratio and key-shadow resolution
+- desktop retains the full arcade-room dressing and cabinet PointLight shadows
+- mobile uses reduced arcade background dressing:
+  - keeps both near neighboring machines
+  - omits the two farther neighboring machines
+  - omits distant prize-display shelves
+- mobile disables the cabinet PointLight cube-shadow pass, avoiding six shadow renders from the local point light
+- desktop cabinet PointLight shadow map is reduced from the previous fixed 1024 to a profile-controlled 512
+- cabinet PointLight shadow near/far range is constrained to the actual cabinet-light volume
+- background arcade architecture and neighboring machines no longer cast directional shadows; the playable cabinet/prizes remain the visual and shadow focus
+- ACES Filmic tone mapping is enabled globally with restrained profile-controlled exposure
+- directional key-light shadow camera is tightened around the playable machine / near environment instead of spending resolution on empty space
+- existing Theme A glass remains intentionally subtle to protect aiming readability
+- browser smoke now asserts the final ACES art pipeline in addition to theme/environment/staff identity
+
+Mobile/performance contract:
+- physics timestep, Rapier bodies, colliders, joints, grip forces and game state are identical across render profiles
+- mobile reductions affect render-only background detail and shadow work
+- renderer pixel-ratio cap remains 1.5 on mobile and 2.0 on desktop
+- primary cabinet remains full-detail on both profiles
+- near environment remains present on mobile so the scene still reads as an arcade rather than an empty lab
+
+Regression coverage:
+- render-profile tests lock desktop/mobile background and cabinet-shadow budgets
+- reduced arcade-room tests verify far machines/displays are omitted while both near machines remain
+- existing full environment, staff, cabinet, physics and layout tests remain authoritative
+- cabinet/root browser smoke requires Theme A + arcade room + staff variant + ACES tone mapping
+
+Art uplift exit criteria before merge:
+- full CI green
+- no physics/gameplay regression
+- feature branch remains cleanly based on current `main`
+- deployed/manual desktop visual validation
+- deployed/manual mobile visual validation
+- verify glass does not obstruct aim
+- verify background does not compete with prizes/claw
+- verify staff scale/service pose reads naturally
+- verify acceptable mobile frame pacing during normal play and CALL STAFF
+
+## Manual validation round 1 — gameplay/readability/staff fixes
+
+Implemented after deployed visual review:
+- playable-stock count now drops as soon as a prize physically falls below the chute opening
+- ChuteSensor remains the only win-authority path
+- CALL STAFF is available whenever the machine is operating, not only at low stock
+- no-deficit staff calls perform a valid service cycle without spawning unnecessary prizes
+- claw returned from near-black to silver/chrome with dark structural accents for contrast against the bright interior
+- cabinet-play claw visuals no longer cast the oversized play-area shadow
+- staff service route moved beside the cabinet and away from the player's front camera
+- staff visual stack now has three levels:
+  1. desktop/high-detail: `adult-female-arcade-attendant-v4-realistic-rigged`
+     - CC-BY-4.0 rigged office-woman source by Pixel_Monster
+     - original 16.36 MB source processed in CI, not committed
+     - optimized local asset ~2.08 MB
+     - local Three.js DRACO decoder; no external CDN runtime dependency
+  2. mobile/lightweight: `adult-female-arcade-attendant-v3-skinned`
+     - Quaternius CC0 skeletal character
+     - Idle / Walking / PickUp clips
+  3. final fallback: procedural `adult-female-arcade-attendant-v2-realistic`
+- desktop browser smoke must reach `data-staff-visual="realistic"`; a silent fallback does not pass CI
+- staff remains visual-only; service-door physics and restocking state machine are unchanged
+
+Latest automated gate at this stage:
+- 61 test files PASS
+- 195 tests PASS
+- desktop cabinet/root browser smoke loads the v4 realistic rigged staff
+- all prior layout/browser smokes remain required
+
+Next action:
+1. deploy the latest PR #70 preview
+2. manually validate desktop staff scale/orientation/animation and claw readability
+3. manually validate mobile remains on the lighter skinned staff
+4. keep PR #70 Draft until both visual checks pass
+
+## Manual validation round 2 — generated staff cutout
+
+The next screenshot review showed the rendered attendant was still a low-poly
+character and faced away from the player. The character presentation is now
+replaced with a generated photorealistic transparent cutout, rendered as a
+camera-facing sprite at 1.64 m human scale. This keeps the attendant looking
+toward the player as the camera moves and removes the GLB/DRACO loading path
+from the active staff visual. A procedural visual remains only as an asset-load
+fallback. The portrait asset is 118 KB WebP with alpha transparency.
+
+The generated attendant wears a white blouse, pink trim and bow, charcoal
+waistcoat, knee-length skirt, dark tights and low-heel shoes. Her raised open
+hand presents toward the cabinet. The cutout remains visual-only; service
+route, service door, restocking, prize inventory and physics are unchanged.
+
+Browser smoke now requires:
+- `adult-female-arcade-attendant-image-billboard-v1`
+- `data-staff-visual="image"`
+
+Manual desktop/mobile appearance approval is still required before PR #70 can
+leave Draft.
+
+---
+
 # M11 — Second Machine Family
 
 ## Preferred order
@@ -2186,3 +2465,53 @@ M00 repository + Vite/Web/physics harness
 ```
 
 Do not start the full arcade environment before these gates pass.
+
+
+---
+
+## M11 — Adaptive graphics + reward feedback
+
+### Slice 1 — adaptive graphics / FPS telemetry
+
+**Status: IMPLEMENTED CANDIDATE on Theme A art branch**
+
+Goal:
+- keep the realistic Theme A presentation usable on older desktop/laptop integrated GPUs without changing gameplay or physics
+
+Implemented:
+- user-facing `AUTO / HIGH / MEDIUM / LOW` graphics selector
+- URL overrides: `?quality=high|medium|low` (or `graphics=`)
+- Auto starts desktop-like devices at High and touch-like devices at Medium
+- Auto observes smoothed real frame rate after a 5 s warmup
+- sustained sub-48 FPS on High downgrades to Medium
+- sustained sub-34 FPS on Medium downgrades to Low
+- no automatic upgrade during a session, preventing quality oscillation
+- High: DPR cap 2, soft 1024 key shadow, cabinet local shadow, full arcade dressing
+- Medium: DPR cap 1.35, 512 key shadow, no cabinet local shadow, reduced arcade dressing
+- Low: DPR cap 1, dynamic shadows disabled, minimal arcade dressing
+- background decoration can be hidden/restored at runtime without rebuilding or touching the physics scene
+- DOM telemetry exposes current mode, effective profile, rounded FPS and downgrade count
+- debug overlay includes the same render telemetry
+
+Physics/gameplay contract:
+- fixed timestep unchanged
+- max physics catch-up unchanged
+- prize/claw/cabinet colliders unchanged
+- grip/friction/torque unchanged
+- ChuteSensor remains authoritative for wins
+- staff service/restock logic unchanged
+
+Next Slice:
+- ChuteSensor-triggered `PRIZE GET!` audio/visual feedback
+- distinct last-prize `MACHINE CLEARED!` feedback
+- low-cost CSS/Web Audio effects with reduced animation under Low graphics
+
+
+### Theme A manual visual validation — claw contrast / edge visibility
+
+Implemented before default-site rollout:
+- cabinet rear interior changed from near-white to a calm low-saturation blue-gray
+- silver/chrome claw brightened while dark bands/tips retain strong silhouette contrast
+- cabinet-only gantry travel bounds keep the fully-open claw inside the opaque side/back viewing envelope
+- front travel still reaches the existing chute park position
+- generic M02 gantry laboratory bounds and physics tuning remain unchanged
