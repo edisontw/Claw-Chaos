@@ -25,6 +25,20 @@ function resolvePublicAssetUrl(path: string): string {
   return new URL(path, document.baseURI).toString();
 }
 
+export function createGeneratedStaffSpriteMaterial(
+  texture: THREE.Texture,
+): THREE.SpriteMaterial {
+  return new THREE.SpriteMaterial({
+    map: texture,
+    color: 0xffffff,
+    transparent: true,
+    alphaTest: 0.015,
+    depthTest: false,
+    depthWrite: false,
+    toneMapped: false,
+  });
+}
+
 /**
  * A photorealistic, generated cutout rendered as a camera-facing sprite.
  * It is visual-only and intentionally has no physics representation.
@@ -62,15 +76,8 @@ export class GeneratedArcadeAttendantVisual {
         texture.generateMipmaps = true;
         texture.needsUpdate = true;
 
-        const material = new THREE.SpriteMaterial({
-          map: texture,
-          color: 0xffffff,
-          transparent: true,
-          alphaTest: 0.015,
-          depthTest: false,
-          depthWrite: false,
-          toneMapped: false,
-        });
+        const material =
+          createGeneratedStaffSpriteMaterial(texture);
         const sprite = new THREE.Sprite(material);
         sprite.name = "generated-arcade-attendant-cutout";
         sprite.center.set(0.5, 0);
