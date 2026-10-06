@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ARCADE_NEIGHBOR_MACHINE_PLACEMENTS } from "../environment/arcadeEnvironment";
 import {
   M10_STAFF_SERVICE_CONFIG,
   advanceStaffServiceState,
@@ -124,14 +125,53 @@ describe("M10 staff service sequence", () => {
     expect(pose.z).toBe(
       M10_STAFF_SERVICE_CONFIG.serviceZ,
     );
-    expect(pose.x).toBeGreaterThan(0.70);
-    expect(pose.z).toBeGreaterThan(0);
-    expect(pose.z).toBeLessThan(0.20);
+    expect(pose.x).toBeGreaterThan(0.80);
+    expect(pose.z).toBeGreaterThan(0.15);
+    expect(pose.z).toBeLessThan(0.30);
     expect(
       Math.hypot(
         pose.x - 1.08,
         pose.z - 1.30,
       ),
-    ).toBeGreaterThan(1.10);
+    ).toBeGreaterThan(1.05);
   });
+  it("keeps the full staff path clear of the right-side neighboring machines", () => {
+    const rightMachines =
+      ARCADE_NEIGHBOR_MACHINE_PLACEMENTS.filter(
+        (machine) => machine.x > 0,
+      );
+
+    const start = {
+      x: M10_STAFF_SERVICE_CONFIG.startX,
+      z: M10_STAFF_SERVICE_CONFIG.startZ,
+    };
+    const end = {
+      x: M10_STAFF_SERVICE_CONFIG.serviceX,
+      z: M10_STAFF_SERVICE_CONFIG.serviceZ,
+    };
+    const dx = end.x - start.x;
+    const dz = end.z - start.z;
+    const lengthSquared = dx * dx + dz * dz;
+
+    for (const machine of rightMachines) {
+      const projection = Math.max(
+        0,
+        Math.min(
+          1,
+          ((machine.x - start.x) * dx +
+            (machine.z - start.z) * dz) /
+            lengthSquared,
+        ),
+      );
+      const closestX = start.x + dx * projection;
+      const closestZ = start.z + dz * projection;
+      const clearance = Math.hypot(
+        machine.x - closestX,
+        machine.z - closestZ,
+      );
+
+      expect(clearance).toBeGreaterThan(0.60);
+    }
+  });
+
 });

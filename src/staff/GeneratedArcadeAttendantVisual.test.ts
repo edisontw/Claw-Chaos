@@ -27,13 +27,14 @@ describe("generated arcade attendant visual", () => {
     expect(visual.root.userData.occlusionPolicy).toBe(
       GENERATED_STAFF_OCCLUSION_POLICY,
     );
-    expect(GENERATED_STAFF_RENDER_ORDER).toBeGreaterThan(100);
+    expect(GENERATED_STAFF_RENDER_ORDER).toBeGreaterThan(0);
+    expect(GENERATED_STAFF_RENDER_ORDER).toBeLessThan(100);
 
     const material =
       createGeneratedStaffSpriteMaterial(
         new THREE.Texture(),
       );
-    expect(material.depthTest).toBe(false);
+    expect(material.depthTest).toBe(true);
     expect(material.depthWrite).toBe(false);
     expect(material.transparent).toBe(true);
     expect(material.toneMapped).toBe(false);

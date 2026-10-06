@@ -36,8 +36,8 @@ export const ARCADE_NEIGHBOR_MACHINE_PLACEMENTS:
     },
     {
       id: "neighbor-right-near",
-      x: 1.18,
-      z: 0.02,
+      x: 1.55,
+      z: -0.12,
       accent: "secondary",
       scale: 1,
     },
@@ -50,8 +50,8 @@ export const ARCADE_NEIGHBOR_MACHINE_PLACEMENTS:
     },
     {
       id: "neighbor-right-far",
-      x: 1.92,
-      z: -0.12,
+      x: 2.18,
+      z: -0.20,
       accent: "primary",
       scale: 0.92,
     },
