@@ -1,3 +1,4 @@
+import * as THREE from "three";
 import { describe, expect, it } from "vitest";
 import {
   GENERATED_STAFF_ASSET_PATH,
@@ -6,6 +7,7 @@ import {
   GENERATED_STAFF_RENDER_ORDER,
   GENERATED_STAFF_TARGET_HEIGHT_METERS,
   GeneratedArcadeAttendantVisual,
+  createGeneratedStaffSpriteMaterial,
 } from "./GeneratedArcadeAttendantVisual";
 
 describe("generated arcade attendant visual", () => {
@@ -26,6 +28,16 @@ describe("generated arcade attendant visual", () => {
       GENERATED_STAFF_OCCLUSION_POLICY,
     );
     expect(GENERATED_STAFF_RENDER_ORDER).toBeGreaterThan(100);
+
+    const material =
+      createGeneratedStaffSpriteMaterial(
+        new THREE.Texture(),
+      );
+    expect(material.depthTest).toBe(false);
+    expect(material.depthWrite).toBe(false);
+    expect(material.transparent).toBe(true);
+    expect(material.toneMapped).toBe(false);
+
     expect(visual.root.visible).toBe(false);
     expect(visual.status).toBe("fallback");
   });
