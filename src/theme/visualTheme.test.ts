@@ -73,7 +73,7 @@ describe("visual theme architecture", () => {
     );
   });
 
-  it("keeps the claw visibly darker than the bright interior backdrop", () => {
+  it("keeps the silver claw legible against a calm mid-tone interior", () => {
     const theme = getVisualTheme();
     const brightness = (color: number): number => {
       const r = (color >> 16) & 0xff;
@@ -100,9 +100,10 @@ describe("visual theme architecture", () => {
       theme.machine.interior.clawBand.color,
     );
 
-    expect(backdrop - claw).toBeGreaterThan(35);
-    expect(claw - band).toBeGreaterThan(100);
-    expect(claw - tip).toBeGreaterThan(90);
+    expect(backdrop).toBeLessThan(160);
+    expect(claw - backdrop).toBeGreaterThan(70);
+    expect(claw - band).toBeGreaterThan(150);
+    expect(claw - tip).toBeGreaterThan(115);
   });
 
   it("keeps the named Theme A preset stable", () => {

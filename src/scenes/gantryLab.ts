@@ -201,6 +201,12 @@ export interface GantryLabOptions {
   addLabFloor?: boolean;
   initialPosition?: { x: number; z: number };
   playReturnTarget?: { x: number; z: number };
+  travelBounds?: {
+    xMin: number;
+    xMax: number;
+    zMin: number;
+    zMax: number;
+  };
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
@@ -295,18 +301,32 @@ export function createGantryLabScene(
     claw.fingerRodRadius;
   const fingerLowerPadLengthMeters =
     options.gripProfile?.fingerLowerPadLengthMeters;
+  const boundedGantry = {
+    ...M02_GANTRY_CONFIG,
+    ...(options.travelBounds ?? {}),
+  };
   const gantry =
     verticalHomeOffset === 0
-      ? M02_GANTRY_CONFIG
+      ? boundedGantry
       : {
-          ...M02_GANTRY_CONFIG,
-          carriageY: M02_GANTRY_CONFIG.carriageY + verticalHomeOffset,
+          ...boundedGantry,
+          carriageY:
+            boundedGantry.carriageY + verticalHomeOffset,
           reelMaxPayout:
-            M02_GANTRY_CONFIG.reelMaxPayout + verticalHomeOffset,
+            boundedGantry.reelMaxPayout + verticalHomeOffset,
         };
-  const initialPosition = resolveGantryInitialPosition(
-    options.initialPosition,
-  );
+  const requestedInitial =
+    options.initialPosition ?? { x: 0, z: 0 };
+  const initialPosition = {
+    x: Math.max(
+      gantry.xMin,
+      Math.min(gantry.xMax, requestedInitial.x),
+    ),
+    z: Math.max(
+      gantry.zMin,
+      Math.min(gantry.zMax, requestedInitial.z),
+    ),
+  };
   const bindings: SimulationScene["bindings"] = [];
   const fingerBodies: RigidBodyHandle[] = [];
   const fingerJoints: RevoluteJointHandle[] = [];

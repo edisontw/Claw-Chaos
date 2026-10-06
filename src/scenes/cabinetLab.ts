@@ -21,6 +21,7 @@ import {
 } from "../cabinet/cabinetVisualStyle";
 import {
   CABINET_CLAW_PARK_POSITION,
+  CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
@@ -325,6 +326,7 @@ export function createCabinetLabScene(
       visualTheme,
       clawCastsShadow: false,
       initialPosition: CABINET_CLAW_PARK_POSITION,
+      travelBounds: CABINET_GANTRY_TRAVEL_BOUNDS,
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,

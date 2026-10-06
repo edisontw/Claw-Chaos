@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { CLAW_LAB_CONFIG } from "../scenes/clawLab";
+import {
+  CLAW_LAB_CONFIG,
+  computeFingerTipSpan,
+} from "../scenes/clawLab";
 import {
   M02_GANTRY_CONFIG,
   resolveGantryInitialPosition,
@@ -8,6 +11,7 @@ import { M04_PLAY_CONFIG } from "../scenes/m04PlayCycle";
 import { M06_CABINET_CONFIG } from "./cabinetGeometry";
 import {
   CABINET_CLAW_PARK_POSITION,
+  CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
 } from "./cabinetPlayTuning";
 
@@ -31,6 +35,38 @@ describe("Cabinet play tuning", () => {
     );
     expect(CABINET_CLAW_PARK_POSITION.z).toBeLessThanOrEqual(
       M02_GANTRY_CONFIG.zMax,
+    );
+  });
+
+  it("keeps the fully-open claw inside the side/back viewing envelope", () => {
+    const openRadius =
+      computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5 +
+      CLAW_LAB_CONFIG.fingerTipVisualRadius;
+
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMin).toBeLessThanOrEqual(
+      CABINET_CLAW_PARK_POSITION.x,
+    );
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMax).toBe(
+      CABINET_CLAW_PARK_POSITION.z,
+    );
+
+    expect(
+      Math.abs(CABINET_GANTRY_TRAVEL_BOUNDS.xMin) +
+        openRadius,
+    ).toBeLessThanOrEqual(
+      M06_CABINET_CONFIG.interiorHalfX + 1e-6,
+    );
+    expect(
+      CABINET_GANTRY_TRAVEL_BOUNDS.xMax +
+        openRadius,
+    ).toBeLessThanOrEqual(
+      M06_CABINET_CONFIG.interiorHalfX + 1e-6,
+    );
+    expect(
+      Math.abs(CABINET_GANTRY_TRAVEL_BOUNDS.zMin) +
+        openRadius,
+    ).toBeLessThanOrEqual(
+      M06_CABINET_CONFIG.interiorHalfZ + 1e-6,
     );
   });
 
