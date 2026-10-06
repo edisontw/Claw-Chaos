@@ -92,7 +92,7 @@ describe("M10 restock with the real service door", () => {
       body: ReturnType<typeof createPrize>["body"];
     }> = [];
     let nextIndex = 0;
-    let sinceLastSpawn =
+    let sinceLastSpawn: number =
       M10_RESTOCK_CONFIG.insertionIntervalSeconds;
     let doorClosingSeconds = 0;
 
