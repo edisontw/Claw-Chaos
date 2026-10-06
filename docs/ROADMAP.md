@@ -2639,5 +2639,5 @@ Invariant:
 Implemented:
 - extend visual staff approach duration from 2.6 s to 3.2 s
 - use asymmetric approach easing so the final approach near the cabinet is substantially slower than the middle of the walk
-- keep service position, service lane, departure timing, physical service door, and restock behavior unchanged
+- keep service position, service lane, departure timing, physical service door, and restock behavior unchanged; this is visual motion timing only
 - add regression coverage requiring the last 0.4 s of approach travel to be less than 35% of an equal-duration mid-approach segment
