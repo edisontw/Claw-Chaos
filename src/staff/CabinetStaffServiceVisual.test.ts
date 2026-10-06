@@ -49,7 +49,7 @@ describe("M10 physical service door", () => {
 
     for (
       let tick = 0;
-      tick < PHYSICS_HZ * 4;
+      tick < PHYSICS_HZ * 5;
       tick += 1
     ) {
       visual.update(

@@ -12,7 +12,7 @@ export interface StaffServiceState {
 }
 
 export const M10_STAFF_SERVICE_CONFIG = {
-  approachSeconds: 2.6,
+  approachSeconds: 3.2,
   doorOpeningSeconds: 0.9,
   doorClosingSeconds: 0.8,
   departureSeconds: 2.2,
@@ -156,8 +156,13 @@ export function staffServicePose(
 
   const approachProgress =
     state.phase === "approaching"
-      ? smoothstep(
-          state.elapsedSeconds / c.approachSeconds,
+      ? 1 -
+        Math.pow(
+          1 -
+            smoothstep(
+              state.elapsedSeconds / c.approachSeconds,
+            ),
+          1.25,
         )
       : 1;
   const departureProgress =
