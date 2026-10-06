@@ -5,6 +5,9 @@ export const GENERATED_STAFF_CHARACTER_VARIANT =
 export const GENERATED_STAFF_ASSET_PATH =
   "assets/staff/arcade-attendant-cutout.webp";
 export const GENERATED_STAFF_TARGET_HEIGHT_METERS = 1.64;
+export const GENERATED_STAFF_RENDER_ORDER = 120;
+export const GENERATED_STAFF_OCCLUSION_POLICY =
+  "foreground-cutout";
 const GENERATED_STAFF_TEXTURE_ASPECT = 1024 / 1536;
 
 export type GeneratedStaffVisualStatus =
@@ -38,6 +41,8 @@ export class GeneratedArcadeAttendantVisual {
     this.root.userData.characterVariant =
       GENERATED_STAFF_CHARACTER_VARIANT;
     this.root.userData.assetStatus = "loading";
+    this.root.userData.occlusionPolicy =
+      GENERATED_STAFF_OCCLUSION_POLICY;
 
     if (
       typeof window === "undefined" ||
@@ -62,6 +67,7 @@ export class GeneratedArcadeAttendantVisual {
           color: 0xffffff,
           transparent: true,
           alphaTest: 0.015,
+          depthTest: false,
           depthWrite: false,
           toneMapped: false,
         });
@@ -75,6 +81,9 @@ export class GeneratedArcadeAttendantVisual {
           1,
         );
         sprite.userData.visualOnly = true;
+        sprite.userData.occlusionPolicy =
+          GENERATED_STAFF_OCCLUSION_POLICY;
+        sprite.renderOrder = GENERATED_STAFF_RENDER_ORDER;
         sprite.castShadow = false;
         sprite.receiveShadow = false;
         this.root.add(sprite);

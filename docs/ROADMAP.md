@@ -2598,3 +2598,19 @@ Service sequencing refinement:
 Restock variety refinement:
 - replacement selection now shuffles the prize pool without replacement before repeating a type
 - rolling prizes are inserted farther inside/back from the open service door
+
+
+### Staff visibility follow-up — foreground photorealistic cutout
+
+Problem:
+- the photorealistic staff billboard is about 1.09 m wide at 1.64 m human height
+- at the previous right-side service pose, part of the sprite projected behind the cabinet/frame and was clipped by normal depth testing
+
+Implemented:
+- move the visual staff service path from the cabinet's right-rear side toward the right-front side
+- keep the staff asset visual-only; service-door and restock physics remain unchanged
+- render the photorealistic cutout as an explicit foreground billboard with depth writes disabled, depth testing disabled, and a high transparent render order
+- retain normal alpha cutout behavior and no staff shadows
+
+Invariant:
+- no claw, prize, chute, gantry, service-door collider, or restock physics parameters changed
