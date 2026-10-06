@@ -15,10 +15,16 @@ import {
   createRestockPlan,
 } from "./restockPlanner";
 
-function openServiceDoor(
+function setServiceDoorAngle(
   serviceDoorBody: ReturnType<
     typeof createCabinetPhysics
   >["serviceDoorBody"],
+  closedCenter: {
+    x: number;
+    y: number;
+    z: number;
+  },
+  angle: number,
 ): void {
   const c = M06_CABINET_CONFIG;
   const hinge = {
@@ -27,11 +33,8 @@ function openServiceDoor(
       -c.interiorHalfZ -
       c.wallHalfThickness * 2,
   };
-  const closed = serviceDoorBody.translation();
-  const offsetX = closed.x - hinge.x;
-  const offsetZ = closed.z - hinge.z;
-  const angle =
-    M10_STAFF_SERVICE_CONFIG.doorOpenRadians;
+  const offsetX = closedCenter.x - hinge.x;
+  const offsetZ = closedCenter.z - hinge.z;
   const cos = Math.cos(angle);
   const sin = Math.sin(angle);
 
@@ -40,7 +43,7 @@ function openServiceDoor(
       hinge.x +
       offsetX * cos +
       offsetZ * sin,
-    y: closed.y,
+    y: closedCenter.y,
     z:
       hinge.z -
       offsetX * sin +
@@ -54,11 +57,17 @@ function openServiceDoor(
   });
 }
 
-describe("M10 restock with the real service door open", () => {
-  it("keeps a full dense-layout refill inside the playable cabinet", async () => {
+describe("M10 restock with the real service door", () => {
+  it("keeps a full dense-layout refill inside when the door closes after insertion", async () => {
     const physics = await PhysicsRuntime.create();
     const cabinet = createCabinetPhysics(physics);
-    openServiceDoor(cabinet.serviceDoorBody);
+    const closedDoorCenter =
+      cabinet.serviceDoorBody.translation();
+    setServiceDoorAngle(
+      cabinet.serviceDoorBody,
+      closedDoorCenter,
+      M10_STAFF_SERVICE_CONFIG.doorOpenRadians,
+    );
     physics.step();
 
     const layout = createCabinetLayout(
@@ -85,6 +94,7 @@ describe("M10 restock with the real service door open", () => {
     let nextIndex = 0;
     let sinceLastSpawn =
       M10_RESTOCK_CONFIG.insertionIntervalSeconds;
+    let doorClosingSeconds = 0;
 
     for (
       let tick = 0;
@@ -121,6 +131,21 @@ describe("M10 restock with the real service door open", () => {
         });
         nextIndex += 1;
         sinceLastSpawn = 0;
+      }
+
+      if (nextIndex >= plan.length) {
+        doorClosingSeconds += 1 / PHYSICS_HZ;
+        const closeProgress = Math.min(
+          1,
+          doorClosingSeconds /
+            M10_STAFF_SERVICE_CONFIG.doorClosingSeconds,
+        );
+        setServiceDoorAngle(
+          cabinet.serviceDoorBody,
+          closedDoorCenter,
+          M10_STAFF_SERVICE_CONFIG.doorOpenRadians *
+            (1 - closeProgress),
+        );
       }
 
       physics.step();
