@@ -111,6 +111,32 @@ describe("M10 staff service sequence", () => {
     expect(staffServicePose(state).visible).toBe(false);
   });
 
+  it("slows visibly during the final approach to the cabinet", () => {
+    const poseAt = (seconds: number) =>
+      staffServicePose({
+        phase: "approaching" as const,
+        elapsedSeconds: seconds,
+      });
+
+    const middleA = poseAt(1.6);
+    const middleB = poseAt(2.0);
+    const lateA = poseAt(2.8);
+    const lateB = poseAt(3.2);
+
+    const middleTravel = Math.hypot(
+      middleB.x - middleA.x,
+      middleB.z - middleA.z,
+    );
+    const lateTravel = Math.hypot(
+      lateB.x - lateA.x,
+      lateB.z - lateA.z,
+    );
+
+    expect(lateTravel).toBeLessThan(
+      middleTravel * 0.35,
+    );
+  });
+
   it("keeps the staff outside the cabinet at the service pose", () => {
     const state = {
       phase: "door_open" as const,
