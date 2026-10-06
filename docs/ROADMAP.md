@@ -2550,3 +2550,16 @@ Implemented:
 - ordinary win and machine-clear cues use stronger gains than the first candidate
 - each note now layers a triangle fundamental with a quieter octave sine harmonic for better phone/laptop-speaker audibility
 - reward cue timing remains short and does not affect simulation timing or physics
+
+
+### Startup auto-win regression fix
+
+Implemented:
+- corrected the default `loose` layout so its pillow no longer spawns over the physical chute opening
+- initial layout settling is explicitly treated as setup, not gameplay
+- playable-stock removal and ChuteSensor WIN polling do not run until the initial settle pipeline is READY/TIMEOUT_READY
+- added a physical regression test that runs the production default loose seed for 4 seconds and requires zero chute wins during startup settling
+
+Invariant:
+- after startup is armed, ChuteSensor remains the sole authoritative WIN trigger
+- no claw, gantry, prize, chute, grip, or fixed-step physics parameters changed
