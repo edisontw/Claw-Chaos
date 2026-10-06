@@ -2593,3 +2593,8 @@ Validation refinement:
 Service sequencing refinement:
 - after the final replacement is inserted, the physical service door now begins closing immediately while prizes finish settling
 - this prevents round prizes from rolling out through a door that previously stayed open until settle completion
+
+
+Restock variety refinement:
+- replacement selection now shuffles the prize pool without replacement before repeating a type
+- rolling prizes are inserted farther inside/back from the open service door
