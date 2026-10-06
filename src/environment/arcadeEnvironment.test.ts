@@ -104,12 +104,21 @@ describe("Art Slice 3 arcade environment", () => {
     }
   });
 
-  it("keeps neighboring machines outside the player movement lane", () => {
+  it("keeps neighboring machines outside the player and staff movement lanes", () => {
     for (const machine of ARCADE_NEIGHBOR_MACHINE_PLACEMENTS) {
       expect(Math.abs(machine.x)).toBeGreaterThanOrEqual(1.0);
       expect(machine.scale).toBeGreaterThanOrEqual(0.85);
       expect(machine.scale).toBeLessThanOrEqual(1.05);
     }
+
+    const rightNear =
+      ARCADE_NEIGHBOR_MACHINE_PLACEMENTS.find(
+        (machine) =>
+          machine.id === "neighbor-right-near",
+      );
+    expect(rightNear).toBeDefined();
+    expect(rightNear!.x).toBeGreaterThanOrEqual(1.50);
+    expect(rightNear!.z).toBeLessThanOrEqual(-0.10);
   });
 
   it("keeps ceiling fixtures above the adjustable player eye height", () => {

@@ -2614,3 +2614,21 @@ Implemented:
 
 Invariant:
 - no claw, prize, chute, gantry, service-door collider, or restock physics parameters changed
+
+
+### Staff service lane follow-up — avoid adjacent-machine emergence
+
+Problem:
+- the previous visual staff start point (x=1.26, z=0.02) was nearly coincident with the right-near neighboring machine (x=1.18, z=0.02)
+- because the photo cutout was also forced into the foreground, the attendant could appear to emerge through the adjacent machine/shelf
+
+Implemented:
+- move the staff start point into the right-front aisle and route her diagonally toward the cabinet service position
+- move the right-side neighboring machines farther outward/back to preserve a visible service corridor
+- restore normal scene depth testing for the photorealistic billboard while retaining depthWrite=false
+- keep only a modest transparent render order instead of forcing the staff above all cabinet/environment geometry
+- add regression coverage requiring the full staff path to remain >0.60 m from right-side neighboring-machine centers, preserving a visible aisle rather than relying on draw order
+
+Invariant:
+- staff remains visual-only
+- service door, restock, claw, prize, chute, and gantry physics are unchanged

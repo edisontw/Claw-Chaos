@@ -5,9 +5,9 @@ export const GENERATED_STAFF_CHARACTER_VARIANT =
 export const GENERATED_STAFF_ASSET_PATH =
   "assets/staff/arcade-attendant-cutout.webp";
 export const GENERATED_STAFF_TARGET_HEIGHT_METERS = 1.64;
-export const GENERATED_STAFF_RENDER_ORDER = 120;
+export const GENERATED_STAFF_RENDER_ORDER = 20;
 export const GENERATED_STAFF_OCCLUSION_POLICY =
-  "foreground-cutout";
+  "scene-depth";
 const GENERATED_STAFF_TEXTURE_ASPECT = 1024 / 1536;
 
 export type GeneratedStaffVisualStatus =
@@ -33,7 +33,7 @@ export function createGeneratedStaffSpriteMaterial(
     color: 0xffffff,
     transparent: true,
     alphaTest: 0.015,
-    depthTest: false,
+    depthTest: true,
     depthWrite: false,
     toneMapped: false,
   });
