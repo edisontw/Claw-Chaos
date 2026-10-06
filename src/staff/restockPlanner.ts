@@ -41,31 +41,60 @@ export function createRestockPlan(
     "m10:restock:" + seed,
   );
   const plan: RestockPlacement[] = [];
+  let cycle: string[] = [];
+
+  const refillCycle = (): void => {
+    cycle = [...prizePool];
+    for (
+      let index = cycle.length - 1;
+      index > 0;
+      index -= 1
+    ) {
+      const swapIndex = Math.min(
+        index,
+        Math.floor(rng.next() * (index + 1)),
+      );
+      [cycle[index], cycle[swapIndex]] = [
+        cycle[swapIndex]!,
+        cycle[index]!,
+      ];
+    }
+  };
 
   for (let index = 0; index < count; index += 1) {
-    const poolIndex = Math.min(
-      prizePool.length - 1,
-      Math.floor(rng.next() * prizePool.length),
-    );
-    const prizeId = prizePool[poolIndex];
+    if (cycle.length === 0) {
+      refillCycle();
+    }
+
+    const prizeId = cycle.pop();
     if (prizeId === undefined) {
       throw new Error("Invalid restock prize pool");
     }
 
+    const rollingPrize =
+      prizeId === "prize/sphere_ball" ||
+      prizeId === "prize/capsule_soft";
+    const x = rollingPrize
+      ? rng.range(-0.24, -0.15)
+      : rng.range(
+          M10_RESTOCK_CONFIG.insertionMinX,
+          M10_RESTOCK_CONFIG.insertionMaxX,
+        );
+    const z = rollingPrize
+      ? rng.range(-0.20, -0.10)
+      : rng.range(
+          M10_RESTOCK_CONFIG.insertionMinZ,
+          M10_RESTOCK_CONFIG.insertionMaxZ,
+        );
+
     plan.push({
       prizeId,
-      x: rng.range(
-        M10_RESTOCK_CONFIG.insertionMinX,
-        M10_RESTOCK_CONFIG.insertionMaxX,
-      ),
+      x,
       y: rng.range(
         M10_RESTOCK_CONFIG.insertionMinY,
         M10_RESTOCK_CONFIG.insertionMaxY,
       ),
-      z: rng.range(
-        M10_RESTOCK_CONFIG.insertionMinZ,
-        M10_RESTOCK_CONFIG.insertionMaxZ,
-      ),
+      z,
       rotationXRadians: rng.range(
         -M10_RESTOCK_CONFIG.maxTiltRadians,
         M10_RESTOCK_CONFIG.maxTiltRadians,

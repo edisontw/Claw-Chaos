@@ -19,6 +19,18 @@ describe("M10 seeded restock planning", () => {
     );
   });
 
+  it("uses every pool prize before repeating a type", () => {
+    const plan = createRestockPlan(
+      "variety",
+      pool.length,
+      pool,
+    );
+
+    expect(
+      new Set(plan.map((entry) => entry.prizeId)).size,
+    ).toBe(pool.length);
+  });
+
   it("changes physical insertion poses across seeds", () => {
     const a = createRestockPlan("seed-a", 6, pool);
     const b = createRestockPlan("seed-b", 6, pool);
@@ -42,12 +54,7 @@ describe("M10 seeded restock planning", () => {
     );
 
     for (const entry of plan) {
-      expect(entry.x).toBeGreaterThanOrEqual(
-        M10_RESTOCK_CONFIG.insertionMinX,
-      );
-      expect(entry.x).toBeLessThanOrEqual(
-        M10_RESTOCK_CONFIG.insertionMaxX,
-      );
+      expect(entry.x).toBeGreaterThanOrEqual(-0.24);
       expect(entry.x).toBeLessThan(0.25);
       expect(entry.y).toBeGreaterThanOrEqual(
         M10_RESTOCK_CONFIG.insertionMinY,
