@@ -64,7 +64,14 @@ export class CabinetMachineAudio {
     }
 
     if (this.context.state !== "running") {
-      await this.context.resume();
+      try {
+        await this.context.resume();
+      } catch {
+        this.root.dataset.machineAudio = "suspended";
+        this.root.dataset.arcadeAmbience = "suspended";
+        this.root.dataset.rewardAudio = "suspended";
+        return false;
+      }
     }
 
     const active = this.context.state === "running";

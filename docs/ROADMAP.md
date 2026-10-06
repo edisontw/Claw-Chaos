@@ -2540,3 +2540,13 @@ Physics/gameplay contract:
 - ChuteSensor remains the sole authoritative WIN source
 - no teleport, parenting, weld, magnet, hidden pickup force, or forced success logic
 - existing claw, gantry, grip, collision, stock, staff and restock behavior unchanged
+
+
+### M11 Slice 2 follow-up — reward audio audibility
+
+Implemented:
+- reward playback now attempts to resume/unlock Web Audio before giving up
+- blocked/suspended reward playback is exposed through DOM telemetry instead of failing silently
+- ordinary win and machine-clear cues use stronger gains than the first candidate
+- each note now layers a triangle fundamental with a quieter octave sine harmonic for better phone/laptop-speaker audibility
+- reward cue timing remains short and does not affect simulation timing or physics
