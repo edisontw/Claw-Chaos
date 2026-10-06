@@ -2465,3 +2465,43 @@ M00 repository + Vite/Web/physics harness
 ```
 
 Do not start the full arcade environment before these gates pass.
+
+
+---
+
+## M11 — Adaptive graphics + reward feedback
+
+### Slice 1 — adaptive graphics / FPS telemetry
+
+**Status: IMPLEMENTED CANDIDATE on Theme A art branch**
+
+Goal:
+- keep the realistic Theme A presentation usable on older desktop/laptop integrated GPUs without changing gameplay or physics
+
+Implemented:
+- user-facing `AUTO / HIGH / MEDIUM / LOW` graphics selector
+- URL overrides: `?quality=high|medium|low` (or `graphics=`)
+- Auto starts desktop-like devices at High and touch-like devices at Medium
+- Auto observes smoothed real frame rate after a 5 s warmup
+- sustained sub-48 FPS on High downgrades to Medium
+- sustained sub-34 FPS on Medium downgrades to Low
+- no automatic upgrade during a session, preventing quality oscillation
+- High: DPR cap 2, soft 1024 key shadow, cabinet local shadow, full arcade dressing
+- Medium: DPR cap 1.35, 512 key shadow, no cabinet local shadow, reduced arcade dressing
+- Low: DPR cap 1, dynamic shadows disabled, minimal arcade dressing
+- background decoration can be hidden/restored at runtime without rebuilding or touching the physics scene
+- DOM telemetry exposes current mode, effective profile, rounded FPS and downgrade count
+- debug overlay includes the same render telemetry
+
+Physics/gameplay contract:
+- fixed timestep unchanged
+- max physics catch-up unchanged
+- prize/claw/cabinet colliders unchanged
+- grip/friction/torque unchanged
+- ChuteSensor remains authoritative for wins
+- staff service/restock logic unchanged
+
+Next Slice:
+- ChuteSensor-triggered `PRIZE GET!` audio/visual feedback
+- distinct last-prize `MACHINE CLEARED!` feedback
+- low-cost CSS/Web Audio effects with reduced animation under Low graphics

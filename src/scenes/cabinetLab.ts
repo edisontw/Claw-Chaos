@@ -11,6 +11,7 @@ import { addCabinetExteriorVisual } from "../cabinet/cabinetExteriorVisual";
 import { addCabinetInteriorVisual } from "../cabinet/cabinetInteriorVisual";
 import {
   addArcadeEnvironment,
+  applyArcadeEnvironmentDetail,
   arcadeEnvironmentId,
 } from "../environment/arcadeEnvironment";
 import {
@@ -243,7 +244,7 @@ export function createCabinetLabScene(
   const visualTheme = getVisualTheme(options.themeId);
   const renderQuality =
     options.renderQuality ?? DESKTOP_RENDER_QUALITY;
-  addArcadeEnvironment(
+  const arcadeEnvironment = addArcadeEnvironment(
     scene,
     visualTheme,
     renderQuality.arcadeBackgroundDetail,
@@ -581,6 +582,28 @@ export function createCabinetLabScene(
     },
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
+    },
+    setRenderQuality(profile): void {
+      applyArcadeEnvironmentDetail(
+        arcadeEnvironment,
+        profile.arcadeBackgroundDetail,
+      );
+      cabinetLight.castShadow =
+        profile.shadowsEnabled &&
+        profile.cabinetLightCastsShadow;
+      if (
+        cabinetLight.shadow.mapSize.width !==
+          profile.cabinetLightShadowMapSize ||
+        cabinetLight.shadow.mapSize.height !==
+          profile.cabinetLightShadowMapSize
+      ) {
+        cabinetLight.shadow.mapSize.set(
+          profile.cabinetLightShadowMapSize,
+          profile.cabinetLightShadowMapSize,
+        );
+        cabinetLight.shadow.map?.dispose();
+        cabinetLight.shadow.map = null;
+      }
     },
     beforePhysicsStep(stepSeconds: number): void {
       if (!layoutSettle.ready) {

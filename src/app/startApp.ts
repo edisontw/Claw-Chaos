@@ -19,8 +19,10 @@ import {
 import { MobileCabinetControls } from "../player/mobileCabinetControls";
 import { StaffCallControl } from "../player/staffCallControl";
 import {
-  chooseRenderQualityProfile,
+  AdaptiveRenderQualityController,
   isTouchLikeEnvironment,
+  parseRenderQualityMode,
+  type RenderQualityMode,
   type RenderQualityProfile,
 } from "../player/mobileRenderProfile";
 import { parseSceneSelection, type SceneSelection } from "../scenes/sceneSelection";
@@ -121,12 +123,25 @@ export async function startApp(
   );
   const visualTheme = getVisualTheme(visualThemeId);
   const touchLike = isTouchLikeEnvironment();
-  const renderQuality = chooseRenderQualityProfile(
-    touchLike,
+  const initialQualityMode = parseRenderQualityMode(
+    window.location.search,
   );
+  const adaptiveRenderQuality =
+    new AdaptiveRenderQualityController(
+      initialQualityMode,
+      touchLike,
+    );
+  let renderQuality = adaptiveRenderQuality.profile;
   root.dataset.sceneId = selection.id;
   root.dataset.visualTheme = visualTheme.id;
   root.dataset.renderProfile = renderQuality.id;
+  root.dataset.renderMode = adaptiveRenderQuality.mode;
+  root.dataset.renderAdaptive =
+    adaptiveRenderQuality.mode === "auto"
+      ? "armed"
+      : "manual";
+  root.dataset.renderFps = "60";
+  root.dataset.renderDowngrades = "0";
   root.dataset.loading = "true";
 
   const physicsPromise =
@@ -170,10 +185,11 @@ export async function startApp(
       renderQuality.pixelRatioCap,
     ),
   );
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = touchLike
-    ? THREE.PCFShadowMap
-    : THREE.PCFSoftShadowMap;
+  renderer.shadowMap.enabled =
+    renderQuality.shadowsEnabled;
+  renderer.shadowMap.type = renderQuality.softShadows
+    ? THREE.PCFSoftShadowMap
+    : THREE.PCFShadowMap;
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure =
@@ -195,7 +211,8 @@ export async function startApp(
     visualTheme.environment.keyLight.intensity,
   );
   keyLight.position.set(4, 8, 5);
-  keyLight.castShadow = true;
+  keyLight.castShadow =
+    renderQuality.shadowsEnabled;
   keyLight.shadow.mapSize.set(
     renderQuality.shadowMapSize,
     renderQuality.shadowMapSize,
@@ -321,6 +338,64 @@ export async function startApp(
     }
   });
 
+  let qualityStatus: HTMLSpanElement | null = null;
+
+  const setLightShadowMapSize = (
+    light: THREE.DirectionalLight | THREE.PointLight,
+    mapSize: number,
+  ): void => {
+    if (
+      light.shadow.mapSize.width === mapSize &&
+      light.shadow.mapSize.height === mapSize
+    ) {
+      return;
+    }
+    light.shadow.mapSize.set(mapSize, mapSize);
+    light.shadow.map?.dispose();
+    light.shadow.map = null;
+  };
+
+  const applyRenderQuality = (
+    profile: RenderQualityProfile,
+  ): void => {
+    renderQuality = profile;
+    root.dataset.renderProfile = profile.id;
+    root.dataset.renderMode =
+      adaptiveRenderQuality.mode;
+    root.dataset.renderAdaptive =
+      adaptiveRenderQuality.mode === "auto"
+        ? "armed"
+        : "manual";
+    root.dataset.renderDowngrades =
+      adaptiveRenderQuality.downgradeCount.toString();
+
+    renderer.setPixelRatio(
+      Math.min(
+        window.devicePixelRatio,
+        profile.pixelRatioCap,
+      ),
+    );
+    renderer.shadowMap.enabled =
+      profile.shadowsEnabled;
+    renderer.shadowMap.type = profile.softShadows
+      ? THREE.PCFSoftShadowMap
+      : THREE.PCFShadowMap;
+    renderer.toneMappingExposure =
+      profile.toneMappingExposure;
+
+    keyLight.castShadow = profile.shadowsEnabled;
+    setLightShadowMapSize(
+      keyLight,
+      profile.shadowMapSize,
+    );
+    testScene.setRenderQuality?.(profile);
+
+    if (qualityStatus) {
+      qualityStatus.textContent =
+        profile.id.toUpperCase();
+    }
+  };
+
   camera.position.set(...testScene.camera.position);
   camera.lookAt(...testScene.camera.target);
 
@@ -391,6 +466,7 @@ export async function startApp(
   let droppedCatchUpSeconds = 0;
   let lastFrameSeconds = performance.now() / 1000;
   let smoothedFps = 60;
+  let renderTelemetryElapsedSeconds = 0;
   let firstFrameRendered = false;
 
   const onKeyDown = (event: KeyboardEvent): void => {
@@ -432,6 +508,67 @@ export async function startApp(
   resize();
   window.addEventListener("resize", resize);
 
+  const graphicsControl =
+    document.createElement("label");
+  graphicsControl.className =
+    "graphics-quality-control";
+  graphicsControl.title =
+    "Graphics quality. Auto only downgrades after sustained low FPS.";
+
+  const graphicsLabel =
+    document.createElement("span");
+  graphicsLabel.textContent = "GRAPHICS";
+
+  const qualitySelect =
+    document.createElement("select");
+  qualitySelect.className =
+    "graphics-quality-select";
+  qualitySelect.setAttribute(
+    "aria-label",
+    "Graphics quality",
+  );
+
+  const qualityModes: readonly RenderQualityMode[] = [
+    "auto",
+    "high",
+    "medium",
+    "low",
+  ];
+  for (const mode of qualityModes) {
+    const option = document.createElement("option");
+    option.value = mode;
+    option.textContent = mode.toUpperCase();
+    qualitySelect.append(option);
+  }
+  qualitySelect.value = adaptiveRenderQuality.mode;
+
+  qualityStatus = document.createElement("span");
+  qualityStatus.className =
+    "graphics-quality-effective";
+  qualityStatus.textContent =
+    renderQuality.id.toUpperCase();
+
+  graphicsControl.append(
+    graphicsLabel,
+    qualitySelect,
+    qualityStatus,
+  );
+  root.append(graphicsControl);
+
+  qualitySelect.addEventListener(
+    "change",
+    () => {
+      const mode =
+        qualitySelect.value as RenderQualityMode;
+      const profile = adaptiveRenderQuality.setMode(
+        mode,
+        touchLike,
+      );
+      applyRenderQuality(profile);
+      resize();
+    },
+  );
+
   const syncRenderTransforms = (): void => {
     for (const binding of testScene.bindings) {
       const position = binding.body.translation();
@@ -449,6 +586,27 @@ export async function startApp(
     if (frameDeltaSeconds > 0) {
       const instantaneousFps = 1 / frameDeltaSeconds;
       smoothedFps += (instantaneousFps - smoothedFps) * 0.08;
+    }
+
+    const adaptiveProfile =
+      adaptiveRenderQuality.update(
+        smoothedFps,
+        frameDeltaSeconds,
+      );
+    if (adaptiveProfile) {
+      applyRenderQuality(adaptiveProfile);
+      resize();
+    }
+
+    renderTelemetryElapsedSeconds += frameDeltaSeconds;
+    if (renderTelemetryElapsedSeconds >= 0.5) {
+      root.dataset.renderFps = Math.max(
+        0,
+        Math.round(smoothedFps),
+      ).toString();
+      root.dataset.renderDowngrades =
+        adaptiveRenderQuality.downgradeCount.toString();
+      renderTelemetryElapsedSeconds = 0;
     }
 
     const result = fixedStep.advance(frameDeltaSeconds, (stepSeconds) => {
@@ -516,6 +674,14 @@ export async function startApp(
       physicsDebugVisible: physicsDebugRenderer.visible,
       massPropertiesDebugVisible: massPropertiesDebugRenderer.visible,
       extraLines: [
+        "Graphics          " +
+          adaptiveRenderQuality.mode +
+          " / " +
+          renderQuality.id +
+          " / " +
+          Math.round(smoothedFps) +
+          " fps / downgrades " +
+          adaptiveRenderQuality.downgradeCount,
         ...(testScene.debugLines?.() ?? []),
         ...(playerViewController?.debugLines() ?? []),
         ],

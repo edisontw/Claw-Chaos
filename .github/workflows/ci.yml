@@ -178,7 +178,10 @@ jobs:
                ! grep -q 'player-reticle' "$DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$DOM_FILE" &&
                grep -q 'mobile-view-height' "$DOM_FILE" &&
-               grep -q 'data-render-profile="desktop"' "$DOM_FILE" &&
+               grep -Eq 'data-render-profile="(high|medium|low)"' "$DOM_FILE" &&
+               grep -q 'data-render-mode="auto"' "$DOM_FILE" &&
+               grep -q 'data-render-adaptive="armed"' "$DOM_FILE" &&
+               grep -q 'data-render-fps=' "$DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$DOM_FILE" &&
@@ -456,7 +459,10 @@ jobs:
                grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-control-style="compact-translucent"' "$ROOT_DOM_FILE" &&
                grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
-               grep -q 'data-render-profile="desktop"' "$ROOT_DOM_FILE" &&
+               grep -Eq 'data-render-profile="(high|medium|low)"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-mode="auto"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-adaptive="armed"' "$ROOT_DOM_FILE" &&
+               grep -q 'data-render-fps=' "$ROOT_DOM_FILE" &&
                grep -q 'data-machine-audio="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-arcade-ambience="armed"' "$ROOT_DOM_FILE" &&
                grep -q 'data-controller-haptics="armed"' "$ROOT_DOM_FILE" &&

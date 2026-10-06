@@ -390,7 +390,6 @@ function addNeighborMachine(
 function addNeighborMachines(
   root: THREE.Group,
   theme: VisualTheme,
-  detail: ArcadeBackgroundDetail,
 ): void {
   const windowToken =
     theme.machine.exterior.paymentPanel;
@@ -426,14 +425,7 @@ function addNeighborMachines(
     prizeGeometry: new THREE.SphereGeometry(0.09, 12, 9),
   };
 
-  const placements =
-    detail === "reduced"
-      ? ARCADE_NEIGHBOR_MACHINE_PLACEMENTS.filter(
-          (placement) => placement.id.includes("near"),
-        )
-      : ARCADE_NEIGHBOR_MACHINE_PLACEMENTS;
-
-  for (const placement of placements) {
+  for (const placement of ARCADE_NEIGHBOR_MACHINE_PLACEMENTS) {
     addNeighborMachine(root, placement, shared);
   }
 }
@@ -504,6 +496,46 @@ function addPrizeDisplay(
   }
 }
 
+export function applyArcadeEnvironmentDetail(
+  root: THREE.Group,
+  detail: ArcadeBackgroundDetail,
+): void {
+  root.userData.backgroundDetail = detail;
+
+  for (const placement of ARCADE_NEIGHBOR_MACHINE_PLACEMENTS) {
+    const machine = root.getObjectByName(
+      `theme-a-${placement.id}`,
+    );
+    if (machine) {
+      machine.visible =
+        detail === "full" ||
+        (detail === "reduced" &&
+          placement.id.includes("near"));
+    }
+  }
+
+  for (const side of ["left", "right"]) {
+    const display = root.getObjectByName(
+      `theme-a-prize-display-${side}`,
+    );
+    if (display) {
+      display.visible = detail === "full";
+    }
+  }
+
+  const showCeilingDressing = detail !== "minimal";
+  for (const fixture of ARCADE_CEILING_FIXTURES) {
+    for (const suffix of ["shell", "diffuser"]) {
+      const object = root.getObjectByName(
+        `theme-a-${fixture.id}-${suffix}`,
+      );
+      if (object) {
+        object.visible = showCeilingDressing;
+      }
+    }
+  }
+}
+
 export function addArcadeEnvironment(
   scene: THREE.Scene,
   theme: VisualTheme,
@@ -512,15 +544,13 @@ export function addArcadeEnvironment(
   const root = new THREE.Group();
   root.name = arcadeEnvironmentId(theme);
   root.userData.visualOnly = true;
-  root.userData.backgroundDetail = detail;
 
   addWallAndFloor(root, theme);
   addBackWallSign(root, theme);
   addCeilingFixtures(root, theme);
-  addNeighborMachines(root, theme, detail);
-  if (detail === "full") {
-    addPrizeDisplay(root, theme);
-  }
+  addNeighborMachines(root, theme);
+  addPrizeDisplay(root, theme);
+  applyArcadeEnvironmentDetail(root, detail);
 
   scene.add(root);
   return root;
