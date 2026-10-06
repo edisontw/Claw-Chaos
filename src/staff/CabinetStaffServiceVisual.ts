@@ -9,13 +9,9 @@ import {
   type StaffCharacterRig,
 } from "./AdultFemaleArcadeStaffVisual";
 import {
-  REALISTIC_STAFF_CHARACTER_VARIANT,
-  RealisticArcadeStaffVisual,
-} from "./RealisticArcadeStaffVisual";
-import {
-  SKINNED_STAFF_CHARACTER_VARIANT,
-  SkinnedArcadeStaffVisual,
-} from "./SkinnedArcadeStaffVisual";
+  GENERATED_STAFF_CHARACTER_VARIANT,
+  GeneratedArcadeAttendantVisual,
+} from "./GeneratedArcadeAttendantVisual";
 import {
   M10_STAFF_SERVICE_CONFIG,
   advanceStaffServiceState,
@@ -29,8 +25,7 @@ export class CabinetStaffServiceVisual {
   private state: StaffServiceState =
     createStaffServiceState();
   private readonly rig: StaffCharacterRig;
-  private readonly realistic: RealisticArcadeStaffVisual;
-  private readonly skinned: SkinnedArcadeStaffVisual;
+  private readonly generated: GeneratedArcadeAttendantVisual;
   private readonly actor = new THREE.Group();
   private readonly doorPivot = new THREE.Group();
   private readonly closedDoorCenter: THREE.Vector3;
@@ -47,28 +42,21 @@ export class CabinetStaffServiceVisual {
     },
     staffTheme: StaffVisualTheme =
       DEFAULT_VISUAL_THEME.staff,
-    private readonly preferHighDetailStaff = true,
   ) {
     this.rig =
       createAdultFemaleArcadeStaffVisual(staffTheme);
-    this.realistic =
-      new RealisticArcadeStaffVisual(
-        preferHighDetailStaff,
-      );
-    this.skinned =
-      new SkinnedArcadeStaffVisual();
+    this.generated =
+      new GeneratedArcadeAttendantVisual();
     this.actor.name =
       "m10-staff-character-visual-root";
     this.actor.visible = false;
     this.actor.userData.visualOnly = true;
 
     this.rig.root.visible = true;
-    this.realistic.root.visible = false;
-    this.skinned.root.visible = false;
+    this.generated.root.visible = false;
     this.actor.add(
       this.rig.root,
-      this.realistic.root,
-      this.skinned.root,
+      this.generated.root,
     );
     scene.add(this.actor);
 
@@ -198,28 +186,12 @@ export class CabinetStaffServiceVisual {
     this.actor.position.set(pose.x, 0, pose.z);
     this.actor.rotation.y = pose.yawRadians;
 
-    const useRealistic =
-      this.realistic.status === "realistic";
-    const useSkinned =
-      !useRealistic &&
-      this.skinned.status === "skinned";
-    this.realistic.root.visible = useRealistic;
-    this.skinned.root.visible = useSkinned;
-    this.rig.root.visible =
-      !useRealistic && !useSkinned;
+    const useGenerated =
+      this.generated.status === "image";
+    this.generated.root.visible = useGenerated;
+    this.rig.root.visible = !useGenerated;
 
-    this.realistic.update(
-      this.state.phase,
-      stepSeconds,
-    );
-    this.skinned.update(
-      this.state.phase,
-      stepSeconds,
-    );
-
-    if (useRealistic || useSkinned) {
-      this.actor.position.y = 0;
-    } else {
+    if (!useGenerated) {
       this.updateCharacterPose(
         pose.walkCycleRadians,
       );
@@ -265,31 +237,13 @@ export class CabinetStaffServiceVisual {
   }
 
   get characterVariant(): string {
-    return this.preferHighDetailStaff
-      ? REALISTIC_STAFF_CHARACTER_VARIANT
-      : SKINNED_STAFF_CHARACTER_VARIANT;
+    return GENERATED_STAFF_CHARACTER_VARIANT;
   }
 
   get visualStatus():
     | "loading"
-    | "realistic"
-    | "skinned"
+    | "image"
     | "fallback" {
-    if (this.realistic.status === "realistic") {
-      return "realistic";
-    }
-    if (this.skinned.status === "skinned") {
-      return "skinned";
-    }
-    if (
-      this.preferHighDetailStaff &&
-      this.realistic.status === "loading"
-    ) {
-      return "loading";
-    }
-    if (this.skinned.status === "loading") {
-      return "loading";
-    }
-    return "fallback";
+    return this.generated.status;
   }
 }

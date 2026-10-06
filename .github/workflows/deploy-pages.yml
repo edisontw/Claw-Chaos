@@ -140,8 +140,8 @@ jobs:
                grep -q 'data-scene-id="cabinet-lab"' /tmp/live-preview-dom.html &&
                grep -q 'data-visual-theme="modern-japanese-arcade"' /tmp/live-preview-dom.html &&
                grep -q 'data-arcade-environment="modern-japanese-arcade:prize-center-room-v1"' /tmp/live-preview-dom.html &&
-               grep -q 'data-staff-character="adult-female-arcade-attendant-v4-realistic-rigged"' /tmp/live-preview-dom.html &&
-               grep -q 'data-staff-visual="realistic"' /tmp/live-preview-dom.html &&
+               grep -q 'data-staff-character="adult-female-arcade-attendant-image-billboard-v1"' /tmp/live-preview-dom.html &&
+               grep -q 'data-staff-visual="image"' /tmp/live-preview-dom.html &&
                grep -q 'data-tone-mapping="aces-filmic"' /tmp/live-preview-dom.html &&
                grep -q 'data-layout-id="loose"' /tmp/live-preview-dom.html &&
                grep -q 'data-staff-state="available"' /tmp/live-preview-dom.html; then
