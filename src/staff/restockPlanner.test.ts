@@ -34,7 +34,7 @@ describe("M10 seeded restock planning", () => {
     ).toBe(true);
   });
 
-  it("keeps insertion at the right-side service area and away from the chute", () => {
+  it("keeps insertion inside a low-energy interior staging zone away from the open service door and chute", () => {
     const plan = createRestockPlan(
       "bounds",
       20,
@@ -42,10 +42,13 @@ describe("M10 seeded restock planning", () => {
     );
 
     for (const entry of plan) {
-      expect(entry.x).toBe(
-        M10_RESTOCK_CONFIG.insertionX,
+      expect(entry.x).toBeGreaterThanOrEqual(
+        M10_RESTOCK_CONFIG.insertionMinX,
       );
-      expect(entry.x).toBeGreaterThan(0.25);
+      expect(entry.x).toBeLessThanOrEqual(
+        M10_RESTOCK_CONFIG.insertionMaxX,
+      );
+      expect(entry.x).toBeLessThan(0.25);
       expect(entry.y).toBeGreaterThanOrEqual(
         M10_RESTOCK_CONFIG.insertionMinY,
       );

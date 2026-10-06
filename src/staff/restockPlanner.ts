@@ -1,13 +1,14 @@
 import { createSeededRandom } from "../core/seededRng";
 
 export const M10_RESTOCK_CONFIG = {
-  insertionIntervalSeconds: 0.55,
-  insertionX: 0.33,
-  insertionMinY: 0.74,
-  insertionMaxY: 0.90,
-  insertionMinZ: -0.16,
-  insertionMaxZ: 0.16,
-  maxTiltRadians: 0.22,
+  insertionIntervalSeconds: 0.70,
+  insertionMinX: -0.10,
+  insertionMaxX: 0.22,
+  insertionMinY: 0.58,
+  insertionMaxY: 0.72,
+  insertionMinZ: -0.18,
+  insertionMaxZ: 0.02,
+  maxTiltRadians: 0.18,
 } as const;
 
 export interface RestockPlacement {
@@ -53,7 +54,10 @@ export function createRestockPlan(
 
     plan.push({
       prizeId,
-      x: M10_RESTOCK_CONFIG.insertionX,
+      x: rng.range(
+        M10_RESTOCK_CONFIG.insertionMinX,
+        M10_RESTOCK_CONFIG.insertionMaxX,
+      ),
       y: rng.range(
         M10_RESTOCK_CONFIG.insertionMinY,
         M10_RESTOCK_CONFIG.insertionMaxY,

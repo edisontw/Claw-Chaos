@@ -2563,3 +2563,23 @@ Implemented:
 Invariant:
 - after startup is armed, ChuteSensor remains the sole authoritative WIN trigger
 - no claw, gantry, prize, chute, grip, or fixed-step physics parameters changed
+
+
+### M10 follow-up — open-door restock retention
+
+Root cause:
+- physical restock previously dropped every replacement at x=0.33 beside the right service opening
+- with the real service door swung open, larger prizes could bounce out of the cabinet even though the older physics test passed with the door closed
+
+Implemented:
+- restock insertion is now distributed across an interior staging zone instead of a single near-door x position
+- insertion height reduced to lower impact energy
+- insertion interval increased slightly to reduce replacement-on-replacement collisions
+- tilt range reduced modestly
+- added a Rapier regression test with the actual service door opened to 1.12 rad
+- the regression performs a full dense-layout refill and requires every replacement to remain inside the playable cabinet, above the deck, outside the chute, and physically settled
+
+Gameplay contract:
+- restocked prizes remain fully dynamic physical bodies
+- no teleport correction, parenting, magnets, welds, or hidden retention forces
+- claw/grip/gantry/chute physics remain unchanged
