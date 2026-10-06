@@ -2505,3 +2505,13 @@ Next Slice:
 - ChuteSensor-triggered `PRIZE GET!` audio/visual feedback
 - distinct last-prize `MACHINE CLEARED!` feedback
 - low-cost CSS/Web Audio effects with reduced animation under Low graphics
+
+
+### Theme A manual visual validation — claw contrast / edge visibility
+
+Implemented before default-site rollout:
+- cabinet rear interior changed from near-white to a calm low-saturation blue-gray
+- silver/chrome claw brightened while dark bands/tips retain strong silhouette contrast
+- cabinet-only gantry travel bounds keep the fully-open claw inside the opaque side/back viewing envelope
+- front travel still reaches the existing chute park position
+- generic M02 gantry laboratory bounds and physics tuning remain unchanged
