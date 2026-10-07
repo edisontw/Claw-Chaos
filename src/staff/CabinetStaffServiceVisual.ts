@@ -214,7 +214,7 @@ export class CabinetStaffServiceVisual {
           )
         : 1;
     const staffScale =
-      0.92 + approachFraction * 0.14;
+      0.94 + approachFraction * 0.16;
     this.actor.scale.setScalar(staffScale);
 
     const useGenerated =

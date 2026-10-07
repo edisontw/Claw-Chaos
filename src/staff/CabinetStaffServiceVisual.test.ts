@@ -62,10 +62,10 @@ describe("M10 physical service door", () => {
     );
     expect(actor).toBeDefined();
     expect(actor!.scale.x).toBeGreaterThanOrEqual(
-      0.92,
+      0.94,
     );
     expect(actor!.scale.x).toBeLessThanOrEqual(
-      1.06,
+      1.10,
     );
 
     for (
@@ -85,7 +85,7 @@ describe("M10 physical service door", () => {
     const openedRotation = { ...door.rotation() };
 
     expect(visual.phase).toBe("door_open");
-    expect(actor!.scale.x).toBeCloseTo(1.06, 2);
+    expect(actor!.scale.x).toBeCloseTo(1.10, 2);
     expect(opened.x).toBeGreaterThan(
       closed.x + 0.20,
     );

@@ -153,9 +153,9 @@ describe("M10 staff service sequence", () => {
       M10_STAFF_SERVICE_CONFIG.serviceZ,
       8,
     );
-    expect(pose.x).toBeGreaterThan(0.80);
-    expect(pose.z).toBeGreaterThan(0.15);
-    expect(pose.z).toBeLessThan(0.30);
+    expect(pose.x).toBeGreaterThan(0.74);
+    expect(pose.z).toBeGreaterThan(0.16);
+    expect(pose.z).toBeLessThan(0.26);
     expect(
       Math.hypot(
         pose.x - 1.08,

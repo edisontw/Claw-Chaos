@@ -18,8 +18,8 @@ export const M10_STAFF_SERVICE_CONFIG = {
   departureSeconds: 2.2,
   startX: 1.72,
   startZ: 0.72,
-  serviceX: 0.84,
-  serviceZ: 0.22,
+  serviceX: 0.78,
+  serviceZ: 0.20,
   doorOpenRadians: 1.12,
 } as const;
 
