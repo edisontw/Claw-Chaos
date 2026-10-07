@@ -598,6 +598,21 @@ export function createCabinetLabScene(
       if (!target) {
         return null;
       }
+
+      const phase = staffServiceVisual.phase;
+      const showingServiceDoor =
+        phase === "opening_door" ||
+        phase === "door_open" ||
+        phase === "closing_door";
+
+      if (showingServiceDoor) {
+        return {
+          position: [-0.18, 1.16, 1.64],
+          target: [0.23, 0.92, -0.02],
+          fovDegrees: 52,
+        };
+      }
+
       const proximity =
         staffServiceVisual.serviceProximity;
       return {

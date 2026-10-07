@@ -30,6 +30,8 @@ export class CabinetStaffServiceVisual {
   private readonly doorPivot = new THREE.Group();
   private readonly closedDoorCenter: THREE.Vector3;
   private readonly doorCenterOffset: THREE.Vector3;
+  private readonly serviceDoorMaterialOpacity =
+    new Map<THREE.Material, number>();
   private serviceProximityValue = 0;
 
   constructor(
@@ -86,6 +88,18 @@ export class CabinetStaffServiceVisual {
     scene.add(this.doorPivot);
 
     for (const object of serviceDoorObjects) {
+      const material = (object as THREE.Mesh).material;
+      const materials = Array.isArray(material)
+        ? material
+        : material
+          ? [material]
+          : [];
+      for (const entry of materials) {
+        this.serviceDoorMaterialOpacity.set(
+          entry,
+          entry.opacity,
+        );
+      }
       this.doorPivot.attach(object);
     }
   }
@@ -259,6 +273,21 @@ export class CabinetStaffServiceVisual {
       pose.doorOpenFraction *
       pose.doorOpenFraction *
       (3 - 2 * pose.doorOpenFraction);
+
+    for (const [
+      material,
+      closedOpacity,
+    ] of this.serviceDoorMaterialOpacity) {
+      const opacityBoost =
+        material instanceof THREE.LineBasicMaterial
+          ? 0.22
+          : 0.035;
+      material.opacity = Math.min(
+        0.45,
+        closedOpacity + opacityBoost * smoothDoor,
+      );
+    }
+
     const doorAngle =
       M10_STAFF_SERVICE_CONFIG.doorOpenRadians *
       smoothDoor;
