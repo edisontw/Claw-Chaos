@@ -303,7 +303,7 @@ export class CabinetStaffServiceVisual {
       x: this.actor.position.x,
       y:
         0.88 +
-        this.serviceProximityValue * 0.40,
+        this.serviceProximityValue * 0.67,
       z: this.actor.position.z,
     };
   }
