@@ -292,7 +292,7 @@ export function createCabinetLabScene(
     );
 
   const layout = createCabinetLayout(
-    options.layoutId ?? "loose",
+    options.layoutId ?? "stocked",
     options.layoutSeed ?? "m09-default",
   );
   const layoutSettle = new LayoutSettlePipeline();
@@ -925,9 +925,11 @@ export function createCabinetLabScene(
           Math.round(M06_CABINET_CONFIG.chuteOpeningHalfZ * 2000) +
           " mm / no raised trim",
         "Service wires     dual visual control leads",
-        layout.id === "loose"
-          ? "Loose layout      familiar five-prize starter arrangement"
-          : layout.id === "dense"
+        layout.id === "stocked"
+          ? "Stocked layout    dense physical prize floor with shallow second layer"
+          : layout.id === "loose"
+            ? "Loose layout      familiar five-prize starter arrangement"
+            : layout.id === "dense"
             ? "Dense layout      seeded compact multi-prize arrangement"
             : layout.id === "showcase"
               ? "Showcase layout   separated material/geometry display rows"
