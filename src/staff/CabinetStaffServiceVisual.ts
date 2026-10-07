@@ -230,10 +230,10 @@ export class CabinetStaffServiceVisual {
     this.actor.position.set(
       pose.x - serviceTuckFraction * 0.23,
       0,
-      pose.z - serviceTuckFraction * 0.14,
+      pose.z - serviceTuckFraction * 0.22,
     );
 
-    this.actor.scale.setScalar(1.10);
+    this.actor.scale.setScalar(0.92);
     this.generated.root.position.y = 0;
 
     const useGenerated =
@@ -314,8 +314,8 @@ export class CabinetStaffServiceVisual {
     return {
       x: this.actor.position.x,
       y:
-        0.92 +
-        this.serviceProximityValue * 0.22,
+        1.04 +
+        this.serviceProximityValue * 0.30,
       z: this.actor.position.z,
     };
   }
