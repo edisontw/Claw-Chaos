@@ -52,7 +52,10 @@ import {
   type ImplementedVisualThemeId,
   type VisualTheme,
 } from "../theme/visualTheme";
-import { createGantryLabScene } from "./gantryLab";
+import {
+  createGantryLabScene,
+  type GantryClawTopologyId,
+} from "./gantryLab";
 import type { SimulationScene } from "./types";
 
 function createPlayDeckWeaveTexture(): THREE.DataTexture {
@@ -239,6 +242,7 @@ export interface CabinetLabOptions {
   layoutSeed?: string;
   themeId?: ImplementedVisualThemeId;
   renderQuality?: RenderQualityProfile;
+  clawTopology?: GantryClawTopologyId;
 }
 
 export function createCabinetLabScene(
@@ -329,6 +333,7 @@ export function createCabinetLabScene(
       addServiceWires: true,
       visualTheme,
       clawCastsShadow: false,
+      clawTopology: options.clawTopology,
       initialPosition: CABINET_CLAW_PARK_POSITION,
       travelBounds: CABINET_GANTRY_TRAVEL_BOUNDS,
       controlsEnabled: () =>
