@@ -222,7 +222,7 @@ export class CabinetStaffServiceVisual {
     );
 
     this.actor.scale.setScalar(1.20);
-    this.generated.root.position.y = -0.52;
+    this.generated.root.position.y = 0;
 
     const useGenerated =
       this.generated.status === "image";
@@ -301,7 +301,9 @@ export class CabinetStaffServiceVisual {
     }
     return {
       x: this.actor.position.x,
-      y: 0.82,
+      y:
+        0.88 +
+        this.serviceProximityValue * 0.30,
       z: this.actor.position.z,
     };
   }
