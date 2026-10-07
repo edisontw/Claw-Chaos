@@ -226,16 +226,16 @@ export class CabinetStaffServiceVisual {
       tuckRaw * tuckRaw * (3 - 2 * tuckRaw);
 
     this.actor.position.set(
-      pose.x - tuckFraction * 0.04,
+      pose.x - tuckFraction * 0.24,
       0,
-      pose.z - tuckFraction * 0.28,
+      pose.z - tuckFraction * 0.42,
     );
 
     const staffScale =
       0.96 + approachFraction * 0.24;
     this.actor.scale.setScalar(staffScale);
     this.generated.root.position.y =
-      -0.12 * tuckFraction;
+      -0.52 * tuckFraction;
 
     const useGenerated =
       this.generated.status === "image";
