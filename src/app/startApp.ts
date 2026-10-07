@@ -434,14 +434,6 @@ export async function startApp(
       root,
       (x, z) => testScene.setManualGantryInput?.(x, z),
       () => testScene.primaryAction?.() ?? false,
-      (direction) =>
-        playerViewController?.adjustEyeHeight(
-          direction *
-            M07_MOBILE_FIRST_PERSON_VIEW_CONFIG
-              .eyeHeightStepMeters,
-        ),
-      (direction) =>
-        playerViewController?.adjustZoom(direction),
     );
   }
 

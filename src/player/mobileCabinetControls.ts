@@ -61,8 +61,6 @@ export class MobileCabinetControls {
     parent: HTMLElement,
     private readonly onMove: (x: number, z: number) => void,
     private readonly onAction: () => boolean,
-    private readonly onViewHeightStep?: (direction: -1 | 1) => void,
-    private readonly onZoomStep?: (direction: -1 | 1) => void,
   ) {
     this.root = document.createElement("div");
     this.root.className = "mobile-cabinet-controls";
@@ -88,59 +86,7 @@ export class MobileCabinetControls {
     this.actionButton.textContent = "DROP\nCLOSE";
     this.actionButton.setAttribute("aria-label", "Drop or close claw");
 
-    const viewHeight = document.createElement("div");
-    viewHeight.className = "mobile-view-height";
-
-    const viewUp = document.createElement("button");
-    viewUp.type = "button";
-    viewUp.className = "mobile-view-height-button";
-    viewUp.textContent = "VIEW +";
-    viewUp.setAttribute("aria-label", "Raise viewpoint");
-
-    const viewDown = document.createElement("button");
-    viewDown.type = "button";
-    viewDown.className = "mobile-view-height-button";
-    viewDown.textContent = "VIEW −";
-    viewDown.setAttribute("aria-label", "Lower viewpoint");
-
-    viewUp.addEventListener("pointerdown", (event) => {
-      this.onViewHeightStep?.(1);
-      event.preventDefault();
-    });
-    viewDown.addEventListener("pointerdown", (event) => {
-      this.onViewHeightStep?.(-1);
-      event.preventDefault();
-    });
-
-    const zoomIn = document.createElement("button");
-    zoomIn.type = "button";
-    zoomIn.className = "mobile-view-height-button";
-    zoomIn.textContent = "ZOOM +";
-    zoomIn.setAttribute("aria-label", "Zoom in");
-
-    const zoomOut = document.createElement("button");
-    zoomOut.type = "button";
-    zoomOut.className = "mobile-view-height-button";
-    zoomOut.textContent = "ZOOM −";
-    zoomOut.setAttribute("aria-label", "Zoom out");
-
-    zoomIn.addEventListener("pointerdown", (event) => {
-      this.onZoomStep?.(1);
-      event.preventDefault();
-    });
-    zoomOut.addEventListener("pointerdown", (event) => {
-      this.onZoomStep?.(-1);
-      event.preventDefault();
-    });
-
-    viewHeight.append(
-      viewUp,
-      viewDown,
-      zoomIn,
-      zoomOut,
-    );
-
-    this.root.append(joystickWrap, viewHeight, this.actionButton);
+    this.root.append(joystickWrap, this.actionButton);
     parent.append(this.root);
 
     this.joystick.addEventListener("pointerdown", this.onJoystickPointerDown);

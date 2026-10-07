@@ -418,6 +418,9 @@ export class FirstPersonPlayerViewController {
   private focus: PlayerViewFocus | null = null;
   private lastInteraction = "none";
   private readonly prompt: HTMLDivElement;
+  private mouseLookPointerId: number | null = null;
+  private mouseLookX = 0;
+  private mouseLookY = 0;
   private touchLookPointerId: number | null = null;
   private touchLookX = 0;
   private touchLookY = 0;
@@ -457,8 +460,6 @@ export class FirstPersonPlayerViewController {
 
     window.addEventListener("keydown", this.onKeyDown);
     window.addEventListener("keyup", this.onKeyUp);
-    window.addEventListener("mousemove", this.onMouseMove);
-    element.addEventListener("click", this.onClick);
     element.addEventListener("pointerdown", this.onPointerDown);
     element.addEventListener("pointermove", this.onPointerMove);
     element.addEventListener("pointerup", this.onPointerUp);
@@ -512,6 +513,7 @@ export class FirstPersonPlayerViewController {
           M07_STAFF_VIEW_FOV_DEGREES,
         );
         this.pressed.clear();
+        this.mouseLookPointerId = null;
         this.touchLookPointerId = null;
         this.touchPoints.clear();
         this.pinchDistancePixels = null;
@@ -593,14 +595,14 @@ export class FirstPersonPlayerViewController {
 
   debugLines(): string[] {
     return [
-      "Player view       WASD move / mouse-or-touch look / F action",
+      "Player view       WASD move / drag to look / wheel-or-pinch zoom / F action",
       `Player pos       lateral ${this.state.x.toFixed(3)} / depth ${this.state.z.toFixed(3)} m`,
       `Eye height       ${this.state.eyeY.toFixed(3)} m`,
       `Zoom FOV         ${this.camera.fov.toFixed(1)} deg`,
       `Head yaw/pitch   ${THREE.MathUtils.radToDeg(this.state.yawRadians).toFixed(1)} / ${THREE.MathUtils.radToDeg(this.state.pitchRadians).toFixed(1)} deg`,
       `View focus       ${this.focus?.target.id ?? "none"}`,
       `Interaction      ${this.lastInteraction}`,
-      `Pointer look     ${document.pointerLockElement === this.element ? "LOCKED" : "click canvas"}`,
+      `Pointer look     ${this.mouseLookPointerId !== null ? "dragging" : "drag"}`,
     ];
   }
 
@@ -663,27 +665,20 @@ export class FirstPersonPlayerViewController {
     this.pressed.delete(event.code);
   };
 
-  private readonly onMouseMove = (event: MouseEvent): void => {
-    if (
-      this.temporaryView ||
-      document.pointerLockElement !== this.element
-    ) {
+  private readonly onPointerDown = (event: PointerEvent): void => {
+    if (this.temporaryView) {
       return;
     }
 
-    this.state = applyFirstPersonDesktopDragDelta(
-      this.state,
-      event.movementX,
-      event.movementY,
-      this.config,
-    );
-  };
-
-  private readonly onPointerDown = (event: PointerEvent): void => {
-    if (
-      this.temporaryView ||
-      event.pointerType === "mouse"
-    ) {
+    if (event.pointerType === "mouse") {
+      if (event.button !== 0) {
+        return;
+      }
+      this.mouseLookPointerId = event.pointerId;
+      this.mouseLookX = event.clientX;
+      this.mouseLookY = event.clientY;
+      this.element.setPointerCapture?.(event.pointerId);
+      event.preventDefault();
       return;
     }
 
@@ -706,10 +701,26 @@ export class FirstPersonPlayerViewController {
   };
 
   private readonly onPointerMove = (event: PointerEvent): void => {
-    if (
-      event.pointerType === "mouse" ||
-      !this.touchPoints.has(event.pointerId)
-    ) {
+    if (event.pointerType === "mouse") {
+      if (this.mouseLookPointerId !== event.pointerId) {
+        return;
+      }
+
+      const dx = event.clientX - this.mouseLookX;
+      const dy = event.clientY - this.mouseLookY;
+      this.mouseLookX = event.clientX;
+      this.mouseLookY = event.clientY;
+      this.state = applyFirstPersonDesktopDragDelta(
+        this.state,
+        dx,
+        dy,
+        this.config,
+      );
+      event.preventDefault();
+      return;
+    }
+
+    if (!this.touchPoints.has(event.pointerId)) {
       return;
     }
 
@@ -760,6 +771,11 @@ export class FirstPersonPlayerViewController {
 
   private readonly onPointerUp = (event: PointerEvent): void => {
     if (event.pointerType === "mouse") {
+      if (this.mouseLookPointerId !== event.pointerId) {
+        return;
+      }
+      this.mouseLookPointerId = null;
+      event.preventDefault();
       return;
     }
 
@@ -845,17 +861,5 @@ export class FirstPersonPlayerViewController {
             M07_ZOOM_WHEEL_DEGREES_PER_PIXEL,
       );
     event.preventDefault();
-  };
-
-  private readonly onClick = (): void => {
-    if (
-      matchMedia("(pointer: coarse)").matches ||
-      navigator.maxTouchPoints > 0
-    ) {
-      return;
-    }
-    if (document.pointerLockElement !== this.element) {
-      void this.element.requestPointerLock();
-    }
   };
 }
