@@ -182,8 +182,8 @@ export class CabinetStaffServiceVisual {
       stepSeconds,
     );
     if (
-      previousPhase !== "hidden" &&
-      this.state.phase === "hidden"
+      previousPhase === "hidden" &&
+      this.state.phase === "approaching"
     ) {
       this.generated.selectRandomStaff();
     }
@@ -252,5 +252,22 @@ export class CabinetStaffServiceVisual {
     | "image"
     | "fallback" {
     return this.generated.status;
+  }
+
+  get selectedAssetPath(): string {
+    return this.generated.assetPath;
+  }
+
+  get viewTarget():
+    | { x: number; y: number; z: number }
+    | null {
+    if (this.state.phase === "hidden") {
+      return null;
+    }
+    return {
+      x: this.actor.position.x,
+      y: 0.82,
+      z: this.actor.position.z,
+    };
   }
 }

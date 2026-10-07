@@ -41,14 +41,27 @@ describe("M10 physical service door", () => {
       ),
     ).toBeDefined();
     expect(visual.visualStatus).toBe("fallback");
+    expect(visual.selectedAssetPath).toBe("");
+    expect(visual.viewTarget).toBeNull();
     expect(
       scene.getObjectByName(
         "adult-female-arcade-attendant-v2-realistic",
       ),
     ).toBeDefined();
 
+    visual.update(
+      true,
+      false,
+      1 / PHYSICS_HZ,
+    );
+    expect(visual.phase).toBe("approaching");
+    expect(visual.selectedAssetPath).toMatch(
+      /arcade-attendant-0[1-8]\.webp$/,
+    );
+    expect(visual.viewTarget).not.toBeNull();
+
     for (
-      let tick = 0;
+      let tick = 1;
       tick < PHYSICS_HZ * 5;
       tick += 1
     ) {
@@ -89,6 +102,7 @@ describe("M10 physical service door", () => {
     const returnedRotation = door.rotation();
 
     expect(visual.phase).toBe("hidden");
+    expect(visual.viewTarget).toBeNull();
     expect(returned.x).toBeCloseTo(
       closed.x,
       4,

@@ -654,6 +654,12 @@ export async function startApp(
       root.dataset.staffVisual =
         staffVisualStatus;
     }
+    const staffAssetPath =
+      testScene.getStaffAssetPath?.();
+    if (staffAssetPath) {
+      root.dataset.staffAsset =
+        staffAssetPath;
+    }
 
     const rewardEvents =
       testScene.consumeRewardEvents?.() ?? [];
@@ -677,6 +683,24 @@ export async function startApp(
       }
     }
 
+    const staffCameraView =
+      testScene.getStaffCameraView?.() ?? null;
+    playerViewController?.setTemporaryCameraView(
+      staffCameraView
+        ? {
+            position: {
+              x: staffCameraView.position[0],
+              y: staffCameraView.position[1],
+              z: staffCameraView.position[2],
+            },
+            target: {
+              x: staffCameraView.target[0],
+              y: staffCameraView.target[1],
+              z: staffCameraView.target[2],
+            },
+          }
+        : null,
+    );
     playerViewController?.update(frameDeltaSeconds);
     if (physicsDebugRenderer.visible) {
       physicsDebugRenderer.update(physics.debugRender());

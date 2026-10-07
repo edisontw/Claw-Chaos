@@ -590,6 +590,19 @@ export function createCabinetLabScene(
     getStaffVisualStatus(): string {
       return staffServiceVisual.visualStatus;
     },
+    getStaffAssetPath(): string {
+      return staffServiceVisual.selectedAssetPath;
+    },
+    getStaffCameraView() {
+      const target = staffServiceVisual.viewTarget;
+      if (!target) {
+        return null;
+      }
+      return {
+        position: [-0.18, 1.18, 1.72],
+        target: [target.x, target.y, target.z],
+      };
+    },
     setManualGantryInput(x: number, z: number): void {
       gantryScene.setManualGantryInput?.(x, z);
     },

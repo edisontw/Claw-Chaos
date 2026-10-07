@@ -61,6 +61,11 @@ export interface PlayerViewLookAngles {
   distanceMeters: number;
 }
 
+export interface TemporaryPlayerCameraView {
+  position: { x: number; y: number; z: number };
+  target: { x: number; y: number; z: number };
+}
+
 const cabinetOuterX =
   M06_CABINET_CONFIG.interiorHalfX +
   M06_CABINET_CONFIG.wallHalfThickness * 2;
@@ -389,6 +394,12 @@ export class FirstPersonPlayerViewController {
   private touchLookPointerId: number | null = null;
   private touchLookX = 0;
   private touchLookY = 0;
+  private temporaryView:
+    | {
+        restoreState: FirstPersonPlayerViewState;
+        view: TemporaryPlayerCameraView;
+      }
+    | null = null;
 
   constructor(
     private readonly camera: THREE.PerspectiveCamera,
@@ -419,6 +430,9 @@ export class FirstPersonPlayerViewController {
   }
 
   adjustEyeHeight(deltaMeters: number): void {
+    if (this.temporaryView) {
+      return;
+    }
     this.state = adjustFirstPersonEyeHeight(
       this.state,
       deltaMeters,
@@ -430,7 +444,58 @@ export class FirstPersonPlayerViewController {
     );
   }
 
+  setTemporaryCameraView(
+    view: TemporaryPlayerCameraView | null,
+  ): void {
+    if (view) {
+      if (!this.temporaryView) {
+        this.temporaryView = {
+          restoreState: { ...this.state },
+          view,
+        };
+        this.pressed.clear();
+        this.touchLookPointerId = null;
+      } else {
+        this.temporaryView.view = view;
+      }
+      this.element.dataset.playerView = "staff-service";
+      return;
+    }
+
+    if (!this.temporaryView) {
+      return;
+    }
+
+    this.state = {
+      ...this.temporaryView.restoreState,
+    };
+    this.temporaryView = null;
+    this.element.dataset.playerView = "active";
+    applyFirstPersonPlayerCamera(
+      this.camera,
+      this.state,
+    );
+  }
+
   update(deltaSeconds: number): void {
+    if (this.temporaryView) {
+      const { position, target } =
+        this.temporaryView.view;
+      this.camera.position.set(
+        position.x,
+        position.y,
+        position.z,
+      );
+      this.camera.lookAt(
+        target.x,
+        target.y,
+        target.z,
+      );
+      this.focus = null;
+      this.element.dataset.playerFocus = "staff";
+      this.prompt.textContent = "";
+      return;
+    }
     this.state = advanceFirstPersonPlayerView(
       this.state,
       {
@@ -475,6 +540,10 @@ export class FirstPersonPlayerViewController {
   }
 
   private readonly onKeyDown = (event: KeyboardEvent): void => {
+    if (this.temporaryView) {
+      return;
+    }
+
     if (
       (event.code === "PageUp" ||
         event.code === "PageDown") &&
@@ -513,7 +582,10 @@ export class FirstPersonPlayerViewController {
   };
 
   private readonly onMouseMove = (event: MouseEvent): void => {
-    if (document.pointerLockElement !== this.element) {
+    if (
+      this.temporaryView ||
+      document.pointerLockElement !== this.element
+    ) {
       return;
     }
 
@@ -526,7 +598,10 @@ export class FirstPersonPlayerViewController {
   };
 
   private readonly onPointerDown = (event: PointerEvent): void => {
-    if (event.pointerType === "mouse") {
+    if (
+      this.temporaryView ||
+      event.pointerType === "mouse"
+    ) {
       return;
     }
     this.touchLookPointerId = event.pointerId;

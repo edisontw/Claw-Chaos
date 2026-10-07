@@ -44,6 +44,8 @@ export interface SimulationScene {
   requestStaff?(): boolean;
   getStaffCallState?(): StaffCallUiState;
   getStaffVisualStatus?(): string;
+  getStaffAssetPath?(): string;
+  getStaffCameraView?(): CameraPreset | null;
   isSafeForService?(): boolean;
   setManualGantryInput?(x: number, z: number): void;
   setRenderQuality?(profile: RenderQualityProfile): void;
