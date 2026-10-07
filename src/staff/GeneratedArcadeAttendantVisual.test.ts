@@ -10,6 +10,7 @@ import {
   GeneratedArcadeAttendantVisual,
   createGeneratedStaffSpriteMaterial,
   pickRandomGeneratedStaffAssetIndex,
+  pickRandomGeneratedStaffLoadedIndex,
 } from "./GeneratedArcadeAttendantVisual";
 
 describe("generated arcade attendant visual", () => {
@@ -40,7 +41,7 @@ describe("generated arcade attendant visual", () => {
       createGeneratedStaffSpriteMaterial(
         new THREE.Texture(),
       );
-    expect(material.depthTest).toBe(true);
+    expect(material.depthTest).toBe(false);
     expect(material.depthWrite).toBe(false);
     expect(material.transparent).toBe(true);
     expect(material.toneMapped).toBe(false);
@@ -62,5 +63,32 @@ describe("generated arcade attendant visual", () => {
     expect(
       pickRandomGeneratedStaffAssetIndex(7, () => 0.999),
     ).toBe(6);
+  });
+
+  it("switches only among already-loaded staff textures", () => {
+    expect(
+      pickRandomGeneratedStaffLoadedIndex([], 2, () => 0),
+    ).toBe(-1);
+    expect(
+      pickRandomGeneratedStaffLoadedIndex(
+        [1, 4, 6],
+        4,
+        () => 0,
+      ),
+    ).toBe(1);
+    expect(
+      pickRandomGeneratedStaffLoadedIndex(
+        [1, 4, 6],
+        4,
+        () => 0.999,
+      ),
+    ).toBe(6);
+    expect(
+      pickRandomGeneratedStaffLoadedIndex(
+        [4],
+        4,
+        () => 0.5,
+      ),
+    ).toBe(4);
   });
 });

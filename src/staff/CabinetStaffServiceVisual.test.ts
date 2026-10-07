@@ -55,10 +55,18 @@ describe("M10 physical service door", () => {
       1 / PHYSICS_HZ,
     );
     expect(visual.phase).toBe("approaching");
-    expect(visual.selectedAssetPath).toMatch(
-      /arcade-attendant-0[1-8]\.webp$/,
-    );
     expect(visual.viewTarget).not.toBeNull();
+
+    const actor = scene.getObjectByName(
+      "m10-staff-character-visual-root",
+    );
+    expect(actor).toBeDefined();
+    expect(actor!.scale.x).toBeGreaterThanOrEqual(
+      0.92,
+    );
+    expect(actor!.scale.x).toBeLessThanOrEqual(
+      1.06,
+    );
 
     for (
       let tick = 1;
@@ -77,6 +85,7 @@ describe("M10 physical service door", () => {
     const openedRotation = { ...door.rotation() };
 
     expect(visual.phase).toBe("door_open");
+    expect(actor!.scale.x).toBeCloseTo(1.06, 2);
     expect(opened.x).toBeGreaterThan(
       closed.x + 0.20,
     );

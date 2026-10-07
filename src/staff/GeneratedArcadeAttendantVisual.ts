@@ -15,9 +15,9 @@ export const GENERATED_STAFF_ASSET_PATHS = [
 export const GENERATED_STAFF_ASSET_PATH =
   GENERATED_STAFF_ASSET_PATHS[0];
 export const GENERATED_STAFF_TARGET_HEIGHT_METERS = 1.64;
-export const GENERATED_STAFF_RENDER_ORDER = 20;
+export const GENERATED_STAFF_RENDER_ORDER = 40;
 export const GENERATED_STAFF_OCCLUSION_POLICY =
-  "scene-depth";
+  "staff-foreground";
 const GENERATED_STAFF_TEXTURE_ASPECT = 1024 / 1536;
 
 export type GeneratedStaffVisualStatus =
@@ -61,6 +61,29 @@ export function pickRandomGeneratedStaffAssetIndex(
   return slot >= currentIndex ? slot + 1 : slot;
 }
 
+export function pickRandomGeneratedStaffLoadedIndex(
+  loadedIndices: readonly number[],
+  currentIndex: number,
+  random: () => number = Math.random,
+): number {
+  if (loadedIndices.length === 0) {
+    return -1;
+  }
+
+  const alternatives = loadedIndices.filter(
+    (index) => index !== currentIndex,
+  );
+  const candidates =
+    alternatives.length > 0
+      ? alternatives
+      : loadedIndices;
+  const slot = Math.min(
+    candidates.length - 1,
+    Math.floor(random() * candidates.length),
+  );
+  return candidates[slot] ?? loadedIndices[0] ?? -1;
+}
+
 export function createGeneratedStaffSpriteMaterial(
   texture: THREE.Texture,
 ): THREE.SpriteMaterial {
@@ -69,7 +92,7 @@ export function createGeneratedStaffSpriteMaterial(
     color: 0xffffff,
     transparent: true,
     alphaTest: 0.015,
-    depthTest: true,
+    depthTest: false,
     depthWrite: false,
     toneMapped: false,
   });
@@ -77,18 +100,19 @@ export function createGeneratedStaffSpriteMaterial(
 
 /**
  * A photorealistic, generated cutout rendered as a camera-facing sprite.
- * It is visual-only and intentionally has no physics representation.
+ * All staff textures are preloaded so a service call can switch portraits
+ * synchronously instead of briefly showing the previous attendant.
  */
 export class GeneratedArcadeAttendantVisual {
   readonly root = new THREE.Group();
   private statusValue: GeneratedStaffVisualStatus =
     "loading";
   private currentAssetIndex = -1;
-  private loadRequestId = 0;
   private loader: THREE.TextureLoader | null = null;
   private sprite: THREE.Sprite | null = null;
   private material: THREE.SpriteMaterial | null = null;
-  private texture: THREE.Texture | null = null;
+  private readonly textures =
+    new Map<number, THREE.Texture>();
 
   constructor() {
     this.root.name = GENERATED_STAFF_CHARACTER_VARIANT;
@@ -109,101 +133,115 @@ export class GeneratedArcadeAttendantVisual {
     }
 
     this.loader = new THREE.TextureLoader();
-    this.selectRandomStaff();
+    this.preloadAssets();
   }
 
   selectRandomStaff(): string {
-    this.currentAssetIndex =
-      pickRandomGeneratedStaffAssetIndex(
+    const loadedIndices = Array.from(
+      this.textures.keys(),
+    );
+    const selectedIndex =
+      pickRandomGeneratedStaffLoadedIndex(
+        loadedIndices,
         this.currentAssetIndex,
       );
-    const path =
-      GENERATED_STAFF_ASSET_PATHS[
-        this.currentAssetIndex
-      ] ?? GENERATED_STAFF_ASSET_PATHS[0];
-    this.root.userData.assetIndex =
-      this.currentAssetIndex + 1;
-    this.root.userData.assetPath = path;
-    this.loadAsset(path);
-    return path;
+
+    if (selectedIndex < 0) {
+      return this.assetPath;
+    }
+
+    this.applyTexture(selectedIndex);
+    return (
+      GENERATED_STAFF_ASSET_PATHS[selectedIndex] ??
+      GENERATED_STAFF_ASSET_PATH
+    );
   }
 
-  private loadAsset(path: string): void {
+  private preloadAssets(): void {
     if (!this.loader) {
       return;
     }
 
-    const requestId = ++this.loadRequestId;
-    if (!this.sprite) {
-      this.setStatus("loading");
-    }
+    GENERATED_STAFF_ASSET_PATHS.forEach(
+      (path, index) => {
+        this.loader?.load(
+          resolvePublicAssetUrl(path),
+          (texture) => {
+            this.prepareTexture(texture);
+            this.textures.set(index, texture);
 
-    this.loader.load(
-      resolvePublicAssetUrl(path),
-      (texture) => {
-        if (requestId !== this.loadRequestId) {
-          texture.dispose();
-          return;
-        }
-
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.magFilter = THREE.LinearFilter;
-        texture.minFilter =
-          THREE.LinearMipmapLinearFilter;
-        texture.generateMipmaps = true;
-        texture.needsUpdate = true;
-
-        if (!this.sprite || !this.material) {
-          const material =
-            createGeneratedStaffSpriteMaterial(
-              texture,
+            if (!this.sprite) {
+              this.applyTexture(index);
+            }
+          },
+          undefined,
+          (error) => {
+            console.warn(
+              `Generated arcade attendant image failed to preload: ${path}`,
+              error,
             );
-          const sprite = new THREE.Sprite(material);
-          sprite.name =
-            "generated-arcade-attendant-cutout";
-          sprite.center.set(0.5, 0);
-          sprite.scale.set(
-            GENERATED_STAFF_TARGET_HEIGHT_METERS *
-              GENERATED_STAFF_TEXTURE_ASPECT,
-            GENERATED_STAFF_TARGET_HEIGHT_METERS,
-            1,
-          );
-          sprite.userData.visualOnly = true;
-          sprite.userData.occlusionPolicy =
-            GENERATED_STAFF_OCCLUSION_POLICY;
-          sprite.renderOrder =
-            GENERATED_STAFF_RENDER_ORDER;
-          sprite.castShadow = false;
-          sprite.receiveShadow = false;
-          this.material = material;
-          this.sprite = sprite;
-          this.texture = texture;
-          this.root.add(sprite);
-        } else {
-          const previousTexture = this.texture;
-          this.material.map = texture;
-          this.material.needsUpdate = true;
-          this.texture = texture;
-          previousTexture?.dispose();
-        }
-
-        this.root.userData.activeAssetPath = path;
-        this.setStatus("image");
-      },
-      undefined,
-      (error) => {
-        if (requestId !== this.loadRequestId) {
-          return;
-        }
-        if (!this.sprite) {
-          this.setStatus("fallback");
-        }
-        console.warn(
-          "Generated arcade attendant image failed to load; keeping the current visual fallback.",
-          error,
+            if (
+              this.textures.size === 0 &&
+              !this.sprite
+            ) {
+              this.setStatus("fallback");
+            }
+          },
         );
       },
     );
+  }
+
+  private prepareTexture(texture: THREE.Texture): void {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    texture.magFilter = THREE.LinearFilter;
+    texture.minFilter =
+      THREE.LinearMipmapLinearFilter;
+    texture.generateMipmaps = true;
+    texture.needsUpdate = true;
+  }
+
+  private applyTexture(index: number): void {
+    const texture = this.textures.get(index);
+    const path =
+      GENERATED_STAFF_ASSET_PATHS[index];
+    if (!texture || !path) {
+      return;
+    }
+
+    if (!this.sprite || !this.material) {
+      const material =
+        createGeneratedStaffSpriteMaterial(texture);
+      const sprite = new THREE.Sprite(material);
+      sprite.name =
+        "generated-arcade-attendant-cutout";
+      sprite.center.set(0.5, 0);
+      sprite.scale.set(
+        GENERATED_STAFF_TARGET_HEIGHT_METERS *
+          GENERATED_STAFF_TEXTURE_ASPECT,
+        GENERATED_STAFF_TARGET_HEIGHT_METERS,
+        1,
+      );
+      sprite.userData.visualOnly = true;
+      sprite.userData.occlusionPolicy =
+        GENERATED_STAFF_OCCLUSION_POLICY;
+      sprite.renderOrder =
+        GENERATED_STAFF_RENDER_ORDER;
+      sprite.castShadow = false;
+      sprite.receiveShadow = false;
+      this.material = material;
+      this.sprite = sprite;
+      this.root.add(sprite);
+    } else {
+      this.material.map = texture;
+      this.material.needsUpdate = true;
+    }
+
+    this.currentAssetIndex = index;
+    this.root.userData.assetIndex = index + 1;
+    this.root.userData.assetPath = path;
+    this.root.userData.activeAssetPath = path;
+    this.setStatus("image");
   }
 
   private setStatus(status: GeneratedStaffVisualStatus): void {

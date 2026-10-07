@@ -193,6 +193,30 @@ export class CabinetStaffServiceVisual {
     this.actor.position.set(pose.x, 0, pose.z);
     this.actor.rotation.y = pose.yawRadians;
 
+    const travelDistance = Math.hypot(
+      M10_STAFF_SERVICE_CONFIG.serviceX -
+        M10_STAFF_SERVICE_CONFIG.startX,
+      M10_STAFF_SERVICE_CONFIG.serviceZ -
+        M10_STAFF_SERVICE_CONFIG.startZ,
+    );
+    const distanceFromStart = Math.hypot(
+      pose.x - M10_STAFF_SERVICE_CONFIG.startX,
+      pose.z - M10_STAFF_SERVICE_CONFIG.startZ,
+    );
+    const approachFraction =
+      travelDistance > 1e-6
+        ? Math.min(
+            1,
+            Math.max(
+              0,
+              distanceFromStart / travelDistance,
+            ),
+          )
+        : 1;
+    const staffScale =
+      0.92 + approachFraction * 0.14;
+    this.actor.scale.setScalar(staffScale);
+
     const useGenerated =
       this.generated.status === "image";
     this.generated.root.visible = useGenerated;
