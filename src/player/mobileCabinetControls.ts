@@ -62,6 +62,7 @@ export class MobileCabinetControls {
     private readonly onMove: (x: number, z: number) => void,
     private readonly onAction: () => boolean,
     private readonly onViewHeightStep?: (direction: -1 | 1) => void,
+    private readonly onZoomStep?: (direction: -1 | 1) => void,
   ) {
     this.root = document.createElement("div");
     this.root.className = "mobile-cabinet-controls";
@@ -110,7 +111,34 @@ export class MobileCabinetControls {
       this.onViewHeightStep?.(-1);
       event.preventDefault();
     });
-    viewHeight.append(viewUp, viewDown);
+
+    const zoomIn = document.createElement("button");
+    zoomIn.type = "button";
+    zoomIn.className = "mobile-view-height-button";
+    zoomIn.textContent = "ZOOM +";
+    zoomIn.setAttribute("aria-label", "Zoom in");
+
+    const zoomOut = document.createElement("button");
+    zoomOut.type = "button";
+    zoomOut.className = "mobile-view-height-button";
+    zoomOut.textContent = "ZOOM −";
+    zoomOut.setAttribute("aria-label", "Zoom out");
+
+    zoomIn.addEventListener("pointerdown", (event) => {
+      this.onZoomStep?.(1);
+      event.preventDefault();
+    });
+    zoomOut.addEventListener("pointerdown", (event) => {
+      this.onZoomStep?.(-1);
+      event.preventDefault();
+    });
+
+    viewHeight.append(
+      viewUp,
+      viewDown,
+      zoomIn,
+      zoomOut,
+    );
 
     this.root.append(joystickWrap, viewHeight, this.actionButton);
     parent.append(this.root);

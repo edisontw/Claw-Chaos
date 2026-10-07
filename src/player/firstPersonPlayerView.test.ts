@@ -3,6 +3,8 @@ import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
 import {
   M07_CAMERA_FOV_DEGREES,
   M07_MOBILE_CAMERA_FOV_DEGREES,
+  M07_ZOOM_MAX_FOV_DEGREES,
+  M07_ZOOM_MIN_FOV_DEGREES,
   M07_CABINET_VIEW_TARGETS,
   M07_FIRST_PERSON_VIEW_CONFIG,
   M07_MOBILE_FIRST_PERSON_VIEW_CONFIG,
@@ -11,10 +13,12 @@ import {
   applyFirstPersonDesktopDragDelta,
   applyFirstPersonLookDelta,
   applyFirstPersonTouchDragDelta,
+  clampFirstPersonZoomFov,
   computeLookAnglesToPoint,
   createFirstPersonPlayerViewState,
   findFocusedPlayerViewTarget,
   playerCameraPosition,
+  zoomFirstPersonFovByStep,
 } from "./firstPersonPlayerView";
 
 describe("M07 first-person player view constraints", () => {
@@ -309,5 +313,34 @@ describe("M07 first-person player view constraints", () => {
 
       expect(focused?.target.id).toBe(target.id);
     }
+  });
+});
+
+
+describe("first-person zoom", () => {
+  it("zooms by FOV while preserving safe bounds", () => {
+    expect(
+      zoomFirstPersonFovByStep(50, 1),
+    ).toBe(46);
+    expect(
+      zoomFirstPersonFovByStep(50, -1),
+    ).toBe(54);
+    expect(
+      clampFirstPersonZoomFov(10),
+    ).toBe(M07_ZOOM_MIN_FOV_DEGREES);
+    expect(
+      clampFirstPersonZoomFov(100),
+    ).toBe(M07_ZOOM_MAX_FOV_DEGREES);
+  });
+
+  it("keeps the zoom envelope useful rather than extreme", () => {
+    expect(M07_ZOOM_MIN_FOV_DEGREES).toBeGreaterThanOrEqual(30);
+    expect(M07_ZOOM_MAX_FOV_DEGREES).toBeLessThanOrEqual(70);
+    expect(M07_ZOOM_MIN_FOV_DEGREES).toBeLessThan(
+      M07_CAMERA_FOV_DEGREES,
+    );
+    expect(M07_ZOOM_MAX_FOV_DEGREES).toBeGreaterThan(
+      M07_MOBILE_CAMERA_FOV_DEGREES,
+    );
   });
 });

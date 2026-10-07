@@ -440,6 +440,8 @@ export async function startApp(
             M07_MOBILE_FIRST_PERSON_VIEW_CONFIG
               .eyeHeightStepMeters,
         ),
+      (direction) =>
+        playerViewController?.adjustZoom(direction),
     );
   }
 

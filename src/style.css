@@ -284,8 +284,9 @@ canvas {
   position: absolute;
   top: max(12px, calc(env(safe-area-inset-top) + 8px));
   right: max(10px, env(safe-area-inset-right));
-  display: flex;
-  flex-direction: row;
+  width: 112px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 5px;
   pointer-events: auto;
 }
@@ -322,6 +323,7 @@ canvas {
   .mobile-view-height {
     top: max(8px, calc(env(safe-area-inset-top) + 5px));
     right: max(10px, env(safe-area-inset-right));
+    width: 104px;
     gap: 4px;
   }
 
