@@ -177,7 +177,7 @@ jobs:
                grep -q 'player-interaction-prompt' "$DOM_FILE" &&
                ! grep -q 'player-reticle' "$DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$DOM_FILE" &&
-               grep -q 'mobile-view-height' "$DOM_FILE" &&
+               ! grep -q 'mobile-view-height' "$DOM_FILE" &&
                grep -Eq 'data-render-profile="(high|medium|low)"' "$DOM_FILE" &&
                grep -q 'data-render-mode="auto"' "$DOM_FILE" &&
                grep -q 'data-render-adaptive="armed"' "$DOM_FILE" &&
@@ -461,7 +461,7 @@ jobs:
                ! grep -q 'player-reticle' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-controls="ready"' "$ROOT_DOM_FILE" &&
                grep -q 'data-mobile-control-style="compact-translucent"' "$ROOT_DOM_FILE" &&
-               grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
+               ! grep -q 'mobile-view-height' "$ROOT_DOM_FILE" &&
                grep -Eq 'data-render-profile="(high|medium|low)"' "$ROOT_DOM_FILE" &&
                grep -q 'data-render-mode="auto"' "$ROOT_DOM_FILE" &&
                grep -q 'data-render-adaptive="armed"' "$ROOT_DOM_FILE" &&
