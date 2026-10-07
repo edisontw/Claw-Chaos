@@ -62,7 +62,7 @@ describe("M10 physical service door", () => {
     );
     expect(actor).toBeDefined();
     expect(actor!.scale.x).toBeCloseTo(
-      0.84,
+      0.96,
       2,
     );
     expect(visual.serviceProximity).toBeGreaterThanOrEqual(0);
@@ -85,7 +85,7 @@ describe("M10 physical service door", () => {
     const openedRotation = { ...door.rotation() };
 
     expect(visual.phase).toBe("door_open");
-    expect(actor!.scale.x).toBeCloseTo(0.84, 2);
+    expect(actor!.scale.x).toBeCloseTo(0.96, 2);
     expect(actor!.position.x).toBeGreaterThan(
       M06_CABINET_CONFIG.interiorHalfX,
     );
@@ -94,7 +94,7 @@ describe("M10 physical service door", () => {
       2,
     );
     expect(actor!.position.z).toBeCloseTo(
-      -0.34,
+      -0.32,
       2,
     );
     const generatedRoot = scene.getObjectByName(
