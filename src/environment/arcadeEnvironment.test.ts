@@ -61,6 +61,14 @@ describe("Art Slice 3 arcade environment", () => {
       root.getObjectByName("theme-a-prize-display-left")
         ?.visible,
     ).toBe(false);
+    expect(
+      root.getObjectByName("theme-a-side-stock-left")
+        ?.visible,
+    ).toBe(true);
+    expect(
+      root.getObjectByName("theme-a-side-stock-right")
+        ?.visible,
+    ).toBe(true);
 
     applyArcadeEnvironmentDetail(root, "full");
     expect(
@@ -89,6 +97,22 @@ describe("Art Slice 3 arcade environment", () => {
       root.getObjectByName("theme-a-prize-display-right")
         ?.visible,
     ).toBe(false);
+    expect(
+      root.getObjectByName("theme-a-side-stock-left")
+        ?.visible,
+    ).toBe(false);
+    expect(
+      root.getObjectByName("theme-a-side-stock-right")
+        ?.visible,
+    ).toBe(false);
+    expect(
+      root.getObjectByName("theme-a-arcade-side-wall-left")
+        ?.visible,
+    ).not.toBe(false);
+    expect(
+      root.getObjectByName("theme-a-arcade-side-wall-right")
+        ?.visible,
+    ).not.toBe(false);
 
     for (const fixture of ARCADE_CEILING_FIXTURES) {
       expect(
@@ -119,6 +143,28 @@ describe("Art Slice 3 arcade environment", () => {
     expect(rightNear).toBeDefined();
     expect(rightNear!.x).toBeGreaterThanOrEqual(1.50);
     expect(rightNear!.z).toBeLessThanOrEqual(-0.10);
+  });
+
+  it("fills both lateral sight lines with room boundaries and stock displays", () => {
+    const scene = new THREE.Scene();
+    const root = addArcadeEnvironment(
+      scene,
+      DEFAULT_VISUAL_THEME,
+      "full",
+    );
+
+    for (const side of ["left", "right"]) {
+      expect(
+        root.getObjectByName(
+          `theme-a-arcade-side-wall-${side}`,
+        ),
+      ).toBeDefined();
+      const stock = root.getObjectByName(
+        `theme-a-side-stock-${side}`,
+      );
+      expect(stock).toBeDefined();
+      expect(stock!.children.length).toBeGreaterThanOrEqual(18);
+    }
   });
 
   it("keeps ceiling fixtures above the adjustable player eye height", () => {
