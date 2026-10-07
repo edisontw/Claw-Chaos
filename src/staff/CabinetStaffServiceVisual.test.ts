@@ -97,6 +97,10 @@ describe("M10 physical service door", () => {
       -0.32,
       2,
     );
+    expect(actor!.position.y).toBeCloseTo(
+      -0.22,
+      2,
+    );
     const generatedRoot = scene.getObjectByName(
       "adult-female-arcade-attendant-image-billboard-v1",
     );

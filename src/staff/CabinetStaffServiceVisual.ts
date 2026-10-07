@@ -227,9 +227,12 @@ export class CabinetStaffServiceVisual {
       serviceTuckRaw *
       (3 - 2 * serviceTuckRaw);
 
+    const serviceVerticalOffset =
+      -serviceTuckFraction * 0.22;
+
     this.actor.position.set(
       pose.x - serviceTuckFraction * 0.23,
-      0,
+      serviceVerticalOffset,
       pose.z - serviceTuckFraction * 0.24,
     );
 
@@ -246,6 +249,7 @@ export class CabinetStaffServiceVisual {
         pose.walkCycleRadians,
       );
       this.actor.position.y =
+        serviceVerticalOffset +
         Math.abs(
           Math.sin(pose.walkCycleRadians),
         ) * 0.006;
