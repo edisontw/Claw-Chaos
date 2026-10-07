@@ -215,13 +215,25 @@ export class CabinetStaffServiceVisual {
         : 1;
     this.serviceProximityValue = approachFraction;
 
+    const serviceTuckRaw = Math.min(
+      1,
+      Math.max(
+        0,
+        (approachFraction - 0.72) / 0.28,
+      ),
+    );
+    const serviceTuckFraction =
+      serviceTuckRaw *
+      serviceTuckRaw *
+      (3 - 2 * serviceTuckRaw);
+
     this.actor.position.set(
-      pose.x,
+      pose.x - serviceTuckFraction * 0.23,
       0,
-      pose.z,
+      pose.z - serviceTuckFraction * 0.14,
     );
 
-    this.actor.scale.setScalar(1.20);
+    this.actor.scale.setScalar(1.10);
     this.generated.root.position.y = 0;
 
     const useGenerated =
@@ -302,8 +314,8 @@ export class CabinetStaffServiceVisual {
     return {
       x: this.actor.position.x,
       y:
-        0.88 +
-        this.serviceProximityValue * 0.67,
+        0.92 +
+        this.serviceProximityValue * 0.22,
       z: this.actor.position.z,
     };
   }
