@@ -120,7 +120,7 @@ export class GeneratedArcadeAttendantVisual {
     const path =
       GENERATED_STAFF_ASSET_PATHS[
         this.currentAssetIndex
-      ];
+      ] ?? GENERATED_STAFF_ASSET_PATHS[0];
     this.root.userData.assetIndex =
       this.currentAssetIndex + 1;
     this.root.userData.assetPath = path;
