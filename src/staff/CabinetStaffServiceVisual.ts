@@ -215,27 +215,14 @@ export class CabinetStaffServiceVisual {
         : 1;
     this.serviceProximityValue = approachFraction;
 
-    const tuckRaw = Math.min(
-      1,
-      Math.max(
-        0,
-        (approachFraction - 0.70) / 0.30,
-      ),
-    );
-    const tuckFraction =
-      tuckRaw * tuckRaw * (3 - 2 * tuckRaw);
-
     this.actor.position.set(
-      pose.x - tuckFraction * 0.24,
+      pose.x,
       0,
-      pose.z - tuckFraction * 0.42,
+      pose.z,
     );
 
-    const staffScale =
-      0.96 + approachFraction * 0.24;
-    this.actor.scale.setScalar(staffScale);
-    this.generated.root.position.y =
-      -0.52 * tuckFraction;
+    this.actor.scale.setScalar(1.20);
+    this.generated.root.position.y = -0.52;
 
     const useGenerated =
       this.generated.status === "image";
