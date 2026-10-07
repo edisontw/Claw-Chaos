@@ -191,7 +191,6 @@ export class CabinetStaffServiceVisual {
     const pose = staffServicePose(this.state);
 
     this.actor.visible = pose.visible;
-    this.actor.position.set(pose.x, 0, pose.z);
     this.actor.rotation.y = pose.yawRadians;
 
     const travelDistance = Math.hypot(
@@ -215,9 +214,28 @@ export class CabinetStaffServiceVisual {
           )
         : 1;
     this.serviceProximityValue = approachFraction;
+
+    const tuckRaw = Math.min(
+      1,
+      Math.max(
+        0,
+        (approachFraction - 0.70) / 0.30,
+      ),
+    );
+    const tuckFraction =
+      tuckRaw * tuckRaw * (3 - 2 * tuckRaw);
+
+    this.actor.position.set(
+      pose.x - tuckFraction * 0.04,
+      0,
+      pose.z - tuckFraction * 0.28,
+    );
+
     const staffScale =
-      0.94 + approachFraction * 0.16;
+      0.96 + approachFraction * 0.24;
     this.actor.scale.setScalar(staffScale);
+    this.generated.root.position.y =
+      -0.12 * tuckFraction;
 
     const useGenerated =
       this.generated.status === "image";

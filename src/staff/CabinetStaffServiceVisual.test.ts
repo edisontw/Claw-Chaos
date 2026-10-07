@@ -62,10 +62,10 @@ describe("M10 physical service door", () => {
     );
     expect(actor).toBeDefined();
     expect(actor!.scale.x).toBeGreaterThanOrEqual(
-      0.94,
+      0.96,
     );
     expect(actor!.scale.x).toBeLessThanOrEqual(
-      1.10,
+      1.20,
     );
     expect(visual.serviceProximity).toBeGreaterThanOrEqual(0);
     expect(visual.serviceProximity).toBeLessThanOrEqual(1);
@@ -87,7 +87,18 @@ describe("M10 physical service door", () => {
     const openedRotation = { ...door.rotation() };
 
     expect(visual.phase).toBe("door_open");
-    expect(actor!.scale.x).toBeCloseTo(1.10, 2);
+    expect(actor!.scale.x).toBeCloseTo(1.20, 2);
+    expect(actor!.position.z).toBeLessThan(
+      M06_CABINET_CONFIG.interiorHalfZ * -0.8,
+    );
+    const generatedRoot = scene.getObjectByName(
+      "adult-female-arcade-attendant-image-billboard-v1",
+    );
+    expect(generatedRoot).toBeDefined();
+    expect(generatedRoot!.position.y).toBeCloseTo(
+      -0.12,
+      2,
+    );
     expect(visual.serviceProximity).toBeCloseTo(1, 2);
     expect(opened.x).toBeGreaterThan(
       closed.x + 0.20,
