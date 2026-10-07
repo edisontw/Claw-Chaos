@@ -107,7 +107,7 @@ describe("M10 physical service door", () => {
     );
     expect(visual.serviceProximity).toBeCloseTo(1, 2);
     expect(visual.viewTarget?.y).toBeCloseTo(
-      1.18,
+      1.28,
       2,
     );
     expect(opened.x).toBeGreaterThan(
