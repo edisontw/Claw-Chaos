@@ -1,6 +1,7 @@
 import { createSeededRandom } from "../core/seededRng";
 
 export const CABINET_LAYOUT_IDS = [
+  "stocked",
   "loose",
   "dense",
   "showcase",
@@ -53,6 +54,116 @@ interface PlacementBase {
   rotationYRadians: number;
   yOffsetMeters?: number;
 }
+
+const STOCKED_BASE: readonly PlacementBase[] = [
+  // Back row: fill the normally-empty rear band without covering the chute.
+  {
+    prizeId: "prize/cube_small",
+    role: "filler",
+    x: -0.33,
+    z: -0.245,
+    rotationYRadians: 0.18,
+  },
+  {
+    prizeId: "prize/box_standard",
+    role: "filler",
+    x: -0.11,
+    z: -0.245,
+    rotationYRadians: -0.14,
+  },
+  {
+    prizeId: "prize/teddy_simple",
+    role: "filler",
+    x: 0.13,
+    z: -0.235,
+    rotationYRadians: 0.20,
+  },
+  {
+    prizeId: "prize/cylinder_can",
+    role: "filler",
+    x: 0.35,
+    z: -0.245,
+    rotationYRadians: -0.08,
+  },
+
+  // Middle row: dense playable stock across the full cabinet width.
+  {
+    prizeId: "prize/pillow_small",
+    role: "filler",
+    x: -0.34,
+    z: -0.075,
+    rotationYRadians: -0.20,
+  },
+  {
+    prizeId: "prize/cube_small",
+    role: "filler",
+    x: -0.15,
+    z: -0.07,
+    rotationYRadians: 0.10,
+  },
+  {
+    prizeId: "prize/sphere_ball",
+    role: "filler",
+    x: 0.01,
+    z: -0.06,
+    rotationYRadians: 0,
+  },
+  {
+    prizeId: "prize/capsule_soft",
+    role: "filler",
+    x: 0.18,
+    z: -0.07,
+    rotationYRadians: 0.14,
+  },
+  {
+    prizeId: "prize/box_tall",
+    role: "filler",
+    x: 0.35,
+    z: -0.07,
+    rotationYRadians: -0.16,
+  },
+
+  // Front-right stock stays clear of the physical chute opening.
+  {
+    prizeId: "prize/ellipsoid_egg",
+    role: "filler",
+    x: 0.02,
+    z: 0.13,
+    rotationYRadians: -0.10,
+  },
+  {
+    prizeId: "prize/animal_simple",
+    role: "filler",
+    x: 0.20,
+    z: 0.15,
+    rotationYRadians: 0.12,
+  },
+  {
+    prizeId: "prize/cylinder_can",
+    role: "filler",
+    x: 0.38,
+    z: 0.14,
+    rotationYRadians: 0.08,
+  },
+
+  // A shallow second layer gives the default machine a real stocked/piled read.
+  {
+    prizeId: "prize/box_flat",
+    role: "filler",
+    x: -0.20,
+    z: -0.16,
+    yOffsetMeters: 0.095,
+    rotationYRadians: 0.24,
+  },
+  {
+    prizeId: "prize/pillow_small",
+    role: "filler",
+    x: 0.24,
+    z: -0.16,
+    yOffsetMeters: 0.085,
+    rotationYRadians: -0.22,
+  },
+];
 
 const LOOSE_BASE: readonly PlacementBase[] = [
   {
@@ -338,7 +449,14 @@ function materializePlacements(
 ): CabinetLayoutPlacement[] {
   const rng = createSeededRandom(`m09:${layoutId}:${seed}`);
   const variation =
-    layoutId === "dense"
+    layoutId === "stocked"
+      ? {
+          positionJitter: 0.004,
+          rotationJitter: 0.045,
+          verticalJitterMin: 0,
+          verticalJitterMax: 0.004,
+        }
+      : layoutId === "dense"
       ? {
           positionJitter: 0.009,
           rotationJitter: 0.10,
@@ -388,7 +506,14 @@ function materializePlacements(
           };
 
   const bounds =
-    layoutId === "edge"
+    layoutId === "stocked"
+      ? {
+          minX: -0.40,
+          maxX: 0.40,
+          minZ: -0.27,
+          maxZ: 0.19,
+        }
+      : layoutId === "edge"
       ? {
           minX: -0.40,
           maxX: 0.40,
@@ -442,13 +567,13 @@ export function parseCabinetLayoutSelection(
   search: string,
 ): CabinetLayoutSelection {
   const requested =
-    new URLSearchParams(search).get("layout")?.trim() || "loose";
+    new URLSearchParams(search).get("layout")?.trim() || "stocked";
   const valid = CABINET_LAYOUT_IDS.includes(
     requested as CabinetLayoutId,
   );
 
   return {
-    id: valid ? (requested as CabinetLayoutId) : "loose",
+    id: valid ? (requested as CabinetLayoutId) : "stocked",
     usedFallback: !valid,
   };
 }
@@ -458,7 +583,9 @@ export function createCabinetLayout(
   seed: string,
 ): CabinetLayout {
   const bases =
-    id === "dense"
+    id === "stocked"
+      ? STOCKED_BASE
+      : id === "dense"
       ? DENSE_BASE
       : id === "showcase"
         ? SHOWCASE_BASE
