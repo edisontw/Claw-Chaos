@@ -15,9 +15,9 @@ export const GENERATED_STAFF_ASSET_PATHS = [
 export const GENERATED_STAFF_ASSET_PATH =
   GENERATED_STAFF_ASSET_PATHS[0];
 export const GENERATED_STAFF_TARGET_HEIGHT_METERS = 1.64;
-export const GENERATED_STAFF_RENDER_ORDER = 40;
+export const GENERATED_STAFF_RENDER_ORDER = 20;
 export const GENERATED_STAFF_OCCLUSION_POLICY =
-  "staff-foreground";
+  "scene-depth";
 const GENERATED_STAFF_TEXTURE_ASPECT = 1024 / 1536;
 
 export type GeneratedStaffVisualStatus =
@@ -92,7 +92,7 @@ export function createGeneratedStaffSpriteMaterial(
     color: 0xffffff,
     transparent: true,
     alphaTest: 0.015,
-    depthTest: false,
+    depthTest: true,
     depthWrite: false,
     toneMapped: false,
   });

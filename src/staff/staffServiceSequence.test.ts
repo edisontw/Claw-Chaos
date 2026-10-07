@@ -154,8 +154,8 @@ describe("M10 staff service sequence", () => {
       8,
     );
     expect(pose.x).toBeGreaterThan(0.74);
-    expect(pose.z).toBeGreaterThan(0.16);
-    expect(pose.z).toBeLessThan(0.26);
+    expect(pose.z).toBeGreaterThan(-0.12);
+    expect(pose.z).toBeLessThan(-0.04);
     expect(
       Math.hypot(
         pose.x - 1.08,

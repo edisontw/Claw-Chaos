@@ -41,7 +41,7 @@ describe("generated arcade attendant visual", () => {
       createGeneratedStaffSpriteMaterial(
         new THREE.Texture(),
       );
-    expect(material.depthTest).toBe(false);
+    expect(material.depthTest).toBe(true);
     expect(material.depthWrite).toBe(false);
     expect(material.transparent).toBe(true);
     expect(material.toneMapped).toBe(false);
