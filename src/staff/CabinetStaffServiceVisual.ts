@@ -30,6 +30,7 @@ export class CabinetStaffServiceVisual {
   private readonly doorPivot = new THREE.Group();
   private readonly closedDoorCenter: THREE.Vector3;
   private readonly doorCenterOffset: THREE.Vector3;
+  private serviceProximityValue = 0;
 
   constructor(
     scene: THREE.Scene,
@@ -213,6 +214,7 @@ export class CabinetStaffServiceVisual {
             ),
           )
         : 1;
+    this.serviceProximityValue = approachFraction;
     const staffScale =
       0.94 + approachFraction * 0.16;
     this.actor.scale.setScalar(staffScale);
@@ -280,6 +282,10 @@ export class CabinetStaffServiceVisual {
 
   get selectedAssetPath(): string {
     return this.generated.assetPath;
+  }
+
+  get serviceProximity(): number {
+    return this.serviceProximityValue;
   }
 
   get viewTarget():

@@ -598,9 +598,13 @@ export function createCabinetLabScene(
       if (!target) {
         return null;
       }
+      const proximity =
+        staffServiceVisual.serviceProximity;
       return {
         position: [-0.18, 1.18, 1.72],
         target: [target.x, target.y, target.z],
+        fovDegrees:
+          56 - proximity * 5,
       };
     },
     setManualGantryInput(x: number, z: number): void {

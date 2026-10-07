@@ -692,6 +692,8 @@ export async function startApp(
               y: staffCameraView.target[1],
               z: staffCameraView.target[2],
             },
+            fovDegrees:
+              staffCameraView.fovDegrees,
           }
         : null,
     );

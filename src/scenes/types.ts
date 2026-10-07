@@ -12,6 +12,7 @@ export interface RenderBinding {
 export interface CameraPreset {
   position: [number, number, number];
   target: [number, number, number];
+  fovDegrees?: number;
 }
 
 export interface MassPropertiesDebugTarget {

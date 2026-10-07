@@ -71,6 +71,7 @@ export interface PlayerViewLookAngles {
 export interface TemporaryPlayerCameraView {
   position: { x: number; y: number; z: number };
   target: { x: number; y: number; z: number };
+  fovDegrees?: number;
 }
 
 const cabinetOuterX =
@@ -508,10 +509,11 @@ export class FirstPersonPlayerViewController {
           restoreFovDegrees:
             this.targetFovDegrees,
         };
-        this.targetFovDegrees = Math.max(
-          this.targetFovDegrees,
-          M07_STAFF_VIEW_FOV_DEGREES,
-        );
+        this.targetFovDegrees =
+          clampFirstPersonZoomFov(
+            view.fovDegrees ??
+              M07_STAFF_VIEW_FOV_DEGREES,
+          );
         this.pressed.clear();
         this.mouseLookPointerId = null;
         this.touchLookPointerId = null;
@@ -519,6 +521,11 @@ export class FirstPersonPlayerViewController {
         this.pinchDistancePixels = null;
       } else {
         this.temporaryView.view = view;
+        this.targetFovDegrees =
+          clampFirstPersonZoomFov(
+            view.fovDegrees ??
+              M07_STAFF_VIEW_FOV_DEGREES,
+          );
       }
       this.element.dataset.playerView = "staff-service";
       return;

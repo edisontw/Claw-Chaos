@@ -67,6 +67,8 @@ describe("M10 physical service door", () => {
     expect(actor!.scale.x).toBeLessThanOrEqual(
       1.10,
     );
+    expect(visual.serviceProximity).toBeGreaterThanOrEqual(0);
+    expect(visual.serviceProximity).toBeLessThanOrEqual(1);
 
     for (
       let tick = 1;
@@ -86,6 +88,7 @@ describe("M10 physical service door", () => {
 
     expect(visual.phase).toBe("door_open");
     expect(actor!.scale.x).toBeCloseTo(1.10, 2);
+    expect(visual.serviceProximity).toBeCloseTo(1, 2);
     expect(opened.x).toBeGreaterThan(
       closed.x + 0.20,
     );
