@@ -230,10 +230,10 @@ export class CabinetStaffServiceVisual {
     this.actor.position.set(
       pose.x - serviceTuckFraction * 0.23,
       0,
-      pose.z - serviceTuckFraction * 0.22,
+      pose.z - serviceTuckFraction * 0.26,
     );
 
-    this.actor.scale.setScalar(0.92);
+    this.actor.scale.setScalar(0.84);
     this.generated.root.position.y = 0;
 
     const useGenerated =

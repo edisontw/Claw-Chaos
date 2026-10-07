@@ -604,7 +604,7 @@ export function createCabinetLabScene(
         position: [-0.18, 1.18, 1.72],
         target: [target.x, target.y, target.z],
         fovDegrees:
-          54 - proximity * 6,
+          60 - proximity * 2,
       };
     },
     setManualGantryInput(x: number, z: number): void {
