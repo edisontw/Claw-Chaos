@@ -163,42 +163,38 @@ describe("M10 staff service sequence", () => {
       ),
     ).toBeGreaterThan(1.05);
   });
-  it("keeps the full staff path clear of the right-side neighboring machines", () => {
+  it("keeps the full curved staff path clear of the right-side neighboring machines", () => {
     const rightMachines =
       ARCADE_NEIGHBOR_MACHINE_PLACEMENTS.filter(
         (machine) => machine.x > 0,
       );
-
-    const start = {
-      x: M10_STAFF_SERVICE_CONFIG.startX,
-      z: M10_STAFF_SERVICE_CONFIG.startZ,
-    };
-    const end = {
-      x: M10_STAFF_SERVICE_CONFIG.serviceX,
-      z: M10_STAFF_SERVICE_CONFIG.serviceZ,
-    };
-    const dx = end.x - start.x;
-    const dz = end.z - start.z;
-    const lengthSquared = dx * dx + dz * dz;
+    const sampleCount = 160;
 
     for (const machine of rightMachines) {
-      const projection = Math.max(
-        0,
-        Math.min(
-          1,
-          ((machine.x - start.x) * dx +
-            (machine.z - start.z) * dz) /
-            lengthSquared,
-        ),
-      );
-      const closestX = start.x + dx * projection;
-      const closestZ = start.z + dz * projection;
-      const clearance = Math.hypot(
-        machine.x - closestX,
-        machine.z - closestZ,
-      );
+      let minimumClearance = Number.POSITIVE_INFINITY;
 
-      expect(clearance).toBeGreaterThan(0.60);
+      for (
+        let index = 0;
+        index <= sampleCount;
+        index += 1
+      ) {
+        const elapsedSeconds =
+          M10_STAFF_SERVICE_CONFIG.approachSeconds *
+          (index / sampleCount);
+        const pose = staffServicePose({
+          phase: "approaching",
+          elapsedSeconds,
+        });
+        minimumClearance = Math.min(
+          minimumClearance,
+          Math.hypot(
+            machine.x - pose.x,
+            machine.z - pose.z,
+          ),
+        );
+      }
+
+      expect(minimumClearance).toBeGreaterThan(0.60);
     }
   });
 

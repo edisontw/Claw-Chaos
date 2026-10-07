@@ -172,30 +172,60 @@ export function staffServicePose(
         )
       : 0;
 
-  const x =
-    state.phase === "departing"
-      ? c.serviceX +
-        (c.startX - c.serviceX) *
-          departureProgress
-      : c.startX +
-        (c.serviceX - c.startX) *
-          approachProgress;
-  const z =
-    state.phase === "departing"
-      ? c.serviceZ +
-        (c.startZ - c.serviceZ) *
-          departureProgress
-      : c.startZ +
-        (c.serviceZ - c.startZ) *
-          approachProgress;
+  const routePoint = (
+    progress: number,
+  ): { x: number; z: number } => {
+    const t = clamp01(progress);
+    const oneMinusT = 1 - t;
+    const controlX = c.serviceX;
+    const controlZ = c.startZ;
 
-  const approachYaw = Math.atan2(
-    c.serviceX - c.startX,
-    c.serviceZ - c.startZ,
-  );
-  const departureYaw = Math.atan2(
-    c.startX - c.serviceX,
-    c.startZ - c.serviceZ,
+    return {
+      x:
+        oneMinusT * oneMinusT * c.startX +
+        2 * oneMinusT * t * controlX +
+        t * t * c.serviceX,
+      z:
+        oneMinusT * oneMinusT * c.startZ +
+        2 * oneMinusT * t * controlZ +
+        t * t * c.serviceZ,
+    };
+  };
+
+  const routeTangent = (
+    progress: number,
+  ): { x: number; z: number } => {
+    const t = clamp01(progress);
+    const controlX = c.serviceX;
+    const controlZ = c.startZ;
+
+    return {
+      x:
+        2 * (1 - t) * (controlX - c.startX) +
+        2 * t * (c.serviceX - controlX),
+      z:
+        2 * (1 - t) * (controlZ - c.startZ) +
+        2 * t * (c.serviceZ - controlZ),
+    };
+  };
+
+  const routeProgress =
+    state.phase === "departing"
+      ? 1 - departureProgress
+      : approachProgress;
+  const route = routePoint(routeProgress);
+  const tangent = routeTangent(routeProgress);
+  const direction =
+    state.phase === "departing"
+      ? { x: -tangent.x, z: -tangent.z }
+      : tangent;
+
+  const x = route.x;
+  const z = route.z;
+
+  const walkingYaw = Math.atan2(
+    direction.x,
+    direction.z,
   );
 
   const doorOpenFraction =
@@ -222,11 +252,10 @@ export function staffServicePose(
     x,
     z,
     yawRadians:
-      state.phase === "approaching"
-        ? approachYaw
-        : state.phase === "departing"
-          ? departureYaw
-          : -Math.PI * 0.5,
+      state.phase === "approaching" ||
+      state.phase === "departing"
+        ? walkingYaw
+        : -Math.PI * 0.5,
     walkCycleRadians: walking
       ? state.elapsedSeconds * Math.PI * 3.2
       : 0,
