@@ -2287,6 +2287,27 @@ leave Draft.
 
 Add a 2-prong UFO-style machine.
 
+## Slice 1 — shared 2/3-prong topology foundation
+
+**Status: IMPLEMENTED CANDIDATE**
+
+Implemented:
+- shared gantry/claw runtime now accepts an explicit claw topology instead of hard-coding three fingers
+- existing 3-prong topology remains the default and keeps its original 120-degree spacing
+- new `ufo-two-prong` topology uses two opposed fingers while reusing the same hub, suspension, motor, collision and play-cycle architecture
+- sibling-finger self-contact detection now enumerates finger pairs generically rather than assuming exactly three fingers
+- URL selection supports `?machine=ufo`, `?machine=two-prong` and `?machine=ufo-two-prong`
+- the optional topology is routed through both `gantry-lab` and the production `cabinet-lab`
+- no default claw geometry, grip tuning, layouts, staff/service behavior or cabinet physics were changed
+
+Acceptance for this slice:
+- default site still constructs three fingers
+- UFO query constructs exactly two opposed physical fingers
+- both topologies share one gantry implementation
+- automated tests cover default selection, URL aliases, angular spacing and generic sibling-pair enumeration
+
+This slice is architecture/prototype only. Box-focused layouts and dedicated 2-prong grip geometry/tuning remain later M11 slices.
+
 ## Deliverables
 
 - 2-prong claw definition

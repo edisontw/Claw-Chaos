@@ -197,6 +197,74 @@ export interface GantryGripProfile {
   fingerLowerPadLengthMeters?: number;
 }
 
+export type GantryClawTopologyId =
+  | "three-prong"
+  | "ufo-two-prong";
+
+export const GANTRY_CLAW_TOPOLOGIES = {
+  "three-prong": {
+    fingerCount: 3,
+    azimuthOffsetRadians: 0,
+  },
+  "ufo-two-prong": {
+    fingerCount: 2,
+    azimuthOffsetRadians: 0,
+  },
+} as const satisfies Record<
+  GantryClawTopologyId,
+  {
+    fingerCount: 2 | 3;
+    azimuthOffsetRadians: number;
+  }
+>;
+
+export function parseGantryClawTopology(
+  search: string,
+): GantryClawTopologyId {
+  const requested = new URLSearchParams(search).get("machine");
+
+  if (
+    requested === "ufo" ||
+    requested === "two-prong" ||
+    requested === "ufo-two-prong"
+  ) {
+    return "ufo-two-prong";
+  }
+
+  return "three-prong";
+}
+
+export function createGantryFingerAzimuths(
+  topologyId: GantryClawTopologyId,
+): number[] {
+  const topology = GANTRY_CLAW_TOPOLOGIES[topologyId];
+
+  return Array.from(
+    { length: topology.fingerCount },
+    (_, index) =>
+      topology.azimuthOffsetRadians +
+      index * (Math.PI * 2 / topology.fingerCount),
+  );
+}
+
+export function createFingerIndexPairs(
+  fingerCount: number,
+): Array<readonly [number, number]> {
+  const pairs: Array<readonly [number, number]> = [];
+
+  for (let first = 0; first < fingerCount; first += 1) {
+    for (
+      let second = first + 1;
+      second < fingerCount;
+      second += 1
+    ) {
+      pairs.push([first, second]);
+    }
+  }
+
+  return pairs;
+}
+
 export interface GantryLabOptions {
   addLabFloor?: boolean;
   initialPosition?: { x: number; z: number };
@@ -212,6 +280,7 @@ export interface GantryLabOptions {
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
   gripProfile?: GantryGripProfile;
+  clawTopology?: GantryClawTopologyId;
   controlsEnabled?: () => boolean;
   milestone?: string;
   camera?: {
@@ -301,6 +370,12 @@ export function createGantryLabScene(
     claw.fingerRodRadius;
   const fingerLowerPadLengthMeters =
     options.gripProfile?.fingerLowerPadLengthMeters;
+  const clawTopologyId =
+    options.clawTopology ?? "three-prong";
+  const fingerAzimuths =
+    createGantryFingerAzimuths(clawTopologyId);
+  const fingerIndexPairs =
+    createFingerIndexPairs(fingerAzimuths.length);
   const boundedGantry = {
     ...M02_GANTRY_CONFIG,
     ...(options.travelBounds ?? {}),
@@ -650,8 +725,7 @@ export function createGantryLabScene(
 
   const fingerPivotLocalY = claw.fingerPivotY - claw.hubCenterY;
 
-  for (let index = 0; index < 3; index += 1) {
-    const theta = index * (Math.PI * 2 / 3);
+  for (const theta of fingerAzimuths) {
     const radialX = Math.cos(theta);
     const radialZ = Math.sin(theta);
     const pivotLocal = {
@@ -1312,19 +1386,12 @@ export function createGantryLabScene(
         : claw.openAngle;
       const siblingFingerContact =
         closingFinger &&
-        (
-          physics.countBodyContactPairs(
-            fingerBodies[0]!,
-            fingerBodies[1]!,
-          ) > 0 ||
-          physics.countBodyContactPairs(
-            fingerBodies[1]!,
-            fingerBodies[2]!,
-          ) > 0 ||
-          physics.countBodyContactPairs(
-            fingerBodies[2]!,
-            fingerBodies[0]!,
-          ) > 0
+        fingerIndexPairs.some(
+          ([first, second]) =>
+            physics.countBodyContactPairs(
+              fingerBodies[first]!,
+              fingerBodies[second]!,
+            ) > 0,
         );
       selfContactGuardActive = updateFingerSelfContactGuard(
         selfContactGuardActive,
@@ -1442,6 +1509,11 @@ export function createGantryLabScene(
           " / " +
           M04_PLAY_CONFIG.holdBoostDurationSeconds.toFixed(2) +
           " s",
+        "Claw topology    " +
+          clawTopologyId +
+          " / " +
+          fingerBodies.length +
+          " fingers",
         "Finger command   " + fingerCommand.toFixed(3) + " rad",
         "Self-contact     " +
           (selfContactGuardActive ? "GUARD" : "clear"),

@@ -50,24 +50,36 @@ async function loadSelectedSceneFactory(
       const [
         { createCabinetLabScene },
         { parseCabinetLayoutSelection },
+        { parseGantryClawTopology },
       ] = await Promise.all([
         import("../scenes/cabinetLab"),
         import("../layouts/cabinetLayouts"),
+        import("../scenes/gantryLab"),
       ]);
       const layoutSelection =
         parseCabinetLayoutSelection(search);
+      const clawTopology =
+        parseGantryClawTopology(search);
       return (scene, physics) =>
         createCabinetLabScene(scene, physics, {
           layoutId: layoutSelection.id,
           layoutSeed: selection.seed,
           themeId,
           renderQuality,
+          clawTopology,
         });
     }
     case "gantry-lab": {
-      const { createGantryLabScene } = await import("../scenes/gantryLab");
+      const {
+        createGantryLabScene,
+        parseGantryClawTopology,
+      } = await import("../scenes/gantryLab");
+      const clawTopology =
+        parseGantryClawTopology(search);
       return (scene, physics) =>
-        createGantryLabScene(scene, physics);
+        createGantryLabScene(scene, physics, {
+          clawTopology,
+        });
     }
     case "prize-lab": {
       const { createPrizeLabScene } = await import("../scenes/prizeLab");
