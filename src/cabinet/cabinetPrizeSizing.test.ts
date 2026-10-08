@@ -6,6 +6,7 @@ import {
   cabinetPrizeDefinition,
   STOCKED_PRIZE_SIZE_MULTIPLIER,
   STOCKED_CAN_DIAMETER_MULTIPLIER,
+  STOCKED_TALL_BOX_WIDTH_MULTIPLIER,
 } from "./cabinetPrizeSizing";
 
 describe("Stocked cabinet prize size upgrade", () => {
@@ -23,7 +24,11 @@ describe("Stocked cabinet prize size upgrade", () => {
       const original = getPrizeDefinition(id);
       const enlarged = cabinetPrizeDefinition(original, "stocked");
       const horizontal = STOCKED_PRIZE_SIZE_MULTIPLIER *
-        (id === "prize/cylinder_can" ? STOCKED_CAN_DIAMETER_MULTIPLIER : 1);
+        (id === "prize/cylinder_can"
+          ? STOCKED_CAN_DIAMETER_MULTIPLIER
+          : id === "prize/box_tall"
+            ? STOCKED_TALL_BOX_WIDTH_MULTIPLIER
+            : 1);
       expect(enlarged.dimensions.x).toBeCloseTo(
         original.dimensions.x * horizontal,
         8,
