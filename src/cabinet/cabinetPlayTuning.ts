@@ -91,6 +91,9 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerDensity: 1750,
   fingerAngularDamping: 24.0,
   fingerMotorSpeedRadiansPerSecond: 1.0,
+  descentOpenStiffness: 180,
+  descentOpenDamping: 18,
+  descentOpenMaxTorque: 1.5,
 } as const;
 
 export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.18;
