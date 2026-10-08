@@ -675,6 +675,22 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
     }));
 
     expect(attempt.completedCycle).toBe(true);
-    expect(attempt.peakLiftMeters).toBeGreaterThan(0.035);
+    const minimumPhysicalLiftMeters = {
+      "prize/box_standard": 0.20,
+      "prize/box_tall": 0.25,
+      "prize/box_flat": 0.07,
+      "prize/cylinder_can": 0.10,
+    }[prizeId];
+    expect(attempt.peakLiftMeters).toBeGreaterThan(
+      minimumPhysicalLiftMeters,
+    );
+    if (prizeId === "prize/box_standard") {
+      // The real chute sensor, not a forced win event.
+      expect(attempt.chuteReached).toBe(true);
+    }
+    if (prizeId === "prize/box_tall") {
+      // The taller box survives a meaningful portion of the return.
+      expect(attempt.horizontalTravelMeters).toBeGreaterThan(0.25);
+    }
   }, 30_000);
 });
