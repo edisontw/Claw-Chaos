@@ -359,6 +359,10 @@ export function createCabinetLabScene(
       gripProfile: {
         fingerFriction: activeGrip.fingerFriction,
         fingerDensity: activeGrip.fingerDensity,
+        fingerAngularDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping
+            : undefined,
         closePickupTorque:
           activeGrip.closePickupTorque,
         retainingTorque:
