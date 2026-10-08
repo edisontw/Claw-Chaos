@@ -331,6 +331,8 @@ export function createCabinetLabScene(
       addLabFloor: false,
       verticalHomeOffset:
         CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
+      additionalPickupDropMeters:
+        CABINET_PLAY_TUNING.additionalPickupDropMeters,
       addServiceWires: true,
       visualTheme,
       clawCastsShadow: false,
