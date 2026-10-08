@@ -25,7 +25,9 @@ import {
 } from "../cabinet/cabinetVisualStyle";
 import {
   CABINET_CLAW_PARK_POSITION,
+  CABINET_FULL_OPEN_TRAVEL_BOUNDS,
   CABINET_GANTRY_TRAVEL_BOUNDS,
+  CABINET_WALL_SAFE_OPENING,
   CABINET_PLAY_TUNING,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
@@ -39,6 +41,7 @@ import {
   type CabinetLayoutId,
 } from "../layouts/cabinetLayouts";
 import { LayoutSettlePipeline } from "../layouts/layoutSettle";
+import { cabinetPrizeDefinition } from "../cabinet/cabinetPrizeSizing";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
 import { CabinetStaffServiceVisual } from "../staff/CabinetStaffServiceVisual";
@@ -336,6 +339,12 @@ export function createCabinetLabScene(
       clawTopology: options.clawTopology,
       initialPosition: CABINET_CLAW_PARK_POSITION,
       travelBounds: CABINET_GANTRY_TRAVEL_BOUNDS,
+      wallSafeOpening: {
+        interiorHalfX: M06_CABINET_CONFIG.interiorHalfX,
+        interiorHalfZ: M06_CABINET_CONFIG.interiorHalfZ,
+        fullOpenBounds: CABINET_FULL_OPEN_TRAVEL_BOUNDS,
+        ...CABINET_WALL_SAFE_OPENING,
+      },
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
@@ -400,15 +409,20 @@ export function createCabinetLabScene(
     placement: RestockPlacement,
     index: number,
   ): void => {
-    const definition =
-      getPrizeDefinition(placement.prizeId);
+    const originalDefinition = getPrizeDefinition(placement.prizeId);
+    const definition = cabinetPrizeDefinition(
+      originalDefinition,
+      layout.id,
+    );
     const prize = createPrize(
       physics,
       definition,
       {
         position: {
           x: placement.x,
-          y: placement.y,
+          y:
+            placement.y +
+            (definition.dimensions.y - originalDefinition.dimensions.y) * 0.5,
           z: placement.z,
         },
         rotationXRadians:
@@ -447,7 +461,10 @@ export function createCabinetLabScene(
   const placements = layout.placements;
 
   for (const [index, placement] of placements.entries()) {
-    const definition = getPrizeDefinition(placement.prizeId);
+    const definition = cabinetPrizeDefinition(
+      getPrizeDefinition(placement.prizeId),
+      layout.id,
+    );
     const prize = createPrize(
       physics,
       definition,
