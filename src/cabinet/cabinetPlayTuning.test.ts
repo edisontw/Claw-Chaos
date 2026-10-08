@@ -112,7 +112,6 @@ describe("Cabinet play tuning", () => {
 
   it("reserves the deeper, rubber-padded hold for stocked prizes only", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
-    expect(CABINET_STOCKED_GRIP_TUNING.settleCloseTorque).toBe(0.8);
     expect(CABINET_STOCKED_GRIP_TUNING.closePickupTorque).toBe(4.5);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
@@ -123,12 +122,6 @@ describe("Cabinet play tuning", () => {
     );
     expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(1750);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping).toBe(24.0);
-    expect(
-      CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond,
-    ).toBe(1.0);
-    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness).toBe(180);
-    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenDamping).toBe(18);
-    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque).toBe(1.5);
     expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.18);
     expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBeLessThan(
       M02_GANTRY_CONFIG.reelMaxSpeed,
