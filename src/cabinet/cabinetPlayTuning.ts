@@ -88,6 +88,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // Lower density keeps the whole finger near its pre-upgrade ~60 g mass,
   // preventing a descending claw from batting lightweight prizes away.
   fingerDensity: 1750,
+  fingerAngularDamping: 24.0,
 } as const;
 
 export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.18;
