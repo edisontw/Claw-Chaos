@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 import {
   CABINET_CLAW_PARK_POSITION,
   CABINET_STOCKED_GRIP_TUNING,
-  CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
 } from "../cabinet/cabinetPlayTuning";
 import {
   M06_CABINET_CONFIG,
@@ -46,7 +45,6 @@ import {
 } from "../scenes/m04PlayCycle";
 import {
   advanceReel,
-  haltReel,
   type ReelConfig,
   type ReelState,
 } from "../scenes/reelMotion";
@@ -212,16 +210,15 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           createFingerPoints(theta),
           CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters,
           CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters,
-          CABINET_STOCKED_GRIP_TUNING.fingerFriction,
         ),
         {
-          friction: CABINET_STOCKED_GRIP_TUNING.fingerRodFriction,
+          friction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
           restitution: claw.fingerRestitution,
-          density: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
+          density: claw.fingerDensity,
         },
       );
       finger.setAngularDamping(
-        CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping,
+        M02_FINGER_TRANSPORT_CONFIG.angularDamping,
       );
       const joint = physics.createRevoluteJoint(
         hub,
@@ -249,7 +246,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
     const reelConfig: ReelConfig = {
       minPayout: gantry.reelMinPayout,
       maxPayout: gantry.reelMaxPayout,
-      maxSpeed: CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
+      maxSpeed: gantry.reelMaxSpeed,
       acceleration: gantry.reelAcceleration,
       braking: gantry.reelBraking,
     };
@@ -454,7 +451,6 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         createM04PlayState(),
         reel.payout,
       );
-      let bottomCloseSettleRemainingSeconds = 0;
       let completedCycle = false;
       const chuteRecordedBefore =
         chuteSensor.hasRecordedPrize("bridge-beam");
@@ -474,7 +470,6 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           );
         }
 
-        const phaseBeforeReelAdvance = play.phase;
         reel = advanceReel(
           reel,
           m04ReelCommand(play),
@@ -513,27 +508,11 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           0,
         );
 
-        if (
-          phaseBeforeReelAdvance === "DESCENDING" &&
-          play.phase === "CLOSING"
-        ) {
-          reel = haltReel(reel);
-          bottomCloseSettleRemainingSeconds =
-            CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds;
-        }
-        if (bottomCloseSettleRemainingSeconds > 0) {
-          bottomCloseSettleRemainingSeconds = Math.max(
-            0,
-            bottomCloseSettleRemainingSeconds - dt,
-          );
-        }
-
         updateKinematics();
         applyStabilizer();
 
         const closing =
-          m04FingerShouldClose(play) &&
-          bottomCloseSettleRemainingSeconds <= 0;
+          m04FingerShouldClose(play);
         const siblingFingerContact =
           closing &&
           (
@@ -589,31 +568,20 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
             ? CABINET_STOCKED_GRIP_TUNING.retainingTorque
             : CABINET_STOCKED_GRIP_TUNING.closePickupTorque;
 
-        const compliantOpenDescent =
-          (
-            play.phase === "DESCENDING" ||
-            bottomCloseSettleRemainingSeconds > 0
-          ) && !closing;
         for (const joint of joints) {
           joint.configureMotorPosition(
             fingerCommand,
             closing
               ? claw.motorStiffness
-              : compliantOpenDescent
-                ? CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness
-                : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
             closing
               ? claw.motorDamping
-              : compliantOpenDescent
-                ? CABINET_STOCKED_GRIP_TUNING.descentOpenDamping
-                : M02_FINGER_TRANSPORT_CONFIG.damping,
+              : M02_FINGER_TRANSPORT_CONFIG.damping,
           );
           joint.setMotorMaxForce(
             closing
               ? torque
-              : compliantOpenDescent
-                ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
-                : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
           );
         }
 
