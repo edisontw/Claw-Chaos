@@ -18,6 +18,7 @@ import {
 import { PhysicsRuntime } from "../physics/PhysicsRuntime";
 import { createPrize } from "../prizes/PrizeFactory";
 import { getPrizeDefinition } from "../prizes/catalog";
+import { createFingerPoints } from "../scenes/clawLab";
 import { createGantryLabScene } from "../scenes/gantryLab";
 
 describe("stocked claw descent contact", () => {
@@ -31,7 +32,9 @@ describe("stocked claw descent contact", () => {
     );
     const prize = createPrize(physics, definition, {
       position: {
-        x: 0,
+        // Put the prize under the +X open finger path, not in the empty
+        // center of the three-prong footprint.
+        x: 0.14,
         y:
           M06_CABINET_CONFIG.playDeckY +
           definition.dimensions.y * 0.5,
@@ -109,9 +112,19 @@ describe("stocked claw descent contact", () => {
     let closingObserved = false;
     let reelSpeedAtClosing = Number.NaN;
     let settleStartTick = -1;
+    let closedDepthStartTick = -1;
     let minHubY = Number.POSITIVE_INFINITY;
     let maxHubY = Number.NEGATIVE_INFINITY;
     let maxSettledFingerAngularSpeed = 0;
+    const fingerTipBounds = fingers.map(() => ({
+      minX: Number.POSITIVE_INFINITY,
+      maxX: Number.NEGATIVE_INFINITY,
+      minY: Number.POSITIVE_INFINITY,
+      maxY: Number.NEGATIVE_INFINITY,
+      minZ: Number.POSITIVE_INFINITY,
+      maxZ: Number.NEGATIVE_INFINITY,
+    }));
+    const fingerThetas = [0, 2 * Math.PI / 3, 4 * Math.PI / 3];
 
     for (let tick = 0; tick < PHYSICS_HZ * 4; tick += 1) {
       const before = gantry.getMachineAudioState?.();
@@ -158,25 +171,45 @@ describe("stocked claw descent contact", () => {
         );
         settleStartTick = tick;
       }
+      if (
+        closedDepthStartTick < 0 &&
+        state?.playPhase === "CLOSED_AT_DEPTH"
+      ) {
+        closedDepthStartTick = tick;
+      }
 
       if (
-        closingObserved &&
-        settleStartTick >= 0 &&
-        tick - settleStartTick >= Math.floor(PHYSICS_HZ * 0.20) &&
-        (
-          state?.playPhase === "CLOSING" ||
-          state?.playPhase === "CLOSED_AT_DEPTH"
-        )
+        closedDepthStartTick >= 0 &&
+        tick - closedDepthStartTick >= Math.floor(PHYSICS_HZ * 0.20) &&
+        state?.playPhase === "CLOSED_AT_DEPTH"
       ) {
         const hubY = hub!.translation().y;
         minHubY = Math.min(minHubY, hubY);
         maxHubY = Math.max(maxHubY, hubY);
-        for (const finger of fingers) {
+        for (let index = 0; index < fingers.length; index += 1) {
+          const finger = fingers[index]!;
           const angular = finger.angvel();
           maxSettledFingerAngularSpeed = Math.max(
             maxSettledFingerAngularSpeed,
             Math.hypot(angular.x, angular.y, angular.z),
           );
+          const localTip = createFingerPoints(fingerThetas[index]!).at(-1)!;
+          const p = finger.translation();
+          const q = finger.rotation();
+          const worldTip = new THREE.Vector3(
+            localTip.x,
+            localTip.y,
+            localTip.z,
+          )
+            .applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w))
+            .add(new THREE.Vector3(p.x, p.y, p.z));
+          const bounds = fingerTipBounds[index]!;
+          bounds.minX = Math.min(bounds.minX, worldTip.x);
+          bounds.maxX = Math.max(bounds.maxX, worldTip.x);
+          bounds.minY = Math.min(bounds.minY, worldTip.y);
+          bounds.maxY = Math.max(bounds.maxY, worldTip.y);
+          bounds.minZ = Math.min(bounds.minZ, worldTip.z);
+          bounds.maxZ = Math.max(bounds.maxZ, worldTip.z);
         }
       }
 
@@ -189,6 +222,15 @@ describe("stocked claw descent contact", () => {
       Number.isFinite(minHubY) && Number.isFinite(maxHubY)
         ? maxHubY - minHubY
         : Number.NaN;
+    const maxSettledFingerTipTravel = Math.max(
+      ...fingerTipBounds.map((bounds) =>
+        Math.hypot(
+          bounds.maxX - bounds.minX,
+          bounds.maxY - bounds.minY,
+          bounds.maxZ - bounds.minZ,
+        ),
+      ),
+    );
 
     console.log(
       "stocked soft-drop metrics",
@@ -201,6 +243,7 @@ describe("stocked claw descent contact", () => {
         reelSpeedAtClosing,
         hubVerticalRange,
         maxSettledFingerAngularSpeed,
+        maxSettledFingerTipTravel,
       }),
     );
 
@@ -212,7 +255,9 @@ describe("stocked claw descent contact", () => {
     expect(maxPlanarPrizeSpeed).toBeLessThan(0.75);
     expect(maxPlanarPrizeDisplacement).toBeLessThan(0.10);
     expect(hubVerticalRange).toBeLessThan(0.015);
-    expect(maxSettledFingerAngularSpeed).toBeLessThan(4.0);
+    // Judge visible post-close chatter by actual fingertip travel, not
+    // intentional angular speed while the motor is still closing.
+    expect(maxSettledFingerTipTravel).toBeLessThan(0.012);
     vi.unstubAllGlobals();
   }, 20_000);
 });
