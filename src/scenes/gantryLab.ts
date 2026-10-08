@@ -190,6 +190,9 @@ export interface GantryGripProfile {
   fingerFriction?: number;
   fingerDensity?: number;
   fingerAngularDamping?: number;
+  descentOpenStiffness?: number;
+  descentOpenDamping?: number;
+  descentOpenMaxTorque?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -364,6 +367,15 @@ export function createGantryLabScene(
   const activeFingerAngularDamping =
     options.gripProfile?.fingerAngularDamping ??
     M02_FINGER_TRANSPORT_CONFIG.angularDamping;
+  const descentOpenStiffness =
+    options.gripProfile?.descentOpenStiffness ??
+    M02_FINGER_TRANSPORT_CONFIG.stiffness;
+  const descentOpenDamping =
+    options.gripProfile?.descentOpenDamping ??
+    M02_FINGER_TRANSPORT_CONFIG.damping;
+  const descentOpenMaxTorque =
+    options.gripProfile?.descentOpenMaxTorque ??
+    M02_FINGER_TRANSPORT_CONFIG.maxTorque;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
@@ -1458,20 +1470,28 @@ export function createGantryLabScene(
             ? holdBoostTorque
             : retainingTorque
           : closePickupTorque;
+      const compliantOpenDescent =
+        playCycle.phase === "DESCENDING" && !closingFinger;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
           closingFinger
             ? claw.motorStiffness
-            : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+            : compliantOpenDescent
+              ? descentOpenStiffness
+              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
           closingFinger
             ? claw.motorDamping
-            : M02_FINGER_TRANSPORT_CONFIG.damping,
+            : compliantOpenDescent
+              ? descentOpenDamping
+              : M02_FINGER_TRANSPORT_CONFIG.damping,
         );
         joint.setMotorMaxForce(
           closingFinger
             ? activeContactTorque
-            : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+            : compliantOpenDescent
+              ? descentOpenMaxTorque
+              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
       for (const body of fingerBodies) {
