@@ -125,6 +125,9 @@ describe("Cabinet play tuning", () => {
     expect(
       CABINET_STOCKED_GRIP_TUNING.fingerMotorSpeedRadiansPerSecond,
     ).toBe(1.0);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness).toBe(180);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenDamping).toBe(18);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque).toBe(1.5);
     expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.18);
     expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBeLessThan(
       M02_GANTRY_CONFIG.reelMaxSpeed,
