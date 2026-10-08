@@ -90,7 +90,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // The larger rubber pad otherwise doubles each dynamic finger's mass.
   // Lower density keeps the whole finger near its pre-upgrade ~60 g mass,
   // preventing a descending claw from batting lightweight prizes away.
-  fingerDensity: 3200,
+  fingerDensity: 1750,
   fingerAngularDamping: 8.0,
   // During vertical descent the open claw should yield when it brushes a
   // prize. READY/horizontal transport still uses the stiff M02 open hold.
@@ -100,4 +100,4 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   bottomCloseSettleSeconds: 0.15,
 } as const;
 
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.12;
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.16;
