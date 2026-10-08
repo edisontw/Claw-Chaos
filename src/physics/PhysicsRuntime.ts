@@ -397,7 +397,7 @@ export class PhysicsRuntime {
 
       descriptor = descriptor
         .setDensity(0)
-        .setFriction(segment.friction ?? material.friction ?? 0.7)
+        .setFriction(material.friction ?? 0.7)
         .setRestitution(material.restitution ?? 0.08);
 
       if (material.contactAudioProfileId) {
@@ -624,7 +624,7 @@ export class PhysicsRuntime {
       let collider = RAPIER.ColliderDesc.capsule(cylinderHalfHeight, segment.radius)
         .setTranslation(center.x, center.y, center.z)
         .setRotation(rotation)
-        .setFriction(material.friction ?? 0.7)
+        .setFriction(segment.friction ?? material.friction ?? 0.7)
         .setRestitution(material.restitution ?? 0.08);
 
       if (material.density !== undefined) {
