@@ -82,8 +82,7 @@ describe("Cabinet play tuning", () => {
     const offset = CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
     const cabinetCarriageY = M02_GANTRY_CONFIG.carriageY + offset;
     const cabinetMaxPayout =
-      M02_GANTRY_CONFIG.reelMaxPayout +
-      offset + CABINET_PLAY_TUNING.additionalPickupDropMeters;
+      M02_GANTRY_CONFIG.reelMaxPayout + offset;
 
     const baselineLowestAnchorY =
       M02_GANTRY_CONFIG.carriageY -
@@ -98,17 +97,25 @@ describe("Cabinet play tuning", () => {
 
     expect(offset).toBe(0.085);
     expect(cabinetLowestAnchorY).toBeCloseTo(
-      baselineLowestAnchorY -
-        CABINET_PLAY_TUNING.additionalPickupDropMeters,
+      baselineLowestAnchorY,
       12,
     );
-    expect(CABINET_PLAY_TUNING.additionalPickupDropMeters).toBe(0.055);
     expect(cabinetCarriageTopY).toBeLessThan(
       M06_CABINET_CONFIG.playAreaHeight,
     );
     expect(
       M06_CABINET_CONFIG.playAreaHeight - cabinetCarriageTopY,
     ).toBeGreaterThanOrEqual(0.009);
+  });
+
+  it("reserves the deeper, rubber-padded hold for stocked prizes only", () => {
+    expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
+    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
+    expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.12);
+    expect(CABINET_PLAY_TUNING.fingerLowerPadLengthMeters).toBe(0.012);
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
   });
 
   it("strengthens normal cabinet grip without exceeding HOLD BOOST", () => {
@@ -129,12 +136,12 @@ describe("Cabinet play tuning", () => {
     );
     expect(CABINET_PLAY_TUNING.fingerFriction).toBe(1.94);
     expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(10.0);
-    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.10);
-    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.12);
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
+    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.018);
     expect(CABINET_PLAY_TUNING.closedAngleRadians).toBe(-0.63);
     expect(
       CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-    ).toBe(0.014);
+    ).toBe(0.010);
     expect(
       CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
     ).toBeGreaterThan(
