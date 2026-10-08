@@ -175,6 +175,17 @@ export class PhysicsRuntime {
     return this.dynamicBodyCountValue;
   }
 
+  removeRigidBody(body: RigidBodyHandle): void {
+    for (let index = 0; index < body.numColliders(); index += 1) {
+      this.contactAudioProfiles.delete(body.collider(index).handle);
+    }
+    this.world.removeRigidBody(body);
+    this.dynamicBodyCountValue = Math.max(
+      0,
+      this.dynamicBodyCountValue - 1,
+    );
+  }
+
   countBodyContactPairs(
     bodyA: RigidBodyHandle,
     bodyB: RigidBodyHandle,
