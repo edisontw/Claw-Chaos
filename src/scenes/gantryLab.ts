@@ -188,6 +188,7 @@ function computeSwingAngle(
 
 export interface GantryGripProfile {
   fingerFriction?: number;
+  fingerDensity?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -277,6 +278,7 @@ export interface GantryLabOptions {
   };
   verticalHomeOffset?: number;
   additionalPickupDropMeters?: number;
+  reelMaxSpeedMetersPerSecond?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
@@ -356,6 +358,8 @@ export function createGantryLabScene(
   const additionalPickupDropMeters = options.additionalPickupDropMeters ?? 0;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
+  const activeFingerDensity =
+    options.gripProfile?.fingerDensity ?? claw.fingerDensity;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
@@ -382,6 +386,9 @@ export function createGantryLabScene(
   const boundedGantry = {
     ...M02_GANTRY_CONFIG,
     ...(options.travelBounds ?? {}),
+    ...(options.reelMaxSpeedMetersPerSecond === undefined
+      ? {}
+      : { reelMaxSpeed: options.reelMaxSpeedMetersPerSecond }),
   };
   const gantry =
     verticalHomeOffset === 0 && additionalPickupDropMeters === 0
@@ -776,7 +783,7 @@ export function createGantryLabScene(
       {
         friction: activeFingerFriction,
         restitution: claw.fingerRestitution,
-        density: claw.fingerDensity,
+        density: activeFingerDensity,
         enableCcd: options.clawContinuousCollision ?? false,
       },
     );
@@ -1285,6 +1292,7 @@ export function createGantryLabScene(
       }
 
       const wasLifting = reelCommand < 0;
+      const phaseBeforeReelAdvance = playCycle.phase;
       reel = advanceReel(reel, reelCommand, reelConfig, stepSeconds);
 
       const m04HomeTolerance = {
@@ -1322,6 +1330,17 @@ export function createGantryLabScene(
         playConfig,
         0,
       );
+
+      // AUTO CLOSE must stop the vertical carriage immediately at the
+      // trigger depth. Previously one residual downward reel step could
+      // continue compressing the physical claw into prizes / the deck,
+      // causing a hard kick and bottom-end chatter.
+      if (
+        phaseBeforeReelAdvance === "DESCENDING" &&
+        playCycle.phase === "CLOSING"
+      ) {
+        reel = haltReel(reel);
+      }
 
       if (
         wasLifting &&
