@@ -251,7 +251,7 @@ describe("stocked claw descent contact", () => {
         maxPlanarPrizeDisplacement,
         closingObserved,
         reelSpeedAtClosing,
-        closedAtDepthStartTick,
+        closedDepthStartTick,
         hubVerticalRange,
         maxSettledFingerAngularSpeed,
         maxSettledFingerTipTravel,
