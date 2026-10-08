@@ -4,6 +4,7 @@ import {
   createCabinetPhysics,
 } from "../cabinet/cabinetGeometry";
 import { ChuteSensor } from "../cabinet/chuteSensor";
+import { cabinetPrizeDefinition } from "../cabinet/cabinetPrizeSizing";
 import {
   DEFAULT_SCENE_SEED,
   PHYSICS_HZ,
@@ -27,8 +28,9 @@ describe("stocked default layout startup safety", () => {
     const sensor = new ChuteSensor();
     const prizes = layout.placements.map(
       (placement, index) => {
-        const definition = getPrizeDefinition(
-          placement.prizeId,
+        const definition = cabinetPrizeDefinition(
+          getPrizeDefinition(placement.prizeId),
+          "stocked",
         );
         const prize = createPrize(
           physics,
