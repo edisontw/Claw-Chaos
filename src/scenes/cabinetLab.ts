@@ -41,6 +41,7 @@ import {
   type CabinetLayoutId,
 } from "../layouts/cabinetLayouts";
 import { LayoutSettlePipeline } from "../layouts/layoutSettle";
+import { cabinetPrizeDefinition } from "../cabinet/cabinetPrizeSizing";
 import { getPrizeDefinition } from "../prizes/catalog";
 import { createPrize } from "../prizes/PrizeFactory";
 import { CabinetStaffServiceVisual } from "../staff/CabinetStaffServiceVisual";
@@ -408,15 +409,20 @@ export function createCabinetLabScene(
     placement: RestockPlacement,
     index: number,
   ): void => {
-    const definition =
-      getPrizeDefinition(placement.prizeId);
+    const originalDefinition = getPrizeDefinition(placement.prizeId);
+    const definition = cabinetPrizeDefinition(
+      originalDefinition,
+      layout.id,
+    );
     const prize = createPrize(
       physics,
       definition,
       {
         position: {
           x: placement.x,
-          y: placement.y,
+          y:
+            placement.y +
+            (definition.dimensions.y - originalDefinition.dimensions.y) * 0.5,
           z: placement.z,
         },
         rotationXRadians:
@@ -455,7 +461,10 @@ export function createCabinetLabScene(
   const placements = layout.placements;
 
   for (const [index, placement] of placements.entries()) {
-    const definition = getPrizeDefinition(placement.prizeId);
+    const definition = cabinetPrizeDefinition(
+      getPrizeDefinition(placement.prizeId),
+      layout.id,
+    );
     const prize = createPrize(
       physics,
       definition,
