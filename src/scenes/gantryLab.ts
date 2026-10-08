@@ -276,6 +276,7 @@ export interface GantryLabOptions {
     zMax: number;
   };
   verticalHomeOffset?: number;
+  additionalPickupDropMeters?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
@@ -352,6 +353,7 @@ export function createGantryLabScene(
   const machineInterior = visualTheme.machine.interior;
   const clawCastsShadow = options.clawCastsShadow ?? true;
   const verticalHomeOffset = options.verticalHomeOffset ?? 0;
+  const additionalPickupDropMeters = options.additionalPickupDropMeters ?? 0;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
   const closePickupTorque =
@@ -382,14 +384,15 @@ export function createGantryLabScene(
     ...(options.travelBounds ?? {}),
   };
   const gantry =
-    verticalHomeOffset === 0
+    verticalHomeOffset === 0 && additionalPickupDropMeters === 0
       ? boundedGantry
       : {
           ...boundedGantry,
           carriageY:
             boundedGantry.carriageY + verticalHomeOffset,
           reelMaxPayout:
-            boundedGantry.reelMaxPayout + verticalHomeOffset,
+            boundedGantry.reelMaxPayout +
+            verticalHomeOffset + additionalPickupDropMeters,
         };
   const requestedInitial =
     options.initialPosition ?? { x: 0, z: 0 };
@@ -822,7 +825,8 @@ export function createGantryLabScene(
     options.playReturnTarget ?? { x: gantry.homeX, z: gantry.homeZ };
   const playConfig = {
     autoClosePayoutMeters:
-      M04_PLAY_CONFIG.autoClosePayoutMeters + verticalHomeOffset,
+      M04_PLAY_CONFIG.autoClosePayoutMeters +
+      verticalHomeOffset + additionalPickupDropMeters,
     closedAngleRadians,
     openAngleRadians: claw.openAngle,
     closeCompletionToleranceRadians:
