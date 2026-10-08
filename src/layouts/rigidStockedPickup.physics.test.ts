@@ -121,7 +121,8 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         M02_GANTRY_CONFIG.carriageY + verticalHomeOffset,
       reelMaxPayout:
         M02_GANTRY_CONFIG.reelMaxPayout +
-        verticalHomeOffset,
+        verticalHomeOffset +
+        CABINET_PLAY_TUNING.additionalPickupDropMeters,
     };
     const anchorY =
       gantry.carriageY - gantry.carriageHalfY;
@@ -263,7 +264,8 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
     const playConfig = {
       autoClosePayoutMeters:
         M04_PLAY_CONFIG.autoClosePayoutMeters +
-        verticalHomeOffset,
+        verticalHomeOffset +
+        CABINET_PLAY_TUNING.additionalPickupDropMeters,
       closedAngleRadians:
         CABINET_PLAY_TUNING.closedAngleRadians,
       openAngleRadians: claw.openAngle,
