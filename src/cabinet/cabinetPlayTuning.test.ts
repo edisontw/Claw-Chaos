@@ -113,8 +113,8 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
-    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.18);
-    expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.22);
+    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
+    expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.12);
     expect(CABINET_PLAY_TUNING.fingerLowerPadLengthMeters).toBe(0.012);
     expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
   });
