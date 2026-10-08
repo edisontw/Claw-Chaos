@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CABINET_CLAW_PARK_POSITION,
   CABINET_STOCKED_GRIP_TUNING,
+  CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
 } from "../cabinet/cabinetPlayTuning";
 import {
   M06_CABINET_CONFIG,
@@ -247,7 +248,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
     const reelConfig: ReelConfig = {
       minPayout: gantry.reelMinPayout,
       maxPayout: gantry.reelMaxPayout,
-      maxSpeed: gantry.reelMaxSpeed,
+      maxSpeed: CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
       acceleration: gantry.reelAcceleration,
       braking: gantry.reelBraking,
     };
@@ -569,20 +570,28 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
             ? CABINET_STOCKED_GRIP_TUNING.retainingTorque
             : CABINET_STOCKED_GRIP_TUNING.closePickupTorque;
 
+        const compliantOpenDescent =
+          play.phase === "DESCENDING" && !closing;
         for (const joint of joints) {
           joint.configureMotorPosition(
             fingerCommand,
             closing
               ? claw.motorStiffness
-              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+              : compliantOpenDescent
+                ? CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness
+                : M02_FINGER_TRANSPORT_CONFIG.stiffness,
             closing
               ? claw.motorDamping
-              : M02_FINGER_TRANSPORT_CONFIG.damping,
+              : compliantOpenDescent
+                ? CABINET_STOCKED_GRIP_TUNING.descentOpenDamping
+                : M02_FINGER_TRANSPORT_CONFIG.damping,
           );
           joint.setMotorMaxForce(
             closing
               ? torque
-              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+              : compliantOpenDescent
+                ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
+                : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
           );
         }
 
