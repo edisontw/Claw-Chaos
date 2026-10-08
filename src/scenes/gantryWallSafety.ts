@@ -50,16 +50,19 @@ export function fingerRadialEnvelope(
 ): number {
   const cos = Math.cos(angleRadians);
   const sin = Math.sin(angleRadians);
-  return profile.fingerPivotRadius +
-    Math.max(
-      ...profile.fingerNodes.map((node, index) =>
-        node.radial * cos +
+  let maximumRadius = 0;
+  for (let index = 0; index < profile.fingerNodes.length; index += 1) {
+    const node = profile.fingerNodes[index]!;
+    maximumRadius = Math.max(
+      maximumRadius,
+      node.radial * cos +
         node.down * sin +
         (index === profile.fingerNodes.length - 1
           ? profile.fingerTipRadius
           : profile.fingerRadius),
-      ),
     );
+  }
+  return profile.fingerPivotRadius + maximumRadius;
 }
 
 /** Full opening is preserved in the original accepted interior and at the chute park. */
@@ -115,7 +118,7 @@ export function wallSafeFingerOpenAngle(
 
   let low = profile.minAngleRadians;
   let high = profile.maxAngleRadians;
-  for (let i = 0; i < 24; i += 1) {
+  for (let i = 0; i < 18; i += 1) {
     const mid = (low + high) * 0.5;
     if (fingerRadialEnvelope(mid, profile) > radiusLimit) {
       high = mid;
