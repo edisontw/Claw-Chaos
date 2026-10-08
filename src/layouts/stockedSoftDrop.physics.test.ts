@@ -111,7 +111,6 @@ describe("stocked claw descent contact", () => {
     let maxDescentReelSpeed = 0;
     let closingObserved = false;
     let reelSpeedAtClosing = Number.NaN;
-    let settleStartTick = -1;
     let closedDepthStartTick = -1;
     let minHubY = Number.POSITIVE_INFINITY;
     let maxHubY = Number.NEGATIVE_INFINITY;
@@ -169,7 +168,6 @@ describe("stocked claw descent contact", () => {
         reelSpeedAtClosing = Math.abs(
           state.reelSpeedMetersPerSecond,
         );
-        settleStartTick = tick;
       }
       if (
         closedDepthStartTick < 0 &&
