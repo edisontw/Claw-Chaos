@@ -46,6 +46,7 @@ import {
 } from "../scenes/m04PlayCycle";
 import {
   advanceReel,
+  haltReel,
   type ReelConfig,
   type ReelState,
 } from "../scenes/reelMotion";
@@ -453,6 +454,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         createM04PlayState(),
         reel.payout,
       );
+      let bottomCloseSettleRemainingSeconds = 0;
       let completedCycle = false;
       const chuteRecordedBefore =
         chuteSensor.hasRecordedPrize("bridge-beam");
@@ -472,6 +474,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           );
         }
 
+        const phaseBeforeReelAdvance = play.phase;
         reel = advanceReel(
           reel,
           m04ReelCommand(play),
@@ -510,11 +513,27 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           0,
         );
 
+        if (
+          phaseBeforeReelAdvance === "DESCENDING" &&
+          play.phase === "CLOSING"
+        ) {
+          reel = haltReel(reel);
+          bottomCloseSettleRemainingSeconds =
+            CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds;
+        }
+        if (bottomCloseSettleRemainingSeconds > 0) {
+          bottomCloseSettleRemainingSeconds = Math.max(
+            0,
+            bottomCloseSettleRemainingSeconds - dt,
+          );
+        }
+
         updateKinematics();
         applyStabilizer();
 
         const closing =
-          m04FingerShouldClose(play);
+          m04FingerShouldClose(play) &&
+          bottomCloseSettleRemainingSeconds <= 0;
         const siblingFingerContact =
           closing &&
           (
@@ -571,7 +590,10 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
             : CABINET_STOCKED_GRIP_TUNING.closePickupTorque;
 
         const compliantOpenDescent =
-          play.phase === "DESCENDING" && !closing;
+          (
+            play.phase === "DESCENDING" ||
+            bottomCloseSettleRemainingSeconds > 0
+          ) && !closing;
         for (const joint of joints) {
           joint.configureMotorPosition(
             fingerCommand,
