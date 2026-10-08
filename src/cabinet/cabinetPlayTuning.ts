@@ -9,6 +9,7 @@ export const CABINET_CLAW_PARK_POSITION = {
 export const CABINET_PLAY_TUNING = {
   verticalHomeOffsetMeters: 0.085,
   fingerFriction: 1.94,
+  fingerDensity: CLAW_LAB_CONFIG.fingerDensity,
   closePickupTorque: 10.0,
   retainingTorque: 0.014,
   holdBoostTorque: 0.018,
@@ -83,4 +84,10 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   holdBoostTorque: 0.12,
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
+  // The larger rubber pad otherwise doubles each dynamic finger's mass.
+  // Lower density keeps the whole finger near its pre-upgrade ~60 g mass,
+  // preventing a descending claw from batting lightweight prizes away.
+  fingerDensity: 1750,
 } as const;
+
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.18;
