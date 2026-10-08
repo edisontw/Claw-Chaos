@@ -214,7 +214,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         {
           friction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
           restitution: claw.fingerRestitution,
-          density: claw.fingerDensity,
+          density: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         },
       );
       finger.setAngularDamping(
