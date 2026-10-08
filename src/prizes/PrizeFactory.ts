@@ -9,6 +9,7 @@ import type {
 } from "../physics/PhysicsRuntime";
 import { createCompoundPrizeProfile } from "./compoundProfiles";
 import { createRingLoopGeometry } from "./ringProfile";
+import { createHighFidelityPrizeVisual } from "./highFidelityVisuals";
 import {
   PRIZE_COLOR_PALETTE,
   PRIZE_COM_PROFILES,
@@ -488,6 +489,11 @@ function buildCompoundVisual(
 }
 
 function buildVisual(spec: ResolvedPrizeSpec): THREE.Object3D {
+  const highFidelityVisual = createHighFidelityPrizeVisual(spec);
+  if (highFidelityVisual) {
+    return highFidelityVisual;
+  }
+
   const { x, y, z } = spec.definition.dimensions;
   const material = createVisualMaterial(spec);
 

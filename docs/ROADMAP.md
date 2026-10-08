@@ -2306,8 +2306,29 @@ Manual acceptance:
 - side dressing must not intrude into the staff service lane
 - Auto quality must still be able to downgrade without leaving an obvious open-world edge
 
+## Art Slice 7A — high-fidelity native prize visuals
+
+**Status: IMPLEMENTED CANDIDATE**
+
+First controlled fidelity pass:
+- `prize/box_standard` now uses a rounded packaged-box model with a separate printed sleeve, face label, side labels and top sealing tape
+- `prize/cylinder_can` now uses a multi-part can with body/label layers, top and bottom metal rims, top disc and pull tab
+- `prize/teddy_simple` now uses a detailed plush visual with separate head, ears, limbs, eyes, muzzle, nose, belly patch, paw accents and neck accent
+- all three models retain their existing collider profile, mass profile, COM profile and gameplay physics
+- unsupported prize types continue through the original procedural visual fallback
+- detailed plush limbs use one capsule mesh per limb to limit draw-call growth
+- automated tests guard visual model selection, approximate visual envelope and unchanged physics metadata
+
+This slice intentionally uses original/generic native Three.js 3D rather than importing third-party branded models. It establishes the visual/physics separation first.
+
+Manual acceptance:
+- the three upgraded prize types should be visibly more product-like at normal cabinet distance
+- no obvious visual/collider mismatch during claw contact
+- stocked default should remain responsive on desktop and mobile/Auto
+- if this visual layer passes, the next slice can add higher-detail pillow/animal/capsule/egg assets and evaluate optimized GLB assets for selected hero prizes
+
 Next art/content slice:
-- replace the current primitive prize visuals with higher-fidelity original/generic 3D prize assets while preserving the existing physical collider/mass/COM definitions
+- extend high-fidelity visuals to the remaining soft prizes, then evaluate original optimized GLB assets only where native geometry is still insufficient
 
 ---
 
