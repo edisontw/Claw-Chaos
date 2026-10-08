@@ -82,7 +82,8 @@ describe("Cabinet play tuning", () => {
     const offset = CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
     const cabinetCarriageY = M02_GANTRY_CONFIG.carriageY + offset;
     const cabinetMaxPayout =
-      M02_GANTRY_CONFIG.reelMaxPayout + offset;
+      M02_GANTRY_CONFIG.reelMaxPayout +
+      offset + CABINET_PLAY_TUNING.additionalPickupDropMeters;
 
     const baselineLowestAnchorY =
       M02_GANTRY_CONFIG.carriageY -
@@ -97,9 +98,11 @@ describe("Cabinet play tuning", () => {
 
     expect(offset).toBe(0.085);
     expect(cabinetLowestAnchorY).toBeCloseTo(
-      baselineLowestAnchorY,
+      baselineLowestAnchorY -
+        CABINET_PLAY_TUNING.additionalPickupDropMeters,
       12,
     );
+    expect(CABINET_PLAY_TUNING.additionalPickupDropMeters).toBe(0.055);
     expect(cabinetCarriageTopY).toBeLessThan(
       M06_CABINET_CONFIG.playAreaHeight,
     );
@@ -126,8 +129,8 @@ describe("Cabinet play tuning", () => {
     );
     expect(CABINET_PLAY_TUNING.fingerFriction).toBe(1.94);
     expect(CABINET_PLAY_TUNING.closePickupTorque).toBe(10.0);
-    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.10);
-    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.12);
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
+    expect(CABINET_PLAY_TUNING.holdBoostTorque).toBe(0.018);
     expect(CABINET_PLAY_TUNING.closedAngleRadians).toBe(-0.63);
     expect(
       CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
