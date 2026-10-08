@@ -75,6 +75,8 @@ describe("stocked claw descent contact", () => {
           CABINET_STOCKED_GRIP_TUNING.descentOpenDamping,
         descentOpenMaxTorque:
           CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque,
+        bottomCloseSettleSeconds:
+          CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds,
         closePickupTorque:
           CABINET_STOCKED_GRIP_TUNING.closePickupTorque,
         retainingTorque:
