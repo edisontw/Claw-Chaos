@@ -1040,8 +1040,14 @@ export function createGantryLabScene(
         gantry.homeVelocityTolerance &&
       Math.abs(motion.z.velocity) <=
         gantry.homeVelocityTolerance;
+    const safeOpenAngle = wallOpeningProfile
+      ? wallSafeFingerOpenAngle(
+          { x: motion.x.position, z: motion.z.position },
+          wallOpeningProfile,
+        )
+      : claw.openAngle;
     const fingersOpen =
-      Math.abs(fingerCommand - claw.openAngle) <=
+      Math.abs(fingerCommand - safeOpenAngle) <=
       playConfig.releaseCompletionToleranceRadians;
     const testMotionActive =
       pt006Phase === "ACCELERATING" ||
