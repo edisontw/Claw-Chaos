@@ -363,26 +363,6 @@ export function createCabinetLabScene(
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping
             : undefined,
-        closeFingerMotorSpeedRadiansPerSecond:
-          layout.id === "stocked"
-            ? CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond
-            : undefined,
-        descentOpenStiffness:
-          layout.id === "stocked"
-            ? CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness
-            : undefined,
-        descentOpenDamping:
-          layout.id === "stocked"
-            ? CABINET_STOCKED_GRIP_TUNING.descentOpenDamping
-            : undefined,
-        descentOpenMaxTorque:
-          layout.id === "stocked"
-            ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
-            : undefined,
-        settleCloseTorque:
-          layout.id === "stocked"
-            ? CABINET_STOCKED_GRIP_TUNING.settleCloseTorque
-            : undefined,
         closePickupTorque:
           activeGrip.closePickupTorque,
         retainingTorque:
