@@ -188,6 +188,7 @@ function computeSwingAngle(
 
 export interface GantryGripProfile {
   fingerFriction?: number;
+  fingerRodFriction?: number;
   fingerDensity?: number;
   fingerAngularDamping?: number;
   descentOpenStiffness?: number;
@@ -362,6 +363,8 @@ export function createGantryLabScene(
   const additionalPickupDropMeters = options.additionalPickupDropMeters ?? 0;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
+  const activeFingerRodFriction =
+    options.gripProfile?.fingerRodFriction ?? activeFingerFriction;
   const activeFingerDensity =
     options.gripProfile?.fingerDensity ?? claw.fingerDensity;
   const activeFingerAngularDamping =
@@ -795,9 +798,10 @@ export function createGantryLabScene(
         points,
         fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters,
+        activeFingerFriction,
       ),
       {
-        friction: activeFingerFriction,
+        friction: activeFingerRodFriction,
         restitution: claw.fingerRestitution,
         density: activeFingerDensity,
         enableCcd: options.clawContinuousCollision ?? false,
