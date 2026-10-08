@@ -80,7 +80,6 @@ export const CABINET_GANTRY_TRAVEL_BOUNDS = {
 export const CABINET_STOCKED_GRIP_TUNING = {
   ...CABINET_PLAY_TUNING,
   additionalPickupDropMeters: 0.055,
-  settleCloseTorque: 0.8,
   closePickupTorque: 4.5,
   retainingTorque: 0.10,
   holdBoostTorque: 0.12,
@@ -91,10 +90,6 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // preventing a descending claw from batting lightweight prizes away.
   fingerDensity: 1750,
   fingerAngularDamping: 24.0,
-  closeFingerMotorSpeedRadiansPerSecond: 1.0,
-  descentOpenStiffness: 180,
-  descentOpenDamping: 18,
-  descentOpenMaxTorque: 1.5,
 } as const;
 
 export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.18;
