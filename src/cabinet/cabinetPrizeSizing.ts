@@ -7,7 +7,7 @@ export const STOCKED_PRIZE_SIZE_MULTIPLIER = 1.13;
 // A 9 cm stocked can is much narrower than the three-finger contact
 // triangle; model the larger cylindrical prize actually sold in this
 // machine while keeping its existing mass and upright height.
-export const STOCKED_CAN_DIAMETER_MULTIPLIER = 1.27;
+export const STOCKED_CAN_DIAMETER_MULTIPLIER = 1.45;
 export const STOCKED_TALL_BOX_WIDTH_MULTIPLIER = 1.27;
 
 export function cabinetPrizeDefinition(
