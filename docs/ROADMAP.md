@@ -2279,9 +2279,41 @@ Browser smoke now requires:
 Manual desktop/mobile appearance approval is still required before PR #70 can
 leave Draft.
 
+## Art Slice 6 — full-stock + lateral scene fill
+
+**Status: IMPLEMENTED CANDIDATE**
+
+Reason for insertion before further M11 machine-family work:
+- manual review found the active cabinet still looked under-stocked compared with typical prize machines
+- the player can turn far enough left/right to expose sparse/open room edges
+- prize fidelity remains a later dedicated asset slice, but scene density should be corrected first
+
+Implemented:
+- add a new `stocked` layout containing 14 real dynamic prizes, including a shallow second layer
+- make `stocked` the player-facing default while preserving all established M09 layouts unchanged and selectable
+- keep the physical chute opening clear during the initial arrangement
+- add a dedicated 5-second physical startup regression requiring no startup win and no prize escape
+- add lateral room walls so ±90-degree head turns no longer reveal an open void
+- add visual side-stock displays on both lateral walls
+- increase neighboring-cabinet visible prize fill from 3 to 8 props per machine
+- Medium/reduced graphics retains the lateral stock displays; Low/minimal keeps the room boundary walls but omits decorative stock geometry
+- no claw tuning, gantry bounds, staff/service behavior, service-door physics, or restock physics changed
+
+Manual acceptance:
+- default cabinet should read as stocked/full rather than five isolated prizes
+- the shallow second layer should settle naturally without a startup award
+- left/right head turns should remain visually enclosed and populated
+- side dressing must not intrude into the staff service lane
+- Auto quality must still be able to downgrade without leaving an obvious open-world edge
+
+Next art/content slice:
+- replace the current primitive prize visuals with higher-fidelity original/generic 3D prize assets while preserving the existing physical collider/mass/COM definitions
+
 ---
 
 # M11 — Second Machine Family
+
+**Scheduling note:** topology Slice 1 is complete, but additional UFO geometry/tuning is temporarily deferred until Art Slice 6 and the higher-fidelity prize-content pass are manually accepted.
 
 ## Preferred order
 

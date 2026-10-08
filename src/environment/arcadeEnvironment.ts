@@ -184,6 +184,29 @@ function addWallAndFloor(
   const columnMaterial = physicalMaterial(
     theme.environment.ceilingFixture,
   );
+  const sideWallGeometry = new THREE.BoxGeometry(
+    0.08,
+    2.35,
+    3.25,
+  );
+  const sideWallMaterial = physicalMaterial(
+    theme.environment.wall,
+  );
+  for (const x of [-2.64, 2.64]) {
+    const sideWall = new THREE.Mesh(
+      sideWallGeometry,
+      sideWallMaterial,
+    );
+    sideWall.name =
+      x < 0
+        ? "theme-a-arcade-side-wall-left"
+        : "theme-a-arcade-side-wall-right";
+    sideWall.position.set(x, 1.14, 0.20);
+    sideWall.receiveShadow = true;
+    sideWall.userData.visualOnly = true;
+    root.add(sideWall);
+  }
+
   for (const x of [-2.38, 2.38]) {
     const column = new THREE.Mesh(
       columnGeometry,
@@ -307,6 +330,8 @@ function addNeighborMachine(
     windowGeometry: THREE.BoxGeometry;
     shelfGeometry: THREE.BoxGeometry;
     prizeGeometry: THREE.SphereGeometry;
+    prizeBoxGeometry: THREE.BoxGeometry;
+    prizeTallGeometry: THREE.BoxGeometry;
   },
 ): void {
   const group = new THREE.Group();
@@ -365,21 +390,32 @@ function addNeighborMachine(
     shared.secondary,
     shared.body,
   ];
-  for (let index = 0; index < 3; index += 1) {
+  const prizeGeometries: THREE.BufferGeometry[] = [
+    shared.prizeGeometry,
+    shared.prizeBoxGeometry,
+    shared.prizeGeometry,
+    shared.prizeTallGeometry,
+    shared.prizeBoxGeometry,
+    shared.prizeGeometry,
+    shared.prizeTallGeometry,
+    shared.prizeGeometry,
+  ];
+  for (let index = 0; index < prizeGeometries.length; index += 1) {
     const prize = new THREE.Mesh(
-      shared.prizeGeometry,
-      accentMaterials[index]!,
+      prizeGeometries[index]!,
+      accentMaterials[index % accentMaterials.length]!,
     );
+    const column = index % 4;
+    const row = Math.floor(index / 4);
     prize.position.set(
-      -0.19 + index * 0.19,
-      0.76 + (index % 2) * 0.035,
+      -0.225 + column * 0.15,
+      0.73 + row * 0.145 + (column % 2) * 0.012,
       0.205,
     );
-    prize.scale.set(
-      1,
-      0.88 + index * 0.04,
-      0.92,
-    );
+    prize.rotation.z =
+      prizeGeometries[index] === shared.prizeBoxGeometry
+        ? (column - 1.5) * 0.04
+        : 0;
     prize.castShadow = false;
     group.add(prize);
   }
@@ -422,11 +458,110 @@ function addNeighborMachines(
     headerGeometry: new THREE.BoxGeometry(0.70, 0.18, 0.08),
     windowGeometry: new THREE.BoxGeometry(0.55, 0.67, 0.028),
     shelfGeometry: new THREE.BoxGeometry(0.52, 0.035, 0.30),
-    prizeGeometry: new THREE.SphereGeometry(0.09, 12, 9),
+    prizeGeometry: new THREE.SphereGeometry(0.072, 12, 9),
+    prizeBoxGeometry: new THREE.BoxGeometry(0.115, 0.085, 0.075),
+    prizeTallGeometry: new THREE.BoxGeometry(0.075, 0.125, 0.070),
   };
 
   for (const placement of ARCADE_NEIGHBOR_MACHINE_PLACEMENTS) {
     addNeighborMachine(root, placement, shared);
+  }
+}
+
+function addSideStockDisplays(
+  root: THREE.Group,
+  theme: VisualTheme,
+): void {
+  const frameMaterial = physicalMaterial(
+    theme.environment.neighboringMachineBody,
+  );
+  const shelfMaterial = physicalMaterial(
+    theme.machine.exterior.metalTrim,
+  );
+  const primary = emissiveMaterial(
+    theme.machine.exterior.ledPrimary,
+    0.32,
+  );
+  const secondary = emissiveMaterial(
+    theme.machine.exterior.ledSecondary,
+    0.32,
+  );
+  const body = physicalMaterial(
+    theme.environment.floor,
+  );
+  const sphereGeometry = new THREE.SphereGeometry(0.07, 10, 8);
+  const boxGeometry = new THREE.BoxGeometry(0.115, 0.09, 0.08);
+  const capsuleGeometry = new THREE.CapsuleGeometry(
+    0.045,
+    0.07,
+    4,
+    8,
+  );
+
+  for (const side of [-1, 1] as const) {
+    const display = new THREE.Group();
+    display.name =
+      side < 0
+        ? "theme-a-side-stock-left"
+        : "theme-a-side-stock-right";
+    display.position.set(side * 2.54, 0, 0.42);
+    display.rotation.y =
+      side < 0 ? Math.PI / 2 : -Math.PI / 2;
+    display.userData.visualOnly = true;
+
+    const backing = new THREE.Mesh(
+      new THREE.BoxGeometry(0.82, 1.25, 0.07),
+      frameMaterial,
+    );
+    backing.position.set(0, 0.88, 0);
+    backing.castShadow = false;
+    display.add(backing);
+
+    const header = new THREE.Mesh(
+      new THREE.BoxGeometry(0.82, 0.14, 0.10),
+      side < 0 ? primary : secondary,
+    );
+    header.position.set(0, 1.56, 0.035);
+    header.castShadow = false;
+    display.add(header);
+
+    for (const y of [0.43, 0.72, 1.01, 1.30]) {
+      const shelf = new THREE.Mesh(
+        new THREE.BoxGeometry(0.74, 0.025, 0.20),
+        shelfMaterial,
+      );
+      shelf.position.set(0, y, 0.105);
+      shelf.castShadow = false;
+      display.add(shelf);
+    }
+
+    const materials = [primary, secondary, body];
+    const geometries: THREE.BufferGeometry[] = [
+      sphereGeometry,
+      boxGeometry,
+      capsuleGeometry,
+    ];
+    let index = 0;
+    for (const y of [0.52, 0.81, 1.10, 1.39]) {
+      for (const x of [-0.25, 0, 0.25]) {
+        const prize = new THREE.Mesh(
+          geometries[index % geometries.length]!,
+          materials[index % materials.length]!,
+        );
+        prize.position.set(
+          x,
+          y,
+          0.14 + (index % 2) * 0.008,
+        );
+        prize.rotation.z =
+          ((index % 3) - 1) * 0.08;
+        prize.castShadow = false;
+        display.add(prize);
+        index += 1;
+      }
+    }
+
+    root.add(display);
   }
 }
 
@@ -521,6 +656,13 @@ export function applyArcadeEnvironmentDetail(
     if (display) {
       display.visible = detail === "full";
     }
+
+    const sideStock = root.getObjectByName(
+      `theme-a-side-stock-${side}`,
+    );
+    if (sideStock) {
+      sideStock.visible = detail !== "minimal";
+    }
   }
 
   const showCeilingDressing = detail !== "minimal";
@@ -549,6 +691,7 @@ export function addArcadeEnvironment(
   addBackWallSign(root, theme);
   addCeilingFixtures(root, theme);
   addNeighborMachines(root, theme);
+  addSideStockDisplays(root, theme);
   addPrizeDisplay(root, theme);
   applyArcadeEnvironmentDetail(root, detail);
 

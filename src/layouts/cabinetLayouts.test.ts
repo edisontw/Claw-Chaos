@@ -5,7 +5,20 @@ import {
 } from "./cabinetLayouts";
 
 describe("M09 cabinet layout foundation", () => {
-  it("parses supported layouts and falls back to loose", () => {
+  it("parses supported layouts and uses stocked as the player-facing default", () => {
+    expect(
+      parseCabinetLayoutSelection(""),
+    ).toEqual({
+      id: "stocked",
+      usedFallback: false,
+    });
+
+    expect(
+      parseCabinetLayoutSelection("?layout=stocked"),
+    ).toEqual({
+      id: "stocked",
+      usedFallback: false,
+    });
     expect(
       parseCabinetLayoutSelection("?layout=dense"),
     ).toEqual({
@@ -51,13 +64,14 @@ describe("M09 cabinet layout foundation", () => {
     expect(
       parseCabinetLayoutSelection("?layout=unknown"),
     ).toEqual({
-      id: "loose",
+      id: "stocked",
       usedFallback: true,
     });
   });
 
   it("is deterministic for a fixed seed across every implemented layout", () => {
     for (const id of [
+      "stocked",
       "loose",
       "dense",
       "showcase",
@@ -80,6 +94,9 @@ describe("M09 cabinet layout foundation", () => {
   });
 
   it("keeps all implemented layout content contracts", () => {
+    expect(
+      createCabinetLayout("stocked", "count").placements.length,
+    ).toBeGreaterThanOrEqual(12);
     expect(
       createCabinetLayout("loose", "count").placements,
     ).toHaveLength(5);
