@@ -22,7 +22,6 @@ import { createGantryLabScene } from "../scenes/gantryLab";
 
 describe("stocked claw descent contact", () => {
   it("lands softly on a real prize and stops the reel without bottom chatter", async () => {
-    vi.stubGlobal("window", new EventTarget());
     const physics = await PhysicsRuntime.create();
     createCabinetPhysics(physics);
 
@@ -46,6 +45,9 @@ describe("stocked claw descent contact", () => {
     }
 
     const baseline = prize.body.translation();
+    // Stub browser input only after Rapier WASM has initialized; otherwise
+    // its environment detection can switch execution modes under Node.
+    vi.stubGlobal("window", new EventTarget());
     const scene = new THREE.Scene();
     const gantry = createGantryLabScene(scene, physics, {
       addLabFloor: false,
