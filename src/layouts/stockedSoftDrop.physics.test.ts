@@ -64,6 +64,8 @@ describe("stocked claw descent contact", () => {
       gripProfile: {
         fingerFriction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
+        fingerAngularDamping:
+          CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping,
         closePickupTorque:
           CABINET_STOCKED_GRIP_TUNING.closePickupTorque,
         retainingTorque:
@@ -123,6 +125,13 @@ describe("stocked claw descent contact", () => {
           maxDescentReelSpeed,
           Math.abs(state.reelSpeedMetersPerSecond),
         );
+      }
+
+      if (
+        state?.playPhase === "DESCENDING" ||
+        state?.playPhase === "CLOSING" ||
+        state?.playPhase === "CLOSED_AT_DEPTH"
+      ) {
         const velocity = prize.body.linvel();
         maxPlanarPrizeSpeed = Math.max(
           maxPlanarPrizeSpeed,
