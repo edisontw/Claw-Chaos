@@ -11,6 +11,7 @@ import {
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
   CABINET_STOCKED_GRIP_TUNING,
+  CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
   CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
   CABINET_LONGITUDINAL_CONTACT_ALLOWANCE_METERS,
   openClawLongitudinalReachMeters,
@@ -115,6 +116,14 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
     expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
     expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.12);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBeLessThan(
+      CABINET_PLAY_TUNING.fingerDensity,
+    );
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(1750);
+    expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.18);
+    expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBeLessThan(
+      M02_GANTRY_CONFIG.reelMaxSpeed,
+    );
     expect(CABINET_PLAY_TUNING.fingerLowerPadLengthMeters).toBe(0.012);
     expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
   });
