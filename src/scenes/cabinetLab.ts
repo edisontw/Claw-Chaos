@@ -28,6 +28,7 @@ import {
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
   CABINET_STOCKED_GRIP_TUNING,
+  CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
@@ -339,6 +340,10 @@ export function createCabinetLabScene(
         layout.id === "stocked"
           ? CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters
           : 0,
+      reelMaxSpeedMetersPerSecond:
+        layout.id === "stocked"
+          ? CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND
+          : undefined,
       addServiceWires: true,
       visualTheme,
       clawCastsShadow: false,
@@ -353,6 +358,7 @@ export function createCabinetLabScene(
         !inventoryService.playerInputLocked,
       gripProfile: {
         fingerFriction: activeGrip.fingerFriction,
+        fingerDensity: activeGrip.fingerDensity,
         closePickupTorque:
           activeGrip.closePickupTorque,
         retainingTorque:
