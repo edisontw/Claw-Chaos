@@ -36,6 +36,7 @@ import {
   m04ReelCommand,
 } from "./m04PlayCycle";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
+import { wallSafeFingerOpenAngle, type WallSafeClawProfile } from "./gantryWallSafety";
 import type { SimulationScene } from "./types";
 
 export const M02_FINGER_TRANSPORT_CONFIG = {
@@ -275,6 +276,14 @@ export interface GantryLabOptions {
     zMin: number;
     zMax: number;
   };
+  wallSafeOpening?: Pick<
+    WallSafeClawProfile,
+    | "interiorHalfX"
+    | "interiorHalfZ"
+    | "fullOpenBounds"
+    | "predictiveSeconds"
+    | "additionalMarginMeters"
+  >;
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
@@ -792,6 +801,28 @@ export function createGantryLabScene(
     fingerJoints.push(joint);
     bindings.push({ mesh: visual, body });
   }
+
+  const wallOpeningProfile: WallSafeClawProfile | null =
+    options.wallSafeOpening
+      ? {
+          ...options.wallSafeOpening,
+          extendedBounds: {
+            xMin: gantry.xMin,
+            xMax: gantry.xMax,
+            zMin: gantry.zMin,
+            zMax: gantry.zMax,
+          },
+          fingerPivotRadius: claw.fingerPivotRadius,
+          fingerNodes: claw.fingerNodes,
+          fingerRadius: claw.fingerRodRadius,
+          fingerTipRadius: Math.max(
+            claw.fingerTipVisualRadius,
+            fingerLowerPadRadiusMeters,
+          ),
+          minAngleRadians: closedAngleRadians,
+          maxAngleRadians: claw.openAngle,
+        }
+      : null;
 
   const motionConfig: GantryMotionConfig = {
     x: {
@@ -1383,7 +1414,17 @@ export function createGantryLabScene(
       );
       const fingerTarget = closingFinger
         ? closedAngleRadians
-        : claw.openAngle;
+        : wallOpeningProfile
+          ? wallSafeFingerOpenAngle(
+              {
+                x: motion.x.position,
+                z: motion.z.position,
+                velocityX: motion.x.velocity,
+                velocityZ: motion.z.velocity,
+              },
+              wallOpeningProfile,
+            )
+          : claw.openAngle;
       const siblingFingerContact =
         closingFinger &&
         fingerIndexPairs.some(
