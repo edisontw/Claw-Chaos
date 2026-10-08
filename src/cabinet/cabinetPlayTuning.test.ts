@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  CLAW_LAB_CONFIG,
-  computeFingerTipSpan,
-} from "../scenes/clawLab";
+import { CLAW_LAB_CONFIG } from "../scenes/clawLab";
 import {
   M02_GANTRY_CONFIG,
   resolveGantryInitialPosition,
@@ -11,7 +8,6 @@ import { M04_PLAY_CONFIG } from "../scenes/m04PlayCycle";
 import { M06_CABINET_CONFIG } from "./cabinetGeometry";
 import {
   CABINET_CLAW_PARK_POSITION,
-  CABINET_FULL_OPEN_TRAVEL_BOUNDS,
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
 } from "./cabinetPlayTuning";
@@ -39,43 +35,27 @@ describe("Cabinet play tuning", () => {
     );
   });
 
-  it("keeps the original full-open lane while extending the carriage to edge prizes", () => {
-    const openRadius =
-      computeFingerTipSpan(CLAW_LAB_CONFIG.openAngle) * 0.5 +
-      CLAW_LAB_CONFIG.fingerTipVisualRadius;
-
-    expect(CABINET_FULL_OPEN_TRAVEL_BOUNDS.xMin).toBe(
-      CABINET_CLAW_PARK_POSITION.x,
-    );
-    expect(CABINET_FULL_OPEN_TRAVEL_BOUNDS.zMax).toBe(
-      CABINET_CLAW_PARK_POSITION.z,
-    );
+  it("retains the extended travel range where open fingers naturally touch glass", () => {
+    // Carriage remains inside the cabinet; fingers are free to contact
+    // the real Rapier wall rather than receiving an artificial open-angle cap.
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMin).toBe(-0.37);
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMax).toBe(0.37);
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMin).toBe(-0.27);
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMax).toBe(0.27);
     expect(
-      Math.abs(CABINET_FULL_OPEN_TRAVEL_BOUNDS.xMin) + openRadius,
-    ).toBeLessThanOrEqual(
-      M06_CABINET_CONFIG.interiorHalfX + 0.001,
-    );
-    expect(
-      CABINET_FULL_OPEN_TRAVEL_BOUNDS.xMax + openRadius,
-    ).toBeLessThanOrEqual(
-      M06_CABINET_CONFIG.interiorHalfX + 0.001,
-    );
-    expect(
-      Math.abs(CABINET_FULL_OPEN_TRAVEL_BOUNDS.zMin) + openRadius,
-    ).toBeLessThanOrEqual(
-      M06_CABINET_CONFIG.interiorHalfZ + 0.001,
-    );
-
-    const carriageRadius = M02_GANTRY_CONFIG.carriageHalfX;
-    expect(
-      CABINET_GANTRY_TRAVEL_BOUNDS.xMax + carriageRadius,
+      CABINET_GANTRY_TRAVEL_BOUNDS.xMax +
+        M02_GANTRY_CONFIG.carriageHalfX,
     ).toBeLessThan(M06_CABINET_CONFIG.interiorHalfX);
     expect(
       Math.abs(CABINET_GANTRY_TRAVEL_BOUNDS.zMin) +
         M02_GANTRY_CONFIG.carriageHalfZ,
     ).toBeLessThan(M06_CABINET_CONFIG.interiorHalfZ);
-    expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMax).toBeGreaterThan(0.35);
-    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMin).toBeLessThan(-0.25);
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMin).toBeLessThanOrEqual(
+      CABINET_CLAW_PARK_POSITION.x,
+    );
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMax).toBeGreaterThanOrEqual(
+      CABINET_CLAW_PARK_POSITION.z,
+    );
   });
 
   it("raises the idle claw while preserving the locked bottom reach", () => {

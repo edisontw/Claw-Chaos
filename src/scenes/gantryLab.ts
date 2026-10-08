@@ -36,7 +36,6 @@ import {
   m04ReelCommand,
 } from "./m04PlayCycle";
 import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
-import { wallSafeFingerOpenAngle, type WallSafeClawProfile } from "./gantryWallSafety";
 import type { SimulationScene } from "./types";
 
 export const M02_FINGER_TRANSPORT_CONFIG = {
@@ -276,14 +275,6 @@ export interface GantryLabOptions {
     zMin: number;
     zMax: number;
   };
-  wallSafeOpening?: Pick<
-    WallSafeClawProfile,
-    | "interiorHalfX"
-    | "interiorHalfZ"
-    | "fullOpenBounds"
-    | "predictiveSeconds"
-    | "additionalMarginMeters"
-  >;
   verticalHomeOffset?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
@@ -802,28 +793,6 @@ export function createGantryLabScene(
     bindings.push({ mesh: visual, body });
   }
 
-  const wallOpeningProfile: WallSafeClawProfile | null =
-    options.wallSafeOpening
-      ? {
-          ...options.wallSafeOpening,
-          extendedBounds: {
-            xMin: gantry.xMin,
-            xMax: gantry.xMax,
-            zMin: gantry.zMin,
-            zMax: gantry.zMax,
-          },
-          fingerPivotRadius: claw.fingerPivotRadius,
-          fingerNodes: claw.fingerNodes,
-          fingerRadius: claw.fingerRodRadius,
-          fingerTipRadius: Math.max(
-            claw.fingerTipVisualRadius,
-            fingerLowerPadRadiusMeters,
-          ),
-          minAngleRadians: closedAngleRadians,
-          maxAngleRadians: claw.openAngle,
-        }
-      : null;
-
   const motionConfig: GantryMotionConfig = {
     x: {
       minPosition: gantry.xMin,
@@ -1040,14 +1009,8 @@ export function createGantryLabScene(
         gantry.homeVelocityTolerance &&
       Math.abs(motion.z.velocity) <=
         gantry.homeVelocityTolerance;
-    const safeOpenAngle = wallOpeningProfile
-      ? wallSafeFingerOpenAngle(
-          { x: motion.x.position, z: motion.z.position },
-          wallOpeningProfile,
-        )
-      : claw.openAngle;
     const fingersOpen =
-      Math.abs(fingerCommand - safeOpenAngle) <=
+      Math.abs(fingerCommand - claw.openAngle) <=
       playConfig.releaseCompletionToleranceRadians;
     const testMotionActive =
       pt006Phase === "ACCELERATING" ||
@@ -1418,19 +1381,11 @@ export function createGantryLabScene(
         holdBoostRequested,
         playConfig,
       );
+      // Keep the natural full-open motor target even against cabinet walls.
+      // Existing Rapier finger/glass contacts provide real physical deflection.
       const fingerTarget = closingFinger
         ? closedAngleRadians
-        : wallOpeningProfile
-          ? wallSafeFingerOpenAngle(
-              {
-                x: motion.x.position,
-                z: motion.z.position,
-                velocityX: motion.x.velocity,
-                velocityZ: motion.z.velocity,
-              },
-              wallOpeningProfile,
-            )
-          : claw.openAngle;
+        : claw.openAngle;
       const siblingFingerContact =
         closingFinger &&
         fingerIndexPairs.some(
