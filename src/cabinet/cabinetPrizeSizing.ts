@@ -21,6 +21,11 @@ export function cabinetPrizeDefinition(
       y: definition.dimensions.y * factor,
       z: definition.dimensions.z * factor,
     },
+    // Stocked 3D can renders real top/bottom seams; use matching physical
+    // ledges instead of an unrealistically smooth full-radius cylinder.
+    colliderProfileId: definition.shapeFamily === "cylinder"
+      ? "cylinder/rimmed_v1"
+      : definition.colliderProfileId,
     // Intentional: increased collision and visual size, unchanged weight.
     nominalMassKg: definition.nominalMassKg,
   };
