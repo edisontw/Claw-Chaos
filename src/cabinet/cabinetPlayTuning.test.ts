@@ -10,6 +10,7 @@ import {
   CABINET_CLAW_PARK_POSITION,
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
+  CABINET_STOCKED_GRIP_TUNING,
   CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
   CABINET_LONGITUDINAL_CONTACT_ALLOWANCE_METERS,
   openClawLongitudinalReachMeters,
@@ -106,6 +107,16 @@ describe("Cabinet play tuning", () => {
     expect(
       M06_CABINET_CONFIG.playAreaHeight - cabinetCarriageTopY,
     ).toBeGreaterThanOrEqual(0.009);
+  });
+
+  it("reserves the deeper, rubber-padded hold for stocked prizes only", () => {
+    expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
+    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
+    expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.12);
+    expect(CABINET_PLAY_TUNING.fingerLowerPadLengthMeters).toBe(0.012);
+    expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
   });
 
   it("strengthens normal cabinet grip without exceeding HOLD BOOST", () => {

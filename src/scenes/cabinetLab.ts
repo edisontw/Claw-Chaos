@@ -27,6 +27,7 @@ import {
   CABINET_CLAW_PARK_POSITION,
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
+  CABINET_STOCKED_GRIP_TUNING,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
@@ -324,13 +325,20 @@ export function createCabinetLabScene(
   cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
 
+  const activeGrip = layout.id === "stocked"
+    ? CABINET_STOCKED_GRIP_TUNING
+    : CABINET_PLAY_TUNING;
   const gantryScene = createGantryLabScene(
     scene,
     physics,
     {
       addLabFloor: false,
       verticalHomeOffset:
-        CABINET_PLAY_TUNING.verticalHomeOffsetMeters,
+        activeGrip.verticalHomeOffsetMeters,
+      additionalPickupDropMeters:
+        layout.id === "stocked"
+          ? CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters
+          : 0,
       addServiceWires: true,
       visualTheme,
       clawCastsShadow: false,
@@ -344,21 +352,21 @@ export function createCabinetLabScene(
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
       gripProfile: {
-        fingerFriction: CABINET_PLAY_TUNING.fingerFriction,
+        fingerFriction: activeGrip.fingerFriction,
         closePickupTorque:
-          CABINET_PLAY_TUNING.closePickupTorque,
+          activeGrip.closePickupTorque,
         retainingTorque:
-          CABINET_PLAY_TUNING.retainingTorque,
+          activeGrip.retainingTorque,
         holdBoostTorque:
-          CABINET_PLAY_TUNING.holdBoostTorque,
+          activeGrip.holdBoostTorque,
         pickupLiftDistanceMeters:
-          CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+          activeGrip.pickupLiftDistanceMeters,
         closedAngleRadians:
-          CABINET_PLAY_TUNING.closedAngleRadians,
+          activeGrip.closedAngleRadians,
         fingerLowerPadRadiusMeters:
-          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
+          activeGrip.fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters:
-          CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
+          activeGrip.fingerLowerPadLengthMeters,
       },
       playReturnTarget: CABINET_CLAW_PARK_POSITION,
       milestone: "M10 / Staff & restocking",
@@ -906,28 +914,28 @@ export function createCabinetLabScene(
         "Haptics           optional gamepad rumble + mobile action pulse",
         "Cabinet claw      +" +
           Math.round(
-            CABINET_PLAY_TUNING.verticalHomeOffsetMeters * 1000,
+            activeGrip.verticalHomeOffsetMeters * 1000,
           ) +
           " mm idle height / extended drop travel",
         "Cabinet grip      " +
-          CABINET_PLAY_TUNING.fingerFriction.toFixed(2) +
+          activeGrip.fingerFriction.toFixed(2) +
           " / " +
-          CABINET_PLAY_TUNING.closePickupTorque.toFixed(3) +
+          activeGrip.closePickupTorque.toFixed(3) +
           " / " +
-          CABINET_PLAY_TUNING.retainingTorque.toFixed(3) +
+          activeGrip.retainingTorque.toFixed(3) +
           " / boost " +
-          CABINET_PLAY_TUNING.holdBoostTorque.toFixed(3) +
+          activeGrip.holdBoostTorque.toFixed(3) +
           " / " +
-          CABINET_PLAY_TUNING.pickupLiftDistanceMeters.toFixed(3) +
+          activeGrip.pickupLiftDistanceMeters.toFixed(3) +
           " m pickup / close " +
-          CABINET_PLAY_TUNING.closedAngleRadians.toFixed(2) +
+          activeGrip.closedAngleRadians.toFixed(2) +
           " rad / pad " +
           Math.round(
-            CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters * 1000,
+            activeGrip.fingerLowerPadRadiusMeters * 1000,
           ) +
           " mm x " +
           Math.round(
-            CABINET_PLAY_TUNING.fingerLowerPadLengthMeters * 1000,
+            activeGrip.fingerLowerPadLengthMeters * 1000,
           ) +
           " mm terminal pad",
         "Depth cues        woven deck + fixed cabinet-light shadows",

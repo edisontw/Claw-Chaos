@@ -231,12 +231,27 @@ function buildColliders(definition: PrizeDefinition): PrimitiveColliderSpec[] {
     case "sphere":
       return [{ shape: "sphere", radius: x * 0.5 }];
 
-    case "cylinder":
-      return [{
-        shape: "cylinder",
-        halfHeight: y * 0.5,
-        radius: Math.min(x, z) * 0.5,
-      }];
+    case "cylinder": {
+      const radius = Math.min(x, z) * 0.5;
+      if (definition.colliderProfileId === "cylinder/rimmed_v1") {
+        // Match the real raised metal lips in the high-fidelity can visual.
+        // These are attached to the same rigid body, not pickup shortcuts.
+        return [
+          {
+            shape: "cylinder",
+            halfHeight: y * 0.45,
+            radius: radius * 0.92,
+          },
+          ...([-1, 1] as const).map((side): PrimitiveColliderSpec => ({
+            shape: "cylinder",
+            center: { x: 0, y: side * y * 0.466, z: 0 },
+            halfHeight: y * 0.018,
+            radius,
+          })),
+        ];
+      }
+      return [{ shape: "cylinder", halfHeight: y * 0.5, radius }];
+    }
 
     case "capsule": {
       const radius = Math.min(x, z) * 0.5;
