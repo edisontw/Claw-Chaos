@@ -194,6 +194,7 @@ export interface GantryGripProfile {
   descentOpenStiffness?: number;
   descentOpenDamping?: number;
   descentOpenMaxTorque?: number;
+  bottomCloseSettleSeconds?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -379,6 +380,8 @@ export function createGantryLabScene(
   const descentOpenMaxTorque =
     options.gripProfile?.descentOpenMaxTorque ??
     M02_FINGER_TRANSPORT_CONFIG.maxTorque;
+  const bottomCloseSettleSeconds =
+    options.gripProfile?.bottomCloseSettleSeconds ?? 0;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
@@ -878,6 +881,7 @@ export function createGantryLabScene(
   let fingerCommand = 0;
   let holdBoostActive = false;
   let selfContactGuardActive = false;
+  let bottomCloseSettleRemainingSeconds = 0;
 
   let pt006Phase: Pt006Phase = "READY";
   let pt006Seconds = 0;
@@ -1361,6 +1365,14 @@ export function createGantryLabScene(
         playCycle.phase === "CLOSING"
       ) {
         reel = haltReel(reel);
+        bottomCloseSettleRemainingSeconds =
+          bottomCloseSettleSeconds;
+      }
+      if (bottomCloseSettleRemainingSeconds > 0) {
+        bottomCloseSettleRemainingSeconds = Math.max(
+          0,
+          bottomCloseSettleRemainingSeconds - stepSeconds,
+        );
       }
 
       if (
@@ -1421,7 +1433,11 @@ export function createGantryLabScene(
         true,
       );
 
-      const closingFinger = m04FingerShouldClose(playCycle);
+      const closeMechanicallyRequested =
+        m04FingerShouldClose(playCycle);
+      const closingFinger =
+        closeMechanicallyRequested &&
+        bottomCloseSettleRemainingSeconds <= 0;
       holdBoostActive = m04HoldBoostActive(
         playCycle,
         holdBoostRequested,
@@ -1475,7 +1491,10 @@ export function createGantryLabScene(
             : retainingTorque
           : closePickupTorque;
       const compliantOpenDescent =
-        playCycle.phase === "DESCENDING" && !closingFinger;
+        (
+          playCycle.phase === "DESCENDING" ||
+          bottomCloseSettleRemainingSeconds > 0
+        ) && !closingFinger;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
