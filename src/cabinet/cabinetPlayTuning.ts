@@ -92,9 +92,9 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerAngularDamping: 24.0,
   // During vertical descent the open claw should yield when it brushes a
   // prize. READY/horizontal transport still uses the stiff M02 open hold.
-  descentOpenStiffness: 220,
-  descentOpenDamping: 22,
-  descentOpenMaxTorque: 0.8,
+  descentOpenStiffness: 600,
+  descentOpenDamping: 60,
+  descentOpenMaxTorque: 2.0,
 } as const;
 
 export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.18;
