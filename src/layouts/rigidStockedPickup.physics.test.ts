@@ -541,7 +541,9 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
             closing
               ? CABINET_STOCKED_GRIP_TUNING.closedAngleRadians
               : claw.openAngle,
-            claw.motorSpeedRadiansPerSecond,
+            closing
+              ? CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond
+              : claw.motorSpeedRadiansPerSecond,
             dt,
             closing,
             selfContactGuardActive,
