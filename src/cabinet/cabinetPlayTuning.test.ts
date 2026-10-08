@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CLAW_LAB_CONFIG } from "../scenes/clawLab";
 import {
   M02_GANTRY_CONFIG,
   resolveGantryInitialPosition,
