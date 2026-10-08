@@ -2346,12 +2346,12 @@ Reason:
 Changes:
 - cabinet-only travel extends to X +/-0.37 m and Z -0.27..0.27 m;
   baseline isolated M02 gantry and 3-prong gripping parameters remain unchanged
-- the old conservative travel zone remains fully open, including the chute park
-- outside this zone the physical finger motors receive a predictive,
-  geometry-based wall-safe opening target rather than allowing open fingers
-  to intersect the cabinet glass
-- CALL STAFF service checks treat the narrowed wall-safe target as open,
-  preserving service availability near the edges
+- the original full-open finger motor command is preserved across the
+  **entire** travel range, including the chute park and every cabinet edge
+- open fingers are allowed to contact the existing physical Rapier cabinet
+  glass/frame colliders and visibly deflect in response to real contact;
+  no position/velocity-triggered, predictive or artificial closing angle
+- CALL STAFF safety checks use the original fully-open command
 - the default `stocked` arrangement uses 1.13x physical dimensions
   (visual and collider), unchanged nominal mass and mass profile;
   retained COM profile is normalized to the new dimensions
@@ -2361,9 +2361,11 @@ Changes:
   full opening at chute park, unchanged prize mass and physical settling
 
 Manual acceptance:
-- X and Z movement can reach prizes near walls, without visible claw
-  clipping, motor lock or unusual jitter
-- claw may narrow as it approaches walls and should reopen centrally
+- X and Z movement can reach prizes near walls; fully-open fingers may
+  lightly touch the actual glass/frame, with no disappearance or hard jam
+- the game NEVER changes target claw opening based on wall proximity;
+  any observed finger deflection must result from genuine collision forces
+- after returning to the center, fingers recover with no persistent jam
 - edge item pickup uses the genuine physical claw, not forced attachment
 - enlarged stocked prizes are stable at startup and restock
 - CALL STAFF remains available at the far edges
