@@ -358,6 +358,10 @@ export function createCabinetLabScene(
         !inventoryService.playerInputLocked,
       gripProfile: {
         fingerFriction: activeGrip.fingerFriction,
+        fingerRodFriction:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.fingerRodFriction
+            : activeGrip.fingerFriction,
         fingerDensity: activeGrip.fingerDensity,
         fingerAngularDamping:
           layout.id === "stocked"
