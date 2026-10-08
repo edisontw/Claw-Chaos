@@ -81,7 +81,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   ...CABINET_PLAY_TUNING,
   additionalPickupDropMeters: 0.055,
   fingerFriction: 1.94,
-  fingerRodFriction: 0.45,
+  fingerRodFriction: 0.75,
   closePickupTorque: 4.5,
   retainingTorque: 0.10,
   holdBoostTorque: 0.12,
@@ -99,4 +99,4 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   descentOpenMaxTorque: 2.0,
 } as const;
 
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.16;
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
