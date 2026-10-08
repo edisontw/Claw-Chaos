@@ -25,6 +25,7 @@ export interface CuboidMaterialOptions {
   friction?: number;
   restitution?: number;
   density?: number;
+  enableCcd?: boolean;
   contactAudioProfileId?: string;
 }
 
@@ -585,7 +586,9 @@ export class PhysicsRuntime {
     material: CuboidMaterialOptions = {},
   ): RigidBodyHandle {
     const body = this.world.createRigidBody(
-      RAPIER.RigidBodyDesc.dynamic().setTranslation(origin.x, origin.y, origin.z),
+      RAPIER.RigidBodyDesc.dynamic()
+        .setTranslation(origin.x, origin.y, origin.z)
+        .setCcdEnabled(material.enableCcd ?? false),
     );
 
     for (const segment of segments) {
