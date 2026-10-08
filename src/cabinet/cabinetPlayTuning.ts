@@ -91,7 +91,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // preventing a descending claw from batting lightweight prizes away.
   fingerDensity: 1750,
   fingerAngularDamping: 24.0,
-  fingerMotorSpeedRadiansPerSecond: 1.0,
+  closeFingerMotorSpeedRadiansPerSecond: 1.0,
   descentOpenStiffness: 180,
   descentOpenDamping: 18,
   descentOpenMaxTorque: 1.5,
