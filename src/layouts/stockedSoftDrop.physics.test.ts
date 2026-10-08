@@ -77,6 +77,8 @@ describe("stocked claw descent contact", () => {
           CABINET_STOCKED_GRIP_TUNING.descentOpenDamping,
         descentOpenMaxTorque:
           CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque,
+        settleCloseTorque:
+          CABINET_STOCKED_GRIP_TUNING.settleCloseTorque,
         closePickupTorque:
           CABINET_STOCKED_GRIP_TUNING.closePickupTorque,
         retainingTorque:
@@ -172,11 +174,11 @@ describe("stocked claw descent contact", () => {
       if (
         !closingObserved &&
         before?.playPhase === "DESCENDING" &&
-        state?.playPhase === "CLOSING"
+        state?.playPhase !== "DESCENDING"
       ) {
         closingObserved = true;
         reelSpeedAtClosing = Math.abs(
-          state.reelSpeedMetersPerSecond,
+          state?.reelSpeedMetersPerSecond ?? Number.NaN,
         );
       }
       if (
