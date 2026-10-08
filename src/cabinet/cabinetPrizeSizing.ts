@@ -8,6 +8,7 @@ export const STOCKED_PRIZE_SIZE_MULTIPLIER = 1.13;
 // triangle; model the larger cylindrical prize actually sold in this
 // machine while keeping its existing mass and upright height.
 export const STOCKED_CAN_DIAMETER_MULTIPLIER = 1.27;
+export const STOCKED_TALL_BOX_WIDTH_MULTIPLIER = 1.27;
 
 export function cabinetPrizeDefinition(
   definition: PrizeDefinition,
@@ -20,7 +21,9 @@ export function cabinetPrizeDefinition(
   const factor = STOCKED_PRIZE_SIZE_MULTIPLIER;
   const horizontalFactor = definition.shapeFamily === "cylinder"
     ? factor * STOCKED_CAN_DIAMETER_MULTIPLIER
-    : factor;
+    : definition.shapeFamily === "tall_box"
+      ? factor * STOCKED_TALL_BOX_WIDTH_MULTIPLIER
+      : factor;
   return {
     ...definition,
     dimensions: {
