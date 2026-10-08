@@ -394,14 +394,14 @@ export function createCabinetLabScene(
   > = [
     ...(gantryScene.massPropertiesDebugTargets ?? []),
   ];
-  const tracked: Array<{
+  type TrackedPrize = {
     id: string;
     body: ReturnType<typeof createPrize>["body"];
-  }> = [];
-  const restockedTracked: Array<{
-    id: string;
-    body: ReturnType<typeof createPrize>["body"];
-  }> = [];
+    renderObject: THREE.Object3D;
+  };
+  const tracked: TrackedPrize[] = [];
+  const restockedTracked: TrackedPrize[] = [];
+  let clearedChutePrizeCount = 0;
   type RestockStatus =
     | "idle"
     | "inserting"
@@ -459,9 +459,10 @@ export function createCabinetLabScene(
       body: prize.body,
       label: id,
     });
-    const trackedPrize = {
+    const trackedPrize: TrackedPrize = {
       id,
       body: prize.body,
+      renderObject: prize.renderObject,
     };
     tracked.push(trackedPrize);
     restockedTracked.push(trackedPrize);
@@ -505,8 +506,50 @@ export function createCabinetLabScene(
     tracked.push({
       id: `${placement.prizeId}#${index}`,
       body: prize.body,
+      renderObject: prize.renderObject,
     });
   }
+
+  const clearAwardedPrize = (prizeId: string): void => {
+    const index = tracked.findIndex((entry) => entry.id === prizeId);
+    if (index < 0) {
+      return;
+    }
+    const [prize] = tracked.splice(index, 1);
+    if (!prize) {
+      return;
+    }
+
+    const restockIndex = restockedTracked.findIndex(
+      (entry) => entry.id === prizeId,
+    );
+    if (restockIndex >= 0) {
+      restockedTracked.splice(restockIndex, 1);
+    }
+
+    for (
+      let bindingIndex = bindings.length - 1;
+      bindingIndex >= 0;
+      bindingIndex--
+    ) {
+      if (bindings[bindingIndex]?.body === prize.body) {
+        bindings.splice(bindingIndex, 1);
+      }
+    }
+    for (
+      let debugIndex = massPropertiesDebugTargets.length - 1;
+      debugIndex >= 0;
+      debugIndex--
+    ) {
+      if (massPropertiesDebugTargets[debugIndex]?.body === prize.body) {
+        massPropertiesDebugTargets.splice(debugIndex, 1);
+      }
+    }
+
+    scene.remove(prize.renderObject);
+    physics.removeRigidBody(prize.body);
+    clearedChutePrizeCount += 1;
+  };
 
   return {
     bindings,
@@ -829,6 +872,7 @@ export function createCabinetLabScene(
         }
       }
 
+      const awardedPrizeIdsToClear: string[] = [];
       for (const prize of tracked) {
         // Initial prize settling is setup, not gameplay. Do not let a
         // transient spawn/settle motion decrement stock or produce a WIN.
@@ -878,9 +922,16 @@ export function createCabinetLabScene(
                   },
                 ),
               );
+              // Once the chute sensor has accepted the physical drop as a
+              // real win, remove it instead of letting it accumulate below.
+              awardedPrizeIdsToClear.push(prize.id);
             }
           }
         }
+      }
+
+      for (const prizeId of awardedPrizeIdsToClear) {
+        clearAwardedPrize(prizeId);
       }
     },
     debugLines(): string[] {
@@ -899,6 +950,7 @@ export function createCabinetLabScene(
           M06_CABINET_CONFIG.chuteCenterZ.toFixed(3) +
           " m",
         `Sensor wins       ${sensor.winCount}`,
+        `Chute cleared     ${clearedChutePrizeCount}`,
         `Results accepted  ${resultInventory.resultCount}`,
         `Awarded prizes    ${resultInventory.inventoryCount}`,
         `Playable stock    ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,
