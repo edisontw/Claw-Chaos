@@ -189,6 +189,7 @@ function computeSwingAngle(
 export interface GantryGripProfile {
   fingerFriction?: number;
   fingerDensity?: number;
+  fingerAngularDamping?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -360,6 +361,9 @@ export function createGantryLabScene(
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
   const activeFingerDensity =
     options.gripProfile?.fingerDensity ?? claw.fingerDensity;
+  const activeFingerAngularDamping =
+    options.gripProfile?.fingerAngularDamping ??
+    M02_FINGER_TRANSPORT_CONFIG.angularDamping;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
@@ -787,6 +791,7 @@ export function createGantryLabScene(
         enableCcd: options.clawContinuousCollision ?? false,
       },
     );
+    body.setAngularDamping(activeFingerAngularDamping);
     const joint = physics.createRevoluteJoint(hubBody, body, {
       anchor1: pivotLocal,
       anchor2: { x: 0, y: 0, z: 0 },
