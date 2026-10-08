@@ -67,31 +67,25 @@ function addCapsuleBetween(
   const direction = end.clone().sub(start);
   const length = direction.length();
   const bodyLength = Math.max(0.001, length - radius * 2);
-  const cylinder = configureMesh(
+  const capsule = configureMesh(
     new THREE.Mesh(
-      new THREE.CylinderGeometry(radius, radius, bodyLength, 16),
+      new THREE.CapsuleGeometry(
+        radius,
+        bodyLength,
+        5,
+        14,
+      ),
       material,
     ),
   );
-  cylinder.position.copy(start).add(end).multiplyScalar(0.5);
+  capsule.position.copy(start).add(end).multiplyScalar(0.5);
   if (length > Number.EPSILON) {
-    cylinder.quaternion.setFromUnitVectors(
+    capsule.quaternion.setFromUnitVectors(
       new THREE.Vector3(0, 1, 0),
       direction.clone().normalize(),
     );
   }
-  parent.add(cylinder);
-
-  for (const point of [start, end]) {
-    const cap = configureMesh(
-      new THREE.Mesh(
-        new THREE.SphereGeometry(radius, 18, 12),
-        material,
-      ),
-    );
-    cap.position.copy(point);
-    parent.add(cap);
-  }
+  parent.add(capsule);
 }
 
 function createPackagedBoxVisual(
