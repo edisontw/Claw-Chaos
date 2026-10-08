@@ -2372,6 +2372,51 @@ Manual acceptance:
 
 ---
 
+## Gameplay Fix — stocked box and cylindrical prize pickup
+
+**Status: IMPLEMENTED CANDIDATE — production physical pickup acceptance**
+
+User report: long rectangular boxes and cylindrical cans were ungrippable
+even after the 13% stocked prize enlargement.
+
+Measured production-claw baseline (centered, no prize attachment):
+- standard box: peak lift ~5.8 mm; no successful return
+- cylinder: peak lift ~3.5 mm; no successful return
+- merely increasing retaining torque OR lowering the reel alone did
+  not produce sustained contact or a proper pickup
+- combined improved grip requires deeper contact, longer *physical*
+  rubber end pads and stronger real retention contact
+
+Stocked-only corrections:
+- 55 mm additional reel descent with correspondingly deeper AUTO CLOSE;
+  unchanged independent M02 gantry physics
+- real rubber contact pad: radius 14 mm, last 45 mm of each finger;
+  visuals and capsule colliders share the actual geometry
+- retaining torque 0.18 N m and boost 0.22 N m (stocked layout only);
+  M09 special layouts retain 0.014 / 0.018 N m
+- cylinder body is the matching native 3-part geometric can: slimmer body
+  and actual raised top/bottom rim colliders, not one smooth solid cylinder
+- cylinder width further enlarged by 1.27x relative to the previous
+  stocked 13% scaling; tall box width also 1.27x, with existing
+  mass, vertical height, material and COM profile unchanged
+- no magnets, sticky attachments, forced reward triggers or virtual lifts
+
+Physics acceptance:
+- real full-cycle production claw tests for standard box, tall box,
+  flat box and cylinder at matching stocked size and fixed mass
+- require significant real lift; track contact pairs, peak lift,
+  return and actual chute sensor events (not just contact)
+- retain accepted M09 special-layout bridge and ring tests, Staff and
+  cabinet glass/CCD collision regressions
+
+Manual acceptance:
+- centered pickup can physically lift stocked standard and tall boxes,
+  flat boxes and cylindrical cans; can still slip when off-center
+- no automatic win, no surprise initial prize discharge
+- no breaking the previous Ring/Bridge/calibrated layout behavior
+
+---
+
 ## Gameplay Fix — longitudinal claw/window overdrive
 
 **Status: IMPLEMENTED CANDIDATE — awaiting manual contact acceptance**
