@@ -2392,11 +2392,11 @@ Stocked-only corrections:
   unchanged independent M02 gantry physics
 - real rubber contact pad: radius 14 mm, last 45 mm of each finger;
   visuals and capsule colliders share the actual geometry
-- retaining torque 0.18 N m and boost 0.22 N m (stocked layout only);
+- retaining torque 0.10 N m and boost 0.12 N m (stocked layout only);
   M09 special layouts retain 0.014 / 0.018 N m
 - cylinder body is the matching native 3-part geometric can: slimmer body
   and actual raised top/bottom rim colliders, not one smooth solid cylinder
-- cylinder width further enlarged by 1.27x relative to the previous
+- cylinder width further enlarged by 1.45x relative to the previous
   stocked 13% scaling; tall box width also 1.27x, with existing
   mass, vertical height, material and COM profile unchanged
 - no magnets, sticky attachments, forced reward triggers or virtual lifts
