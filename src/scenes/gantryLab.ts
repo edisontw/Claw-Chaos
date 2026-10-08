@@ -190,11 +190,6 @@ export interface GantryGripProfile {
   fingerFriction?: number;
   fingerDensity?: number;
   fingerAngularDamping?: number;
-  closeFingerMotorSpeedRadiansPerSecond?: number;
-  descentOpenStiffness?: number;
-  descentOpenDamping?: number;
-  descentOpenMaxTorque?: number;
-  settleCloseTorque?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -369,22 +364,8 @@ export function createGantryLabScene(
   const activeFingerAngularDamping =
     options.gripProfile?.fingerAngularDamping ??
     M02_FINGER_TRANSPORT_CONFIG.angularDamping;
-  const activeCloseFingerMotorSpeed =
-    options.gripProfile?.closeFingerMotorSpeedRadiansPerSecond ??
-    claw.motorSpeedRadiansPerSecond;
-  const descentOpenStiffness =
-    options.gripProfile?.descentOpenStiffness ??
-    M02_FINGER_TRANSPORT_CONFIG.stiffness;
-  const descentOpenDamping =
-    options.gripProfile?.descentOpenDamping ??
-    M02_FINGER_TRANSPORT_CONFIG.damping;
-  const descentOpenMaxTorque =
-    options.gripProfile?.descentOpenMaxTorque ??
-    M02_FINGER_TRANSPORT_CONFIG.maxTorque;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
-  const settleCloseTorque =
-    options.gripProfile?.settleCloseTorque ?? closePickupTorque;
   const retainingTorque =
     options.gripProfile?.retainingTorque ?? claw.pt002RetainingTorque;
   const holdBoostTorque =
@@ -1452,9 +1433,7 @@ export function createGantryLabScene(
       fingerCommand = advanceFingerCommandWithSelfContactGuard(
         fingerCommand,
         fingerTarget,
-        closingFinger
-          ? activeCloseFingerMotorSpeed
-          : claw.motorSpeedRadiansPerSecond,
+        claw.motorSpeedRadiansPerSecond,
         stepSeconds,
         closingFinger,
         selfContactGuardActive,
@@ -1478,31 +1457,21 @@ export function createGantryLabScene(
           ? holdBoostActive
             ? holdBoostTorque
             : retainingTorque
-          : activeForcePhase === "CLOSE"
-            ? settleCloseTorque
-            : closePickupTorque;
-      const compliantDescent =
-        !closingFinger && playCycle.phase === "DESCENDING";
+          : closePickupTorque;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
           closingFinger
             ? claw.motorStiffness
-            : compliantDescent
-              ? descentOpenStiffness
-              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+            : M02_FINGER_TRANSPORT_CONFIG.stiffness,
           closingFinger
             ? claw.motorDamping
-            : compliantDescent
-              ? descentOpenDamping
-              : M02_FINGER_TRANSPORT_CONFIG.damping,
+            : M02_FINGER_TRANSPORT_CONFIG.damping,
         );
         joint.setMotorMaxForce(
           closingFinger
             ? activeContactTorque
-            : compliantDescent
-              ? descentOpenMaxTorque
-              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+            : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
       for (const body of fingerBodies) {
