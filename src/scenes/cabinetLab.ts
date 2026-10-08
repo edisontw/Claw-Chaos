@@ -25,9 +25,7 @@ import {
 } from "../cabinet/cabinetVisualStyle";
 import {
   CABINET_CLAW_PARK_POSITION,
-  CABINET_FULL_OPEN_TRAVEL_BOUNDS,
   CABINET_GANTRY_TRAVEL_BOUNDS,
-  CABINET_WALL_SAFE_OPENING,
   CABINET_PLAY_TUNING,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
@@ -339,12 +337,6 @@ export function createCabinetLabScene(
       clawTopology: options.clawTopology,
       initialPosition: CABINET_CLAW_PARK_POSITION,
       travelBounds: CABINET_GANTRY_TRAVEL_BOUNDS,
-      wallSafeOpening: {
-        interiorHalfX: M06_CABINET_CONFIG.interiorHalfX,
-        interiorHalfZ: M06_CABINET_CONFIG.interiorHalfZ,
-        fullOpenBounds: CABINET_FULL_OPEN_TRAVEL_BOUNDS,
-        ...CABINET_WALL_SAFE_OPENING,
-      },
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
