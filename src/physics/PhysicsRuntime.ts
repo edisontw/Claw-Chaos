@@ -38,6 +38,7 @@ export interface CapsuleSegmentSpec {
   start: Vec3;
   end: Vec3;
   radius: number;
+  friction?: number;
 }
 
 export type CompoundColliderSpec =
@@ -396,7 +397,7 @@ export class PhysicsRuntime {
 
       descriptor = descriptor
         .setDensity(0)
-        .setFriction(material.friction ?? 0.7)
+        .setFriction(segment.friction ?? material.friction ?? 0.7)
         .setRestitution(material.restitution ?? 0.08);
 
       if (material.contactAudioProfileId) {
