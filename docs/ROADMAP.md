@@ -2372,6 +2372,37 @@ Manual acceptance:
 
 ---
 
+## Gameplay Fix — longitudinal claw/window overdrive
+
+**Status: IMPLEMENTED CANDIDATE — awaiting manual contact acceptance**
+
+- Screenshot regression: after moving longitudinally toward the window,
+  one claw finger appeared to hang far lower than the other two. The
+  cabinet Z carriage limit allowed +/-0.27 m, while the actual 3-prong
+  *open* finger projection plus pad radius occupied ~0.16 m beyond the hub.
+  Against walls at +/-0.36 m, the old limit forced a physical finger
+  several centimetres into solid glass, resulting in extreme joint
+  deflection / apparent length asymmetry.
+- Correct only the cabinet **front/back mechanical rail end-stops** using
+  the unchanged full-open three-finger collider geometry and a modest
+  10 mm allowance for genuine contact. The chute park at Z +0.20 m,
+  side X +/-0.37 m and all claw angular motor settings remain unchanged.
+- Do not dynamically fold fingers by wall proximity, move walls,
+  weaken glass physics, or distort/scale visuals.
+- New three-finger real-physics regression travels to BOTH longitudinal
+  end-stops, requires glass contact, checks vertical tip asymmetry and
+  verifies that the three fingers recover on retreat.
+- Existing prize sizing, weight, player view, Staff and physics baseline
+  remain unchanged.
+
+Manual acceptance: moving longitudinally all the way to the back or
+front no longer causes one finger to hang much lower than the other
+two. Glass contact is mild; claw recovers immediately after backing off.
+Edge prizes remain reachable via the extended side range and open
+finger contact area.
+
+---
+
 ## Gameplay Fix — physical contact at front glass
 
 **Status: IMPLEMENTED CANDIDATE**

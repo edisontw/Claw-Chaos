@@ -282,6 +282,7 @@ export type CabinetPhysicsParts =
   CabinetPartDefinition[] & {
     serviceDoorBody: RigidBodyHandle;
     frontGlassBody: RigidBodyHandle;
+    backWallBody: RigidBodyHandle;
   };
 
 export function createCabinetPhysics(
@@ -291,6 +292,7 @@ export function createCabinetPhysics(
     createCabinetPartDefinitions() as CabinetPhysicsParts;
   let serviceDoorBody: RigidBodyHandle | null = null;
   let frontGlassBody: RigidBodyHandle | null = null;
+  let backWallBody: RigidBodyHandle | null = null;
 
   for (const part of parts) {
     if (part.id === "glass-right") {
@@ -312,6 +314,9 @@ export function createCabinetPhysics(
       // tests; do not add a second overlapping or invisible wall.
       frontGlassBody = body;
     }
+    if (part.id === "back-wall") {
+      backWallBody = body;
+    }
   }
 
   if (!serviceDoorBody) {
@@ -320,8 +325,12 @@ export function createCabinetPhysics(
   if (!frontGlassBody) {
     throw new Error("Cabinet front glass body was not created");
   }
+  if (!backWallBody) {
+    throw new Error("Cabinet back wall body was not created");
+  }
 
   parts.serviceDoorBody = serviceDoorBody;
   parts.frontGlassBody = frontGlassBody;
+  parts.backWallBody = backWallBody;
   return parts;
 }
