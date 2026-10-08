@@ -10,6 +10,9 @@ import {
   CABINET_CLAW_PARK_POSITION,
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
+  CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
+  CABINET_LONGITUDINAL_CONTACT_ALLOWANCE_METERS,
+  openClawLongitudinalReachMeters,
 } from "./cabinetPlayTuning";
 
 describe("Cabinet play tuning", () => {
@@ -40,8 +43,25 @@ describe("Cabinet play tuning", () => {
     // the real Rapier wall rather than receiving an artificial open-angle cap.
     expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMin).toBe(-0.37);
     expect(CABINET_GANTRY_TRAVEL_BOUNDS.xMax).toBe(0.37);
-    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMin).toBe(-0.27);
-    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMax).toBe(0.27);
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMin).toBe(
+      -CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
+    );
+    expect(CABINET_GANTRY_TRAVEL_BOUNDS.zMax).toBe(
+      CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
+    );
+    // Prevent the old several-centimetre window overdrive while still
+    // allowing the physical capsules to make a small natural contact.
+    expect(CABINET_SAFE_LONGITUDINAL_END_STOP_METERS).toBeGreaterThanOrEqual(
+      CABINET_CLAW_PARK_POSITION.z,
+    );
+    expect(CABINET_SAFE_LONGITUDINAL_END_STOP_METERS).toBeLessThan(0.22);
+    expect(
+      CABINET_SAFE_LONGITUDINAL_END_STOP_METERS +
+      openClawLongitudinalReachMeters() -
+      M06_CABINET_CONFIG.interiorHalfZ,
+    ).toBeLessThanOrEqual(
+      CABINET_LONGITUDINAL_CONTACT_ALLOWANCE_METERS + 0.001,
+    );
     expect(
       CABINET_GANTRY_TRAVEL_BOUNDS.xMax +
         M02_GANTRY_CONFIG.carriageHalfX,
