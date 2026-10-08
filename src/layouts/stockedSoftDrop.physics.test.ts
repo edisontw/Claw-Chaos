@@ -69,6 +69,8 @@ describe("stocked claw descent contact", () => {
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         fingerAngularDamping:
           CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping,
+        fingerMotorSpeedRadiansPerSecond:
+          CABINET_STOCKED_GRIP_TUNING.fingerMotorSpeedRadiansPerSecond,
         closePickupTorque:
           CABINET_STOCKED_GRIP_TUNING.closePickupTorque,
         retainingTorque:
@@ -107,6 +109,7 @@ describe("stocked claw descent contact", () => {
     expect(gantry.primaryAction?.()).toBe(true);
 
     let maxPlanarPrizeSpeed = 0;
+    let maxPlanarPrizeSpeedPhase = "";
     let maxPlanarPrizeDisplacement = 0;
     let maxDescentReelSpeed = 0;
     let closingObserved = false;
@@ -145,10 +148,11 @@ describe("stocked claw descent contact", () => {
         state?.playPhase === "CLOSED_AT_DEPTH"
       ) {
         const velocity = prize.body.linvel();
-        maxPlanarPrizeSpeed = Math.max(
-          maxPlanarPrizeSpeed,
-          Math.hypot(velocity.x, velocity.z),
-        );
+        const planarSpeed = Math.hypot(velocity.x, velocity.z);
+        if (planarSpeed > maxPlanarPrizeSpeed) {
+          maxPlanarPrizeSpeed = planarSpeed;
+          maxPlanarPrizeSpeedPhase = state.playPhase;
+        }
         const position = prize.body.translation();
         maxPlanarPrizeDisplacement = Math.max(
           maxPlanarPrizeDisplacement,
@@ -236,6 +240,7 @@ describe("stocked claw descent contact", () => {
         fingerMasses,
         maxDescentReelSpeed,
         maxPlanarPrizeSpeed,
+        maxPlanarPrizeSpeedPhase,
         maxPlanarPrizeDisplacement,
         closingObserved,
         reelSpeedAtClosing,
