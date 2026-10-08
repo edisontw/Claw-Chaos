@@ -379,6 +379,10 @@ export function createCabinetLabScene(
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
             : undefined,
+        bottomCloseSettleSeconds:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds
+            : undefined,
         closePickupTorque:
           activeGrip.closePickupTorque,
         retainingTorque:
