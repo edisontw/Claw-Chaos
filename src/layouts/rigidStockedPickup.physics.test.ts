@@ -210,15 +210,16 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           createFingerPoints(theta),
           CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters,
           CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters,
+          CABINET_STOCKED_GRIP_TUNING.fingerFriction,
         ),
         {
-          friction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
+          friction: CABINET_STOCKED_GRIP_TUNING.fingerRodFriction,
           restitution: claw.fingerRestitution,
-          density: claw.fingerDensity,
+          density: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         },
       );
       finger.setAngularDamping(
-        M02_FINGER_TRANSPORT_CONFIG.angularDamping,
+        CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping,
       );
       const joint = physics.createRevoluteJoint(
         hub,
