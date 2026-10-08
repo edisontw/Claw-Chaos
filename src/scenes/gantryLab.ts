@@ -194,6 +194,7 @@ export interface GantryGripProfile {
   descentOpenStiffness?: number;
   descentOpenDamping?: number;
   descentOpenMaxTorque?: number;
+  settleCloseTorque?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -382,6 +383,8 @@ export function createGantryLabScene(
     M02_FINGER_TRANSPORT_CONFIG.maxTorque;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
+  const settleCloseTorque =
+    options.gripProfile?.settleCloseTorque ?? closePickupTorque;
   const retainingTorque =
     options.gripProfile?.retainingTorque ?? claw.pt002RetainingTorque;
   const holdBoostTorque =
@@ -1473,7 +1476,9 @@ export function createGantryLabScene(
           ? holdBoostActive
             ? holdBoostTorque
             : retainingTorque
-          : closePickupTorque;
+          : activeForcePhase === "CLOSE"
+            ? settleCloseTorque
+            : closePickupTorque;
       const compliantDescent =
         !closingFinger && playCycle.phase === "DESCENDING";
       for (const joint of fingerJoints) {
