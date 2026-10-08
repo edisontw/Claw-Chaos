@@ -25,7 +25,7 @@ export const CABINET_GANTRY_TRAVEL_BOUNDS = {
 } as const;
 
 export const CABINET_WALL_SAFE_OPENING = {
-  predictiveSeconds: 0.30,
+  predictiveSeconds: 0.40,
   additionalMarginMeters: 0.010,
 } as const;
 
