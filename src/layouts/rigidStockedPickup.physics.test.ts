@@ -541,9 +541,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
             closing
               ? CABINET_STOCKED_GRIP_TUNING.closedAngleRadians
               : claw.openAngle,
-            closing
-              ? CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond
-              : claw.motorSpeedRadiansPerSecond,
+            claw.motorSpeedRadiansPerSecond,
             dt,
             closing,
             selfContactGuardActive,
@@ -568,9 +566,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         const torque =
           forcePhase === "RETAINING"
             ? CABINET_STOCKED_GRIP_TUNING.retainingTorque
-            : forcePhase === "CLOSE"
-              ? CABINET_STOCKED_GRIP_TUNING.settleCloseTorque
-              : CABINET_STOCKED_GRIP_TUNING.closePickupTorque;
+            : CABINET_STOCKED_GRIP_TUNING.closePickupTorque;
 
         for (const joint of joints) {
           joint.configureMotorPosition(
