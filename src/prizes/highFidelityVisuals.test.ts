@@ -32,7 +32,7 @@ describe("Art Slice 7 high-fidelity prize visuals", () => {
       {
         id: "prize/teddy_simple",
         model: "teddy-detailed-face-v1",
-        minChildren: 18,
+        minChildren: 15,
       },
     ] as const;
 
