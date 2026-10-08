@@ -82,7 +82,12 @@ interface AttemptMetrics {
 }
 
 describe("Cabinet stocked rigid-prize production-claw pickup", () => {
-  it.each(["prize/box_standard", "prize/cylinder_can"] as const)(
+  it.each([
+    "prize/box_standard",
+    "prize/box_tall",
+    "prize/box_flat",
+    "prize/cylinder_can",
+  ] as const)(
     "physically lifts %s with the production play cycle",
     async (prizeId) => {
     const physics = await PhysicsRuntime.create();
