@@ -30,6 +30,25 @@ describe("PhysicsRuntime", () => {
     expect(physics.dynamicBodyCount).toBe(1);
   });
 
+  it("removes an awarded dynamic body cleanly from the world", async () => {
+    const physics = await PhysicsRuntime.create();
+    const body = physics.createDynamicCuboid(
+      { x: 0, y: 1, z: 0 },
+      { x: 0.1, y: 0.1, z: 0.1 },
+      0,
+    );
+    expect(physics.dynamicBodyCount).toBe(1);
+
+    physics.removeRigidBody(body);
+
+    expect(physics.dynamicBodyCount).toBe(0);
+    // The removed body no longer contributes to the world; stepping remains valid.
+    for (let tick = 0; tick < 4; tick += 1) {
+      physics.step();
+    }
+    expect(physics.dynamicBodyCount).toBe(0);
+  });
+
   it("drives one revolute finger independently without moving two idle fingers", async () => {
     const physics = await PhysicsRuntime.create();
     const hub = physics.createStaticCuboid(
