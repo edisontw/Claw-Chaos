@@ -190,7 +190,7 @@ export interface GantryGripProfile {
   fingerFriction?: number;
   fingerDensity?: number;
   fingerAngularDamping?: number;
-  fingerMotorSpeedRadiansPerSecond?: number;
+  closeFingerMotorSpeedRadiansPerSecond?: number;
   descentOpenStiffness?: number;
   descentOpenDamping?: number;
   descentOpenMaxTorque?: number;
@@ -369,8 +369,8 @@ export function createGantryLabScene(
   const activeFingerAngularDamping =
     options.gripProfile?.fingerAngularDamping ??
     M02_FINGER_TRANSPORT_CONFIG.angularDamping;
-  const activeFingerMotorSpeed =
-    options.gripProfile?.fingerMotorSpeedRadiansPerSecond ??
+  const activeCloseFingerMotorSpeed =
+    options.gripProfile?.closeFingerMotorSpeedRadiansPerSecond ??
     claw.motorSpeedRadiansPerSecond;
   const descentOpenStiffness =
     options.gripProfile?.descentOpenStiffness ??
@@ -1452,7 +1452,9 @@ export function createGantryLabScene(
       fingerCommand = advanceFingerCommandWithSelfContactGuard(
         fingerCommand,
         fingerTarget,
-        activeFingerMotorSpeed,
+        closingFinger
+          ? activeCloseFingerMotorSpeed
+          : claw.motorSpeedRadiansPerSecond,
         stepSeconds,
         closingFinger,
         selfContactGuardActive,
