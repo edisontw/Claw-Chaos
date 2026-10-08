@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   CABINET_CLAW_PARK_POSITION,
-  CABINET_PLAY_TUNING,
+  CABINET_STOCKED_GRIP_TUNING,
 } from "../cabinet/cabinetPlayTuning";
 import {
   M06_CABINET_CONFIG,
@@ -114,7 +114,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
     const initialBeamRotation = beam.prize.body.rotation();
     const claw = CLAW_LAB_CONFIG;
     const verticalHomeOffset =
-      CABINET_PLAY_TUNING.verticalHomeOffsetMeters;
+      CABINET_STOCKED_GRIP_TUNING.verticalHomeOffsetMeters;
     const gantry = {
       ...M02_GANTRY_CONFIG,
       carriageY:
@@ -122,7 +122,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
       reelMaxPayout:
         M02_GANTRY_CONFIG.reelMaxPayout +
         verticalHomeOffset +
-        CABINET_PLAY_TUNING.additionalPickupDropMeters,
+        CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters,
     };
     const anchorY =
       gantry.carriageY - gantry.carriageHalfY;
@@ -203,11 +203,11 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         pivotWorld,
         createFingerSegments(
           createFingerPoints(theta),
-          CABINET_PLAY_TUNING.fingerLowerPadRadiusMeters,
-          CABINET_PLAY_TUNING.fingerLowerPadLengthMeters,
+          CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters,
+          CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters,
         ),
         {
-          friction: CABINET_PLAY_TUNING.fingerFriction,
+          friction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
           restitution: claw.fingerRestitution,
           density: claw.fingerDensity,
         },
@@ -223,13 +223,13 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           anchor2: { x: 0, y: 0, z: 0 },
           axis: tangent,
           minAngle:
-            CABINET_PLAY_TUNING.closedAngleRadians,
+            CABINET_STOCKED_GRIP_TUNING.closedAngleRadians,
           maxAngle: claw.openAngle,
           initialTarget: claw.openAngle,
           stiffness: claw.motorStiffness,
           damping: claw.motorDamping,
           maxTorque:
-            CABINET_PLAY_TUNING.closePickupTorque,
+            CABINET_STOCKED_GRIP_TUNING.closePickupTorque,
           contactsEnabled: false,
         },
       );
@@ -265,9 +265,9 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
       autoClosePayoutMeters:
         M04_PLAY_CONFIG.autoClosePayoutMeters +
         verticalHomeOffset +
-        CABINET_PLAY_TUNING.additionalPickupDropMeters,
+        CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters,
       closedAngleRadians:
-        CABINET_PLAY_TUNING.closedAngleRadians,
+        CABINET_STOCKED_GRIP_TUNING.closedAngleRadians,
       openAngleRadians: claw.openAngle,
       closeCompletionToleranceRadians:
         M04_PLAY_CONFIG.closeCompletionToleranceRadians,
@@ -276,7 +276,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
       closeSettleSeconds:
         M04_PLAY_CONFIG.closeSettleSeconds,
       pickupLiftDistanceMeters:
-        CABINET_PLAY_TUNING.pickupLiftDistanceMeters,
+        CABINET_STOCKED_GRIP_TUNING.pickupLiftDistanceMeters,
       holdBoostDurationSeconds:
         M04_PLAY_CONFIG.holdBoostDurationSeconds,
     };
@@ -534,7 +534,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           advanceFingerCommandWithSelfContactGuard(
             fingerCommand,
             closing
-              ? CABINET_PLAY_TUNING.closedAngleRadians
+              ? CABINET_STOCKED_GRIP_TUNING.closedAngleRadians
               : claw.openAngle,
             claw.motorSpeedRadiansPerSecond,
             dt,
@@ -560,8 +560,8 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         const forcePhase = m04ForcePhase(play);
         const torque =
           forcePhase === "RETAINING"
-            ? CABINET_PLAY_TUNING.retainingTorque
-            : CABINET_PLAY_TUNING.closePickupTorque;
+            ? CABINET_STOCKED_GRIP_TUNING.retainingTorque
+            : CABINET_STOCKED_GRIP_TUNING.closePickupTorque;
 
         for (const joint of joints) {
           joint.configureMotorPosition(
