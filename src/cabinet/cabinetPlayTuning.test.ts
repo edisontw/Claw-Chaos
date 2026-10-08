@@ -112,6 +112,7 @@ describe("Cabinet play tuning", () => {
 
   it("reserves the deeper, rubber-padded hold for stocked prizes only", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
+    expect(CABINET_STOCKED_GRIP_TUNING.closePickupTorque).toBe(4.5);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
     expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
