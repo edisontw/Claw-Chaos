@@ -44,6 +44,33 @@ describe("Stocked cabinet prize size upgrade", () => {
     }
   });
 
+  it("gives stocked cans a real three-part raised-rim collider at constant mass", async () => {
+    const physics = await PhysicsRuntime.create();
+    const original = getPrizeDefinition("prize/cylinder_can");
+    const stocked = cabinetPrizeDefinition(original, "stocked");
+    const normalBody = createPrize(physics, original, {
+      position: { x: -0.15, y: 0.7, z: 0 },
+    });
+    const stockedBody = createPrize(physics, stocked, {
+      position: { x: 0.15, y: 0.7, z: 0 },
+    });
+
+    expect(stocked.colliderProfileId).toBe("cylinder/rimmed_v1");
+    expect(original.colliderProfileId).toBe("cylinder/basic");
+    expect(normalBody.body.numColliders()).toBe(1);
+    expect(stockedBody.body.numColliders()).toBe(3);
+    expect(stockedBody.body.mass()).toBeCloseTo(normalBody.body.mass(), 6);
+    expect(stockedBody.resolved.centerOfMass.y).toBeCloseTo(
+      original.dimensions.y *
+        STOCKED_PRIZE_SIZE_MULTIPLIER *
+        -0.15,
+      8,
+    );
+    expect(stocked.dimensions.x).toBeGreaterThan(
+      original.dimensions.x * STOCKED_PRIZE_SIZE_MULTIPLIER,
+    );
+  });
+
   it("retains all calibrated M09 layouts and the ring geometry", () => {
     const original = getPrizeDefinition("prize/box_standard");
     expect(cabinetPrizeDefinition(original, "loose")).toBe(original);
