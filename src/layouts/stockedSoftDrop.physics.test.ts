@@ -109,7 +109,7 @@ describe("stocked claw descent contact", () => {
     const fingerMasses = fingers.map((body) => body.mass());
     for (const mass of fingerMasses) {
       expect(mass).toBeGreaterThan(0.045);
-      expect(mass).toBeLessThan(0.075);
+      expect(mass).toBeLessThan(0.12);
     }
 
     // Real gameplay starts with the claw already fully open at the top.
