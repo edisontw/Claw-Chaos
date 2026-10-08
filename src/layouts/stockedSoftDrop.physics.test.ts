@@ -1,5 +1,5 @@
 import * as THREE from "three";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import {
   createCabinetPhysics,
   M06_CABINET_CONFIG,
@@ -22,6 +22,7 @@ import { createGantryLabScene } from "../scenes/gantryLab";
 
 describe("stocked claw descent contact", () => {
   it("lands softly on a real prize and stops the reel without bottom chatter", async () => {
+    vi.stubGlobal("window", new EventTarget());
     const physics = await PhysicsRuntime.create();
     createCabinetPhysics(physics);
 
@@ -201,5 +202,6 @@ describe("stocked claw descent contact", () => {
     expect(maxPlanarPrizeDisplacement).toBeLessThan(0.10);
     expect(hubVerticalRange).toBeLessThan(0.015);
     expect(maxSettledFingerAngularSpeed).toBeLessThan(4.0);
+    vi.unstubAllGlobals();
   }, 20_000);
 });
