@@ -2332,6 +2332,44 @@ Next art/content slice:
 
 ---
 
+## Art/Gameplay Fix — edge reach and larger lightweight prizes
+
+**Status: IMPLEMENTED CANDIDATE**
+
+Reason:
+- full-stock made prizes near the walls prominent but the old center-only
+  carriage stops at X +/-0.28 m excluded their centers
+- users reported difficulty picking stock close to side and rear walls
+- the larger prize visuals should correspond to genuinely larger physical
+  colliders while keeping their original mass
+
+Changes:
+- cabinet-only travel extends to X +/-0.37 m and Z -0.27..0.27 m;
+  baseline isolated M02 gantry and 3-prong gripping parameters remain unchanged
+- the old conservative travel zone remains fully open, including the chute park
+- outside this zone the physical finger motors receive a predictive,
+  geometry-based wall-safe opening target rather than allowing open fingers
+  to intersect the cabinet glass
+- CALL STAFF service checks treat the narrowed wall-safe target as open,
+  preserving service availability near the edges
+- the default `stocked` arrangement uses 1.13x physical dimensions
+  (visual and collider), unchanged nominal mass and mass profile;
+  retained COM profile is normalized to the new dimensions
+- other established M09 layouts and ring dimensions stay unchanged
+- restocking of stocked prizes uses the same size and adjusted height
+- tests cover transport to new bounds, clearance targets, continued
+  full opening at chute park, unchanged prize mass and physical settling
+
+Manual acceptance:
+- X and Z movement can reach prizes near walls, without visible claw
+  clipping, motor lock or unusual jitter
+- claw may narrow as it approaches walls and should reopen centrally
+- edge item pickup uses the genuine physical claw, not forced attachment
+- enlarged stocked prizes are stable at startup and restock
+- CALL STAFF remains available at the far edges
+
+---
+
 # M11 — Second Machine Family
 
 **Scheduling note:** topology Slice 1 is complete, but additional UFO geometry/tuning is temporarily deferred until Art Slice 6 and the higher-fidelity prize-content pass are manually accepted.
