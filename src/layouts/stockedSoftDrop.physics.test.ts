@@ -69,8 +69,8 @@ describe("stocked claw descent contact", () => {
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         fingerAngularDamping:
           CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping,
-        fingerMotorSpeedRadiansPerSecond:
-          CABINET_STOCKED_GRIP_TUNING.fingerMotorSpeedRadiansPerSecond,
+        closeFingerMotorSpeedRadiansPerSecond:
+          CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond,
         descentOpenStiffness:
           CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness,
         descentOpenDamping:
@@ -112,6 +112,15 @@ describe("stocked claw descent contact", () => {
     for (const mass of fingerMasses) {
       expect(mass).toBeGreaterThan(0.045);
       expect(mass).toBeLessThan(0.075);
+    }
+
+    // Real gameplay starts with the claw already fully open at the top.
+    // Let the READY pose settle before beginning the descent so opening
+    // motion itself is not mistaken for a drop collision.
+    for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
+      gantry.beforePhysicsStep?.(FIXED_TIMESTEP_SECONDS);
+      physics.step();
+      gantry.afterPhysicsStep?.(FIXED_TIMESTEP_SECONDS);
     }
 
     expect(gantry.primaryAction?.()).toBe(true);
