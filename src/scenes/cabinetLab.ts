@@ -334,6 +334,9 @@ export function createCabinetLabScene(
       addServiceWires: true,
       visualTheme,
       clawCastsShadow: false,
+      // Use continuous *physical* collision for the three/four thin
+      // finger capsules against front/side glass during fast travel.
+      clawContinuousCollision: true,
       clawTopology: options.clawTopology,
       initialPosition: CABINET_CLAW_PARK_POSITION,
       travelBounds: CABINET_GANTRY_TRAVEL_BOUNDS,

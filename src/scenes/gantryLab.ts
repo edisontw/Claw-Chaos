@@ -279,6 +279,7 @@ export interface GantryLabOptions {
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
+  clawContinuousCollision?: boolean;
   gripProfile?: GantryGripProfile;
   clawTopology?: GantryClawTopologyId;
   controlsEnabled?: () => boolean;
@@ -773,6 +774,7 @@ export function createGantryLabScene(
         friction: activeFingerFriction,
         restitution: claw.fingerRestitution,
         density: claw.fingerDensity,
+        enableCcd: options.clawContinuousCollision ?? false,
       },
     );
     const joint = physics.createRevoluteJoint(hubBody, body, {

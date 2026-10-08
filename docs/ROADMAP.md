@@ -2372,6 +2372,30 @@ Manual acceptance:
 
 ---
 
+## Gameplay Fix — physical contact at front glass
+
+**Status: IMPLEMENTED CANDIDATE**
+
+- The front pane already has a real static Rapier cuboid named
+  `front-glass`; do not place a duplicate invisible wall.
+- Expose `frontGlassBody` for targeted contact tests.
+- Enable continuous collision detection (CCD) for actual cabinet
+  claw-finger capsule bodies. This improves physical contact with thin
+  front/side glass under fast movement, without pre-closing the claw or
+  modifying finger forces/torques/angles.
+- Automated production-shape regression tests require actual Rapier
+  glass contacts at the right and front boundaries, enforce tip
+  containment behind the exterior pane and verify fingers release
+  cleanly after moving away.
+- Keep extended travel, stocked sizing, Staff/service door and M02
+  physics tuning unchanged.
+
+Manual acceptance: move an open claw all the way to the front glass,
+observe slight **physical** deflection/contact rather than disappearing
+through the front pane, then return to center without a jam.
+
+---
+
 # M11 — Second Machine Family
 
 **Scheduling note:** topology Slice 1 is complete, but additional UFO geometry/tuning is temporarily deferred until Art Slice 6 and the higher-fidelity prize-content pass are manually accepted.

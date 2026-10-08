@@ -281,6 +281,7 @@ export function createCabinetPartDefinitions(): CabinetPartDefinition[] {
 export type CabinetPhysicsParts =
   CabinetPartDefinition[] & {
     serviceDoorBody: RigidBodyHandle;
+    frontGlassBody: RigidBodyHandle;
   };
 
 export function createCabinetPhysics(
@@ -289,6 +290,7 @@ export function createCabinetPhysics(
   const parts =
     createCabinetPartDefinitions() as CabinetPhysicsParts;
   let serviceDoorBody: RigidBodyHandle | null = null;
+  let frontGlassBody: RigidBodyHandle | null = null;
 
   for (const part of parts) {
     if (part.id === "glass-right") {
@@ -300,17 +302,26 @@ export function createCabinetPhysics(
       continue;
     }
 
-    physics.createStaticCuboid(
+    const body = physics.createStaticCuboid(
       part.center,
       part.halfExtents,
       part.friction,
     );
+    if (part.id === "front-glass") {
+      // Expose the existing real front window collider for regression
+      // tests; do not add a second overlapping or invisible wall.
+      frontGlassBody = body;
+    }
   }
 
   if (!serviceDoorBody) {
     throw new Error("Cabinet service door body was not created");
   }
+  if (!frontGlassBody) {
+    throw new Error("Cabinet front glass body was not created");
+  }
 
   parts.serviceDoorBody = serviceDoorBody;
+  parts.frontGlassBody = frontGlassBody;
   return parts;
 }
