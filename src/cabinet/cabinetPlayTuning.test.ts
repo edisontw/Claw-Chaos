@@ -124,7 +124,7 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(1750);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping).toBe(24.0);
     expect(
-      CABINET_STOCKED_GRIP_TUNING.fingerMotorSpeedRadiansPerSecond,
+      CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond,
     ).toBe(1.0);
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness).toBe(180);
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenDamping).toBe(18);
