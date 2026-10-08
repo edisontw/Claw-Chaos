@@ -69,16 +69,6 @@ describe("stocked claw descent contact", () => {
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         fingerAngularDamping:
           CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping,
-        closeFingerMotorSpeedRadiansPerSecond:
-          CABINET_STOCKED_GRIP_TUNING.closeFingerMotorSpeedRadiansPerSecond,
-        descentOpenStiffness:
-          CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness,
-        descentOpenDamping:
-          CABINET_STOCKED_GRIP_TUNING.descentOpenDamping,
-        descentOpenMaxTorque:
-          CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque,
-        settleCloseTorque:
-          CABINET_STOCKED_GRIP_TUNING.settleCloseTorque,
         closePickupTorque:
           CABINET_STOCKED_GRIP_TUNING.closePickupTorque,
         retainingTorque:
