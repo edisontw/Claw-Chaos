@@ -80,6 +80,7 @@ export const CABINET_GANTRY_TRAVEL_BOUNDS = {
 export const CABINET_STOCKED_GRIP_TUNING = {
   ...CABINET_PLAY_TUNING,
   additionalPickupDropMeters: 0.055,
+  settleCloseTorque: 0.8,
   closePickupTorque: 4.5,
   retainingTorque: 0.10,
   holdBoostTorque: 0.12,
