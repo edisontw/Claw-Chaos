@@ -68,8 +68,10 @@ async function simulateOpenClawWallContact(
       friction: CABINET_PLAY_TUNING.fingerFriction,
       restitution: claw.fingerRestitution,
       density: claw.fingerDensity,
+      enableCcd: true,
     },
   );
+  expect(finger.isCcdEnabled()).toBe(true);
   finger.setAngularDamping(
     M02_FINGER_TRANSPORT_CONFIG.angularDamping,
   );
