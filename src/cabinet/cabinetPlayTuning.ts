@@ -10,13 +10,12 @@ export const CABINET_PLAY_TUNING = {
   verticalHomeOffsetMeters: 0.085,
   fingerFriction: 1.94,
   closePickupTorque: 10.0,
-  retainingTorque: 0.10,
-  holdBoostTorque: 0.12,
-  additionalPickupDropMeters: 0.055,
+  retainingTorque: 0.014,
+  holdBoostTorque: 0.018,
   pickupLiftDistanceMeters: 0.18,
   closedAngleRadians: -0.63,
-  fingerLowerPadRadiusMeters: 0.014,
-  fingerLowerPadLengthMeters: 0.045,
+  fingerLowerPadRadiusMeters: 0.010,
+  fingerLowerPadLengthMeters: 0.012,
   chuteTrimHalfWidth: 0.012,
   chuteTrimHalfHeight: 0.004,
 } as const;
@@ -73,3 +72,15 @@ export const CABINET_GANTRY_TRAVEL_BOUNDS = {
   zMax: CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
 } as const;
 
+
+// Stocked machine only: a longer rubber contact zone and deeper natural
+// pickup allow low-friction real rigid prizes to be retained. The seven
+// previously accepted M09 layouts keep their calibrated claw physics.
+export const CABINET_STOCKED_GRIP_TUNING = {
+  ...CABINET_PLAY_TUNING,
+  additionalPickupDropMeters: 0.055,
+  retainingTorque: 0.10,
+  holdBoostTorque: 0.12,
+  fingerLowerPadRadiusMeters: 0.014,
+  fingerLowerPadLengthMeters: 0.045,
+} as const;
