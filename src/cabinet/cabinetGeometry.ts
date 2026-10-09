@@ -283,6 +283,7 @@ export type CabinetPhysicsParts =
     serviceDoorBody: RigidBodyHandle;
     frontGlassBody: RigidBodyHandle;
     backWallBody: RigidBodyHandle;
+    playDeckBodies: RigidBodyHandle[];
   };
 
 export function createCabinetPhysics(
@@ -293,6 +294,7 @@ export function createCabinetPhysics(
   let serviceDoorBody: RigidBodyHandle | null = null;
   let frontGlassBody: RigidBodyHandle | null = null;
   let backWallBody: RigidBodyHandle | null = null;
+  const playDeckBodies: RigidBodyHandle[] = [];
 
   for (const part of parts) {
     if (part.id === "glass-right") {
@@ -309,6 +311,9 @@ export function createCabinetPhysics(
       part.halfExtents,
       part.friction,
     );
+    if (part.role === "play_deck") {
+      playDeckBodies.push(body);
+    }
     if (part.id === "front-glass") {
       // Expose the existing real front window collider for regression
       // tests; do not add a second overlapping or invisible wall.
@@ -332,5 +337,6 @@ export function createCabinetPhysics(
   parts.serviceDoorBody = serviceDoorBody;
   parts.frontGlassBody = frontGlassBody;
   parts.backWallBody = backWallBody;
+  parts.playDeckBodies = playDeckBodies;
   return parts;
 }
