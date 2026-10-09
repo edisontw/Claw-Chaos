@@ -438,8 +438,8 @@ function materializePlacements(
       ? {
           minX: -0.40,
           maxX: 0.40,
-          minZ: -0.27,
-          maxZ: 0.19,
+          minZ: -0.305,
+          maxZ: 0.28,
         }
       : layoutId === "edge"
       ? {
