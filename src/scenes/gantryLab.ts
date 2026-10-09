@@ -29,7 +29,7 @@ import {
   M04_PLAY_CONFIG,
   advanceM04PlayState,
   applyM04Action,
-  applyM04DeckContact,
+  applyM04AutomaticLanding,
   createM04PlayState,
   m04FingerShouldClose,
   m04ForcePhase,
@@ -1267,7 +1267,7 @@ export function createGantryLabScene(
           ),
         );
       if (descentFloorContact || prizeResistanceLimitReached) {
-        playCycle = applyM04DeckContact(
+        playCycle = applyM04AutomaticLanding(
           playCycle,
           reel.payout,
         );
