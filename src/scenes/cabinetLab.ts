@@ -326,6 +326,13 @@ export function createCabinetLabScene(
   cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
 
+  type TrackedPrize = {
+    id: string;
+    body: ReturnType<typeof createPrize>["body"];
+    renderObject: THREE.Object3D;
+  };
+  const tracked: TrackedPrize[] = [];
+
   const activeGrip = layout.id === "stocked"
     ? CABINET_STOCKED_GRIP_TUNING
     : CABINET_PLAY_TUNING;
@@ -356,6 +363,10 @@ export function createCabinetLabScene(
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
+      descentContactBodies:
+        layout.id === "stocked"
+          ? () => tracked.map((prize) => prize.body)
+          : undefined,
       gripProfile: {
         fingerFriction: activeGrip.fingerFriction,
         fingerRodFriction:
@@ -430,12 +441,6 @@ export function createCabinetLabScene(
   > = [
     ...(gantryScene.massPropertiesDebugTargets ?? []),
   ];
-  type TrackedPrize = {
-    id: string;
-    body: ReturnType<typeof createPrize>["body"];
-    renderObject: THREE.Object3D;
-  };
-  const tracked: TrackedPrize[] = [];
   const restockedTracked: TrackedPrize[] = [];
   let clearedChutePrizeCount = 0;
   type RestockStatus =
