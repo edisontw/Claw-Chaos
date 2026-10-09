@@ -195,6 +195,9 @@ export interface GantryGripProfile {
   descentOpenStiffness?: number;
   descentOpenDamping?: number;
   descentOpenMaxTorque?: number;
+  descentPrizeContactStiffness?: number;
+  descentPrizeContactDamping?: number;
+  descentPrizeContactMaxTorque?: number;
   bottomCloseSettleSeconds?: number;
   closeRampSeconds?: number;
   closeRampStartTorque?: number;
@@ -393,6 +396,15 @@ export function createGantryLabScene(
     M02_FINGER_TRANSPORT_CONFIG.damping;
   const descentOpenMaxTorque =
     options.gripProfile?.descentOpenMaxTorque ??
+    M02_FINGER_TRANSPORT_CONFIG.maxTorque;
+  const descentPrizeContactStiffness =
+    options.gripProfile?.descentPrizeContactStiffness ??
+    M02_FINGER_TRANSPORT_CONFIG.stiffness;
+  const descentPrizeContactDamping =
+    options.gripProfile?.descentPrizeContactDamping ??
+    M02_FINGER_TRANSPORT_CONFIG.damping;
+  const descentPrizeContactMaxTorque =
+    options.gripProfile?.descentPrizeContactMaxTorque ??
     M02_FINGER_TRANSPORT_CONFIG.maxTorque;
   const bottomCloseSettleSeconds =
     options.gripProfile?.bottomCloseSettleSeconds ?? 0;
@@ -1216,6 +1228,15 @@ export function createGantryLabScene(
       let inputZ = 0;
       let reelCommand = manualReelCommand;
 
+      const prizeBodies = options.descentContactBodies?.() ?? [];
+      const fingerPrizeContacts = fingerBodies.map(
+        (fingerBody) =>
+          playCycle.phase === "DESCENDING" &&
+          prizeBodies.some(
+            (prizeBody) =>
+              physics.countBodyContactPairs(fingerBody, prizeBody) > 0,
+          ),
+      );
       const descentFloorContact =
         playCycle.phase === "DESCENDING" &&
         (options.descentFloorBodies?.() ?? []).some((deckBody) =>
@@ -1583,26 +1604,35 @@ export function createGantryLabScene(
       // under their own weight before ever touching a prize.
       const compliantOpenDescent =
         bottomCloseSettleRemainingSeconds > 0 && !closingFinger;
-      for (const joint of fingerJoints) {
+      for (const [index, joint] of fingerJoints.entries()) {
+        // A finger stays fully open in free air. During genuine contact
+        // with a prize it can yield mechanically without ending the DROP.
+        const touchingPrize = fingerPrizeContacts[index] ?? false;
         joint.configureMotorPosition(
           fingerCommand,
           closingFinger
             ? claw.motorStiffness
             : compliantOpenDescent
               ? descentOpenStiffness
-              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+              : touchingPrize
+                ? descentPrizeContactStiffness
+                : M02_FINGER_TRANSPORT_CONFIG.stiffness,
           closingFinger
             ? closeMotorDamping
             : compliantOpenDescent
               ? descentOpenDamping
-              : M02_FINGER_TRANSPORT_CONFIG.damping,
+              : touchingPrize
+                ? descentPrizeContactDamping
+                : M02_FINGER_TRANSPORT_CONFIG.damping,
         );
         joint.setMotorMaxForce(
           closingFinger
             ? activeContactTorque
             : compliantOpenDescent
               ? descentOpenMaxTorque
-              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+              : touchingPrize
+                ? descentPrizeContactMaxTorque
+                : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
       for (const body of fingerBodies) {
