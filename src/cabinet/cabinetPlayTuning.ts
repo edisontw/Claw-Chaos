@@ -87,17 +87,21 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   holdBoostTorque: 0.12,
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
-  // The larger rubber pad otherwise doubles each dynamic finger's mass.
-  // Lower density keeps the whole finger near its pre-upgrade ~60 g mass,
-  // preventing a descending claw from batting lightweight prizes away.
-  fingerDensity: 1750,
+  // Keep the larger rubber pad lighter than the generic finger while
+  // retaining enough inertia for the proven rigid-prize pickup behavior.
+  fingerDensity: 2400,
   fingerAngularDamping: 8.0,
   // During vertical descent the open claw should yield when it brushes a
   // prize. READY/horizontal transport still uses the stiff M02 open hold.
   descentOpenStiffness: 220,
   descentOpenDamping: 22,
   descentOpenMaxTorque: 0.8,
+  // Once the reel stops, briefly re-center the open fingers with a
+  // damped mid-strength motor before the strong closing motor engages.
+  bottomSettleStiffness: 600,
+  bottomSettleDamping: 60,
+  bottomSettleMaxTorque: 2.0,
   bottomCloseSettleSeconds: 0.15,
 } as const;
 
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.16;
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
