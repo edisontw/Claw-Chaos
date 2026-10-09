@@ -26,7 +26,7 @@ import {
   type RenderQualityMode,
   type RenderQualityProfile,
 } from "../player/mobileRenderProfile";
-import { parseSceneSelection, type SceneSelection } from "../scenes/sceneSelection";
+import { resolveStartupSceneSelection, type SceneSelection } from "../scenes/sceneSelection";
 import type { SimulationScene } from "../scenes/types";
 import {
   getVisualTheme,
@@ -130,7 +130,14 @@ export async function startApp(
   physicsReady?: Promise<PhysicsRuntime>,
   bootstrapStartedAtMs = performance.now(),
 ): Promise<void> {
-  const selection = parseSceneSelection(window.location.search);
+  const selection = resolveStartupSceneSelection(
+    window.location.search,
+    () => {
+      const randomId = window.crypto?.randomUUID?.() ??
+        `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+      return `stocked-session-${randomId}`;
+    },
+  );
   const visualThemeId = parseVisualThemeId(
     window.location.search,
   );
