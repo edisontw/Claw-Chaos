@@ -64,6 +64,7 @@ describe("stocked claw descent contact", () => {
       reelMaxSpeedMetersPerSecond:
         CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
       clawContinuousCollision: true,
+      descentContactBodies: () => [prize.body],
       gripProfile: {
         fingerFriction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
