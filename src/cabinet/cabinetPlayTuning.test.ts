@@ -138,15 +138,19 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerFriction).toBe(1.94);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerRodFriction).toBe(1.94);
-    expect(CABINET_STOCKED_GRIP_TUNING.closePickupTorque).toBe(10.0);
+    expect(CABINET_STOCKED_GRIP_TUNING.hubMassKg).toBe(0.36);
+    expect(CABINET_STOCKED_GRIP_TUNING.closePickupTorque).toBe(12.0);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
-    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
-    expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.12);
-    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(
+    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.16);
+    expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.22);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(3500);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBeGreaterThan(
       CABINET_PLAY_TUNING.fingerDensity,
     );
-    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(3200);
+    expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBeLessThan(
+      CABINET_STOCKED_GRIP_TUNING.holdBoostTorque,
+    );
     expect(CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping).toBe(40.0);
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness).toBe(8);
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenDamping).toBe(10);
@@ -157,7 +161,7 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters).toBe(0.025);
     expect(CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds).toBe(0.12);
     expect(CABINET_STOCKED_GRIP_TUNING.closeRampSeconds).toBe(0.20);
-    expect(CABINET_STOCKED_GRIP_TUNING.closeRampStartTorque).toBe(1.5);
+    expect(CABINET_STOCKED_GRIP_TUNING.closeRampStartTorque).toBe(1.8);
     expect(CABINET_STOCKED_GRIP_TUNING.closeMotorDamping).toBe(64.0);
     expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.27);
     expect(CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND).toBe(0.16);

@@ -188,6 +188,7 @@ function computeSwingAngle(
 }
 
 export interface GantryGripProfile {
+  hubMassKg?: number;
   fingerFriction?: number;
   fingerRodFriction?: number;
   fingerDensity?: number;
@@ -447,6 +448,9 @@ export function createGantryLabScene(
   const boundedGantry = {
     ...M02_GANTRY_CONFIG,
     ...(options.travelBounds ?? {}),
+    ...(options.gripProfile?.hubMassKg === undefined
+      ? {}
+      : { hubMassKg: options.gripProfile.hubMassKg }),
     ...(options.reelMaxSpeedMetersPerSecond === undefined
       ? {}
       : { reelMaxSpeed: options.reelMaxSpeedMetersPerSecond }),

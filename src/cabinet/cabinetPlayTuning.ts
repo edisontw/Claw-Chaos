@@ -86,12 +86,15 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   openAngleRadians: 0.30,
   fingerFriction: 1.94,
   fingerRodFriction: 1.94,
-  closePickupTorque: 10.0,
-  retainingTorque: 0.10,
-  holdBoostTorque: 0.12,
+  // Heavier actual Rapier claw and firmer sustained grip for stocked toys.
+  // No visual-only scaling and no change to the seven diagnostic layouts.
+  hubMassKg: 0.36,
+  closePickupTorque: 12.0,
+  retainingTorque: 0.16,
+  holdBoostTorque: 0.22,
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
-  fingerDensity: 3200,
+  fingerDensity: 3500,
   fingerAngularDamping: 40.0,
   // These compliant values are applied ONLY during the short bottom
   // settle after real contact stops the reel, never during free-air DROP.
@@ -109,7 +112,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // After the reel stops, build clamp force progressively instead of
   // switching from a compliant open joint straight to full pickup force.
   closeRampSeconds: 0.20,
-  closeRampStartTorque: 1.5,
+  closeRampStartTorque: 1.8,
   // Damp the first few oscillations after a firm stocked pickup.
   closeMotorDamping: 64.0,
 } as const;

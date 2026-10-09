@@ -386,6 +386,10 @@ export function createCabinetLabScene(
           ? () => tracked.map((prize) => prize.body)
           : undefined,
       gripProfile: {
+        hubMassKg:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.hubMassKg
+            : undefined,
         fingerFriction: activeGrip.fingerFriction,
         fingerRodFriction:
           layout.id === "stocked"
