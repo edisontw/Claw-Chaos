@@ -75,6 +75,7 @@ describe("stocked claw descent contact", () => {
         CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters,
       descentContactBodies: () => [prize.body],
       gripProfile: {
+        hubMassKg: CABINET_STOCKED_GRIP_TUNING.hubMassKg,
         fingerFriction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         fingerAngularDamping:
@@ -129,11 +130,12 @@ describe("stocked claw descent contact", () => {
       .filter((body) => body.isDynamic());
     const fingers = dynamicGantryBodies.filter((body) => body !== hub);
     expect(fingers).toHaveLength(3);
+    expect(hub!.mass()).toBeCloseTo(CABINET_STOCKED_GRIP_TUNING.hubMassKg, 3);
 
     const fingerMasses = fingers.map((body) => body.mass());
     for (const mass of fingerMasses) {
-      expect(mass).toBeGreaterThan(0.045);
-      expect(mass).toBeLessThan(0.12);
+      expect(mass).toBeGreaterThan(0.12);
+      expect(mass).toBeLessThan(0.16);
     }
 
     // Real gameplay starts with the claw already fully open at the top.
