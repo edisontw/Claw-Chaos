@@ -65,6 +65,10 @@ const STOCKED_BASE: readonly PlacementBase[] = [
     x: -0.34, z: -0.24, rotationYRadians: 0.10 },
   { prizeId: "prize/box_standard", role: "filler",
     x: -0.105, z: -0.25, rotationYRadians: -0.08 },
+  // One slightly recessed plush makes the back feel naturally stocked
+  // without an artificial elevated pile.
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: 0.01, z: -0.305, rotationYRadians: 0.03 },
   { prizeId: "prize/animal_simple", role: "filler",
     x: 0.13, z: -0.24, rotationYRadians: 0.08 },
   { prizeId: "prize/teddy_simple", role: "filler",
