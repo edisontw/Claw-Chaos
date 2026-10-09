@@ -149,7 +149,10 @@ describe("stocked claw descent contact", () => {
     }));
     const fingerThetas = [0, 2 * Math.PI / 3, 4 * Math.PI / 3];
 
-    for (let tick = 0; tick < PHYSICS_HZ * 4; tick += 1) {
+    // The stocked reel is intentionally slower than the generic lab reel;
+    // allow enough time to reach the real auto-close depth and observe the
+    // complete bottom settle / progressive close sequence.
+    for (let tick = 0; tick < PHYSICS_HZ * 8; tick += 1) {
       const before = gantry.getMachineAudioState?.();
       gantry.beforePhysicsStep?.(FIXED_TIMESTEP_SECONDS);
       physics.step();
