@@ -804,13 +804,14 @@ export function createCabinetLabScene(
         staffServiceVisual.phase === "door_open" &&
         restockStatus === "idle"
       ) {
-        const prizePool = Array.from(
-          new Set(
-            layout.placements.map(
-              (placement) => placement.prizeId,
-            ),
-          ),
+        // Maintain the public-facing plush-heavy merchandising mix on
+        // every staff refill. Diagnostic layouts still keep unique pools.
+        const stockedPool = layout.placements.map(
+          (placement) => placement.prizeId,
         );
+        const prizePool = layout.id === "stocked"
+          ? stockedPool
+          : Array.from(new Set(stockedPool));
         restockedTracked.length = 0;
         restockPlan = createRestockPlan(
           layout.seed +
