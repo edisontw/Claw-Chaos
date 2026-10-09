@@ -104,8 +104,9 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   closeMotorDamping: 64.0,
 } as const;
 
-// Faster than the overly cautious 0.10 m/s drop, while retaining a
-// controlled approach to prizes and immediate stop on actual contact.
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
-export const CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND = 0.10;
-export const CABINET_STOCKED_APPROACH_DISTANCE_METERS = 0.18;
+// A crane drop should feel prompt, not like slow-motion. Keep a short
+// controlled approach only near the physical deck; deck contacts stop the
+// reel before the claw presses through the floor.
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.26;
+export const CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND = 0.20;
+export const CABINET_STOCKED_APPROACH_DISTANCE_METERS = 0.085;
