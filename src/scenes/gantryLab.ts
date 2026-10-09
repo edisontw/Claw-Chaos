@@ -306,9 +306,11 @@ export interface GantryLabOptions {
   // stops and automatic closing begins only when a finger touches the deck
   // (or the mechanical payout limit), never because a prize is nearby.
   descentFloorBodies?: () => readonly RigidBodyHandle[];
-  // Prize contacts remain physical solver contacts, without triggering
-  // the auto-close state transition.
+  // Prize contact does not instant-close the claw. If an object obstructs
+  // the descent before floor contact, the real reel runs a short additional
+  // distance to allow the yielding fingers to settle into the pile.
   descentContactBodies?: () => readonly RigidBodyHandle[];
+  descentPrizeFollowThroughMeters?: number;
   milestone?: string;
   camera?: {
     position: [number, number, number];
@@ -927,6 +929,7 @@ export function createGantryLabScene(
   let selfContactGuardActive = false;
   let bottomCloseSettleRemainingSeconds = 0;
   let closeRampElapsedSeconds = 0;
+  let firstDescentPrizeContactPayout: number | null = null;
 
   let pt006Phase: Pt006Phase = "READY";
   let pt006Seconds = 0;
@@ -1237,6 +1240,18 @@ export function createGantryLabScene(
               physics.countBodyContactPairs(fingerBody, prizeBody) > 0,
           ),
       );
+      if (playCycle.phase === "DESCENDING" &&
+          fingerPrizeContacts.some(Boolean) &&
+          firstDescentPrizeContactPayout === null) {
+        firstDescentPrizeContactPayout = reel.payout;
+      }
+      const prizeResistanceLimitReached =
+        playCycle.phase === "DESCENDING" &&
+        firstDescentPrizeContactPayout !== null &&
+        options.descentPrizeFollowThroughMeters !== undefined &&
+        reel.payout >=
+          firstDescentPrizeContactPayout +
+          options.descentPrizeFollowThroughMeters;
       const descentFloorContact =
         playCycle.phase === "DESCENDING" &&
         (options.descentFloorBodies?.() ?? []).some((deckBody) =>
@@ -1248,7 +1263,7 @@ export function createGantryLabScene(
               ) > 0,
           ),
         );
-      if (descentFloorContact) {
+      if (descentFloorContact || prizeResistanceLimitReached) {
         playCycle = applyM04DeckContact(
           playCycle,
           reel.payout,
