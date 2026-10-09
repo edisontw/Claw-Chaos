@@ -377,10 +377,6 @@ export function createCabinetLabScene(
         layout.id === "stocked"
           ? () => parts.playDeckBodies
           : undefined,
-      descentPrizeFollowThroughMeters:
-        layout.id === "stocked"
-          ? CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters
-          : undefined,
       descentContactBodies:
         layout.id === "stocked"
           ? () => tracked.map((prize) => prize.body)
