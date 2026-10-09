@@ -92,6 +92,25 @@ export function applyM04Action(
   return state;
 }
 
+// A real deck contact (unlike a player's early-close input) is the
+// mechanical bottom end of the automatic drop. A prize alone is NOT the
+// bottom limit: fingers must be free to touch and move real prizes.
+export function applyM04DeckContact(
+  state: M04PlayState,
+  reelPayoutMeters: number,
+): M04PlayState {
+  if (state.phase !== "DESCENDING") {
+    return state;
+  }
+  return {
+    ...state,
+    phase: "CLOSING",
+    phaseElapsedSeconds: 0,
+    closeReason: "AUTO",
+    closeStartPayoutMeters: reelPayoutMeters,
+  };
+}
+
 export function m04HoldBoostActive(
   state: M04PlayState,
   requested: boolean,
