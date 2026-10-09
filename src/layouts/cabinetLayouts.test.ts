@@ -93,6 +93,37 @@ describe("M09 cabinet layout foundation", () => {
     expect(second.placements).not.toEqual(first.placements);
   });
 
+  it("varies visible stocked merchandising while keeping the safe display slots", () => {
+    const seeds = ["fresh-001", "fresh-002", "fresh-003", "fresh-004"];
+    const sample = seeds.map((seed) => createCabinetLayout("stocked", seed));
+    const itemSequences = new Set(
+      sample.map((layout) => layout.placements.map((p) => p.prizeId).join("|")),
+    );
+    const positionSequences = new Set(
+      sample.map((layout) => layout.placements.map((p) =>
+        `${p.x.toFixed(3)}:${p.z.toFixed(3)}`).join("|")),
+    );
+    expect(itemSequences.size).toBeGreaterThan(1);
+    expect(positionSequences.size).toBe(seeds.length);
+
+    for (const layout of sample) {
+      expect(layout.placements).toHaveLength(12);
+      expect(layout.placements.filter((p) => p.prizeId === "prize/teddy_simple")).toHaveLength(6);
+      expect(layout.placements.filter((p) => p.prizeId === "prize/animal_simple")).toHaveLength(3);
+      expect(layout.placements.filter((p) => p.prizeId.startsWith("prize/box_"))).toHaveLength(2);
+      expect(layout.placements.filter((p) => p.prizeId === "prize/pillow_small")).toHaveLength(1);
+      // The left-front payout chute must not be randomly filled.
+      expect(layout.placements.some(
+        (p) => p.x < -0.13 && p.z > 0.09,
+      )).toBe(false);
+      expect(layout.placements.every(
+        (p) => p.x >= -0.40 && p.x <= 0.40 &&
+          p.z >= -0.305 && p.z <= 0.28 &&
+          p.yOffsetMeters < 0.008,
+      )).toBe(true);
+    }
+  });
+
   it("keeps all implemented layout content contracts", () => {
     expect(
       createCabinetLayout("stocked", "count").placements.length,
