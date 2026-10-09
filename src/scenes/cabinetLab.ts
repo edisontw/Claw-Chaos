@@ -29,6 +29,8 @@ import {
   CABINET_PLAY_TUNING,
   CABINET_STOCKED_GRIP_TUNING,
   CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
+  CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND,
+  CABINET_STOCKED_APPROACH_DISTANCE_METERS,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
@@ -350,6 +352,14 @@ export function createCabinetLabScene(
       reelMaxSpeedMetersPerSecond:
         layout.id === "stocked"
           ? CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND
+          : undefined,
+      reelApproachMaxSpeedMetersPerSecond:
+        layout.id === "stocked"
+          ? CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND
+          : undefined,
+      reelApproachDistanceMeters:
+        layout.id === "stocked"
+          ? CABINET_STOCKED_APPROACH_DISTANCE_METERS
           : undefined,
       addServiceWires: true,
       visualTheme,
@@ -804,13 +814,14 @@ export function createCabinetLabScene(
         staffServiceVisual.phase === "door_open" &&
         restockStatus === "idle"
       ) {
-        const prizePool = Array.from(
-          new Set(
-            layout.placements.map(
-              (placement) => placement.prizeId,
-            ),
-          ),
+        // Maintain the public-facing plush-heavy merchandising mix on
+        // every staff refill. Diagnostic layouts still keep unique pools.
+        const stockedPool = layout.placements.map(
+          (placement) => placement.prizeId,
         );
+        const prizePool = layout.id === "stocked"
+          ? stockedPool
+          : Array.from(new Set(stockedPool));
         restockedTracked.length = 0;
         restockPlan = createRestockPlan(
           layout.seed +

@@ -88,9 +88,10 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
   fingerDensity: 3200,
-  fingerAngularDamping: 24.0,
-  // During descent the open claw is only lightly held open, so a prize
-  // can deflect a finger instead of being struck by a rigid motor brace.
+  fingerAngularDamping: 40.0,
+  // These compliant values are applied ONLY during the short bottom
+  // settle after real contact stops the reel, never during free-air DROP.
+  // Free-air descent uses the stable M02 open-finger transport motor.
   descentOpenStiffness: 8,
   descentOpenDamping: 10,
   descentOpenMaxTorque: 0.05,
@@ -99,7 +100,12 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // switching from a compliant open joint straight to full pickup force.
   closeRampSeconds: 0.20,
   closeRampStartTorque: 1.5,
-  closeMotorDamping: 32.0,
+  // Damp the first few oscillations after a firm stocked pickup.
+  closeMotorDamping: 64.0,
 } as const;
 
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.10;
+// Faster than the overly cautious 0.10 m/s drop, while retaining a
+// controlled approach to prizes and immediate stop on actual contact.
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
+export const CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND = 0.10;
+export const CABINET_STOCKED_APPROACH_DISTANCE_METERS = 0.18;

@@ -120,6 +120,29 @@ describe("M09 cabinet layout foundation", () => {
     ).toHaveLength(4);
   });
 
+  it("merchandises the default machine with mostly dolls and no naked test geometry", () => {
+    const stock = createCabinetLayout("stocked", "merchandise").placements;
+    const dolls = stock.filter(
+      (entry) => entry.prizeId === "prize/teddy_simple" ||
+        entry.prizeId === "prize/animal_simple",
+    );
+    expect(stock).toHaveLength(12);
+    expect(dolls.length).toBeGreaterThanOrEqual(8);
+    expect(
+      stock.every((entry) => ![
+        "prize/cube_small", "prize/sphere_ball",
+        "prize/capsule_soft", "prize/cylinder_can",
+      ].includes(entry.prizeId)),
+    ).toBe(true);
+    // No floating exhibition stack on the public-facing default.
+    expect(stock.every((entry) => entry.yOffsetMeters < 0.008)).toBe(true);
+    // Row staging must not get silently flattened by old test-stage bounds.
+    expect(stock.some((entry) => entry.z < -0.29)).toBe(true);
+    expect(stock.some((entry) => entry.z > 0.23)).toBe(true);
+    // Front-left chute stays open. A mid/front center prize is still playable.
+    expect(stock.some((entry) => entry.z > 0.10 && entry.x > 0)).toBe(true);
+  });
+
   it("creates two tilted hollow ring targets with dedicated dynamic supports", () => {
     const layout = createCabinetLayout(
       "ring",

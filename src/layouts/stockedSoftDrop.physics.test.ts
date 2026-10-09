@@ -9,6 +9,8 @@ import {
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_STOCKED_GRIP_TUNING,
   CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
+  CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND,
+  CABINET_STOCKED_APPROACH_DISTANCE_METERS,
 } from "../cabinet/cabinetPlayTuning";
 import { cabinetPrizeDefinition } from "../cabinet/cabinetPrizeSizing";
 import {
@@ -63,6 +65,10 @@ describe("stocked claw descent contact", () => {
         CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters,
       reelMaxSpeedMetersPerSecond:
         CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
+      reelApproachMaxSpeedMetersPerSecond:
+        CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND,
+      reelApproachDistanceMeters:
+        CABINET_STOCKED_APPROACH_DISTANCE_METERS,
       clawContinuousCollision: true,
       descentContactBodies: () => [prize.body],
       gripProfile: {
@@ -127,6 +133,23 @@ describe("stocked claw descent contact", () => {
       physics.step();
     }
 
+    // In free air the OPEN claw must not collapse as soon as DROP begins.
+    // Read the actual world-space fingertip separation, not a motor command.
+    const spread = (): number => {
+      const center = hub!.translation();
+      return fingers.reduce((total, finger, index) => {
+        const p = finger.translation();
+        const q = finger.rotation();
+        const localTip = createFingerPoints(
+          [0, 2 * Math.PI / 3, 4 * Math.PI / 3][index]!,
+        ).at(-1)!;
+        const tip = new THREE.Vector3(localTip.x, localTip.y, localTip.z)
+          .applyQuaternion(new THREE.Quaternion(q.x, q.y, q.z, q.w))
+          .add(new THREE.Vector3(p.x, p.y, p.z));
+        return total + Math.hypot(tip.x - center.x, tip.z - center.z);
+      }, 0) / fingers.length;
+    };
+    const initialOpenSpread = spread();
     expect(gantry.primaryAction?.()).toBe(true);
 
     let maxPlanarPrizeSpeed = 0;
@@ -157,6 +180,14 @@ describe("stocked claw descent contact", () => {
       gantry.beforePhysicsStep?.(FIXED_TIMESTEP_SECONDS);
       physics.step();
       const state = gantry.getMachineAudioState?.();
+
+      // 0.3 seconds is still well above the prize. Verify the physical
+      // fingers remain open and the descent proceeds at normal speed.
+      if (tick === Math.floor(PHYSICS_HZ * 0.30)) {
+        expect(state?.playPhase).toBe("DESCENDING");
+        expect(spread()).toBeGreaterThan(initialOpenSpread * 0.90);
+        expect(Math.abs(state?.reelSpeedMetersPerSecond ?? 0)).toBeGreaterThan(0.10);
+      }
 
       if (state?.playPhase === "DESCENDING") {
         maxDescentReelSpeed = Math.max(

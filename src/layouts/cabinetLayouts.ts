@@ -56,113 +56,41 @@ interface PlacementBase {
 }
 
 const STOCKED_BASE: readonly PlacementBase[] = [
-  // Back row: fill the normally-empty rear band without covering the chute.
-  {
-    prizeId: "prize/cube_small",
-    role: "filler",
-    x: -0.33,
-    z: -0.245,
-    rotationYRadians: 0.18,
-  },
-  {
-    prizeId: "prize/box_standard",
-    role: "filler",
-    x: -0.11,
-    z: -0.245,
-    rotationYRadians: -0.14,
-  },
-  {
-    prizeId: "prize/teddy_simple",
-    role: "filler",
-    x: 0.13,
-    z: -0.235,
-    rotationYRadians: 0.20,
-  },
-  {
-    prizeId: "prize/cylinder_can",
-    role: "filler",
-    x: 0.35,
-    z: -0.245,
-    rotationYRadians: -0.08,
-  },
+  // A merchandised, easy-to-read modern crane: plush characters dominate,
+  // with a few recognizable gift products, and no naked physics primitives.
+  // Keep three shallow, staggered rows with low yaw variation rather than
+  // floating second-layer piles; the solver still owns all item collisions.
+  // Rear display row.
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: -0.34, z: -0.24, rotationYRadians: 0.10 },
+  { prizeId: "prize/box_standard", role: "filler",
+    x: -0.105, z: -0.25, rotationYRadians: -0.08 },
+  // One slightly recessed plush makes the back feel naturally stocked
+  // without an artificial elevated pile.
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: 0.01, z: -0.305, rotationYRadians: 0.03 },
+  { prizeId: "prize/animal_simple", role: "filler",
+    x: 0.13, z: -0.24, rotationYRadians: 0.08 },
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: 0.35, z: -0.24, rotationYRadians: -0.10 },
 
-  // Middle row: dense playable stock across the full cabinet width.
-  {
-    prizeId: "prize/pillow_small",
-    role: "filler",
-    x: -0.34,
-    z: -0.075,
-    rotationYRadians: -0.20,
-  },
-  {
-    prizeId: "prize/cube_small",
-    role: "filler",
-    x: -0.15,
-    z: -0.07,
-    rotationYRadians: 0.10,
-  },
-  {
-    prizeId: "prize/sphere_ball",
-    role: "filler",
-    x: 0.01,
-    z: -0.06,
-    rotationYRadians: 0,
-  },
-  {
-    prizeId: "prize/capsule_soft",
-    role: "filler",
-    x: 0.18,
-    z: -0.07,
-    rotationYRadians: 0.14,
-  },
-  {
-    prizeId: "prize/box_tall",
-    role: "filler",
-    x: 0.35,
-    z: -0.07,
-    rotationYRadians: -0.16,
-  },
+  // Reachable central prizes with clear seams between most silhouettes.
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: -0.34, z: -0.045, rotationYRadians: -0.08 },
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: -0.105, z: -0.050, rotationYRadians: 0.10 },
+  { prizeId: "prize/animal_simple", role: "filler",
+    x: 0.13, z: -0.050, rotationYRadians: -0.12 },
+  { prizeId: "prize/box_tall", role: "filler",
+    x: 0.37, z: -0.055, rotationYRadians: 0.04 },
 
-  // Front-right stock stays clear of the physical chute opening.
-  {
-    prizeId: "prize/ellipsoid_egg",
-    role: "filler",
-    x: 0.02,
-    z: 0.13,
-    rotationYRadians: -0.10,
-  },
-  {
-    prizeId: "prize/animal_simple",
-    role: "filler",
-    x: 0.20,
-    z: 0.15,
-    rotationYRadians: 0.12,
-  },
-  {
-    prizeId: "prize/cylinder_can",
-    role: "filler",
-    x: 0.38,
-    z: 0.14,
-    rotationYRadians: 0.08,
-  },
-
-  // A shallow second layer gives the default machine a real stocked/piled read.
-  {
-    prizeId: "prize/box_flat",
-    role: "filler",
-    x: -0.20,
-    z: -0.16,
-    yOffsetMeters: 0.095,
-    rotationYRadians: 0.24,
-  },
-  {
-    prizeId: "prize/pillow_small",
-    role: "filler",
-    x: 0.24,
-    z: -0.16,
-    yOffsetMeters: 0.085,
-    rotationYRadians: -0.22,
-  },
+  // Front-left chute remains visible and physically unobstructed.
+  { prizeId: "prize/pillow_small", role: "filler",
+    x: 0.02, z: 0.13, rotationYRadians: 0.12 },
+  { prizeId: "prize/teddy_simple", role: "filler",
+    x: 0.17, z: 0.25, rotationYRadians: -0.10 },
+  { prizeId: "prize/animal_simple", role: "filler",
+    x: 0.33, z: 0.12, rotationYRadians: 0.10 },
 ];
 
 const LOOSE_BASE: readonly PlacementBase[] = [
@@ -510,8 +438,8 @@ function materializePlacements(
       ? {
           minX: -0.40,
           maxX: 0.40,
-          minZ: -0.27,
-          maxZ: 0.19,
+          minZ: -0.305,
+          maxZ: 0.28,
         }
       : layoutId === "edge"
       ? {
