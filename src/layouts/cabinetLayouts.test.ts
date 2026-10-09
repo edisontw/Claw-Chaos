@@ -126,7 +126,7 @@ describe("M09 cabinet layout foundation", () => {
       (entry) => entry.prizeId === "prize/teddy_simple" ||
         entry.prizeId === "prize/animal_simple",
     );
-    expect(stock).toHaveLength(11);
+    expect(stock).toHaveLength(12);
     expect(dolls.length).toBeGreaterThanOrEqual(8);
     expect(
       stock.every((entry) => ![
