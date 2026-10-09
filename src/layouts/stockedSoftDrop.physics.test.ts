@@ -186,7 +186,7 @@ describe("stocked claw descent contact", () => {
       if (tick === Math.floor(PHYSICS_HZ * 0.30)) {
         expect(state?.playPhase).toBe("DESCENDING");
         expect(spread()).toBeGreaterThan(initialOpenSpread * 0.90);
-        expect(Math.abs(state.reelSpeedMetersPerSecond)).toBeGreaterThan(0.10);
+        expect(Math.abs(state?.reelSpeedMetersPerSecond ?? 0)).toBeGreaterThan(0.10);
       }
 
       if (state?.playPhase === "DESCENDING") {
