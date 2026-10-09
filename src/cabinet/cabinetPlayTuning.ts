@@ -88,13 +88,13 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerRodFriction: 1.94,
   // Heavier actual Rapier claw and firmer sustained grip for stocked toys.
   // No visual-only scaling and no change to the seven diagnostic layouts.
-  hubMassKg: 0.38,
+  hubMassKg: 0.36,
   closePickupTorque: 12.0,
   retainingTorque: 0.16,
   holdBoostTorque: 0.22,
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
-  fingerDensity: 3800,
+  fingerDensity: 3500,
   fingerAngularDamping: 40.0,
   // These compliant values are applied ONLY during the short bottom
   // settle after real contact stops the reel, never during free-air DROP.
