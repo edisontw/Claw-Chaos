@@ -19,6 +19,11 @@ describe("stocked physical deck bottom / visual alignment", () => {
     const physics = await PhysicsRuntime.create();
     const cabinet = createCabinetPhysics(physics);
     expect(cabinet.playDeckBodies).toHaveLength(4);
+    // Initialize Rapier's node/WASM runtime before stubbing a DOM window.
+    // A fake browser global before the first native step can crash Rapier.
+    for (let tick = 0; tick < 2; tick += 1) {
+      physics.step();
+    }
 
     // Match the real stocked cabinet configuration; no prize should stop
     // descent before the finger physically touches a play-deck collider.
