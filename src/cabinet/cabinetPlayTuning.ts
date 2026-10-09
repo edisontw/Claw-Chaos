@@ -107,7 +107,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   descentPrizeContactStiffness: 600,
   descentPrizeContactDamping: 120,
   descentPrizeContactMaxTorque: 0.65,
-  bottomCloseSettleSeconds: 0.18,
+  bottomCloseSettleSeconds: 0.12,
   // After the reel stops, build clamp force progressively instead of
   // switching from a compliant open joint straight to full pickup force.
   closeRampSeconds: 0.20,
