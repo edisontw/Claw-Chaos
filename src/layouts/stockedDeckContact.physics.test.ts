@@ -44,6 +44,7 @@ describe("stocked physical deck bottom / visual alignment", () => {
         CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters,
       clawContinuousCollision: true,
       gripProfile: {
+        hubMassKg: CABINET_STOCKED_GRIP_TUNING.hubMassKg,
         fingerFriction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
         fingerRodFriction: CABINET_STOCKED_GRIP_TUNING.fingerRodFriction,
         fingerDensity: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
