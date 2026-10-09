@@ -92,10 +92,11 @@ export function applyM04Action(
   return state;
 }
 
-// A real deck contact (unlike a player's early-close input) is the
-// mechanical bottom end of the automatic drop. A prize alone is NOT the
-// bottom limit: fingers must be free to touch and move real prizes.
-export function applyM04DeckContact(
+// Automatic landing after physical play-deck contact or a short amount
+// of solver-confirmed prize contact with resistance. A first brush against
+// a prize alone must not instantly close the claw. Both landing paths
+// are distinct from the player's EARLY CLOSE action.
+export function applyM04AutomaticLanding(
   state: M04PlayState,
   reelPayoutMeters: number,
 ): M04PlayState {
