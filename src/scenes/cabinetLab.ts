@@ -379,6 +379,18 @@ export function createCabinetLabScene(
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
             : undefined,
+        bottomSettleStiffness:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.bottomSettleStiffness
+            : undefined,
+        bottomSettleDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.bottomSettleDamping
+            : undefined,
+        bottomSettleMaxTorque:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.bottomSettleMaxTorque
+            : undefined,
         bottomCloseSettleSeconds:
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds
