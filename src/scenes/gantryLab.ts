@@ -188,6 +188,16 @@ function computeSwingAngle(
 
 export interface GantryGripProfile {
   fingerFriction?: number;
+  fingerRodFriction?: number;
+  fingerDensity?: number;
+  fingerAngularDamping?: number;
+  descentOpenStiffness?: number;
+  descentOpenDamping?: number;
+  descentOpenMaxTorque?: number;
+  bottomCloseSettleSeconds?: number;
+  closeRampSeconds?: number;
+  closeRampStartTorque?: number;
+  closeMotorDamping?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
   holdBoostTorque?: number;
@@ -277,6 +287,7 @@ export interface GantryLabOptions {
   };
   verticalHomeOffset?: number;
   additionalPickupDropMeters?: number;
+  reelMaxSpeedMetersPerSecond?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
@@ -284,6 +295,11 @@ export interface GantryLabOptions {
   gripProfile?: GantryGripProfile;
   clawTopology?: GantryClawTopologyId;
   controlsEnabled?: () => boolean;
+  // Optional live prize bodies used by stocked cabinets. If an open finger
+  // makes real solver contact during DESCENDING, stop lowering and begin the
+  // existing bottom-settle/close sequence instead of continuing to press the
+  // claw through the prize toward a fixed depth.
+  descentContactBodies?: () => readonly RigidBodyHandle[];
   milestone?: string;
   camera?: {
     position: [number, number, number];
@@ -356,6 +372,32 @@ export function createGantryLabScene(
   const additionalPickupDropMeters = options.additionalPickupDropMeters ?? 0;
   const activeFingerFriction =
     options.gripProfile?.fingerFriction ?? claw.fingerFriction;
+  const activeFingerRodFriction =
+    options.gripProfile?.fingerRodFriction ?? activeFingerFriction;
+  const activeFingerDensity =
+    options.gripProfile?.fingerDensity ?? claw.fingerDensity;
+  const activeFingerAngularDamping =
+    options.gripProfile?.fingerAngularDamping ??
+    M02_FINGER_TRANSPORT_CONFIG.angularDamping;
+  const descentOpenStiffness =
+    options.gripProfile?.descentOpenStiffness ??
+    M02_FINGER_TRANSPORT_CONFIG.stiffness;
+  const descentOpenDamping =
+    options.gripProfile?.descentOpenDamping ??
+    M02_FINGER_TRANSPORT_CONFIG.damping;
+  const descentOpenMaxTorque =
+    options.gripProfile?.descentOpenMaxTorque ??
+    M02_FINGER_TRANSPORT_CONFIG.maxTorque;
+  const bottomCloseSettleSeconds =
+    options.gripProfile?.bottomCloseSettleSeconds ?? 0;
+  const closeRampSeconds =
+    options.gripProfile?.closeRampSeconds ?? 0;
+  const closeRampStartTorque =
+    options.gripProfile?.closeRampStartTorque ??
+    options.gripProfile?.closePickupTorque ??
+    claw.maxMotorTorque;
+  const closeMotorDamping =
+    options.gripProfile?.closeMotorDamping ?? claw.motorDamping;
   const closePickupTorque =
     options.gripProfile?.closePickupTorque ?? claw.maxMotorTorque;
   const retainingTorque =
@@ -382,6 +424,9 @@ export function createGantryLabScene(
   const boundedGantry = {
     ...M02_GANTRY_CONFIG,
     ...(options.travelBounds ?? {}),
+    ...(options.reelMaxSpeedMetersPerSecond === undefined
+      ? {}
+      : { reelMaxSpeed: options.reelMaxSpeedMetersPerSecond }),
   };
   const gantry =
     verticalHomeOffset === 0 && additionalPickupDropMeters === 0
@@ -772,14 +817,16 @@ export function createGantryLabScene(
         points,
         fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters,
+        activeFingerFriction,
       ),
       {
-        friction: activeFingerFriction,
+        friction: activeFingerRodFriction,
         restitution: claw.fingerRestitution,
-        density: claw.fingerDensity,
+        density: activeFingerDensity,
         enableCcd: options.clawContinuousCollision ?? false,
       },
     );
+    body.setAngularDamping(activeFingerAngularDamping);
     const joint = physics.createRevoluteJoint(hubBody, body, {
       anchor1: pivotLocal,
       anchor2: { x: 0, y: 0, z: 0 },
@@ -850,6 +897,8 @@ export function createGantryLabScene(
   let fingerCommand = 0;
   let holdBoostActive = false;
   let selfContactGuardActive = false;
+  let bottomCloseSettleRemainingSeconds = 0;
+  let closeRampElapsedSeconds = 0;
 
   let pt006Phase: Pt006Phase = "READY";
   let pt006Seconds = 0;
@@ -1151,6 +1200,30 @@ export function createGantryLabScene(
       let inputZ = 0;
       let reelCommand = manualReelCommand;
 
+      const descentPrizeContact =
+        playCycle.phase === "DESCENDING" &&
+        (options.descentContactBodies?.() ?? []).some((targetBody) =>
+          fingerBodies.some(
+            (fingerBody) =>
+              physics.countBodyContactPairs(
+                fingerBody,
+                targetBody,
+              ) > 0,
+          ),
+        );
+      if (descentPrizeContact) {
+        playCycle = applyM04Action(
+          playCycle,
+          reel.payout,
+        );
+        reel = haltReel(reel);
+        manualReelCommand = 0;
+        reelCommand = 0;
+        bottomCloseSettleRemainingSeconds =
+          bottomCloseSettleSeconds;
+        closeRampElapsedSeconds = 0;
+      }
+
       if (
         pt008Phase === "ACCELERATING" ||
         pt008Phase === "BRAKING" ||
@@ -1285,6 +1358,7 @@ export function createGantryLabScene(
       }
 
       const wasLifting = reelCommand < 0;
+      const phaseBeforeReelAdvance = playCycle.phase;
       reel = advanceReel(reel, reelCommand, reelConfig, stepSeconds);
 
       const m04HomeTolerance = {
@@ -1322,6 +1396,26 @@ export function createGantryLabScene(
         playConfig,
         0,
       );
+
+      // AUTO CLOSE must stop the vertical carriage immediately at the
+      // trigger depth. Previously one residual downward reel step could
+      // continue compressing the physical claw into prizes / the deck,
+      // causing a hard kick and bottom-end chatter.
+      if (
+        phaseBeforeReelAdvance === "DESCENDING" &&
+        playCycle.phase === "CLOSING"
+      ) {
+        reel = haltReel(reel);
+        bottomCloseSettleRemainingSeconds =
+          bottomCloseSettleSeconds;
+        closeRampElapsedSeconds = 0;
+      }
+      if (bottomCloseSettleRemainingSeconds > 0) {
+        bottomCloseSettleRemainingSeconds = Math.max(
+          0,
+          bottomCloseSettleRemainingSeconds - stepSeconds,
+        );
+      }
 
       if (
         wasLifting &&
@@ -1381,7 +1475,11 @@ export function createGantryLabScene(
         true,
       );
 
-      const closingFinger = m04FingerShouldClose(playCycle);
+      const closeMechanicallyRequested =
+        m04FingerShouldClose(playCycle);
+      const closingFinger =
+        closeMechanicallyRequested &&
+        bottomCloseSettleRemainingSeconds <= 0;
       holdBoostActive = m04HoldBoostActive(
         playCycle,
         holdBoostRequested,
@@ -1427,27 +1525,53 @@ export function createGantryLabScene(
         playConfig,
         stepSeconds,
       );
+      if (closingFinger && closeRampSeconds > 0) {
+        closeRampElapsedSeconds = Math.min(
+          closeRampSeconds,
+          closeRampElapsedSeconds + stepSeconds,
+        );
+      } else if (!closeMechanicallyRequested) {
+        closeRampElapsedSeconds = 0;
+      }
+      const closeRampProgress =
+        closeRampSeconds <= 0
+          ? 1
+          : Math.min(1, closeRampElapsedSeconds / closeRampSeconds);
+      const rampedCloseTorque =
+        closeRampStartTorque +
+        (closePickupTorque - closeRampStartTorque) * closeRampProgress;
       const activeForcePhase = m04ForcePhase(playCycle);
       const activeContactTorque =
         activeForcePhase === "RETAINING"
           ? holdBoostActive
             ? holdBoostTorque
             : retainingTorque
-          : closePickupTorque;
+          : rampedCloseTorque;
+      const compliantOpenDescent =
+        (
+          playCycle.phase === "DESCENDING" ||
+          bottomCloseSettleRemainingSeconds > 0
+        ) && !closingFinger;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
           closingFinger
             ? claw.motorStiffness
-            : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+            : compliantOpenDescent
+              ? descentOpenStiffness
+              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
           closingFinger
-            ? claw.motorDamping
-            : M02_FINGER_TRANSPORT_CONFIG.damping,
+            ? closeMotorDamping
+            : compliantOpenDescent
+              ? descentOpenDamping
+              : M02_FINGER_TRANSPORT_CONFIG.damping,
         );
         joint.setMotorMaxForce(
           closingFinger
             ? activeContactTorque
-            : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+            : compliantOpenDescent
+              ? descentOpenMaxTorque
+              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
       for (const body of fingerBodies) {

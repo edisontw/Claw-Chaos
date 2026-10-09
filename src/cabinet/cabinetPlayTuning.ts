@@ -9,6 +9,7 @@ export const CABINET_CLAW_PARK_POSITION = {
 export const CABINET_PLAY_TUNING = {
   verticalHomeOffsetMeters: 0.085,
   fingerFriction: 1.94,
+  fingerDensity: CLAW_LAB_CONFIG.fingerDensity,
   closePickupTorque: 10.0,
   retainingTorque: 0.014,
   holdBoostTorque: 0.018,
@@ -79,8 +80,26 @@ export const CABINET_GANTRY_TRAVEL_BOUNDS = {
 export const CABINET_STOCKED_GRIP_TUNING = {
   ...CABINET_PLAY_TUNING,
   additionalPickupDropMeters: 0.055,
+  fingerFriction: 1.94,
+  fingerRodFriction: 1.94,
+  closePickupTorque: 10.0,
   retainingTorque: 0.10,
   holdBoostTorque: 0.12,
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
+  fingerDensity: 3200,
+  fingerAngularDamping: 24.0,
+  // During descent the open claw is only lightly held open, so a prize
+  // can deflect a finger instead of being struck by a rigid motor brace.
+  descentOpenStiffness: 8,
+  descentOpenDamping: 10,
+  descentOpenMaxTorque: 0.05,
+  bottomCloseSettleSeconds: 0.12,
+  // After the reel stops, build clamp force progressively instead of
+  // switching from a compliant open joint straight to full pickup force.
+  closeRampSeconds: 0.20,
+  closeRampStartTorque: 1.5,
+  closeMotorDamping: 32.0,
 } as const;
+
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.10;

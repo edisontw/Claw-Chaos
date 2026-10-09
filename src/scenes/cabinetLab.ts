@@ -28,6 +28,7 @@ import {
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
   CABINET_STOCKED_GRIP_TUNING,
+  CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
 } from "../cabinet/cabinetPlayTuning";
 import { ChuteSensor } from "../cabinet/chuteSensor";
 import type { PhysicsRuntime } from "../physics/PhysicsRuntime";
@@ -325,6 +326,13 @@ export function createCabinetLabScene(
   cabinetLight.shadow.normalBias = 0.012;
   scene.add(cabinetLight);
 
+  type TrackedPrize = {
+    id: string;
+    body: ReturnType<typeof createPrize>["body"];
+    renderObject: THREE.Object3D;
+  };
+  const tracked: TrackedPrize[] = [];
+
   const activeGrip = layout.id === "stocked"
     ? CABINET_STOCKED_GRIP_TUNING
     : CABINET_PLAY_TUNING;
@@ -339,6 +347,10 @@ export function createCabinetLabScene(
         layout.id === "stocked"
           ? CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters
           : 0,
+      reelMaxSpeedMetersPerSecond:
+        layout.id === "stocked"
+          ? CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND
+          : undefined,
       addServiceWires: true,
       visualTheme,
       clawCastsShadow: false,
@@ -351,8 +363,49 @@ export function createCabinetLabScene(
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
+      descentContactBodies:
+        layout.id === "stocked"
+          ? () => tracked.map((prize) => prize.body)
+          : undefined,
       gripProfile: {
         fingerFriction: activeGrip.fingerFriction,
+        fingerRodFriction:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.fingerRodFriction
+            : activeGrip.fingerFriction,
+        fingerDensity: activeGrip.fingerDensity,
+        fingerAngularDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping
+            : undefined,
+        descentOpenStiffness:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness
+            : undefined,
+        descentOpenDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentOpenDamping
+            : undefined,
+        descentOpenMaxTorque:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
+            : undefined,
+        bottomCloseSettleSeconds:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds
+            : undefined,
+        closeRampSeconds:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.closeRampSeconds
+            : undefined,
+        closeRampStartTorque:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.closeRampStartTorque
+            : undefined,
+        closeMotorDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.closeMotorDamping
+            : undefined,
         closePickupTorque:
           activeGrip.closePickupTorque,
         retainingTorque:
@@ -388,14 +441,8 @@ export function createCabinetLabScene(
   > = [
     ...(gantryScene.massPropertiesDebugTargets ?? []),
   ];
-  const tracked: Array<{
-    id: string;
-    body: ReturnType<typeof createPrize>["body"];
-  }> = [];
-  const restockedTracked: Array<{
-    id: string;
-    body: ReturnType<typeof createPrize>["body"];
-  }> = [];
+  const restockedTracked: TrackedPrize[] = [];
+  let clearedChutePrizeCount = 0;
   type RestockStatus =
     | "idle"
     | "inserting"
@@ -453,9 +500,10 @@ export function createCabinetLabScene(
       body: prize.body,
       label: id,
     });
-    const trackedPrize = {
+    const trackedPrize: TrackedPrize = {
       id,
       body: prize.body,
+      renderObject: prize.renderObject,
     };
     tracked.push(trackedPrize);
     restockedTracked.push(trackedPrize);
@@ -499,8 +547,50 @@ export function createCabinetLabScene(
     tracked.push({
       id: `${placement.prizeId}#${index}`,
       body: prize.body,
+      renderObject: prize.renderObject,
     });
   }
+
+  const clearAwardedPrize = (prizeId: string): void => {
+    const index = tracked.findIndex((entry) => entry.id === prizeId);
+    if (index < 0) {
+      return;
+    }
+    const [prize] = tracked.splice(index, 1);
+    if (!prize) {
+      return;
+    }
+
+    const restockIndex = restockedTracked.findIndex(
+      (entry) => entry.id === prizeId,
+    );
+    if (restockIndex >= 0) {
+      restockedTracked.splice(restockIndex, 1);
+    }
+
+    for (
+      let bindingIndex = bindings.length - 1;
+      bindingIndex >= 0;
+      bindingIndex--
+    ) {
+      if (bindings[bindingIndex]?.body === prize.body) {
+        bindings.splice(bindingIndex, 1);
+      }
+    }
+    for (
+      let debugIndex = massPropertiesDebugTargets.length - 1;
+      debugIndex >= 0;
+      debugIndex--
+    ) {
+      if (massPropertiesDebugTargets[debugIndex]?.body === prize.body) {
+        massPropertiesDebugTargets.splice(debugIndex, 1);
+      }
+    }
+
+    scene.remove(prize.renderObject);
+    physics.removeRigidBody(prize.body);
+    clearedChutePrizeCount += 1;
+  };
 
   return {
     bindings,
@@ -823,6 +913,7 @@ export function createCabinetLabScene(
         }
       }
 
+      const awardedPrizeIdsToClear: string[] = [];
       for (const prize of tracked) {
         // Initial prize settling is setup, not gameplay. Do not let a
         // transient spawn/settle motion decrement stock or produce a WIN.
@@ -872,9 +963,16 @@ export function createCabinetLabScene(
                   },
                 ),
               );
+              // Once the chute sensor has accepted the physical drop as a
+              // real win, remove it instead of letting it accumulate below.
+              awardedPrizeIdsToClear.push(prize.id);
             }
           }
         }
+      }
+
+      for (const prizeId of awardedPrizeIdsToClear) {
+        clearAwardedPrize(prizeId);
       }
     },
     debugLines(): string[] {
@@ -893,6 +991,7 @@ export function createCabinetLabScene(
           M06_CABINET_CONFIG.chuteCenterZ.toFixed(3) +
           " m",
         `Sensor wins       ${sensor.winCount}`,
+        `Chute cleared     ${clearedChutePrizeCount}`,
         `Results accepted  ${resultInventory.resultCount}`,
         `Awarded prizes    ${resultInventory.inventoryCount}`,
         `Playable stock    ${inventoryService.remainingInventoryCount} / ${inventoryService.initialInventoryCount}`,

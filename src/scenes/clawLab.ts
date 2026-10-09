@@ -476,6 +476,7 @@ export function createFingerSegments(
   points: readonly Vec3[],
   lowerPadRadius: number = CLAW_LAB_CONFIG.fingerRodRadius,
   lowerPadLengthMeters?: number,
+  lowerPadFriction?: number,
 ): CapsuleSegmentSpec[] {
   const segments: CapsuleSegmentSpec[] = [];
 
@@ -525,6 +526,7 @@ export function createFingerSegments(
         start: padStart,
         end,
         radius: lowerPadRadius,
+        friction: lowerPadFriction,
       });
     }
   }

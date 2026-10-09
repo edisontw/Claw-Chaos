@@ -11,6 +11,7 @@ import {
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_PLAY_TUNING,
   CABINET_STOCKED_GRIP_TUNING,
+  CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
   CABINET_SAFE_LONGITUDINAL_END_STOP_METERS,
   CABINET_LONGITUDINAL_CONTACT_ALLOWANCE_METERS,
   openClawLongitudinalReachMeters,
@@ -111,10 +112,29 @@ describe("Cabinet play tuning", () => {
 
   it("reserves the deeper, rubber-padded hold for stocked prizes only", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerFriction).toBe(1.94);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerRodFriction).toBe(1.94);
+    expect(CABINET_STOCKED_GRIP_TUNING.closePickupTorque).toBe(10.0);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters).toBe(0.045);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters).toBe(0.014);
     expect(CABINET_STOCKED_GRIP_TUNING.retainingTorque).toBe(0.10);
     expect(CABINET_STOCKED_GRIP_TUNING.holdBoostTorque).toBe(0.12);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(
+      CABINET_PLAY_TUNING.fingerDensity,
+    );
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerDensity).toBe(3200);
+    expect(CABINET_STOCKED_GRIP_TUNING.fingerAngularDamping).toBe(24.0);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness).toBe(8);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenDamping).toBe(10);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque).toBe(0.05);
+    expect(CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds).toBe(0.12);
+    expect(CABINET_STOCKED_GRIP_TUNING.closeRampSeconds).toBe(0.20);
+    expect(CABINET_STOCKED_GRIP_TUNING.closeRampStartTorque).toBe(1.5);
+    expect(CABINET_STOCKED_GRIP_TUNING.closeMotorDamping).toBe(32.0);
+    expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.10);
+    expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBeLessThan(
+      M02_GANTRY_CONFIG.reelMaxSpeed,
+    );
     expect(CABINET_PLAY_TUNING.fingerLowerPadLengthMeters).toBe(0.012);
     expect(CABINET_PLAY_TUNING.retainingTorque).toBe(0.014);
   });

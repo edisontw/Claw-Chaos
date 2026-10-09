@@ -38,6 +38,7 @@ export interface CapsuleSegmentSpec {
   start: Vec3;
   end: Vec3;
   radius: number;
+  friction?: number;
 }
 
 export type CompoundColliderSpec =
@@ -173,6 +174,17 @@ export class PhysicsRuntime {
 
   get dynamicBodyCount(): number {
     return this.dynamicBodyCountValue;
+  }
+
+  removeRigidBody(body: RigidBodyHandle): void {
+    for (let index = 0; index < body.numColliders(); index += 1) {
+      this.contactAudioProfiles.delete(body.collider(index).handle);
+    }
+    this.world.removeRigidBody(body);
+    this.dynamicBodyCountValue = Math.max(
+      0,
+      this.dynamicBodyCountValue - 1,
+    );
   }
 
   countBodyContactPairs(
@@ -612,7 +624,7 @@ export class PhysicsRuntime {
       let collider = RAPIER.ColliderDesc.capsule(cylinderHalfHeight, segment.radius)
         .setTranslation(center.x, center.y, center.z)
         .setRotation(rotation)
-        .setFriction(material.friction ?? 0.7)
+        .setFriction(segment.friction ?? material.friction ?? 0.7)
         .setRestitution(material.restitution ?? 0.08);
 
       if (material.density !== undefined) {
