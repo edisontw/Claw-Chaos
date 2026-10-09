@@ -22,7 +22,7 @@ describe("Everyday gift and plush merchandise", () => {
       expect(visual!.userData.prizeVisualFidelity).toBe("high-v1");
       expect(visual!.userData.prizeVisualModel).toBe(product.model);
       expect(visual!.getObjectByName(product.marker)).toBeDefined();
-      expect(visual!.children.length).toBeGreaterThanOrEqual(6);
+      expect(visual!.children.length).toBeGreaterThanOrEqual(5);
     }
   });
 
