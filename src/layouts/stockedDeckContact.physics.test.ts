@@ -40,8 +40,6 @@ describe("stocked physical deck bottom / visual alignment", () => {
       reelApproachMaxSpeedMetersPerSecond: CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND,
       reelApproachDistanceMeters: CABINET_STOCKED_APPROACH_DISTANCE_METERS,
       descentFloorBodies: () => cabinet.playDeckBodies,
-      descentPrizeFollowThroughMeters:
-        CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters,
       clawContinuousCollision: true,
       gripProfile: {
         hubMassKg: CABINET_STOCKED_GRIP_TUNING.hubMassKg,
