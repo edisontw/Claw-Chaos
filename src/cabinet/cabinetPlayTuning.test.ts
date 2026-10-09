@@ -129,13 +129,16 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenStiffness).toBe(8);
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenDamping).toBe(10);
     expect(CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque).toBe(0.05);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeContactStiffness).toBe(600);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeContactDamping).toBe(120);
+    expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeContactMaxTorque).toBe(0.65);
     expect(CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds).toBe(0.12);
     expect(CABINET_STOCKED_GRIP_TUNING.closeRampSeconds).toBe(0.20);
     expect(CABINET_STOCKED_GRIP_TUNING.closeRampStartTorque).toBe(1.5);
     expect(CABINET_STOCKED_GRIP_TUNING.closeMotorDamping).toBe(64.0);
-    expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.26);
-    expect(CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND).toBe(0.20);
-    expect(CABINET_STOCKED_APPROACH_DISTANCE_METERS).toBe(0.085);
+    expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBe(0.32);
+    expect(CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND).toBe(0.16);
+    expect(CABINET_STOCKED_APPROACH_DISTANCE_METERS).toBe(0.20);
     expect(CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND).toBeLessThan(
       M02_GANTRY_CONFIG.reelMaxSpeed,
     );
