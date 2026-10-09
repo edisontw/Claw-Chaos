@@ -92,6 +92,26 @@ export function applyM04Action(
   return state;
 }
 
+// Automatic landing after physical play-deck contact or a short amount
+// of solver-confirmed prize contact with resistance. A first brush against
+// a prize alone must not instantly close the claw. Both landing paths
+// are distinct from the player's EARLY CLOSE action.
+export function applyM04AutomaticLanding(
+  state: M04PlayState,
+  reelPayoutMeters: number,
+): M04PlayState {
+  if (state.phase !== "DESCENDING") {
+    return state;
+  }
+  return {
+    ...state,
+    phase: "CLOSING",
+    phaseElapsedSeconds: 0,
+    closeReason: "AUTO",
+    closeStartPayoutMeters: reelPayoutMeters,
+  };
+}
+
 export function m04HoldBoostActive(
   state: M04PlayState,
   requested: boolean,

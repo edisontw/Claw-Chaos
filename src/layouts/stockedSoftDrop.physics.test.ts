@@ -26,7 +26,7 @@ import { createGantryLabScene } from "../scenes/gantryLab";
 describe("stocked claw descent contact", () => {
   it("lands softly on a real prize and stops the reel without bottom chatter", async () => {
     const physics = await PhysicsRuntime.create();
-    createCabinetPhysics(physics);
+    const cabinet = createCabinetPhysics(physics);
 
     const definition = cabinetPrizeDefinition(
       getPrizeDefinition("prize/box_standard"),
@@ -70,6 +70,9 @@ describe("stocked claw descent contact", () => {
       reelApproachDistanceMeters:
         CABINET_STOCKED_APPROACH_DISTANCE_METERS,
       clawContinuousCollision: true,
+      descentFloorBodies: () => cabinet.playDeckBodies,
+      descentPrizeFollowThroughMeters:
+        CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters,
       descentContactBodies: () => [prize.body],
       gripProfile: {
         fingerFriction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
@@ -82,6 +85,12 @@ describe("stocked claw descent contact", () => {
           CABINET_STOCKED_GRIP_TUNING.descentOpenDamping,
         descentOpenMaxTorque:
           CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque,
+        descentPrizeContactStiffness:
+          CABINET_STOCKED_GRIP_TUNING.descentPrizeContactStiffness,
+        descentPrizeContactDamping:
+          CABINET_STOCKED_GRIP_TUNING.descentPrizeContactDamping,
+        descentPrizeContactMaxTorque:
+          CABINET_STOCKED_GRIP_TUNING.descentPrizeContactMaxTorque,
         bottomCloseSettleSeconds:
           CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds,
         closeRampSeconds:

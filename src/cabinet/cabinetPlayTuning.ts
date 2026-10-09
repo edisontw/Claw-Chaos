@@ -95,6 +95,12 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   descentOpenStiffness: 8,
   descentOpenDamping: 10,
   descentOpenMaxTorque: 0.05,
+  // On real prize contact only, allow the individual open finger to yield
+  // instead of rigidly sweeping a lightweight box away with 50 N m torque.
+  descentPrizeContactStiffness: 600,
+  descentPrizeContactDamping: 120,
+  descentPrizeContactMaxTorque: 0.65,
+  descentPrizeFollowThroughMeters: 0.025,
   bottomCloseSettleSeconds: 0.12,
   // After the reel stops, build clamp force progressively instead of
   // switching from a compliant open joint straight to full pickup force.
@@ -104,8 +110,9 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   closeMotorDamping: 64.0,
 } as const;
 
-// Faster than the overly cautious 0.10 m/s drop, while retaining a
-// controlled approach to prizes and immediate stop on actual contact.
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
-export const CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND = 0.10;
-export const CABINET_STOCKED_APPROACH_DISTANCE_METERS = 0.18;
+// A crane drop should feel prompt, not like slow-motion. Keep a short
+// controlled approach only near the physical deck; deck contacts stop the
+// reel before the claw presses through the floor.
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.27;
+export const CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND = 0.16;
+export const CABINET_STOCKED_APPROACH_DISTANCE_METERS = 0.20;

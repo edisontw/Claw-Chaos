@@ -373,6 +373,14 @@ export function createCabinetLabScene(
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
+      descentFloorBodies:
+        layout.id === "stocked"
+          ? () => parts.playDeckBodies
+          : undefined,
+      descentPrizeFollowThroughMeters:
+        layout.id === "stocked"
+          ? CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters
+          : undefined,
       descentContactBodies:
         layout.id === "stocked"
           ? () => tracked.map((prize) => prize.body)
@@ -399,6 +407,18 @@ export function createCabinetLabScene(
         descentOpenMaxTorque:
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
+            : undefined,
+        descentPrizeContactStiffness:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentPrizeContactStiffness
+            : undefined,
+        descentPrizeContactDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentPrizeContactDamping
+            : undefined,
+        descentPrizeContactMaxTorque:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentPrizeContactMaxTorque
             : undefined,
         bottomCloseSettleSeconds:
           layout.id === "stocked"
