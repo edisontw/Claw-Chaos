@@ -136,6 +136,9 @@ describe("M09 cabinet layout foundation", () => {
     ).toBe(true);
     // No floating exhibition stack on the public-facing default.
     expect(stock.every((entry) => entry.yOffsetMeters < 0.008)).toBe(true);
+    // Row staging must not get silently flattened by old test-stage bounds.
+    expect(stock.some((entry) => entry.z < -0.29)).toBe(true);
+    expect(stock.some((entry) => entry.z > 0.23)).toBe(true);
     // Front-left chute stays open. A mid/front center prize is still playable.
     expect(stock.some((entry) => entry.z > 0.10 && entry.x > 0)).toBe(true);
   });
