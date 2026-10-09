@@ -63,6 +63,7 @@ describe("stocked physical deck bottom / visual alignment", () => {
         holdBoostTorque: CABINET_STOCKED_GRIP_TUNING.holdBoostTorque,
         pickupLiftDistanceMeters: CABINET_STOCKED_GRIP_TUNING.pickupLiftDistanceMeters,
         closedAngleRadians: CABINET_STOCKED_GRIP_TUNING.closedAngleRadians,
+        openAngleRadians: CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
         fingerLowerPadRadiusMeters: CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters: CABINET_STOCKED_GRIP_TUNING.fingerLowerPadLengthMeters,
       },
