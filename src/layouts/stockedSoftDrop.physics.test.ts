@@ -71,6 +71,8 @@ describe("stocked claw descent contact", () => {
         CABINET_STOCKED_APPROACH_DISTANCE_METERS,
       clawContinuousCollision: true,
       descentFloorBodies: () => cabinet.playDeckBodies,
+      descentPrizeFollowThroughMeters:
+        CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters,
       descentContactBodies: () => [prize.body],
       gripProfile: {
         fingerFriction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
