@@ -160,7 +160,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
       },
       claw.hubColliderHalfHeight,
       claw.collarRadius,
-      gantry.hubMassKg,
+      CABINET_STOCKED_GRIP_TUNING.hubMassKg,
       {
         friction: 0.55,
         restitution: 0.02,
@@ -214,7 +214,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         {
           friction: CABINET_STOCKED_GRIP_TUNING.fingerFriction,
           restitution: claw.fingerRestitution,
-          density: claw.fingerDensity,
+          density: CABINET_STOCKED_GRIP_TUNING.fingerDensity,
         },
       );
       finger.setAngularDamping(
