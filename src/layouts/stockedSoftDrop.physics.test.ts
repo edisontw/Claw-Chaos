@@ -71,8 +71,6 @@ describe("stocked claw descent contact", () => {
         CABINET_STOCKED_APPROACH_DISTANCE_METERS,
       clawContinuousCollision: true,
       descentFloorBodies: () => cabinet.playDeckBodies,
-      descentPrizeFollowThroughMeters:
-        CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters,
       descentContactBodies: () => [prize.body],
       gripProfile: {
         hubMassKg: CABINET_STOCKED_GRIP_TUNING.hubMassKg,
@@ -328,7 +326,10 @@ describe("stocked claw descent contact", () => {
     expect(hubVerticalRange).toBeLessThan(0.015);
     // Judge visible post-close chatter by actual fingertip travel, not
     // intentional angular speed while the motor is still closing.
-    expect(maxSettledFingerTipTravel).toBeLessThan(0.012);
+    // Full deck-range descent gives slightly more real finger/box
+    // contact travel than the former premature-prize stop; keep the
+    // post-close window strictly under 15 mm without hiding instability.
+    expect(maxSettledFingerTipTravel).toBeLessThan(0.015);
     vi.unstubAllGlobals();
   }, 20_000);
 });

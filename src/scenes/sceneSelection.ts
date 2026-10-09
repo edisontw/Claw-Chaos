@@ -22,3 +22,26 @@ export function parseSceneSelection(search: string): SceneSelection {
     usedFallback: !isKnown,
   };
 }
+
+
+/**
+ * The public stocked machine gets a fresh set of physical prize positions
+ * every time a new page session starts. An explicit ?seed=... stays fully
+ * reproducible for bug reports. Other M09 physics layouts stay deterministic.
+ */
+export function resolveStartupSceneSelection(
+  search: string,
+  newSeed: () => string,
+): SceneSelection {
+  const selected = parseSceneSelection(search);
+  const params = new URLSearchParams(search);
+  const requestedLayout = params.get("layout")?.trim() || "stocked";
+  if (
+    selected.id === "cabinet-lab" &&
+    requestedLayout === "stocked" &&
+    !params.get("seed")?.trim()
+  ) {
+    return { ...selected, seed: newSeed() };
+  }
+  return selected;
+}
