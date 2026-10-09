@@ -373,6 +373,10 @@ export function createCabinetLabScene(
       controlsEnabled: () =>
         layoutSettle.ready &&
         !inventoryService.playerInputLocked,
+      descentFloorBodies:
+        layout.id === "stocked"
+          ? () => parts.playDeckBodies
+          : undefined,
       descentContactBodies:
         layout.id === "stocked"
           ? () => tracked.map((prize) => prize.body)
