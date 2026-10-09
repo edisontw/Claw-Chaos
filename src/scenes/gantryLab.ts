@@ -29,6 +29,7 @@ import {
   M04_PLAY_CONFIG,
   advanceM04PlayState,
   applyM04Action,
+  applyM04DeckContact,
   createM04PlayState,
   m04FingerShouldClose,
   m04ForcePhase,
@@ -297,10 +298,13 @@ export interface GantryLabOptions {
   gripProfile?: GantryGripProfile;
   clawTopology?: GantryClawTopologyId;
   controlsEnabled?: () => boolean;
-  // Optional live prize bodies used by stocked cabinets. If an open finger
-  // makes real solver contact during DESCENDING, stop lowering and begin the
-  // existing bottom-settle/close sequence instead of continuing to press the
-  // claw through the prize toward a fixed depth.
+  // Optional physical floor surfaces. Prize contact alone is NOT bottom:
+  // a real claw may brush prizes before reaching the play deck. The reel
+  // stops and automatic closing begins only when a finger touches the deck
+  // (or the mechanical payout limit), never because a prize is nearby.
+  descentFloorBodies?: () => readonly RigidBodyHandle[];
+  // Prize contacts remain physical solver contacts, without triggering
+  // the auto-close state transition.
   descentContactBodies?: () => readonly RigidBodyHandle[];
   milestone?: string;
   camera?: {
@@ -1212,19 +1216,19 @@ export function createGantryLabScene(
       let inputZ = 0;
       let reelCommand = manualReelCommand;
 
-      const descentPrizeContact =
+      const descentFloorContact =
         playCycle.phase === "DESCENDING" &&
-        (options.descentContactBodies?.() ?? []).some((targetBody) =>
+        (options.descentFloorBodies?.() ?? []).some((deckBody) =>
           fingerBodies.some(
             (fingerBody) =>
               physics.countBodyContactPairs(
                 fingerBody,
-                targetBody,
+                deckBody,
               ) > 0,
           ),
         );
-      if (descentPrizeContact) {
-        playCycle = applyM04Action(
+      if (descentFloorContact) {
+        playCycle = applyM04DeckContact(
           playCycle,
           reel.payout,
         );
