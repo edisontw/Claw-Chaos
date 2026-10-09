@@ -288,6 +288,8 @@ export interface GantryLabOptions {
   verticalHomeOffset?: number;
   additionalPickupDropMeters?: number;
   reelMaxSpeedMetersPerSecond?: number;
+  reelApproachMaxSpeedMetersPerSecond?: number;
+  reelApproachDistanceMeters?: number;
   addServiceWires?: boolean;
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
@@ -868,6 +870,16 @@ export function createGantryLabScene(
     acceleration: gantry.reelAcceleration,
     braking: gantry.reelBraking,
   };
+  const approachReelConfig: ReelConfig =
+    options.reelApproachMaxSpeedMetersPerSecond === undefined
+      ? reelConfig
+      : {
+          ...reelConfig,
+          maxSpeed: Math.min(
+            reelConfig.maxSpeed,
+            options.reelApproachMaxSpeedMetersPerSecond,
+          ),
+        };
   const playReturnTarget =
     options.playReturnTarget ?? { x: gantry.homeX, z: gantry.homeZ };
   const playConfig = {
@@ -1359,7 +1371,20 @@ export function createGantryLabScene(
 
       const wasLifting = reelCommand < 0;
       const phaseBeforeReelAdvance = playCycle.phase;
-      reel = advanceReel(reel, reelCommand, reelConfig, stepSeconds);
+      // Stocked cabinets can reel quickly through open air, then use a
+      // physically slower approach for the last stretch before auto-close.
+      // This changes only motor speed, not collision / success decisions.
+      const controlledApproach =
+        playCycle.phase === "DESCENDING" &&
+        options.reelApproachDistanceMeters !== undefined &&
+        reel.payout >=
+          playConfig.autoClosePayoutMeters - options.reelApproachDistanceMeters;
+      reel = advanceReel(
+        reel,
+        reelCommand,
+        controlledApproach ? approachReelConfig : reelConfig,
+        stepSeconds,
+      );
 
       const m04HomeTolerance = {
         position: gantry.homePositionTolerance,
