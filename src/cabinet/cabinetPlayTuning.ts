@@ -113,7 +113,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   closeRampSeconds: 0.20,
   closeRampStartTorque: 1.8,
   // Damp the first few oscillations after a firm stocked pickup.
-  closeMotorDamping: 64.0,
+  closeMotorDamping: 72.0,
 } as const;
 
 // A crane drop should feel prompt, not like slow-motion. Keep a short
