@@ -1547,11 +1547,13 @@ export function createGantryLabScene(
             ? holdBoostTorque
             : retainingTorque
           : rampedCloseTorque;
+      // Hold the claw fully OPEN through free-air descent. The weaker,
+      // contact-compliant motor is permitted only after real prize contact
+      // or auto-depth has halted the reel for the brief bottom settle.
+      // Weakening the motor at DROP start made heavy fingers collapse
+      // under their own weight before ever touching a prize.
       const compliantOpenDescent =
-        (
-          playCycle.phase === "DESCENDING" ||
-          bottomCloseSettleRemainingSeconds > 0
-        ) && !closingFinger;
+        bottomCloseSettleRemainingSeconds > 0 && !closingFinger;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
