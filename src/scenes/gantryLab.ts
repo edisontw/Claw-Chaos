@@ -194,6 +194,9 @@ export interface GantryGripProfile {
   descentOpenStiffness?: number;
   descentOpenDamping?: number;
   descentOpenMaxTorque?: number;
+  bottomSettleStiffness?: number;
+  bottomSettleDamping?: number;
+  bottomSettleMaxTorque?: number;
   bottomCloseSettleSeconds?: number;
   closePickupTorque?: number;
   retainingTorque?: number;
@@ -379,6 +382,15 @@ export function createGantryLabScene(
     M02_FINGER_TRANSPORT_CONFIG.damping;
   const descentOpenMaxTorque =
     options.gripProfile?.descentOpenMaxTorque ??
+    M02_FINGER_TRANSPORT_CONFIG.maxTorque;
+  const bottomSettleStiffness =
+    options.gripProfile?.bottomSettleStiffness ??
+    M02_FINGER_TRANSPORT_CONFIG.stiffness;
+  const bottomSettleDamping =
+    options.gripProfile?.bottomSettleDamping ??
+    M02_FINGER_TRANSPORT_CONFIG.damping;
+  const bottomSettleMaxTorque =
+    options.gripProfile?.bottomSettleMaxTorque ??
     M02_FINGER_TRANSPORT_CONFIG.maxTorque;
   const bottomCloseSettleSeconds =
     options.gripProfile?.bottomCloseSettleSeconds ?? 0;
@@ -1490,31 +1502,38 @@ export function createGantryLabScene(
             ? holdBoostTorque
             : retainingTorque
           : closePickupTorque;
+      const bottomSettling =
+        bottomCloseSettleRemainingSeconds > 0 && !closingFinger;
       const compliantOpenDescent =
-        (
-          playCycle.phase === "DESCENDING" ||
-          bottomCloseSettleRemainingSeconds > 0
-        ) && !closingFinger;
+        playCycle.phase === "DESCENDING" &&
+        !closingFinger &&
+        !bottomSettling;
       for (const joint of fingerJoints) {
         joint.configureMotorPosition(
           fingerCommand,
           closingFinger
             ? claw.motorStiffness
-            : compliantOpenDescent
-              ? descentOpenStiffness
-              : M02_FINGER_TRANSPORT_CONFIG.stiffness,
+            : bottomSettling
+              ? bottomSettleStiffness
+              : compliantOpenDescent
+                ? descentOpenStiffness
+                : M02_FINGER_TRANSPORT_CONFIG.stiffness,
           closingFinger
             ? claw.motorDamping
-            : compliantOpenDescent
-              ? descentOpenDamping
-              : M02_FINGER_TRANSPORT_CONFIG.damping,
+            : bottomSettling
+              ? bottomSettleDamping
+              : compliantOpenDescent
+                ? descentOpenDamping
+                : M02_FINGER_TRANSPORT_CONFIG.damping,
         );
         joint.setMotorMaxForce(
           closingFinger
             ? activeContactTorque
-            : compliantOpenDescent
-              ? descentOpenMaxTorque
-              : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
+            : bottomSettling
+              ? bottomSettleMaxTorque
+              : compliantOpenDescent
+                ? descentOpenMaxTorque
+                : M02_FINGER_TRANSPORT_CONFIG.maxTorque,
         );
       }
       for (const body of fingerBodies) {
