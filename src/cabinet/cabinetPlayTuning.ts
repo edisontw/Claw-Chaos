@@ -88,7 +88,7 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerLowerPadRadiusMeters: 0.014,
   fingerLowerPadLengthMeters: 0.045,
   fingerDensity: 3200,
-  fingerAngularDamping: 24.0,
+  fingerAngularDamping: 40.0,
   // These compliant values are applied ONLY during the short bottom
   // settle after real contact stops the reel, never during free-air DROP.
   // Free-air descent uses the stable M02 open-finger transport motor.
@@ -100,7 +100,8 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   // switching from a compliant open joint straight to full pickup force.
   closeRampSeconds: 0.20,
   closeRampStartTorque: 1.5,
-  closeMotorDamping: 32.0,
+  // Damp the first few oscillations after a firm stocked pickup.
+  closeMotorDamping: 64.0,
 } as const;
 
 // Faster than the overly cautious 0.10 m/s drop, while retaining a
