@@ -15,13 +15,18 @@ import { getPrizeDefinition } from "../prizes/catalog";
 import { createCabinetLayout } from "./cabinetLayouts";
 
 describe("stocked default layout startup safety", () => {
-  it("settles a full physical prize floor without startup wins or cabinet escapes", async () => {
+  it.each([
+    DEFAULT_SCENE_SEED,
+    "fresh-001",
+    "fresh-002",
+    "fresh-003",
+  ])("settles randomized physical prizes without startup wins: %s", async (seed) => {
     const physics = await PhysicsRuntime.create();
     createCabinetPhysics(physics);
 
     const layout = createCabinetLayout(
       "stocked",
-      DEFAULT_SCENE_SEED,
+      seed,
     );
     expect(layout.placements.length).toBeGreaterThanOrEqual(12);
 
