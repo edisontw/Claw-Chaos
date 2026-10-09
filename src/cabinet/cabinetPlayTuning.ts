@@ -89,11 +89,13 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerLowerPadLengthMeters: 0.045,
   fingerDensity: 3200,
   fingerAngularDamping: 24.0,
-  // During descent the open claw is only lightly held open, so a prize
-  // can deflect a finger instead of being struck by a rigid motor brace.
-  descentOpenStiffness: 8,
-  descentOpenDamping: 10,
-  descentOpenMaxTorque: 0.05,
+  // Keep open fingers at their true mechanical OPEN angle throughout the
+  // descent. The near-passive motor (0.05 N m) made heavy fingers fold under
+  // gravity as soon as DROP started, before any physical prize contact.
+  // Real prize contact is handled by the solver and stops the downward reel.
+  descentOpenStiffness: 6000,
+  descentOpenDamping: 340,
+  descentOpenMaxTorque: 50.0,
   bottomCloseSettleSeconds: 0.12,
   // After the reel stops, build clamp force progressively instead of
   // switching from a compliant open joint straight to full pickup force.
@@ -102,4 +104,6 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   closeMotorDamping: 32.0,
 } as const;
 
-export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.10;
+// Faster than the overly cautious 0.10 m/s drop, while retaining a
+// controlled approach to prizes and immediate stop on actual contact.
+export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
