@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { RoundedBoxGeometry } from "three/addons/geometries/RoundedBoxGeometry.js";
 import type { ResolvedPrizeSpec } from "./types";
+import { createRetailPrizeVisual } from "./retailPrizeVisuals";
 
 export const HIGH_FIDELITY_PRIZE_VISUAL_IDS = [
   "prize/box_standard",
@@ -580,6 +581,6 @@ export function createHighFidelityPrizeVisual(
     case "prize/teddy_simple":
       return createTeddyVisual(spec);
     default:
-      return null;
+      return createRetailPrizeVisual(spec);
   }
 }
