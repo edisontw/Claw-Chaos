@@ -411,6 +411,38 @@ function createTeddyVisual(
     );
     group.add(ear);
 
+    // Pastel assortment includes bunny-ear plush variants. The longer
+    // cloth ears are decorative only; actual Rapier grip still uses the
+    // original teddy body/limb colliders.
+    if (spec.variant.colorId === "pink" || spec.variant.colorId === "purple") {
+      const longEar = configureMesh(
+        new THREE.Mesh(
+          new THREE.SphereGeometry(0.013 * radialScale, 16, 12),
+          furMaterial,
+        ),
+      );
+      longEar.name =
+        side < 0 ? "prize-bunny-ear-left" : "prize-bunny-ear-right";
+      longEar.scale.set(0.72, 1.72, 0.60);
+      longEar.position.set(side * 0.031 * sx, 0.123 * sy, -0.004 * sz);
+      group.add(longEar);
+      const innerEar = configureMesh(
+        new THREE.Mesh(
+          new THREE.SphereGeometry(0.009 * radialScale, 12, 10),
+          matteMaterial(0xf5c2ce, 0.94),
+        ),
+      );
+      innerEar.name =
+        side < 0 ? "prize-bunny-inner-ear-left" : "prize-bunny-inner-ear-right";
+      innerEar.scale.set(0.55, 1.45, 0.30);
+      innerEar.position.set(
+        side * 0.031 * sx,
+        0.125 * sy,
+        0.005 * sz,
+      );
+      group.add(innerEar);
+    }
+
     addCapsuleBetween(
       group,
       new THREE.Vector3(
