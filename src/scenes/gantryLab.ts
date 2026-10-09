@@ -295,6 +295,11 @@ export interface GantryLabOptions {
   gripProfile?: GantryGripProfile;
   clawTopology?: GantryClawTopologyId;
   controlsEnabled?: () => boolean;
+  // Optional live prize bodies used by stocked cabinets. If an open finger
+  // makes real solver contact during DESCENDING, stop lowering and begin the
+  // existing bottom-settle/close sequence instead of continuing to press the
+  // claw through the prize toward a fixed depth.
+  descentContactBodies?: () => readonly RigidBodyHandle[];
   milestone?: string;
   camera?: {
     position: [number, number, number];
@@ -1194,6 +1199,30 @@ export function createGantryLabScene(
       let inputX = 0;
       let inputZ = 0;
       let reelCommand = manualReelCommand;
+
+      const descentPrizeContact =
+        playCycle.phase === "DESCENDING" &&
+        (options.descentContactBodies?.() ?? []).some((targetBody) =>
+          fingerBodies.some(
+            (fingerBody) =>
+              physics.countBodyContactPairs(
+                fingerBody,
+                targetBody,
+              ) > 0,
+          ),
+        );
+      if (descentPrizeContact) {
+        playCycle = applyM04Action(
+          playCycle,
+          reel.payout,
+        );
+        reel = haltReel(reel);
+        manualReelCommand = 0;
+        reelCommand = 0;
+        bottomCloseSettleRemainingSeconds =
+          bottomCloseSettleSeconds;
+        closeRampElapsedSeconds = 0;
+      }
 
       if (
         pt008Phase === "ACCELERATING" ||
