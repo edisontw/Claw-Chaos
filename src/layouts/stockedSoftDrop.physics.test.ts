@@ -109,6 +109,8 @@ describe("stocked claw descent contact", () => {
           CABINET_STOCKED_GRIP_TUNING.pickupLiftDistanceMeters,
         closedAngleRadians:
           CABINET_STOCKED_GRIP_TUNING.closedAngleRadians,
+        openAngleRadians:
+          CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
         fingerLowerPadRadiusMeters:
           CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters:
