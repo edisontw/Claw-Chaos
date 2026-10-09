@@ -1136,6 +1136,9 @@ export function createGantryLabScene(
     homeReturnPhase = "READY";
     const previous = playCycle;
     playCycle = applyM04Action(playCycle, reel.payout);
+    if (previous.phase === "READY" && playCycle.phase === "DESCENDING") {
+      firstDescentPrizeContactPayout = null;
+    }
     if (
       previous.phase === "DESCENDING" &&
       playCycle.phase === "CLOSING"
