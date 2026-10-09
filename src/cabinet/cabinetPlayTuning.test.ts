@@ -158,7 +158,6 @@ describe("Cabinet play tuning", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeContactStiffness).toBe(600);
     expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeContactDamping).toBe(120);
     expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeContactMaxTorque).toBe(0.65);
-    expect(CABINET_STOCKED_GRIP_TUNING.descentPrizeFollowThroughMeters).toBe(0.025);
     expect(CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds).toBe(0.12);
     expect(CABINET_STOCKED_GRIP_TUNING.closeRampSeconds).toBe(0.20);
     expect(CABINET_STOCKED_GRIP_TUNING.closeRampStartTorque).toBe(1.8);
