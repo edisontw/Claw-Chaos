@@ -9,6 +9,8 @@ import {
   CABINET_GANTRY_TRAVEL_BOUNDS,
   CABINET_STOCKED_GRIP_TUNING,
   CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
+  CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND,
+  CABINET_STOCKED_APPROACH_DISTANCE_METERS,
 } from "../cabinet/cabinetPlayTuning";
 import { cabinetPrizeDefinition } from "../cabinet/cabinetPrizeSizing";
 import {
@@ -63,6 +65,10 @@ describe("stocked claw descent contact", () => {
         CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters,
       reelMaxSpeedMetersPerSecond:
         CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND,
+      reelApproachMaxSpeedMetersPerSecond:
+        CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND,
+      reelApproachDistanceMeters:
+        CABINET_STOCKED_APPROACH_DISTANCE_METERS,
       clawContinuousCollision: true,
       descentContactBodies: () => [prize.body],
       gripProfile: {
