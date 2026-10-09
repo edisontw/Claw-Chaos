@@ -106,3 +106,5 @@ export const CABINET_STOCKED_GRIP_TUNING = {
 // Faster than the overly cautious 0.10 m/s drop, while retaining a
 // controlled approach to prizes and immediate stop on actual contact.
 export const CABINET_STOCKED_REEL_MAX_SPEED_METERS_PER_SECOND = 0.14;
+export const CABINET_STOCKED_APPROACH_REEL_SPEED_METERS_PER_SECOND = 0.10;
+export const CABINET_STOCKED_APPROACH_DISTANCE_METERS = 0.18;
