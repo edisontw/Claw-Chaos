@@ -91,9 +91,9 @@ export const CABINET_STOCKED_GRIP_TUNING = {
   fingerAngularDamping: 24.0,
   // During descent the open claw is only lightly held open, so a prize
   // can deflect a finger instead of being struck by a rigid motor brace.
-  descentOpenStiffness: 45,
-  descentOpenDamping: 18,
-  descentOpenMaxTorque: 0.18,
+  descentOpenStiffness: 8,
+  descentOpenDamping: 10,
+  descentOpenMaxTorque: 0.05,
   bottomCloseSettleSeconds: 0.12,
   // After the reel stops, build clamp force progressively instead of
   // switching from a compliant open joint straight to full pickup force.
