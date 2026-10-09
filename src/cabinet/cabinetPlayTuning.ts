@@ -80,6 +80,10 @@ export const CABINET_GANTRY_TRAVEL_BOUNDS = {
 export const CABINET_STOCKED_GRIP_TUNING = {
   ...CABINET_PLAY_TUNING,
   additionalPickupDropMeters: 0.055,
+  // Narrow the resting OPEN claw slightly, reducing incidental contact
+  // with neighbouring stocked prizes. Same physical finger shapes/pads
+  // and the original full closing angle/force are retained.
+  openAngleRadians: 0.30,
   fingerFriction: 1.94,
   fingerRodFriction: 1.94,
   closePickupTorque: 10.0,

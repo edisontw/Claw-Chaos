@@ -229,8 +229,8 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
           axis: tangent,
           minAngle:
             CABINET_STOCKED_GRIP_TUNING.closedAngleRadians,
-          maxAngle: claw.openAngle,
-          initialTarget: claw.openAngle,
+          maxAngle: CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
+          initialTarget: CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
           stiffness: claw.motorStiffness,
           damping: claw.motorDamping,
           maxTorque:
@@ -273,7 +273,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
         CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters,
       closedAngleRadians:
         CABINET_STOCKED_GRIP_TUNING.closedAngleRadians,
-      openAngleRadians: claw.openAngle,
+      openAngleRadians: CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
       closeCompletionToleranceRadians:
         M04_PLAY_CONFIG.closeCompletionToleranceRadians,
       releaseCompletionToleranceRadians:
@@ -360,7 +360,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
     for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
       fingerCommand = advanceMotorCommand(
         fingerCommand,
-        claw.openAngle,
+        CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
         claw.motorSpeedRadiansPerSecond,
         dt,
       );
@@ -540,7 +540,7 @@ describe("Cabinet stocked rigid-prize production-claw pickup", () => {
             fingerCommand,
             closing
               ? CABINET_STOCKED_GRIP_TUNING.closedAngleRadians
-              : claw.openAngle,
+              : CABINET_STOCKED_GRIP_TUNING.openAngleRadians,
             claw.motorSpeedRadiansPerSecond,
             dt,
             closing,

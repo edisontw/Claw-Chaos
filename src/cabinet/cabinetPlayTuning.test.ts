@@ -112,6 +112,28 @@ describe("Cabinet play tuning", () => {
     ).toBeGreaterThanOrEqual(0.009);
   });
 
+  it("slightly reduces the stocked open claw span without altering physics labs", () => {
+    // For each jaw, its physical terminal outer radius at the resting
+    // motor angle determines whether it brushes adjacent prizes.
+    const jawReach = (angle: number): number =>
+      Math.max(...CLAW_LAB_CONFIG.fingerNodes.map((node) =>
+        CLAW_LAB_CONFIG.fingerPivotRadius +
+        node.radial * Math.cos(angle) +
+        node.down * Math.sin(angle),
+      )) + CABINET_STOCKED_GRIP_TUNING.fingerLowerPadRadiusMeters;
+
+    const original = jawReach(CLAW_LAB_CONFIG.openAngle);
+    const stocked = jawReach(CABINET_STOCKED_GRIP_TUNING.openAngleRadians);
+    expect(CLAW_LAB_CONFIG.openAngle).toBe(0.35);
+    expect(CABINET_STOCKED_GRIP_TUNING.openAngleRadians).toBe(0.30);
+    expect(original - stocked).toBeGreaterThan(0.005);
+    expect(original - stocked).toBeLessThan(0.015);
+    // Only resting opening changes; full closing capability is preserved.
+    expect(CABINET_STOCKED_GRIP_TUNING.closedAngleRadians).toBe(
+      CABINET_PLAY_TUNING.closedAngleRadians,
+    );
+  });
+
   it("reserves the deeper, rubber-padded hold for stocked prizes only", () => {
     expect(CABINET_STOCKED_GRIP_TUNING.additionalPickupDropMeters).toBe(0.055);
     expect(CABINET_STOCKED_GRIP_TUNING.fingerFriction).toBe(1.94);

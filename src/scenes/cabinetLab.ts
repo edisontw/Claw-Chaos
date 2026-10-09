@@ -446,6 +446,10 @@ export function createCabinetLabScene(
           activeGrip.pickupLiftDistanceMeters,
         closedAngleRadians:
           activeGrip.closedAngleRadians,
+        openAngleRadians:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.openAngleRadians
+            : undefined,
         fingerLowerPadRadiusMeters:
           activeGrip.fingerLowerPadRadiusMeters,
         fingerLowerPadLengthMeters:
