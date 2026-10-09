@@ -207,6 +207,7 @@ export interface GantryGripProfile {
   holdBoostTorque?: number;
   pickupLiftDistanceMeters?: number;
   closedAngleRadians?: number;
+  openAngleRadians?: number;
   fingerLowerPadRadiusMeters?: number;
   fingerLowerPadLengthMeters?: number;
 }
@@ -430,6 +431,8 @@ export function createGantryLabScene(
     M04_PLAY_CONFIG.pickupLiftDistanceMeters;
   const closedAngleRadians =
     options.gripProfile?.closedAngleRadians ?? claw.closedAngle;
+  const openAngleRadians =
+    options.gripProfile?.openAngleRadians ?? claw.openAngle;
   const fingerLowerPadRadiusMeters =
     options.gripProfile?.fingerLowerPadRadiusMeters ??
     claw.fingerRodRadius;
@@ -852,8 +855,8 @@ export function createGantryLabScene(
       anchor2: { x: 0, y: 0, z: 0 },
       axis: tangent,
       minAngle: closedAngleRadians,
-      maxAngle: claw.openAngle,
-      initialTarget: claw.openAngle,
+      maxAngle: openAngleRadians,
+      initialTarget: openAngleRadians,
       stiffness: claw.motorStiffness,
       damping: claw.motorDamping,
       maxTorque: closePickupTorque,
@@ -905,7 +908,7 @@ export function createGantryLabScene(
       M04_PLAY_CONFIG.autoClosePayoutMeters +
       verticalHomeOffset + additionalPickupDropMeters,
     closedAngleRadians,
-    openAngleRadians: claw.openAngle,
+    openAngleRadians,
     closeCompletionToleranceRadians:
       M04_PLAY_CONFIG.closeCompletionToleranceRadians,
     releaseCompletionToleranceRadians:
@@ -1096,7 +1099,7 @@ export function createGantryLabScene(
       Math.abs(motion.z.velocity) <=
         gantry.homeVelocityTolerance;
     const fingersOpen =
-      Math.abs(fingerCommand - claw.openAngle) <=
+      Math.abs(fingerCommand - openAngleRadians) <=
       playConfig.releaseCompletionToleranceRadians;
     const testMotionActive =
       pt006Phase === "ACCELERATING" ||
@@ -1557,7 +1560,7 @@ export function createGantryLabScene(
       // Existing Rapier finger/glass contacts provide real physical deflection.
       const fingerTarget = closingFinger
         ? closedAngleRadians
-        : claw.openAngle;
+        : openAngleRadians;
       const siblingFingerContact =
         closingFinger &&
         fingerIndexPairs.some(
