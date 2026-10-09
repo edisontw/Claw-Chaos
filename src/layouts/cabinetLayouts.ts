@@ -93,6 +93,37 @@ const STOCKED_BASE: readonly PlacementBase[] = [
     x: 0.33, z: 0.12, rotationYRadians: 0.10 },
 ];
 
+// Keep the well-tested twelve display slots, but vary which plush character
+// occupies each slot and where the two packaged gifts sit. Shuffle only
+// within comparable prize families to avoid unstable stacks or blocked chutes.
+function randomizeStockedMerchandise(
+  seed: string,
+): PlacementBase[] {
+  const slots = STOCKED_BASE.map((base) => ({ ...base }));
+  const rng = createSeededRandom(`m09:stocked:merchandise:${seed}`);
+  const groups = [
+    slots.map((slot, index) =>
+      slot.prizeId === "prize/teddy_simple" ||
+      slot.prizeId === "prize/animal_simple" ? index : -1,
+    ).filter((index) => index >= 0),
+    slots.map((slot, index) =>
+      slot.prizeId === "prize/box_standard" ||
+      slot.prizeId === "prize/box_tall" ? index : -1,
+    ).filter((index) => index >= 0),
+  ];
+  for (const indices of groups) {
+    const prizes = indices.map((index) => slots[index]!.prizeId);
+    for (let i = prizes.length - 1; i > 0; i -= 1) {
+      const j = Math.floor(rng.next() * (i + 1));
+      [prizes[i], prizes[j]] = [prizes[j]!, prizes[i]!];
+    }
+    for (const [index, slotIndex] of indices.entries()) {
+      slots[slotIndex] = { ...slots[slotIndex]!, prizeId: prizes[index]! };
+    }
+  }
+  return slots;
+}
+
 const LOOSE_BASE: readonly PlacementBase[] = [
   {
     prizeId: "prize/cube_small",
@@ -379,8 +410,8 @@ function materializePlacements(
   const variation =
     layoutId === "stocked"
       ? {
-          positionJitter: 0.004,
-          rotationJitter: 0.045,
+          positionJitter: 0.018,
+          rotationJitter: 0.14,
           verticalJitterMin: 0,
           verticalJitterMax: 0.004,
         }
@@ -462,16 +493,23 @@ function materializePlacements(
           maxZ: 0.195,
         };
 
-  return bases.map((base, index) => ({
+  return bases.map((base, index) => {
+    // The rear recessed slot must stay behind the primary rear row, rather
+    // than crossing it because of a random lateral/depth offset.
+    const positionJitter =
+      layoutId === "stocked" && index === 2
+        ? 0.008
+        : variation.positionJitter;
+    return {
     prizeId: base.prizeId,
     role: base.role,
     x: clamp(
-      base.x + rng.range(-variation.positionJitter, variation.positionJitter),
+      base.x + rng.range(-positionJitter, positionJitter),
       bounds.minX,
       bounds.maxX,
     ),
     z: clamp(
-      base.z + rng.range(-variation.positionJitter, variation.positionJitter),
+      base.z + rng.range(-positionJitter, positionJitter),
       bounds.minZ,
       bounds.maxZ,
     ),
@@ -488,7 +526,8 @@ function materializePlacements(
       base.rotationYRadians +
       rng.range(-variation.rotationJitter, variation.rotationJitter),
     variantSeed: `m09:${layoutId}:${seed}:${index}`,
-  }));
+    };
+  });
 }
 
 export function parseCabinetLayoutSelection(
@@ -512,7 +551,7 @@ export function createCabinetLayout(
 ): CabinetLayout {
   const bases =
     id === "stocked"
-      ? STOCKED_BASE
+      ? randomizeStockedMerchandise(seed)
       : id === "dense"
       ? DENSE_BASE
       : id === "showcase"
