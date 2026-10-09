@@ -404,6 +404,18 @@ export function createCabinetLabScene(
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.descentOpenMaxTorque
             : undefined,
+        descentPrizeContactStiffness:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentPrizeContactStiffness
+            : undefined,
+        descentPrizeContactDamping:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentPrizeContactDamping
+            : undefined,
+        descentPrizeContactMaxTorque:
+          layout.id === "stocked"
+            ? CABINET_STOCKED_GRIP_TUNING.descentPrizeContactMaxTorque
+            : undefined,
         bottomCloseSettleSeconds:
           layout.id === "stocked"
             ? CABINET_STOCKED_GRIP_TUNING.bottomCloseSettleSeconds
