@@ -125,7 +125,6 @@ describe("stocked claw descent contact", () => {
     for (let tick = 0; tick < PHYSICS_HZ; tick += 1) {
       gantry.beforePhysicsStep?.(FIXED_TIMESTEP_SECONDS);
       physics.step();
-      gantry.afterPhysicsStep?.(FIXED_TIMESTEP_SECONDS);
     }
 
     expect(gantry.primaryAction?.()).toBe(true);
@@ -157,7 +156,6 @@ describe("stocked claw descent contact", () => {
       const before = gantry.getMachineAudioState?.();
       gantry.beforePhysicsStep?.(FIXED_TIMESTEP_SECONDS);
       physics.step();
-      gantry.afterPhysicsStep?.(FIXED_TIMESTEP_SECONDS);
       const state = gantry.getMachineAudioState?.();
 
       if (state?.playPhase === "DESCENDING") {
