@@ -2,11 +2,21 @@ import { describe, expect, it } from "vitest";
 import {
   MOBILE_ACTION_DEBOUNCE_MS,
   MOBILE_JOYSTICK_DEAD_ZONE_FRACTION,
+  canClaimJoystickPointer,
   isActionPressAllowed,
   normalizeVirtualJoystick,
 } from "./mobileCabinetControls";
 
 describe("mobile cabinet controls", () => {
+  it("keeps the active joystick finger until release, even with a second touch", () => {
+    expect(canClaimJoystickPointer(null)).toBe(true);
+    // Another finger touching the joystick must not steal the active drag.
+    expect(canClaimJoystickPointer(7)).toBe(false);
+    expect(canClaimJoystickPointer(42)).toBe(false);
+    // After pointerup or pointercancel clears the owner, another drag can start.
+    expect(canClaimJoystickPointer(null)).toBe(true);
+  });
+
   it("applies a dead zone, remaps travel, and clamps to the unit circle", () => {
     const centered = normalizeVirtualJoystick(0, 0, 50);
     expect(centered).toEqual({ x: 0, z: 0 });
