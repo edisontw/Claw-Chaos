@@ -17,9 +17,38 @@ import {
   computeLookAnglesToPoint,
   createFirstPersonPlayerViewState,
   findFocusedPlayerViewTarget,
+  formatPlayerViewFocusPrompt,
   playerCameraPosition,
   zoomFirstPersonFovByStep,
 } from "./firstPersonPlayerView";
+
+describe("first-person focus prompts", () => {
+  const primary = M07_CABINET_VIEW_TARGETS.find(
+    (target) => target.action === "primary",
+  )!;
+  const nonPrimary = M07_CABINET_VIEW_TARGETS.find(
+    (target) => target.action !== "primary",
+  )!;
+
+  it("shows the keyboard action on desktop", () => {
+    expect(formatPlayerViewFocusPrompt(primary, false)).toBe(
+      `[F] ${primary.label}`,
+    );
+  });
+
+  it("shows the actual mobile action instead of keyboard shortcut", () => {
+    expect(formatPlayerViewFocusPrompt(primary, true)).toBe(
+      "Use DROP / CLOSE",
+    );
+  });
+
+  it("keeps passive labels and empty focus unchanged", () => {
+    expect(formatPlayerViewFocusPrompt(nonPrimary, true)).toBe(nonPrimary.label);
+    expect(formatPlayerViewFocusPrompt(nonPrimary, false)).toBe(nonPrimary.label);
+    expect(formatPlayerViewFocusPrompt(null, true)).toBe("");
+    expect(formatPlayerViewFocusPrompt(null, false)).toBe("");
+  });
+});
 
 describe("M07 first-person player view constraints", () => {
   it("uses drag-direction touch semantics", () => {
