@@ -1,5 +1,6 @@
 import * as THREE from "three";
 import { M06_CABINET_CONFIG } from "../cabinet/cabinetGeometry";
+import { isTouchLikeEnvironment } from "./mobileRenderProfile";
 
 export const M07_CAMERA_FOV_DEGREES = 50;
 export const M07_MOBILE_CAMERA_FOV_DEGREES = 58;
@@ -60,6 +61,16 @@ export interface PlayerViewFocus {
   target: PlayerViewTarget;
   distanceMeters: number;
   angleRadians: number;
+}
+
+/** Display the input actually available on this device. */
+export function formatPlayerViewFocusPrompt(
+  target: PlayerViewTarget | null,
+  touchLike: boolean,
+): string {
+  if (!target) return "";
+  if (target.action !== "primary") return target.label;
+  return touchLike ? "Use DROP / CLOSE" : `[F] ${target.label}`;
 }
 
 export interface PlayerViewLookAngles {
@@ -419,6 +430,7 @@ export class FirstPersonPlayerViewController {
   private focus: PlayerViewFocus | null = null;
   private lastInteraction = "none";
   private readonly prompt: HTMLDivElement;
+  private readonly touchLike = isTouchLikeEnvironment();
   private mouseLookPointerId: number | null = null;
   private mouseLookX = 0;
   private mouseLookY = 0;
@@ -590,14 +602,10 @@ export class FirstPersonPlayerViewController {
     this.element.dataset.playerFocus =
       this.focus?.target.id ?? "none";
 
-    if (!this.focus) {
-      this.prompt.textContent = "";
-    } else if (this.focus.target.action === "primary") {
-      this.prompt.textContent =
-        "[F] " + this.focus.target.label;
-    } else {
-      this.prompt.textContent = this.focus.target.label;
-    }
+    this.prompt.textContent = formatPlayerViewFocusPrompt(
+      this.focus?.target ?? null,
+      this.touchLike,
+    );
   }
 
   debugLines(): string[] {
