@@ -3,6 +3,7 @@ import {
   MOBILE_ACTION_DEBOUNCE_MS,
   MOBILE_JOYSTICK_DEAD_ZONE_FRACTION,
   canClaimJoystickPointer,
+  isActiveJoystickPointer,
   isActionPressAllowed,
   normalizeVirtualJoystick,
 } from "./mobileCabinetControls";
@@ -15,6 +16,15 @@ describe("mobile cabinet controls", () => {
     expect(canClaimJoystickPointer(42)).toBe(false);
     // After pointerup or pointercancel clears the owner, another drag can start.
     expect(canClaimJoystickPointer(null)).toBe(true);
+  });
+
+  it("releases the joystick only when its owning pointer loses capture", () => {
+    expect(isActiveJoystickPointer(null, 7)).toBe(false);
+    expect(isActiveJoystickPointer(7, 8)).toBe(false);
+    expect(isActiveJoystickPointer(7, 7)).toBe(true);
+    expect(isActiveJoystickPointer(0, 0)).toBe(true);
+    // A stale lostpointercapture from an earlier finger must not stop a new drag.
+    expect(isActiveJoystickPointer(8, 7)).toBe(false);
   });
 
   it("applies a dead zone, remaps travel, and clamps to the unit circle", () => {
