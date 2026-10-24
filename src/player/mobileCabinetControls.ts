@@ -49,6 +49,12 @@ export function isActionPressAllowed(
   );
 }
 
+// Keyboard and assistive-technology button clicks have no pointer click count.
+// Pointer clicks are already handled on pointerdown to preserve CLOSE timing.
+export function isNonPointerActionClick(clickDetail: number): boolean {
+  return clickDetail === 0;
+}
+
 // Keep the first finger in control until it releases the joystick.
 export function canClaimJoystickPointer(activePointerId: number | null): boolean {
   return activePointerId === null;
@@ -108,6 +114,7 @@ export class MobileCabinetControls {
     this.joystick.addEventListener("pointercancel", this.onJoystickPointerUp);
     this.joystick.addEventListener("lostpointercapture", this.onJoystickLostPointerCapture);
     this.actionButton.addEventListener("pointerdown", this.onActionPointerDown);
+    this.actionButton.addEventListener("click", this.onActionClick);
   }
 
   private updateJoystick(event: PointerEvent): void {
@@ -167,7 +174,20 @@ export class MobileCabinetControls {
     this.releaseJoystick(event.pointerId);
   };
 
+  private readonly onActionClick = (event: MouseEvent): void => {
+    if (!isNonPointerActionClick(event.detail)) {
+      return;
+    }
+    this.triggerAction();
+    event.preventDefault();
+  };
+
   private readonly onActionPointerDown = (event: PointerEvent): void => {
+    this.triggerAction();
+    event.preventDefault();
+  };
+
+  private triggerAction(): void {
     const now = performance.now();
     if (
       !isActionPressAllowed(
@@ -176,7 +196,6 @@ export class MobileCabinetControls {
       )
     ) {
       this.actionButton.dataset.result = "debounced";
-      event.preventDefault();
       return;
     }
 
@@ -192,6 +211,5 @@ export class MobileCabinetControls {
         navigator.vibrate(18);
       }
     }
-    event.preventDefault();
-  };
+  }
 }
