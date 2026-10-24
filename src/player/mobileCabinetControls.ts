@@ -54,6 +54,14 @@ export function canClaimJoystickPointer(activePointerId: number | null): boolean
   return activePointerId === null;
 }
 
+// A lost capture may arrive without a pointerup or pointercancel.
+export function isActiveJoystickPointer(
+  activePointerId: number | null,
+  pointerId: number,
+): boolean {
+  return activePointerId !== null && activePointerId === pointerId;
+}
+
 export class MobileCabinetControls {
   private readonly root: HTMLDivElement;
   private readonly joystick: HTMLDivElement;
@@ -98,6 +106,7 @@ export class MobileCabinetControls {
     this.joystick.addEventListener("pointermove", this.onJoystickPointerMove);
     this.joystick.addEventListener("pointerup", this.onJoystickPointerUp);
     this.joystick.addEventListener("pointercancel", this.onJoystickPointerUp);
+    this.joystick.addEventListener("lostpointercapture", this.onJoystickLostPointerCapture);
     this.actionButton.addEventListener("pointerdown", this.onActionPointerDown);
   }
 
@@ -137,15 +146,25 @@ export class MobileCabinetControls {
     event.preventDefault();
   };
 
-  private readonly onJoystickPointerUp = (event: PointerEvent): void => {
-    if (this.joystickPointerId !== event.pointerId) {
-      return;
+  private releaseJoystick(pointerId: number): boolean {
+    if (!isActiveJoystickPointer(this.joystickPointerId, pointerId)) {
+      return false;
     }
     this.joystickPointerId = null;
     this.joystick.dataset.active = "false";
     this.thumb.style.transform = "translate(-50%, -50%)";
     this.onMove(0, 0);
-    event.preventDefault();
+    return true;
+  }
+
+  private readonly onJoystickPointerUp = (event: PointerEvent): void => {
+    if (this.releaseJoystick(event.pointerId)) {
+      event.preventDefault();
+    }
+  };
+
+  private readonly onJoystickLostPointerCapture = (event: PointerEvent): void => {
+    this.releaseJoystick(event.pointerId);
   };
 
   private readonly onActionPointerDown = (event: PointerEvent): void => {
