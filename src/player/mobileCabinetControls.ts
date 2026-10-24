@@ -49,6 +49,11 @@ export function isActionPressAllowed(
   );
 }
 
+// Keep the first finger in control until it releases the joystick.
+export function canClaimJoystickPointer(activePointerId: number | null): boolean {
+  return activePointerId === null;
+}
+
 export class MobileCabinetControls {
   private readonly root: HTMLDivElement;
   private readonly joystick: HTMLDivElement;
@@ -113,6 +118,10 @@ export class MobileCabinetControls {
   }
 
   private readonly onJoystickPointerDown = (event: PointerEvent): void => {
+    if (!canClaimJoystickPointer(this.joystickPointerId)) {
+      event.preventDefault();
+      return;
+    }
     this.joystickPointerId = event.pointerId;
     this.joystick.dataset.active = "true";
     this.joystick.setPointerCapture?.(event.pointerId);
