@@ -4,11 +4,20 @@ import {
   MOBILE_JOYSTICK_DEAD_ZONE_FRACTION,
   canClaimJoystickPointer,
   isActiveJoystickPointer,
+  isNonPointerActionClick,
   isActionPressAllowed,
   normalizeVirtualJoystick,
 } from "./mobileCabinetControls";
 
 describe("mobile cabinet controls", () => {
+  it("accepts keyboard and assistive-tech action clicks without repeating pointer taps", () => {
+    // Enter/Space and assistive-tech synthesized clicks have detail 0.
+    expect(isNonPointerActionClick(0)).toBe(true);
+    // Touch/mouse pointerdown already triggered the action: ignore follow-up clicks.
+    expect(isNonPointerActionClick(1)).toBe(false);
+    expect(isNonPointerActionClick(2)).toBe(false);
+  });
+
   it("keeps the active joystick finger until release, even with a second touch", () => {
     expect(canClaimJoystickPointer(null)).toBe(true);
     // Another finger touching the joystick must not steal the active drag.
