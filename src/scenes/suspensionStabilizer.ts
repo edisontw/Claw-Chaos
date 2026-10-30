@@ -4,6 +4,21 @@ export interface SuspensionStabilizerConfig {
   maxForce: number;
 }
 
+export interface SuspensionDamping {
+  angular: number;
+  spring: number;
+}
+
+// Cabinet travel damping is active only while READY and nearly fully reeled.
+export function chooseSuspensionDamping(
+  baseline: SuspensionDamping,
+  upperTravel: SuspensionDamping | undefined,
+  isReady: boolean,
+  isNearTop: boolean,
+): SuspensionDamping {
+  return upperTravel && isReady && isNearTop ? upperTravel : baseline;
+}
+
 export interface SuspensionHorizontalState {
   anchorX: number;
   anchorZ: number;

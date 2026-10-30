@@ -362,6 +362,9 @@ export function createCabinetLabScene(
           ? CABINET_STOCKED_APPROACH_DISTANCE_METERS
           : undefined,
       addServiceWires: true,
+      // Dampen free-air sway during player movement above the playfield.
+      // Descent and prize retention preserve their calibrated response.
+      upperTravelDamping: { angular: 4.0, spring: 1.8 },
       visualTheme,
       clawCastsShadow: false,
       // Use continuous *physical* collision for the three/four thin
