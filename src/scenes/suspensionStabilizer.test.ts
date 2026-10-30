@@ -1,11 +1,29 @@
 import { describe, expect, it } from "vitest";
-import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
+import {
+  chooseSuspensionDamping,
+  computeSuspensionStabilizerImpulse,
+} from "./suspensionStabilizer";
 
 const config = {
   stiffness: 55,
   damping: 8.5,
   maxForce: 4,
 };
+
+describe("cabinet upper-travel damping", () => {
+  const baseline = { angular: 3.0, spring: 1.0 };
+  const calmer = { angular: 4.0, spring: 1.8 };
+
+  it("dampens only ready, near-top movement", () => {
+    expect(chooseSuspensionDamping(baseline, calmer, true, true)).toEqual(calmer);
+    expect(chooseSuspensionDamping(baseline, calmer, false, true)).toEqual(baseline);
+    expect(chooseSuspensionDamping(baseline, calmer, true, false)).toEqual(baseline);
+  });
+
+  it("preserves M02/M03 defaults without a cabinet override", () => {
+    expect(chooseSuspensionDamping(baseline, undefined, true, true)).toEqual(baseline);
+  });
+});
 
 describe("M02 suspension stabilizer", () => {
   it("pushes an offset hub back toward the carriage centerline", () => {
