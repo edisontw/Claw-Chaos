@@ -36,7 +36,11 @@ import {
   m04HoldBoostActive,
   m04ReelCommand,
 } from "./m04PlayCycle";
-import { computeSuspensionStabilizerImpulse } from "./suspensionStabilizer";
+import {
+  chooseSuspensionDamping,
+  computeSuspensionStabilizerImpulse,
+  type SuspensionDamping,
+} from "./suspensionStabilizer";
 import type { SimulationScene } from "./types";
 
 export const M02_FINGER_TRANSPORT_CONFIG = {
@@ -297,6 +301,8 @@ export interface GantryLabOptions {
   reelApproachMaxSpeedMetersPerSecond?: number;
   reelApproachDistanceMeters?: number;
   addServiceWires?: boolean;
+  // Applies only to pre-DROP upper travel; other states keep lab damping.
+  upperTravelDamping?: SuspensionDamping;
   visualTheme?: VisualTheme;
   clawCastsShadow?: boolean;
   clawContinuousCollision?: boolean;
@@ -1509,6 +1515,18 @@ export function createGantryLabScene(
 
       const hubVelocity = hubBody.linvel();
       const currentHub = hubBody.translation();
+      const suspensionDamping = chooseSuspensionDamping(
+        {
+          angular: gantry.suspensionAngularDamping,
+          spring: gantry.suspensionSpringDamping,
+        },
+        options.upperTravelDamping,
+        playCycle.phase === "READY",
+        reel.payout <= gantry.reelMinPayout + 0.01,
+      );
+      if (options.upperTravelDamping) {
+        hubBody.setAngularDamping(suspensionDamping.angular);
+      }
       const stabilizerImpulse = computeSuspensionStabilizerImpulse(
         {
           anchorX: motion.x.position,
@@ -1522,7 +1540,7 @@ export function createGantryLabScene(
         },
         {
           stiffness: gantry.suspensionSpringStiffness,
-          damping: gantry.suspensionSpringDamping,
+          damping: suspensionDamping.spring,
           maxForce: gantry.suspensionSpringMaxForce,
         },
         stepSeconds,
